@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="helpdesk_ticket_form_assign_to_me" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.form.assign.to.me</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
+        <field name="arch" type="xml">
+            <!-- Insert before Save/Discard in the control panel -->
+            <xpath expr="//header" position="inside">
+                <button name="action_assign_to_me"
+                        type="object"
+                        string="Assign to Me"
+                        class="btn-secondary"
+                        invisible="user_id == uid"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
