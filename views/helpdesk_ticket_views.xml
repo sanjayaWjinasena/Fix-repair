@@ -6,6 +6,11 @@
         <field name="model">helpdesk.ticket</field>
         <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
         <field name="arch" type="xml">
+            <!-- Declare computed field so Odoo's view validator accepts it in invisible modifiers -->
+            <xpath expr="//field[@name='name']" position="before">
+                <field name="repair_stage_state" invisible="1"/>
+            </xpath>
+
             <!-- All workflow buttons appear in the control panel alongside Save/Discard -->
             <xpath expr="//header" position="inside">
 
