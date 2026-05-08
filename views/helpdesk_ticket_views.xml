@@ -6,13 +6,30 @@
         <field name="model">helpdesk.ticket</field>
         <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
         <field name="arch" type="xml">
-            <!-- Insert before Save/Discard in the control panel -->
+            <!-- All workflow buttons appear in the control panel alongside Save/Discard -->
             <xpath expr="//header" position="inside">
+
+                <!-- Visible in New stage only -->
+                <button name="action_send_to_factory"
+                        type="object"
+                        string="Send to Factory"
+                        class="btn-primary"
+                        invisible="repair_stage_state != 'new'"/>
+
+                <!-- Visible in Sent to Factory stage only -->
+                <button name="action_received_at_factory"
+                        type="object"
+                        string="Received at Factory"
+                        class="btn-primary"
+                        invisible="repair_stage_state != 'sent_to_factory'"/>
+
+                <!-- Always visible unless already assigned to current user -->
                 <button name="action_assign_to_me"
                         type="object"
                         string="Assign to Me"
                         class="btn-secondary"
                         invisible="user_id == uid"/>
+
             </xpath>
         </field>
     </record>
