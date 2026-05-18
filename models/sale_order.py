@@ -15,7 +15,6 @@ class SaleOrder(models.Model):
 
             # RUG Request button: only on Repair quotations, before request is sent
             rug_req_invisible = (
-                "(x_studio_rug_confirmed != True) or "
                 "(x_studio_quotation_type != 'Repair') or "
                 "(state not in ['draft', 'sent']) or "
                 "(x_studio_rug_request_sent == True) or "
@@ -27,7 +26,6 @@ class SaleOrder(models.Model):
 
             # Approve/Reject RUG buttons: only on Repair quotations, after request is sent
             rug_approve_invisible = (
-                "(x_studio_rug_confirmed != True) or "
                 "(x_studio_quotation_type != 'Repair') or "
                 "(state not in ['draft', 'sent']) or "
                 "(x_studio_rug_request_sent == False) or "
