@@ -9,7 +9,6 @@
     'depends': ['helpdesk', 'helpdesk_fsm', 'sale', 'industry_fsm_sale', 'industry_fsm_stock'],
     'data': [
         'views/helpdesk_ticket_views.xml',
-        'views/sale_order_views.xml',
     ],
     'installable': True,
     'auto_install': False,
