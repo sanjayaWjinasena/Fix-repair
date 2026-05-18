@@ -6,7 +6,7 @@
     'author': 'Jinasena Agricultural Machinery (Pvt) Ltd.',
     'category': 'Helpdesk',
     'license': 'LGPL-3',
-    'depends': ['helpdesk', 'helpdesk_fsm', 'sale', 'industry_fsm_sale'],
+    'depends': ['helpdesk', 'helpdesk_fsm', 'sale', 'industry_fsm_sale', 'industry_fsm_stock'],
     'data': [
         'views/helpdesk_ticket_views.xml',
     ],
