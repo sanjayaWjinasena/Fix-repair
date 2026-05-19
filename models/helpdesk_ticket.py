@@ -47,8 +47,16 @@ class HelpdeskTicket(models.Model):
 
     def action_send_to_factory(self):
         stage = self._get_or_create_stage('Sent to Factory', 10)
-        self.write({'stage_id': stage.id})
+        self.write({
+            'stage_id': stage.id,
+            'x_studio_s_shipped_data': fields.Date.today(),
+            'x_studio_s_shipped_by': self.env.uid,
+        })
 
     def action_received_at_factory(self):
         stage = self._get_or_create_stage('Received at Factory', 20)
-        self.write({'stage_id': stage.id})
+        self.write({
+            'stage_id': stage.id,
+            'x_studio_f_recieved_data': fields.Date.today(),
+            'x_studio_f_recieved_by': self.env.uid,
+        })
