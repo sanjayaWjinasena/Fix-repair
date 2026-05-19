@@ -40,6 +40,18 @@ class SaleOrder(models.Model):
 
     def write(self, vals):
         res = super().write(vals)
+
+        # When RUG request is sent, move linked helpdesk ticket to "Estimation Sent to Customer"
+        if vals.get('x_studio_rug_request_sent'):
+            stage = self.env['helpdesk.stage'].search(
+                [('name', '=', 'Estimation Sent to Customer')], limit=1
+            )
+            if stage:
+                for order in self:
+                    ticket = order.task_id.helpdesk_ticket_id
+                    if ticket:
+                        ticket.write({'stage_id': stage.id})
+
         # When RUG is approved, reprice all lines to product cost price
         if vals.get('x_studio_rug_approved'):
             for order in self:
@@ -47,4 +59,5 @@ class SaleOrder(models.Model):
                     for line in order.order_line:
                         if line.product_id:
                             line.write({'price_unit': line.product_id.standard_price})
+
         return res
