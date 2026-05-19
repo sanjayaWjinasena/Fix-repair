@@ -43,17 +43,20 @@ class SaleOrder(models.Model):
 
         # When RUG request is sent, move linked helpdesk ticket to "Estimation Sent to Customer"
         if vals.get('x_studio_rug_request_sent'):
-            stage = self.env['helpdesk.stage'].search(
-                [('name', '=', 'Estimation Sent to Customer')], limit=1
-            )
-            if stage:
-                for order in self:
-                    # task_id may be unset; fall back to searching by sale_order_id
-                    task = order.task_id or self.env['project.task'].search(
-                        [('sale_order_id', '=', order.id)], limit=1
+            for order in self:
+                # task_id may be unset; fall back to searching by sale_order_id
+                task = order.task_id or self.env['project.task'].search(
+                    [('sale_order_id', '=', order.id)], limit=1
+                )
+                ticket = task.helpdesk_ticket_id if task else False
+                if ticket:
+                    # Filter by ticket's team to avoid cross-company stage access errors
+                    stage = self.env['helpdesk.stage'].search(
+                        [('name', '=', 'Estimation Sent to Customer'),
+                         ('team_ids', 'in', ticket.team_id.ids)],
+                        limit=1
                     )
-                    ticket = task.helpdesk_ticket_id if task else False
-                    if ticket:
+                    if stage:
                         ticket.write({'stage_id': stage.id})
 
         # When RUG is approved, reprice all lines to product cost price
