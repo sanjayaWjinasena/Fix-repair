@@ -48,7 +48,11 @@ class SaleOrder(models.Model):
             )
             if stage:
                 for order in self:
-                    ticket = order.task_id.helpdesk_ticket_id
+                    # task_id may be unset; fall back to searching by sale_order_id
+                    task = order.task_id or self.env['project.task'].search(
+                        [('sale_order_id', '=', order.id)], limit=1
+                    )
+                    ticket = task.helpdesk_ticket_id if task else False
                     if ticket:
                         ticket.write({'stage_id': stage.id})
 
