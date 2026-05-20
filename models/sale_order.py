@@ -38,32 +38,39 @@ class SaleOrder(models.Model):
 
         return arch, view
 
+    def _move_ticket_to_stage(self, order, stage_name):
+        """Find the linked helpdesk ticket and move it to the named stage."""
+        task = order.task_id or self.env['project.task'].search(
+            [('sale_order_id', '=', order.id)], limit=1
+        )
+        ticket = task.helpdesk_ticket_id if task else False
+        if not ticket:
+            return
+        stage_env = self.env['helpdesk.stage'].with_context(
+            allowed_company_ids=[order.company_id.id]
+        )
+        stage = stage_env.search(
+            [('name', '=', stage_name),
+             ('team_ids', 'in', ticket.team_id.ids)],
+            limit=1
+        )
+        if stage:
+            ticket.sudo().write({'stage_id': stage.id})
+
     def write(self, vals):
         res = super().write(vals)
 
-        # When RUG request is sent, move linked helpdesk ticket to "Estimation Sent to Customer"
+        # RUG request sent → Estimation Sent to Customer
         if vals.get('x_studio_rug_request_sent'):
             for order in self:
-                # task_id may be unset; fall back to searching by sale_order_id
-                task = order.task_id or self.env['project.task'].search(
-                    [('sale_order_id', '=', order.id)], limit=1
-                )
-                ticket = task.helpdesk_ticket_id if task else False
-                if ticket:
-                    # Restrict allowed_company_ids to the order's company so Odoo's
-                    # own multi-company record rule returns only that company's stage
-                    stage_env = self.env['helpdesk.stage'].with_context(
-                        allowed_company_ids=[order.company_id.id]
-                    )
-                    stage = stage_env.search(
-                        [('name', '=', 'Estimation Sent to Customer'),
-                         ('team_ids', 'in', ticket.team_id.ids)],
-                        limit=1
-                    )
-                    if stage:
-                        ticket.sudo().write({'stage_id': stage.id})
+                self._move_ticket_to_stage(order, 'Estimation Sent to Customer')
 
-        # When RUG is approved, reprice all lines to product cost price
+        # RUG approved or rejected → Estimation Approval Received
+        if vals.get('x_studio_rug_approved') or vals.get('x_studio_rug_rejected'):
+            for order in self:
+                self._move_ticket_to_stage(order, 'Estimation Approval Received')
+
+        # RUG approved → reprice all lines to product cost price
         if vals.get('x_studio_rug_approved'):
             for order in self:
                 if order.x_studio_quotation_type == 'Repair':
