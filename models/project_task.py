@@ -16,6 +16,8 @@ class ProjectTask(models.Model):
         """
         if not self.sale_order_id:
             self._fsm_create_sale_order()
+            if self.helpdesk_ticket_id and self.sale_order_id:
+                self.sale_order_id.sudo().write({'x_studio_quotation_type': 'Repair'})
         return self.sale_order_id
 
     def _fsm_create_sale_order(self):
