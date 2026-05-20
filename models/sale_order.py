@@ -45,6 +45,23 @@ class SaleOrder(models.Model):
 
         return arch, view
 
+    @api.onchange('partner_id')
+    def _onchange_partner_payment_method(self):
+        for order in self:
+            if order.partner_id.x_studio_payment_method:
+                order.x_studio_order_payment_method = order.partner_id.x_studio_payment_method
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get('x_studio_order_payment_method'):
+                partner_id = vals.get('partner_id')
+                if partner_id:
+                    partner = self.env['res.partner'].sudo().browse(partner_id)
+                    if partner.x_studio_payment_method:
+                        vals['x_studio_order_payment_method'] = partner.x_studio_payment_method
+        return super().create(vals_list)
+
     def _move_ticket_to_stage(self, order, stage_name):
         """Find the linked helpdesk ticket and move it to the named stage."""
         sudo_order = order.sudo()
@@ -63,6 +80,12 @@ class SaleOrder(models.Model):
             ticket.sudo().write({'stage_id': stage.id})
 
     def write(self, vals):
+        # When partner changes on a draft/sent SO, sync Order Payment Type from customer
+        if vals.get('partner_id') and not vals.get('x_studio_order_payment_method'):
+            partner = self.env['res.partner'].sudo().browse(vals['partner_id'])
+            if partner.x_studio_payment_method:
+                vals = dict(vals, x_studio_order_payment_method=partner.x_studio_payment_method)
+
         res = super().write(vals)
 
         # RUG request sent → Estimation Sent to Customer
