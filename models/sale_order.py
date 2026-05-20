@@ -40,16 +40,14 @@ class SaleOrder(models.Model):
 
     def _move_ticket_to_stage(self, order, stage_name):
         """Find the linked helpdesk ticket and move it to the named stage."""
-        task = order.task_id or self.env['project.task'].search(
+        sudo_order = order.sudo()
+        task = sudo_order.task_id or self.env['project.task'].sudo().search(
             [('sale_order_id', '=', order.id)], limit=1
         )
-        ticket = task.helpdesk_ticket_id if task else False
+        ticket = task.sudo().helpdesk_ticket_id if task else False
         if not ticket:
             return
-        stage_env = self.env['helpdesk.stage'].with_context(
-            allowed_company_ids=[order.company_id.id]
-        )
-        stage = stage_env.search(
+        stage = self.env['helpdesk.stage'].sudo().search(
             [('name', '=', stage_name),
              ('team_ids', 'in', ticket.team_id.ids)],
             limit=1
