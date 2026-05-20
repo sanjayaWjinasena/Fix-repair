@@ -13,6 +13,13 @@ class SaleOrder(models.Model):
             for el in arch.xpath("//field[@name='x_studio_order_payment_method']"):
                 el.set('readonly', "state in ('cancel', 'done', 'sale')")
 
+            # Quotation Type: lock to Repair once set — cannot be changed away from Repair
+            for el in arch.xpath("//field[@name='x_studio_quotation_type']"):
+                el.set('readonly',
+                       "x_studio_quotation_type == 'Repair' or "
+                       "(task_id != False) or "
+                       "(state not in ['draft', 'sent'])")
+
             # RUG Request button: only on Repair quotations, before request is sent
             rug_req_invisible = (
                 "(x_studio_quotation_type != 'Repair') or "
@@ -66,6 +73,12 @@ class SaleOrder(models.Model):
         return super().create(vals_list)
 
     def write(self, vals):
+        # When a repair task is linked to an existing quotation, auto-set type to Repair
+        if vals.get('task_id') and not vals.get('x_studio_quotation_type'):
+            task = self.env['project.task'].sudo().browse(vals['task_id'])
+            if task.helpdesk_ticket_id:
+                vals = dict(vals, x_studio_quotation_type='Repair')
+
         res = super().write(vals)
 
         # RUG request sent → Estimation Sent to Customer
