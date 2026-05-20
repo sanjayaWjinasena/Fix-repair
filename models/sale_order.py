@@ -50,10 +50,11 @@ class SaleOrder(models.Model):
                 )
                 ticket = task.helpdesk_ticket_id if task else False
                 if ticket:
-                    # sudo() needed: button-clicking user may lack helpdesk.stage read access
+                    # Filter by team AND company to avoid picking the wrong company's stage
                     stage = self.env['helpdesk.stage'].sudo().search(
                         [('name', '=', 'Estimation Sent to Customer'),
-                         ('team_ids', 'in', ticket.team_id.ids)],
+                         ('team_ids', 'in', ticket.team_id.ids),
+                         ('x_studio_company_id', '=', order.company_id.id)],
                         limit=1
                     )
                     if stage:
