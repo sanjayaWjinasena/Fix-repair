@@ -50,14 +50,14 @@ class SaleOrder(models.Model):
                 )
                 ticket = task.helpdesk_ticket_id if task else False
                 if ticket:
-                    # Filter by ticket's team to avoid cross-company stage access errors
-                    stage = self.env['helpdesk.stage'].search(
+                    # sudo() needed: button-clicking user may lack helpdesk.stage read access
+                    stage = self.env['helpdesk.stage'].sudo().search(
                         [('name', '=', 'Estimation Sent to Customer'),
                          ('team_ids', 'in', ticket.team_id.ids)],
                         limit=1
                     )
                     if stage:
-                        ticket.write({'stage_id': stage.id})
+                        ticket.sudo().write({'stage_id': stage.id})
 
         # When RUG is approved, reprice all lines to product cost price
         if vals.get('x_studio_rug_approved'):
