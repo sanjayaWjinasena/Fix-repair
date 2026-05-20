@@ -50,11 +50,14 @@ class SaleOrder(models.Model):
                 )
                 ticket = task.helpdesk_ticket_id if task else False
                 if ticket:
-                    # Filter by team AND company to avoid picking the wrong company's stage
-                    stage = self.env['helpdesk.stage'].sudo().search(
+                    # Restrict allowed_company_ids to the order's company so Odoo's
+                    # own multi-company record rule returns only that company's stage
+                    stage_env = self.env['helpdesk.stage'].with_context(
+                        allowed_company_ids=[order.company_id.id]
+                    )
+                    stage = stage_env.search(
                         [('name', '=', 'Estimation Sent to Customer'),
-                         ('team_ids', 'in', ticket.team_id.ids),
-                         ('x_studio_company_id', '=', order.company_id.id)],
+                         ('team_ids', 'in', ticket.team_id.ids)],
                         limit=1
                     )
                     if stage:
