@@ -5,6 +5,19 @@ from odoo import api, fields, models
 class HelpdeskTicket(models.Model):
     _inherit = 'helpdesk.ticket'
 
+    @api.model
+    def _get_view(self, view_id=None, view_type='form', **options):
+        arch, view = super()._get_view(view_id, view_type, **options)
+        if view_type == 'form':
+            for btn in arch.xpath("//button[@name='action_generate_fsm_task']"):
+                btn.set('invisible',
+                    "not use_fsm or "
+                    "fsm_task_count > 0 or "
+                    "repair_stage_state != 'received_at_factory' or "
+                    "not x_studio_valid_return"
+                )
+        return arch, view
+
     # Computed field so the view can show/hide stage buttons cleanly
     repair_stage_state = fields.Selection([
         ('new',                    'New'),
