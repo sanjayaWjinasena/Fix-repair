@@ -39,9 +39,14 @@ class SaleOrder(models.Model):
                 "(x_studio_rug_rejected == True) or "
                 "(x_studio_rug_approved == True)"
             )
-            for name in ('1981', '2004'):
-                for btn in arch.xpath(f"//button[@name='{name}']"):
-                    btn.set('invisible', rug_approve_invisible)
+            # Approve: rewire to our method so it confirms the SO directly (no send wizard)
+            for btn in arch.xpath("//button[@name='1981']"):
+                btn.set('invisible', rug_approve_invisible)
+                btn.set('type', 'object')
+                btn.set('name', 'action_approve_rug_direct')
+            # Reject: keep Studio server action, only override visibility
+            for btn in arch.xpath("//button[@name='2004']"):
+                btn.set('invisible', rug_approve_invisible)
 
         return arch, view
 
@@ -61,6 +66,10 @@ class SaleOrder(models.Model):
                     if partner.x_studio_payment_method:
                         vals['x_studio_order_payment_method'] = partner.x_studio_payment_method
         return super().create(vals_list)
+
+    def action_approve_rug_direct(self):
+        self.write({'x_studio_rug_approved': True})
+        return self.action_confirm()
 
     def _move_ticket_to_stage(self, order, stage_name):
         """Find the linked helpdesk ticket and move it to the named stage."""
