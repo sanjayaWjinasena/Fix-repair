@@ -28,6 +28,20 @@
                         class="btn-primary"
                         invisible="repair_stage_state != 'sent_to_factory'"/>
 
+                <!-- Visible in Repair Completed stage only -->
+                <button name="action_send_to_sales_centre"
+                        type="object"
+                        string="Send to Sales Centre"
+                        class="btn-primary"
+                        invisible="repair_stage_state != 'repair_completed'"/>
+
+                <!-- Visible in Sent to Sales Centre stage only -->
+                <button name="action_received_at_sales_centre"
+                        type="object"
+                        string="Received at Sales Centre"
+                        class="btn-primary"
+                        invisible="repair_stage_state != 'sent_to_sales_centre'"/>
+
                 <!-- Always visible unless already assigned to current user -->
                 <button name="action_assign_to_me"
                         type="object"
