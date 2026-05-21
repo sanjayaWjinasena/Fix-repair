@@ -9,6 +9,7 @@ class HelpdeskTicket(models.Model):
     def _get_view(self, view_id=None, view_type='form', **options):
         arch, view = super()._get_view(view_id, view_type, **options)
         if view_type == 'form':
+            # Plan Intervention: only when at Received at Factory with a valid return and no task yet
             for btn in arch.xpath("//button[@name='action_generate_fsm_task']"):
                 btn.set('invisible',
                     "not use_fsm or "
@@ -16,6 +17,9 @@ class HelpdeskTicket(models.Model):
                     "repair_stage_state != 'received_at_factory' or "
                     "not x_studio_valid_return"
                 )
+            # Return: hide once a return already exists
+            for btn in arch.xpath("//button[@name='195']"):
+                btn.set('invisible', "x_studio_valid_return == True")
         return arch, view
 
     # Computed field so the view can show/hide stage buttons cleanly
