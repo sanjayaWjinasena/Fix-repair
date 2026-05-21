@@ -7,10 +7,12 @@ class HelpdeskTicket(models.Model):
 
     # Computed field so the view can show/hide stage buttons cleanly
     repair_stage_state = fields.Selection([
-        ('new',                 'New'),
-        ('sent_to_factory',     'Sent to Factory'),
-        ('received_at_factory', 'Received at Factory'),
-        ('other',               'Other'),
+        ('new',                    'New'),
+        ('sent_to_factory',        'Sent to Factory'),
+        ('received_at_factory',    'Received at Factory'),
+        ('repair_completed',       'Repair Completed'),
+        ('sent_to_sales_centre',   'Sent to Sales Centre'),
+        ('other',                  'Other'),
     ], compute='_compute_repair_stage_state')
 
     @api.depends('stage_id.name')
@@ -23,6 +25,10 @@ class HelpdeskTicket(models.Model):
                 ticket.repair_stage_state = 'sent_to_factory'
             elif name == 'Received at Factory':
                 ticket.repair_stage_state = 'received_at_factory'
+            elif name == 'Repair Completed':
+                ticket.repair_stage_state = 'repair_completed'
+            elif name == 'Sent to Sales Centre':
+                ticket.repair_stage_state = 'sent_to_sales_centre'
             else:
                 ticket.repair_stage_state = 'other'
 
@@ -46,17 +52,33 @@ class HelpdeskTicket(models.Model):
         self.write({'user_id': self.env.uid})
 
     def action_send_to_factory(self):
-        stage = self._get_or_create_stage('Sent to Factory', 10)
+        stage = self._get_or_create_stage('Sent to Factory', 20)
         self.write({
             'stage_id': stage.id,
-            'x_studio_s_shipped_date': fields.Date.today(),
+            'x_studio_s_shipped_date': fields.Datetime.now(),
             'x_studio_s_shipped_by': self.env.uid,
         })
 
     def action_received_at_factory(self):
-        stage = self._get_or_create_stage('Received at Factory', 20)
+        stage = self._get_or_create_stage('Received at Factory', 30)
         self.write({
             'stage_id': stage.id,
-            'x_studio_f_received_date': fields.Date.today(),
+            'x_studio_f_received_date': fields.Datetime.now(),
             'x_studio_f_received_by': self.env.uid,
+        })
+
+    def action_send_to_sales_centre(self):
+        stage = self._get_or_create_stage('Sent to Sales Centre', 100)
+        self.write({
+            'stage_id': stage.id,
+            'x_studio_f_shipped_date': fields.Datetime.now(),
+            'x_studio_f_shipped_by': self.env.uid,
+        })
+
+    def action_received_at_sales_centre(self):
+        stage = self._get_or_create_stage('Received at Sales Centre', 110)
+        self.write({
+            'stage_id': stage.id,
+            'x_studio_s_received_date': fields.Datetime.now(),
+            'x_studio_s_received_by': self.env.uid,
         })
