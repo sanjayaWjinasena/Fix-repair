@@ -6,38 +6,37 @@
         <field name="model">helpdesk.ticket</field>
         <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
         <field name="arch" type="xml">
+            <!-- Stored computed field — web_read reads a plain DB varchar, no many2one traversal -->
+            <xpath expr="//field[@name='name']" position="before">
+                <field name="repair_stage_state" invisible="1"/>
+            </xpath>
 
             <xpath expr="//header" position="inside">
 
-                <!-- Visible in New stage only -->
                 <button name="action_send_to_factory"
                         type="object"
                         string="Send to Factory"
                         class="btn-primary"
-                        invisible="stage_id.name != 'New'"/>
+                        invisible="repair_stage_state != 'new'"/>
 
-                <!-- Visible in Sent to Factory stage only -->
                 <button name="action_received_at_factory"
                         type="object"
                         string="Received at Factory"
                         class="btn-primary"
-                        invisible="stage_id.name != 'Sent to Factory'"/>
+                        invisible="repair_stage_state != 'sent_to_factory'"/>
 
-                <!-- Visible in Repair Completed stage only -->
                 <button name="action_send_to_sales_centre"
                         type="object"
                         string="Send to Sales Centre"
                         class="btn-primary"
-                        invisible="stage_id.name != 'Repair Completed'"/>
+                        invisible="repair_stage_state != 'repair_completed'"/>
 
-                <!-- Visible in Sent to Sales Centre stage only -->
                 <button name="action_received_at_sales_centre"
                         type="object"
                         string="Received at Sales Centre"
                         class="btn-primary"
-                        invisible="stage_id.name != 'Sent to Sales Centre'"/>
+                        invisible="repair_stage_state != 'sent_to_sales_centre'"/>
 
-                <!-- Always visible unless already assigned to current user -->
                 <button name="action_assign_to_me"
                         type="object"
                         string="Assign to Me"
