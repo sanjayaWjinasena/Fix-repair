@@ -9,41 +9,18 @@ class HelpdeskTicket(models.Model):
     def _get_view(self, view_id=None, view_type='form', **options):
         arch, view = super()._get_view(view_id, view_type, **options)
         if view_type == 'form':
+            # Plan Intervention: only at Received at Factory with a valid return and no task yet
             for btn in arch.xpath("//button[@name='action_generate_fsm_task']"):
                 btn.set('invisible',
                     "not use_fsm or "
                     "fsm_task_count > 0 or "
-                    "repair_stage_state != 'received_at_factory' or "
+                    "stage_id.name != 'Received at Factory' or "
                     "not x_studio_valid_return"
                 )
+            # Return: hide once a return already exists
+            for btn in arch.xpath("//button[@name='195']"):
+                btn.set('invisible', "x_studio_valid_return == True")
         return arch, view
-
-    # Computed field so the view can show/hide stage buttons cleanly
-    repair_stage_state = fields.Selection([
-        ('new',                    'New'),
-        ('sent_to_factory',        'Sent to Factory'),
-        ('received_at_factory',    'Received at Factory'),
-        ('repair_completed',       'Repair Completed'),
-        ('sent_to_sales_centre',   'Sent to Sales Centre'),
-        ('other',                  'Other'),
-    ], compute='_compute_repair_stage_state')
-
-    @api.depends('stage_id.name')
-    def _compute_repair_stage_state(self):
-        for ticket in self:
-            name = (ticket.stage_id.name or '').strip()
-            if name == 'New':
-                ticket.repair_stage_state = 'new'
-            elif name == 'Sent to Factory':
-                ticket.repair_stage_state = 'sent_to_factory'
-            elif name == 'Received at Factory':
-                ticket.repair_stage_state = 'received_at_factory'
-            elif name == 'Repair Completed':
-                ticket.repair_stage_state = 'repair_completed'
-            elif name == 'Sent to Sales Centre':
-                ticket.repair_stage_state = 'sent_to_sales_centre'
-            else:
-                ticket.repair_stage_state = 'other'
 
     # ── Helpers ──────────────────────────────────────────────────────────────
 
