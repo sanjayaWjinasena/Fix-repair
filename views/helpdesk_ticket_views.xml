@@ -6,12 +6,7 @@
         <field name="model">helpdesk.ticket</field>
         <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
         <field name="arch" type="xml">
-            <!-- Declare computed field so Odoo's view validator accepts it in invisible modifiers -->
-            <xpath expr="//field[@name='name']" position="before">
-                <field name="repair_stage_state" invisible="1"/>
-            </xpath>
 
-            <!-- All workflow buttons appear in the control panel alongside Save/Discard -->
             <xpath expr="//header" position="inside">
 
                 <!-- Visible in New stage only -->
@@ -19,28 +14,28 @@
                         type="object"
                         string="Send to Factory"
                         class="btn-primary"
-                        invisible="repair_stage_state != 'new'"/>
+                        invisible="stage_id.name != 'New'"/>
 
                 <!-- Visible in Sent to Factory stage only -->
                 <button name="action_received_at_factory"
                         type="object"
                         string="Received at Factory"
                         class="btn-primary"
-                        invisible="repair_stage_state != 'sent_to_factory'"/>
+                        invisible="stage_id.name != 'Sent to Factory'"/>
 
                 <!-- Visible in Repair Completed stage only -->
                 <button name="action_send_to_sales_centre"
                         type="object"
                         string="Send to Sales Centre"
                         class="btn-primary"
-                        invisible="repair_stage_state != 'repair_completed'"/>
+                        invisible="stage_id.name != 'Repair Completed'"/>
 
                 <!-- Visible in Sent to Sales Centre stage only -->
                 <button name="action_received_at_sales_centre"
                         type="object"
                         string="Received at Sales Centre"
                         class="btn-primary"
-                        invisible="repair_stage_state != 'sent_to_sales_centre'"/>
+                        invisible="stage_id.name != 'Sent to Sales Centre'"/>
 
                 <!-- Always visible unless already assigned to current user -->
                 <button name="action_assign_to_me"
