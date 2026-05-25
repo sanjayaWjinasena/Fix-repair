@@ -82,7 +82,10 @@ class SaleOrder(models.Model):
             return
         stage = self.env['helpdesk.stage'].sudo().search(
             [('name', '=', stage_name),
-             ('team_ids', 'in', ticket.team_id.ids)],
+             ('team_ids', 'in', ticket.team_id.ids),
+             '|',
+             ('x_studio_company_id', '=', ticket.company_id.id),
+             ('x_studio_company_id', '=', False)],
             limit=1
         )
         if stage:
