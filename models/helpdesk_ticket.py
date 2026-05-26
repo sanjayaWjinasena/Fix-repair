@@ -28,18 +28,20 @@ class HelpdeskTicket(models.Model):
     @api.depends('stage_id')
     def _compute_repair_stage_state(self):
         mapping = {
-            'New':                     'new',
-            'Sent to Factory':         'sent_to_factory',
-            'Received at Factory':     'received_at_factory',
-            'Repair Completed':        'repair_completed',
-            'Sent to Sales Centre':    'sent_to_sales_centre',
+            'New':                      'new',
+            'Sent to Factory':          'sent_to_factory',
+            'Received at Factory':      'received_at_factory',
+            'Repair Completed':         'repair_completed',
+            'Sent to Sales Centre':     'sent_to_sales_centre',
             'Received at Sales Centre': 'received_at_sales_centre',
         }
         for ticket in self:
-            name = (ticket.stage_id.name or '').strip()
+            # sudo() so users without perm_read on helpdesk.stage can still
+            # read the stage name (the stored value is set here, not exposed raw)
+            name = (ticket.sudo().stage_id.name or '').strip()
             ticket.repair_stage_state = mapping.get(name, 'other')
 
-    @api.depends('picking_ids.state')
+    @api.depends('picking_ids')
     def _compute_x_studio_handed_over(self):
         for rec in self:
             rec.x_studio_handed_over = sum(
@@ -76,7 +78,7 @@ class HelpdeskTicket(models.Model):
     def _get_or_create_stage(self, name, sequence):
         """Find the stage by name scoped to this ticket's team and company."""
         self.ensure_one()
-        stage = self.env['helpdesk.stage'].search([
+        stage = self.env['helpdesk.stage'].sudo().search([
             ('name', '=', name),
             ('team_ids', 'in', self.team_id.ids),
             '|',
@@ -84,7 +86,7 @@ class HelpdeskTicket(models.Model):
             ('x_studio_company_id', '=', False),
         ], limit=1)
         if not stage:
-            stage = self.env['helpdesk.stage'].create({'name': name, 'sequence': sequence})
+            stage = self.env['helpdesk.stage'].sudo().create({'name': name, 'sequence': sequence})
         return stage
 
     def _move_to_stage(self, stage_name):
