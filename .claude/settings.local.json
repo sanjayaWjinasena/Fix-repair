@@ -12,7 +12,13 @@
       "Bash(gh repo *)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(npx playwright *)"
+      "Bash(npx playwright *)",
+      "Read(//d/Odoo Repositories/Fix-Repair-Clear_DB/**)",
+      "Bash(rm -rf __init__.py __manifest__.py models/ views/)",
+      "Bash(gh pr *)",
+      "PowerShell(gh pr list --repo sanjayaWjinasena/Fix-repair --state all --json number,title,state,headRefName,baseRefName,body 2>&1)",
+      "PowerShell($response = Invoke-RestMethod -Uri \"https://api.github.com/repos/sanjayaWjinasena/Fix-repair/pulls?state=all&per_page=50\" -Headers @{Accept=\"application/vnd.github.v3+json\"} 2>&1; $response | Select-Object number, title, state, @{n='head';e={$_.head.ref}}, @{n='base';e={$_.base.ref}} | Format-Table)",
+      "PowerShell(Get-StoredCredential *)"
     ]
   }
 }

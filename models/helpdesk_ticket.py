@@ -5,36 +5,52 @@ from odoo import api, fields, models
 class HelpdeskTicket(models.Model):
     _inherit = 'helpdesk.ticket'
 
-    # Stored so web_read reads a plain varchar from the DB — no many2one
-    # traversal, no record-rule filtering issue on helpdesk.stage.
     repair_stage_state = fields.Selection([
-        ('new',                  'New'),
-        ('sent_to_factory',      'Sent to Factory'),
-        ('received_at_factory',  'Received at Factory'),
-        ('repair_completed',     'Repair Completed'),
-        ('sent_to_sales_centre', 'Sent to Sales Centre'),
-        ('other',                'Other'),
+        ('new',                      'New'),
+        ('sent_to_factory',          'Sent to Factory'),
+        ('received_at_factory',      'Received at Factory'),
+        ('repair_completed',         'Repair Completed'),
+        ('sent_to_sales_centre',     'Sent to Sales Centre'),
+        ('received_at_sales_centre', 'Received at Sales Centre'),
+        ('other',                    'Other'),
     ], compute='_compute_repair_stage_state', store=True)
+
+    # Override the Studio-defined x_studio_handed_over compute to:
+    #   1. Remove the stage-write side effect (caused timeouts on list views)
+    #   2. Remove the user-context company bug (was using allowed_company_ids[0]
+    #      instead of rec.company_id, moving company-2 tickets to stage 13)
+    # Stage transitions are now handled entirely by stock_picking._action_done.
+    x_studio_handed_over = fields.Boolean(
+        compute='_compute_x_studio_handed_over',
+        store=False,
+    )
 
     @api.depends('stage_id')
     def _compute_repair_stage_state(self):
         mapping = {
-            'New':                  'new',
-            'Sent to Factory':      'sent_to_factory',
-            'Received at Factory':  'received_at_factory',
-            'Repair Completed':     'repair_completed',
-            'Sent to Sales Centre': 'sent_to_sales_centre',
+            'New':                     'new',
+            'Sent to Factory':         'sent_to_factory',
+            'Received at Factory':     'received_at_factory',
+            'Repair Completed':        'repair_completed',
+            'Sent to Sales Centre':    'sent_to_sales_centre',
+            'Received at Sales Centre': 'received_at_sales_centre',
         }
         for ticket in self:
             name = (ticket.stage_id.name or '').strip()
             ticket.repair_stage_state = mapping.get(name, 'other')
 
+    @api.depends('picking_ids.state')
+    def _compute_x_studio_handed_over(self):
+        for rec in self:
+            rec.x_studio_handed_over = sum(
+                1 for p in rec.picking_ids if p.state == 'done'
+            ) > 1
+
     @api.model
     def _get_view(self, view_id=None, view_type='form', **options):
         arch, view = super()._get_view(view_id, view_type, **options)
         if view_type == 'form':
-            # Restrict stage selection to the ticket's own company so users can't
-            # accidentally pick a same-named stage from the other company.
+            # Restrict stage selection to the ticket's own company
             for field in arch.xpath("//field[@name='stage_id']"):
                 field.set('domain',
                     "[('team_ids', 'in', [team_id]), "
@@ -58,10 +74,31 @@ class HelpdeskTicket(models.Model):
     # ── Helpers ──────────────────────────────────────────────────────────────
 
     def _get_or_create_stage(self, name, sequence):
-        stage = self.env['helpdesk.stage'].search([('name', '=', name)], limit=1)
+        """Find the stage by name scoped to this ticket's team and company."""
+        self.ensure_one()
+        stage = self.env['helpdesk.stage'].search([
+            ('name', '=', name),
+            ('team_ids', 'in', self.team_id.ids),
+            '|',
+            ('x_studio_company_id', '=', self.company_id.id),
+            ('x_studio_company_id', '=', False),
+        ], limit=1)
         if not stage:
             stage = self.env['helpdesk.stage'].create({'name': name, 'sequence': sequence})
         return stage
+
+    def _move_to_stage(self, stage_name):
+        """Move each ticket to the named stage, scoped to the ticket's company and team."""
+        for ticket in self:
+            stage = self.env['helpdesk.stage'].sudo().search([
+                ('name', '=', stage_name),
+                ('team_ids', 'in', ticket.team_id.ids),
+                '|',
+                ('x_studio_company_id', '=', ticket.company_id.id),
+                ('x_studio_company_id', '=', False),
+            ], limit=1)
+            if stage:
+                ticket.sudo().write({'stage_id': stage.id})
 
     # ── Button actions ───────────────────────────────────────────────────────
 
