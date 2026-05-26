@@ -8,7 +8,8 @@ class StockPicking(models.Model):
     def _action_done(self):
         res = super()._action_done()
 
-        # Collect unique Repair SOs from the pickings just validated
+        # ── Path A: Repair SO pickings ────────────────────────────────────────
+        # Move ticket through repair stages based on picking completion
         repair_so_ids = set()
         for picking in self.filtered(lambda p: p.state == 'done' and p.sale_id):
             if picking.sale_id.x_studio_quotation_type == 'Repair':
@@ -25,16 +26,41 @@ class StockPicking(models.Model):
             current_stage = (ticket.stage_id.name or '').strip()
 
             if current_stage == 'Received at Sales Centre':
-                # Return validated after handover — close the ticket
                 self.env['sale.order']._move_ticket_to_stage(so, 'Handed Over to Customer')
             else:
-                # At least one picking done → Repair Started
                 self.env['sale.order']._move_ticket_to_stage(so, 'Repair Started')
-                # All pickings for this SO done → Repair Completed
                 all_pickings = self.env['stock.picking'].sudo().search(
                     [('sale_id', '=', so.id)]
                 )
                 if all_pickings and all(p.state in ('done', 'cancel') for p in all_pickings):
                     self.env['sale.order']._move_ticket_to_stage(so, 'Repair Completed')
+
+        # ── Path B: Type-2 handover pickings (not linked to a Repair SO) ─────
+        # These move FROM a virtual/inventory location TO the customer, i.e.
+        # "sales centre gives the repaired item back to the customer".
+        # They may be on a Sales SO or have no SO at all, so Path A misses them.
+        # We detect them by location.usage and match tickets by partner + company.
+        received_stage_ids = self.env['helpdesk.stage'].sudo().search(
+            [('name', '=', 'Received at Sales Centre')]
+        ).ids
+
+        if received_stage_ids:
+            handover_pickings = self.filtered(
+                lambda p: (
+                    p.state == 'done'
+                    and p.partner_id
+                    and p.location_id.usage == 'inventory'
+                    and p.location_dest_id.usage == 'customer'
+                    # skip Repair SOs — already handled by Path A above
+                    and (not p.sale_id or p.sale_id.x_studio_quotation_type != 'Repair')
+                )
+            )
+            for picking in handover_pickings:
+                tickets = self.env['helpdesk.ticket'].sudo().search([
+                    ('partner_id', '=', picking.partner_id.id),
+                    ('stage_id', 'in', received_stage_ids),
+                    ('company_id', '=', picking.company_id.id),
+                ])
+                tickets._move_to_stage('Handed Over to Customer')
 
         return res
