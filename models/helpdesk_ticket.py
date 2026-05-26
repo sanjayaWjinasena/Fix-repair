@@ -33,6 +33,15 @@ class HelpdeskTicket(models.Model):
     def _get_view(self, view_id=None, view_type='form', **options):
         arch, view = super()._get_view(view_id, view_type, **options)
         if view_type == 'form':
+            # Restrict stage selection to the ticket's own company so users can't
+            # accidentally pick a same-named stage from the other company.
+            for field in arch.xpath("//field[@name='stage_id']"):
+                field.set('domain',
+                    "[('team_ids', 'in', [team_id]), "
+                    "'|', ('x_studio_company_id', '=', company_id), "
+                    "('x_studio_company_id', '=', False)]"
+                )
+
             # Plan Intervention: only at Received at Factory with a valid return and no task yet
             for btn in arch.xpath("//button[@name='action_generate_fsm_task']"):
                 btn.set('invisible',
