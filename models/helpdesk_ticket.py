@@ -73,9 +73,9 @@ class HelpdeskTicket(models.Model):
                 btn.set('invisible', "x_studio_valid_return == True")
 
             # Serial Number: only show lots already issued via a sale order.
-            # product_id is rarely set on tickets, so filtering by it would yield
-            # an empty list for most tickets — just filter by sale_order_ids.
-            serial_domain = "[('sale_order_ids', '!=', False)]"
+            # sale_order_ids is non-stored so domain filters on it are ignored.
+            # is_issued is a virtual field with a _search that queries move lines.
+            serial_domain = "[('is_issued', '=', True)]"
             serial_options = "{'no_create': True, 'no_quick_create': True}"
             for field in arch.xpath("//field[@name='x_studio_serial_no']"):
                 field.set('domain', serial_domain)
