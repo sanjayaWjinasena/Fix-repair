@@ -71,6 +71,16 @@ class HelpdeskTicket(models.Model):
             # Return: hide once a return already exists
             for btn in arch.xpath("//button[@name='195']"):
                 btn.set('invisible', "x_studio_valid_return == True")
+
+            # Serial Number: only show lots already issued via a sale order
+            serial_domain = "[('product_id', '=', product_id), ('sale_order_ids', '!=', False)]"
+            serial_options = "{'no_create': True, 'no_quick_create': True}"
+            for field in arch.xpath("//field[@name='x_studio_serial_no']"):
+                field.set('domain', serial_domain)
+                field.set('options', serial_options)
+            for field in arch.xpath("//field[@name='lot_id']"):
+                field.set('domain', serial_domain)
+                field.set('options', serial_options)
         return arch, view
 
     # ── Helpers ──────────────────────────────────────────────────────────────
