@@ -25,8 +25,19 @@ class StockPicking(models.Model):
 
             current_stage = (ticket.stage_id.name or '').strip()
 
+            # Stages where a picking completing should NOT auto-advance the ticket.
+            # The SO confirm creates service moves that auto-complete — those must
+            # not pull the ticket out of pre-repair stages like Estimation Approval
+            # Received. "Repair Started" is only triggered from Advance Received.
+            _pre_repair_stages = {
+                'New', 'Sent to Factory', 'Received at Factory', 'Diagnosis',
+                'Estimation Sent to Customer', 'Estimation Approval Received',
+            }
+
             if current_stage == 'Received at Sales Centre':
                 self.env['sale.order']._move_ticket_to_stage(so, 'Handed Over to Customer')
+            elif current_stage in _pre_repair_stages:
+                pass  # don't advance until advance payment is recorded
             else:
                 self.env['sale.order']._move_ticket_to_stage(so, 'Repair Started')
                 all_pickings = self.env['stock.picking'].sudo().search(
