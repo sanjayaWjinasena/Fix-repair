@@ -48,6 +48,12 @@ class SaleOrder(models.Model):
             for btn in arch.xpath("//button[@name='2004']"):
                 btn.set('invisible', rug_approve_invisible)
 
+            # Confirm button: hide on Repair SOs until RUG is approved
+            for btn in arch.xpath("//button[@name='action_confirm']"):
+                existing = btn.get('invisible', '')
+                extra = "(x_studio_quotation_type == 'Repair' and not x_studio_rug_approved)"
+                btn.set('invisible', f"({existing}) or {extra}" if existing else extra)
+
         return arch, view
 
     @api.onchange('partner_id')
@@ -69,7 +75,8 @@ class SaleOrder(models.Model):
 
     def action_approve_rug_direct(self):
         self.write({'x_studio_rug_approved': True})
-        return self.action_confirm()
+        # write() moves the ticket to 'Estimation Approval Received'.
+        # Confirm button becomes visible once rug_approved=True; user clicks it manually.
 
     def _move_ticket_to_stage(self, order, stage_name):
         """Find the linked helpdesk ticket and move it to the named stage."""
