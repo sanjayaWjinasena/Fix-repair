@@ -43,11 +43,9 @@ class StockPicking(models.Model):
                 pass  # don't advance until advance payment is recorded
             else:
                 self.env['sale.order']._move_ticket_to_stage(so, 'Repair Started')
-                all_pickings = self.env['stock.picking'].sudo().search(
-                    [('sale_id', '=', so.id)]
-                )
-                if all_pickings and all(p.state in ('done', 'cancel') for p in all_pickings):
-                    self.env['sale.order']._move_ticket_to_stage(so, 'Repair Completed')
+                # 'Repair Completed' is set exclusively by action_fsm_validate
+                # (Mark as Done on the task) — not auto-advanced here, so that
+                # 'Send to Sales Centre' only appears after the explicit click.
 
         # ── Path B: Return-to-customer handover pickings ──────────────────────
         # Pickings: Virtual/inventory location → Customer location.
