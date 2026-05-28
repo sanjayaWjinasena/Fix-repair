@@ -51,8 +51,6 @@ class StockPicking(models.Model):
                     and p.partner_id
                     and p.location_id.usage == 'inventory'
                     and p.location_dest_id.usage == 'customer'
-                    # skip Repair SOs — already handled by Path A above
-                    and (not p.sale_id or p.sale_id.x_studio_quotation_type != 'Repair')
                 )
             )
             for picking in handover_pickings:
