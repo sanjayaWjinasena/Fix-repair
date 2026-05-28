@@ -1,9 +1,18 @@
 # -*- coding: utf-8 -*-
-from odoo import api, models
+from lxml import etree
+from odoo import api, fields, models
 
 
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
+
+    # Mirrors the linked helpdesk ticket's "Repair Under Warranty" flag so the
+    # sale order form can gate RUG buttons and Send by Email without a lookup.
+    x_rug_repair = fields.Boolean(
+        related='task_id.helpdesk_ticket_id.x_studio_rug_repair',
+        string='Repair Under Warranty',
+        store=False,
+    )
 
     @api.model
     def _get_view(self, view_id=None, view_type='form', **options):
@@ -20,9 +29,10 @@ class SaleOrder(models.Model):
                        "(task_id != False) or "
                        "(state not in ['draft', 'sent'])")
 
-            # RUG Request button: only on Repair quotations, before request is sent
+            # RUG Request: only for Repair Under Warranty (x_rug_repair=True)
             rug_req_invisible = (
                 "(x_studio_quotation_type != 'Repair') or "
+                "(not x_rug_repair) or "
                 "(state not in ['draft', 'sent']) or "
                 "(x_studio_rug_request_sent == True) or "
                 "(x_studio_rug_rejected == True) or "
@@ -31,28 +41,48 @@ class SaleOrder(models.Model):
             for btn in arch.xpath("//button[@name='1980']"):
                 btn.set('invisible', rug_req_invisible)
 
-            # Approve/Reject RUG buttons: only on Repair quotations, after request is sent
+            # Approve/Reject RUG: only for RUG repairs, after request is sent
             rug_approve_invisible = (
                 "(x_studio_quotation_type != 'Repair') or "
+                "(not x_rug_repair) or "
                 "(state not in ['draft', 'sent']) or "
                 "(x_studio_rug_request_sent == False) or "
                 "(x_studio_rug_rejected == True) or "
                 "(x_studio_rug_approved == True)"
             )
-            # Approve: rewire to our method so it confirms the SO directly (no send wizard)
             for btn in arch.xpath("//button[@name='1981']"):
                 btn.set('invisible', rug_approve_invisible)
                 btn.set('type', 'object')
                 btn.set('name', 'action_approve_rug_direct')
-            # Reject: keep Studio server action, only override visibility
             for btn in arch.xpath("//button[@name='2004']"):
                 btn.set('invisible', rug_approve_invisible)
 
-            # Confirm button: hide on Repair SOs until RUG is approved
+            # Confirm: for RUG repairs block until approved; non-warranty repairs confirm freely
             for btn in arch.xpath("//button[@name='action_confirm']"):
                 existing = btn.get('invisible', '')
-                extra = "(x_studio_quotation_type == 'Repair' and not x_studio_rug_approved)"
+                extra = "(x_studio_quotation_type == 'Repair' and x_rug_repair and not x_studio_rug_approved)"
                 btn.set('invisible', f"({existing}) or {extra}" if existing else extra)
+
+            # Send by Email: Studio hid this for all types; re-enable for non-warranty Repair SOs
+            send_email_invisible = (
+                "(x_studio_quotation_type != 'Repair') or "
+                "x_rug_repair or "
+                "(state not in ['draft', 'sent'])"
+            )
+            for btn in arch.xpath("//button[@id='send_by_email_primary']"):
+                btn.set('invisible', send_email_invisible)
+            for btn in arch.xpath("//button[@id='send_by_email']"):
+                btn.set('invisible', send_email_invisible)
+            # Fallback: standard Odoo method name
+            for btn in arch.xpath("//button[@name='action_quotation_send']"):
+                btn.set('invisible', send_email_invisible)
+
+            # Ensure x_rug_repair is loaded in the form context
+            for header in arch.xpath("//header"):
+                fld = etree.SubElement(header, 'field')
+                fld.set('name', 'x_rug_repair')
+                fld.set('invisible', '1')
+                break
 
         return arch, view
 

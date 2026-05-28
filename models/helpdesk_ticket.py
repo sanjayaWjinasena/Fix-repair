@@ -69,9 +69,13 @@ class HelpdeskTicket(models.Model):
                     "repair_stage_state != 'received_at_factory' or "
                     "not x_studio_valid_return"
                 )
-            # Return: hide once a return already exists
+            # Return: only for RUG repairs at Received at Sales Centre
+            # (first return was customer→centre; this is centre→customer)
             for btn in arch.xpath("//button[@name='195']"):
-                btn.set('invisible', "x_studio_valid_return == True")
+                btn.set('invisible',
+                    "not x_studio_rug_repair or "
+                    "repair_stage_state != 'received_at_sales_centre'"
+                )
 
             # Send to Sales Centre: only after the FSM task is marked as done.
             # x_studio_fsm_task_done is a Studio computed field that is True once
