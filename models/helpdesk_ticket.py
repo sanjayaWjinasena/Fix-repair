@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from lxml import etree
 from odoo import api, fields, models
 
 
@@ -71,6 +72,20 @@ class HelpdeskTicket(models.Model):
             # Return: hide once a return already exists
             for btn in arch.xpath("//button[@name='195']"):
                 btn.set('invisible', "x_studio_valid_return == True")
+
+            # Send to Sales Centre: only after the FSM task is marked as done.
+            # x_studio_fsm_task_done is a Studio computed field that is True once
+            # any linked FSM task has fsm_done=True or x_studio_end_quick_repair=True.
+            for btn in arch.xpath("//button[@name='action_send_to_sales_centre']"):
+                btn.set('invisible',
+                    "repair_stage_state != 'repair_completed' or not x_studio_fsm_task_done"
+                )
+            # Ensure the computed field is loaded even if not otherwise in the view
+            for header in arch.xpath("//header"):
+                fld = etree.SubElement(header, 'field')
+                fld.set('name', 'x_studio_fsm_task_done')
+                fld.set('invisible', '1')
+                break
 
             # Serial Number: only show lots already issued via a sale order.
             # sale_order_ids is non-stored so domain filters on it are ignored.
