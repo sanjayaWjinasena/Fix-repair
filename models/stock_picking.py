@@ -35,11 +35,12 @@ class StockPicking(models.Model):
                 if all_pickings and all(p.state in ('done', 'cancel') for p in all_pickings):
                     self.env['sale.order']._move_ticket_to_stage(so, 'Repair Completed')
 
-        # ── Path B: Type-2 handover pickings (not linked to a Repair SO) ─────
-        # These move FROM a virtual/inventory location TO the customer, i.e.
-        # "sales centre gives the repaired item back to the customer".
-        # They may be on a Sales SO or have no SO at all, so Path A misses them.
-        # We detect them by location.usage and match tickets by partner + company.
+        # ── Path B: Return-to-customer handover pickings ──────────────────────
+        # Pickings: Virtual/inventory location → Customer location.
+        # Primary match: picking.return_id.id == ticket.x_studio_pick_id
+        # (the wizard stores the original RET picking on the ticket; the
+        #  2nd return reverses it, so return_id points back to that picking).
+        # Fallback: partner + company + stage (for pickings not via wizard).
         received_stage_ids = self.env['helpdesk.stage'].sudo().search(
             [('name', '=', 'Received at Sales Centre')]
         ).ids
@@ -54,11 +55,21 @@ class StockPicking(models.Model):
                 )
             )
             for picking in handover_pickings:
-                tickets = self.env['helpdesk.ticket'].sudo().search([
-                    ('partner_id', '=', picking.partner_id.id),
-                    ('stage_id', 'in', received_stage_ids),
-                    ('company_id', '=', picking.company_id.id),
-                ])
-                tickets._move_to_stage('Handed Over to Customer')
+                ticket = self.env['helpdesk.ticket']
+                if picking.return_id:
+                    ticket = self.env['helpdesk.ticket'].sudo().search([
+                        ('x_studio_pick_id', '=', picking.return_id.id),
+                        ('stage_id', 'in', received_stage_ids),
+                        ('company_id', '=', picking.company_id.id),
+                    ], limit=1)
+                if not ticket:
+                    ticket = self.env['helpdesk.ticket'].sudo().search([
+                        ('partner_id', '=', picking.partner_id.id),
+                        ('stage_id', 'in', received_stage_ids),
+                        ('company_id', '=', picking.company_id.id),
+                        ('x_studio_rug_repair', '=', True),
+                    ], limit=1)
+                if ticket:
+                    ticket._move_to_stage('Handed Over to Customer')
 
         return res
