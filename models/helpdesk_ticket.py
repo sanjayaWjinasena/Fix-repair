@@ -84,6 +84,18 @@ class HelpdeskTicket(models.Model):
                     f"'default_location_id': (repair_stage_state == 'received_at_sales_centre' and {cust_loc_id}) or False, "
                     "'default_picking_id': (repair_stage_state == 'received_at_sales_centre' and x_studio_pick_id) or False}"
                 )
+
+            # Serial Number: only show lots already issued via a sale order.
+            # sale_order_ids is non-stored so domain filters on it are ignored.
+            # is_issued is a virtual field with a _search that queries move lines.
+            serial_domain = "[('is_issued', '=', True)]"
+            serial_options = "{'no_create': True, 'no_quick_create': True}"
+            for field in arch.xpath("//field[@name='x_studio_serial_no']"):
+                field.set('domain', serial_domain)
+                field.set('options', serial_options)
+            for field in arch.xpath("//field[@name='lot_id']"):
+                field.set('domain', serial_domain)
+                field.set('options', serial_options)
         return arch, view
 
     # ── Helpers ──────────────────────────────────────────────────────────────
