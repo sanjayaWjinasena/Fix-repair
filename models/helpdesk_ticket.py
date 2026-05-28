@@ -68,9 +68,19 @@ class HelpdeskTicket(models.Model):
                     "repair_stage_state != 'received_at_factory' or "
                     "not x_studio_valid_return"
                 )
-            # Return: hide once a return already exists
+            # Return button: two appearances for RUG repairs —
+            #   New stage            → customer returning item to centre (no return yet)
+            #   Received at Sales Centre → centre returning repaired item to customer
             for btn in arch.xpath("//button[@name='195']"):
-                btn.set('invisible', "x_studio_valid_return == True")
+                btn.set('invisible',
+                    "not x_studio_rug_repair or "
+                    "(x_studio_valid_return == True and "
+                    " repair_stage_state != 'received_at_sales_centre')"
+                )
+                btn.set('context',
+                    "{'default_ticket_id': id, 'default_company_id': company_id, "
+                    "'default_picking_id': x_studio_pick_id}"
+                )
 
             # Serial Number: only show lots already issued via a sale order.
             # sale_order_ids is non-stored so domain filters on it are ignored.
@@ -145,8 +155,17 @@ class HelpdeskTicket(models.Model):
 
     def action_received_at_sales_centre(self):
         stage = self._get_or_create_stage('Received at Sales Centre', 110)
-        self.write({
-            'stage_id': stage.id,
-            'x_studio_s_received_date': fields.Datetime.now(),
-            'x_studio_s_received_by': self.env.uid,
-        })
+        for ticket in self:
+            vals = {
+                'stage_id': stage.id,
+                'x_studio_s_received_date': fields.Datetime.now(),
+                'x_studio_s_received_by': self.env.uid,
+            }
+            incoming = self.env['stock.picking'].sudo().search([
+                ('id', 'in', ticket.picking_ids.ids),
+                ('picking_type_code', '=', 'incoming'),
+                ('state', '=', 'done'),
+            ], order='id desc', limit=1)
+            if incoming:
+                vals['x_studio_pick_id'] = incoming.id
+            ticket.write(vals)
