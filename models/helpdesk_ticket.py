@@ -68,9 +68,19 @@ class HelpdeskTicket(models.Model):
                     "repair_stage_state != 'received_at_factory' or "
                     "not x_studio_valid_return"
                 )
-            # Return: visible at all stages for RUG repairs
+            # Return button — same action 195, two distinct popup behaviours:
+            #   New stage:                 default_ticket_id=id → wizard shows Sale Order
+            #                              group so user selects which delivery to reverse
+            #   Received at Sales Centre:  default_picking_id=x_studio_pick_id, no ticket_id
+            #                              → Sale Order group is hidden, items pre-load from
+            #                              the picking, simple "item + return location" form
             for btn in arch.xpath("//button[@name='195']"):
                 btn.set('invisible', "not x_studio_rug_repair")
+                btn.set('context',
+                    "{'default_ticket_id': (repair_stage_state == 'new' and id) or False, "
+                    "'default_company_id': company_id, "
+                    "'default_picking_id': (repair_stage_state == 'received_at_sales_centre' and x_studio_pick_id) or False}"
+                )
         return arch, view
 
     # ── Helpers ──────────────────────────────────────────────────────────────
