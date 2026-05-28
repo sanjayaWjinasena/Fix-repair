@@ -79,7 +79,7 @@ class HelpdeskTicket(models.Model):
                 )
                 btn.set('context',
                     "{'default_ticket_id': id, 'default_company_id': company_id, "
-                    "'default_picking_id': x_studio_pick_id}"
+                    "'default_picking_id': (repair_stage_state == 'received_at_sales_centre' and x_studio_pick_id) or False}"
                 )
 
             # Serial Number: only show lots already issued via a sale order.
