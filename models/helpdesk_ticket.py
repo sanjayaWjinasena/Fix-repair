@@ -69,12 +69,20 @@ class HelpdeskTicket(models.Model):
                     "repair_stage_state != 'received_at_factory' or "
                     "not x_studio_valid_return"
                 )
-            # Return: only for RUG repairs at Received at Sales Centre
-            # (first return was customer→centre; this is centre→customer)
+            # Return: only for RUG repairs at Received at Sales Centre.
+            # Also fix context: Studio's XPath that sets default_picking_id is
+            # not applied in this Odoo version, so we enforce it here.
+            # x_studio_pick_id is set to the incoming receipt picking by
+            # action_received_at_sales_centre so the wizard pre-loads
+            # the correct picking → second popup (item + send to customer).
             for btn in arch.xpath("//button[@name='195']"):
                 btn.set('invisible',
                     "not x_studio_rug_repair or "
                     "repair_stage_state != 'received_at_sales_centre'"
+                )
+                btn.set('context',
+                    "{'default_ticket_id': id, 'default_company_id': company_id, "
+                    "'default_picking_id': x_studio_pick_id}"
                 )
 
             # Send to Sales Centre: only after the FSM task is marked as done.
@@ -164,8 +172,20 @@ class HelpdeskTicket(models.Model):
 
     def action_received_at_sales_centre(self):
         stage = self._get_or_create_stage('Received at Sales Centre', 110)
-        self.write({
-            'stage_id': stage.id,
-            'x_studio_s_received_date': fields.Datetime.now(),
-            'x_studio_s_received_by': self.env.uid,
-        })
+        for ticket in self:
+            vals = {
+                'stage_id': stage.id,
+                'x_studio_s_received_date': fields.Datetime.now(),
+                'x_studio_s_received_by': self.env.uid,
+            }
+            # Point x_studio_pick_id at the latest done incoming picking so the
+            # Return button wizard pre-loads it → user just confirms to send item
+            # back to customer (second popup, different from the first return).
+            incoming = self.env['stock.picking'].sudo().search([
+                ('id', 'in', ticket.picking_ids.ids),
+                ('picking_type_code', '=', 'incoming'),
+                ('state', '=', 'done'),
+            ], order='id desc', limit=1)
+            if incoming:
+                vals['x_studio_pick_id'] = incoming.id
+            ticket.write(vals)
