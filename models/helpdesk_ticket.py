@@ -72,13 +72,16 @@ class HelpdeskTicket(models.Model):
             #   New stage:                 default_ticket_id=id → wizard shows Sale Order
             #                              group so user selects which delivery to reverse
             #   Received at Sales Centre:  default_picking_id=x_studio_pick_id, no ticket_id
-            #                              → Sale Order group is hidden, items pre-load from
-            #                              the picking, simple "item + return location" form
+            #                              → Sale Order group hidden, items pre-load from
+            #                              the picking; return location defaults to Customers
+            cust_loc = self.env.ref('stock.stock_location_customers', raise_if_not_found=False)
+            cust_loc_id = cust_loc.id if cust_loc else 5
             for btn in arch.xpath("//button[@name='195']"):
                 btn.set('invisible', "not x_studio_rug_repair")
                 btn.set('context',
                     "{'default_ticket_id': (repair_stage_state == 'new' and id) or False, "
                     "'default_company_id': company_id, "
+                    f"'default_location_id': (repair_stage_state == 'received_at_sales_centre' and {cust_loc_id}) or False, "
                     "'default_picking_id': (repair_stage_state == 'received_at_sales_centre' and x_studio_pick_id) or False}"
                 )
         return arch, view
