@@ -68,9 +68,9 @@ class HelpdeskTicket(models.Model):
                     "repair_stage_state != 'received_at_factory' or "
                     "not x_studio_valid_return"
                 )
-            # Return: hide once a return already exists
+            # Return: visible at all stages for RUG repairs
             for btn in arch.xpath("//button[@name='195']"):
-                btn.set('invisible', "x_studio_valid_return == True")
+                btn.set('invisible', "not x_studio_rug_repair")
         return arch, view
 
     # ── Helpers ──────────────────────────────────────────────────────────────
