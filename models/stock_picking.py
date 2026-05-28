@@ -25,12 +25,16 @@ class StockPicking(models.Model):
 
             current_stage = (ticket.stage_id.name or '').strip()
 
-            # Stages where a picking completing should NOT auto-advance the ticket.
-            # These are stages before the customer has approved the estimate, so
-            # no picking validation should pull the ticket forward yet.
+            # Stages where Path A should NOT move the ticket.
+            # Early stages: SO confirm auto-completes service moves — must not
+            # pull the ticket forward before the customer approves.
+            # Later stages: repair is done — material pickings fired by Mark as
+            # Done must not pull the ticket backward to 'Repair Started'.
             _pre_repair_stages = {
                 'New', 'Sent to Factory', 'Received at Factory', 'Diagnosis',
                 'Estimation Sent to Customer',
+                'Repair Completed', 'Sent to Sales Centre',
+                'Handed Over to Customer',
             }
 
             if current_stage == 'Received at Sales Centre':
