@@ -25,6 +25,10 @@ class HelpdeskTicket(models.Model):
         store=False,
     )
 
+    # True once the technician clicks Mark as Done on the linked FSM task.
+    # Used to gate the Send to Sales Centre button.
+    task_done = fields.Boolean(compute='_compute_task_done')
+
     @api.depends('stage_id')
     def _compute_repair_stage_state(self):
         mapping = {
@@ -47,6 +51,14 @@ class HelpdeskTicket(models.Model):
             rec.x_studio_handed_over = sum(
                 1 for p in rec.picking_ids if p.state == 'done'
             ) > 1
+
+    def _compute_task_done(self):
+        for ticket in self:
+            ticket.task_done = self.env['project.task'].sudo().search_count([
+                ('helpdesk_ticket_id', '=', ticket.id),
+                ('is_fsm', '=', True),
+                ('fsm_done', '=', True),
+            ]) > 0
 
     @api.model
     def _get_view(self, view_id=None, view_type='form', **options):
