@@ -69,16 +69,17 @@ class HelpdeskTicket(models.Model):
                     "repair_stage_state != 'received_at_factory' or "
                     "not x_studio_valid_return"
                 )
-            # Return: only for RUG repairs at Received at Sales Centre.
-            # Also fix context: Studio's XPath that sets default_picking_id is
-            # not applied in this Odoo version, so we enforce it here.
-            # x_studio_pick_id is set to the incoming receipt picking by
-            # action_received_at_sales_centre so the wizard pre-loads
-            # the correct picking → second popup (item + send to customer).
+            # Return button: two appearances for RUG repairs —
+            #   New stage            → customer returning item to centre (no return yet)
+            #   Received at Sales Centre → centre returning repaired item to customer
+            # Context always carries x_studio_pick_id; the value differs per stage
+            # (set by Studio automations at New, set by action_received_at_sales_centre
+            # at Received at Sales Centre) so the wizard pre-loads the correct picking.
             for btn in arch.xpath("//button[@name='195']"):
                 btn.set('invisible',
                     "not x_studio_rug_repair or "
-                    "repair_stage_state != 'received_at_sales_centre'"
+                    "(repair_stage_state not in ['new', 'received_at_sales_centre']) or "
+                    "(repair_stage_state == 'new' and x_studio_valid_return == True)"
                 )
                 btn.set('context',
                     "{'default_ticket_id': id, 'default_company_id': company_id, "
