@@ -78,8 +78,8 @@ class HelpdeskTicket(models.Model):
             for btn in arch.xpath("//button[@name='195']"):
                 btn.set('invisible',
                     "not x_studio_rug_repair or "
-                    "(repair_stage_state not in ['new', 'received_at_sales_centre']) or "
-                    "(repair_stage_state == 'new' and x_studio_valid_return == True)"
+                    "(x_studio_valid_return == True and "
+                    " repair_stage_state != 'received_at_sales_centre')"
                 )
                 btn.set('context',
                     "{'default_ticket_id': id, 'default_company_id': company_id, "
