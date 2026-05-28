@@ -37,12 +37,3 @@ class ProjectTask(models.Model):
                 btn.set('invisible', "not display_mark_as_done_secondary")
         return arch, view
 
-    def action_fsm_validate(self, stop_running_timers=False):
-        res = super().action_fsm_validate(stop_running_timers=stop_running_timers)
-        # Move the linked repair ticket to Repair Completed so the
-        # "Send to Sales Centre" button becomes visible on the ticket.
-        for task in self:
-            ticket = task.helpdesk_ticket_id
-            if ticket and ticket.x_studio_rug_repair:
-                ticket._move_to_stage('Repair Completed')
-        return res

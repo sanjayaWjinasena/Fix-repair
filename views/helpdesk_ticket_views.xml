@@ -9,6 +9,7 @@
             <!-- Stored computed field — web_read reads a plain DB varchar, no many2one traversal -->
             <xpath expr="//field[@name='name']" position="before">
                 <field name="repair_stage_state" invisible="1"/>
+                <field name="task_done" invisible="1"/>
             </xpath>
 
             <xpath expr="//header" position="inside">
@@ -29,7 +30,7 @@
                         type="object"
                         string="Send to Sales Centre"
                         class="btn-primary"
-                        invisible="repair_stage_state != 'repair_completed'"/>
+                        invisible="not task_done"/>
 
                 <button name="action_received_at_sales_centre"
                         type="object"
