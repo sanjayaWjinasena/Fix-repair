@@ -1,10 +1,38 @@
 # -*- coding: utf-8 -*-
+import ast
 from lxml import etree
 from odoo import api, models
 
 
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
+
+    def _auto_init(self):
+        result = super()._auto_init()
+        # Add 'Not Under Warranty' to the Studio-managed x_studio_quotation_type
+        # selection field. selection_add cannot extend Studio fields (no Python
+        # base definition), so we patch ir_model_fields directly via SQL.
+        # Runs on every install/upgrade; idempotent.
+        self.env.cr.execute("""
+            SELECT id, selection FROM ir_model_fields
+            WHERE model = 'sale.order' AND name = 'x_studio_quotation_type'
+            LIMIT 1
+        """)
+        row = self.env.cr.fetchone()
+        if row:
+            field_id, sel_str = row
+            try:
+                sel = ast.literal_eval(sel_str or '[]')
+            except Exception:
+                sel = []
+            new_val = ('Not Under Warranty', 'Not Under Warranty')
+            if new_val not in sel:
+                sel.append(new_val)
+                self.env.cr.execute(
+                    "UPDATE ir_model_fields SET selection = %s WHERE id = %s",
+                    (str(sel), field_id),
+                )
+        return result
 
     @api.model
     def _get_view(self, view_id=None, view_type='form', **options):
