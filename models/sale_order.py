@@ -44,10 +44,11 @@ class SaleOrder(models.Model):
             for el in arch.xpath("//field[@name='x_studio_order_payment_method']"):
                 el.set('readonly', "state in ('cancel', 'done', 'sale')")
 
-            # Quotation Type: lock to Repair once set — cannot be changed away from Repair
+            # Quotation Type: editable in draft/sent until an FSM task is linked.
+            # Allows switching between Repair and Not Under Warranty; locks once
+            # Plan Intervention is clicked (task_id set) or the SO is confirmed.
             for el in arch.xpath("//field[@name='x_studio_quotation_type']"):
                 el.set('readonly',
-                       "x_studio_quotation_type == 'Repair' or "
                        "(task_id != False) or "
                        "(state not in ['draft', 'sent'])")
 
