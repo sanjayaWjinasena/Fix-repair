@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Adds 'Not Under Warranty' to the Studio-managed x_studio_quotation_type
+         selection field. Runs on every install and upgrade. -->
+    <function model="sale.order" name="_ensure_not_under_warranty_selection"/>
+</odoo>
