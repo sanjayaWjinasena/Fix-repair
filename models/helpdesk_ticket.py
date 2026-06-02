@@ -72,13 +72,16 @@ class HelpdeskTicket(models.Model):
                     "('x_studio_company_id', '=', False)]"
                 )
 
-            # Plan Intervention: only at Received at Factory with a valid return and no task yet
+            # Plan Intervention: show at Received at Factory with no task yet.
+            # Warranty (RUG) repairs also require a valid return picking to confirm
+            # the item is physically at the factory; non-warranty customers bring
+            # the item in directly so no return picking exists.
             for btn in arch.xpath("//button[@name='action_generate_fsm_task']"):
                 btn.set('invisible',
                     "not use_fsm or "
                     "fsm_task_count > 0 or "
                     "repair_stage_state != 'received_at_factory' or "
-                    "not x_studio_valid_return"
+                    "(x_studio_rug_repair and not x_studio_valid_return)"
                 )
             # Return button — same action 195, two distinct popup behaviours:
             #   New stage:                 default_ticket_id=id → wizard shows Sale Order
