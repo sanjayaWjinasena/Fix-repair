@@ -1,15 +1,10 @@
 # -*- coding: utf-8 -*-
 from lxml import etree
-from odoo import api, fields, models
+from odoo import api, models
 
 
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
-
-    x_studio_quotation_type = fields.Selection(
-        selection_add=[('Not Under Warranty', 'Not Under Warranty')],
-        ondelete={'Not Under Warranty': 'set null'},
-    )
 
     @api.model
     def _get_view(self, view_id=None, view_type='form', **options):
