@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import ast
 from lxml import etree
 from odoo import api, models
 
@@ -11,30 +10,27 @@ class SaleOrder(models.Model):
     def _ensure_not_under_warranty_selection(self):
         """Add 'Not Under Warranty' to x_studio_quotation_type if absent.
 
-        Called from data/fix_repair_data.xml on every install and upgrade.
-        selection_add cannot extend Studio-only fields (no Python base), so
-        we patch ir_model_fields directly via raw SQL.
+        In Odoo 17 selection values live in ir.model.fields.selection,
+        not in a column on ir_model_fields itself.
+        Called from data/fix_repair_data.xml and inline before any write.
         """
-        self.env.cr.execute("""
-            SELECT id, selection FROM ir_model_fields
-            WHERE model = 'sale.order' AND name = 'x_studio_quotation_type'
-            LIMIT 1
-        """)
-        row = self.env.cr.fetchone()
-        if not row:
+        field = self.env['ir.model.fields'].sudo().search([
+            ('model', '=', 'sale.order'),
+            ('name', '=', 'x_studio_quotation_type'),
+        ], limit=1)
+        if not field:
             return
-        field_id, sel_str = row
-        try:
-            sel = ast.literal_eval(sel_str or '[]')
-        except Exception:
-            sel = []
-        new_val = ('Not Under Warranty', 'Not Under Warranty')
-        if new_val not in sel:
-            sel.append(new_val)
-            self.env.cr.execute(
-                "UPDATE ir_model_fields SET selection = %s WHERE id = %s",
-                (str(sel), field_id),
-            )
+        IrSel = self.env['ir.model.fields.selection'].sudo()
+        if not IrSel.search([
+            ('field_id', '=', field.id),
+            ('value', '=', 'Not Under Warranty'),
+        ], limit=1):
+            IrSel.create({
+                'field_id': field.id,
+                'value': 'Not Under Warranty',
+                'name': 'Not Under Warranty',
+                'sequence': 100,
+            })
 
     @api.model
     def _get_view(self, view_id=None, view_type='form', **options):
