@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from lxml import etree
 from odoo import api, models
 
 
@@ -53,6 +54,21 @@ class SaleOrder(models.Model):
                 existing = btn.get('invisible', '')
                 extra = "(x_studio_quotation_type == 'Repair' and not x_studio_rug_approved)"
                 btn.set('invisible', f"({existing}) or {extra}" if existing else extra)
+
+            # Send by Email: Not Under Warranty type has no RUG flow — show directly
+            # Studio has hidden all action_quotation_send buttons via an always-true
+            # `state not in ['False']` guard; inject a clean button for this type.
+            for header in arch.xpath("//header"):
+                btn = etree.Element('button')
+                btn.set('name', 'action_quotation_send')
+                btn.set('string', 'Send by Email')
+                btn.set('type', 'object')
+                btn.set('class', 'btn-primary')
+                btn.set('invisible',
+                    "x_studio_quotation_type != 'Not Under Warranty' "
+                    "or state not in ('draft', 'sent')"
+                )
+                header.insert(0, btn)
 
         return arch, view
 
