@@ -8,6 +8,7 @@
     'license': 'LGPL-3',
     'depends': ['helpdesk', 'helpdesk_fsm', 'sale', 'sale_stock', 'industry_fsm_sale', 'industry_fsm_stock'],
     'data': [
+        'data/fix_repair_data.xml',
         'views/helpdesk_ticket_views.xml',
     ],
     'installable': True,
