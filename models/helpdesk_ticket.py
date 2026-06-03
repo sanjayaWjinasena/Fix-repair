@@ -115,10 +115,13 @@ class HelpdeskTicket(models.Model):
             for btn in arch.xpath("//button[@name='195']"):
                 btn.set('invisible', "False")
                 btn.set('context',
-                    "{'default_ticket_id': (repair_stage_state == 'new' and id) or False, "
-                    "'default_company_id': company_id, "
+                    # ticket_id: only for RUG at New stage (no pick_id yet) — shows SO picker
+                    # picking_id: non-warranty New (outgoing delivery) + Received at Sales Centre
+                    #             (incoming return picking); automation 172 stores both in x_studio_pick_id
+                    "{'default_ticket_id': (repair_stage_state == 'new' and not x_studio_pick_id and id) or False, "
+                    "'default_picking_id': x_studio_pick_id or False, "
                     f"'default_location_id': (repair_stage_state == 'received_at_sales_centre' and {cust_loc_id}) or False, "
-                    "'default_picking_id': (repair_stage_state == 'received_at_sales_centre' and x_studio_pick_id) or False}"
+                    "'default_company_id': company_id}"
                 )
 
             # Serial Number: only show lots already issued via a sale order.
