@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from lxml import etree
+from markupsafe import Markup, escape
 from odoo import api, models
 
 
@@ -125,12 +126,17 @@ class SaleOrder(models.Model):
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url', '')
         portal_url = base_url + self.get_portal_url()
 
-        link_line = (
-            '<p style="margin-top:16px;">'
-            'You can also check the Quotation on: '
-            f'<a href="{portal_url}">{portal_url}</a>'
-            '</p>'
-        )
+        link_line = Markup(
+            '<div style="margin-top:24px; text-align:center;">'
+            '<a href="{url}" '
+            'style="display:inline-block; padding:12px 24px; '
+            'background-color:#875A7B; color:#ffffff; text-decoration:none; '
+            'border-radius:4px; font-family:Arial,sans-serif; font-size:14px; '
+            'font-weight:bold;">'
+            'View Quotation'
+            '</a>'
+            '</div>'
+        ).format(url=escape(portal_url))
 
         ctx = action.get('context', {})
         template_id = ctx.get('default_template_id')
