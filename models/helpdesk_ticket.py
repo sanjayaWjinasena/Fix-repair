@@ -64,6 +64,22 @@ class HelpdeskTicket(models.Model):
     def _onchange_serial_no_product(self):
         if self.x_studio_serial_no and self.x_studio_serial_no.product_id:
             self.product_id = self.x_studio_serial_no.product_id
+        elif not self.x_studio_serial_no:
+            self.product_id = False
+
+    @api.model
+    def _deactivate_clearing_serial_automation(self):
+        """Deactivate the Studio automation that unconditionally clears product_id,
+        lot_id, etc. whenever x_studio_serial_no changes — it overwrites our
+        onchange and prevents the product from auto-populating from the serial.
+        The clearing logic is now handled by _onchange_serial_no_product instead.
+        """
+        automation = self.env['base.automation'].sudo().search([
+            ('name', '=', 'RR - Auto Select Product for RUG Repairs-33'),
+            ('model_id.model', '=', 'helpdesk.ticket'),
+        ], limit=1)
+        if automation and automation.active:
+            automation.write({'active': False})
 
     @api.model
     def _get_view(self, view_id=None, view_type='form', **options):

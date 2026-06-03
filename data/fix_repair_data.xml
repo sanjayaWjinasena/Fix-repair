@@ -3,4 +3,9 @@
     <!-- Adds 'Not Under Warranty' to the Studio-managed x_studio_quotation_type
          selection field. Runs on every install and upgrade. -->
     <function model="sale.order" name="_ensure_not_under_warranty_selection"/>
+
+    <!-- Deactivates the Studio automation "RR - Auto Select Product for RUG Repairs-33"
+         which unconditionally clears product_id when x_studio_serial_no changes,
+         overwriting our Python onchange. Clearing logic is in _onchange_serial_no_product. -->
+    <function model="helpdesk.ticket" name="_deactivate_clearing_serial_automation"/>
 </odoo>
