@@ -1,0 +1,214 @@
+Fix-Repair Module — Development Log
+=====================================
+Branch: not-under-warranty-with-serial-no
+Base:   return-validation (which is based on main)
+
+
+═══════════════════════════════════════════════════════════════
+PREVIOUS WORK (return-validation branch → merged to main)
+═══════════════════════════════════════════════════════════════
+
+1. DEFAULT RETURN LOCATION FOR 2ND RETURN POPUP
+   File: models/helpdesk_ticket.py (_get_view)
+   - Button 195 context sets default_location_id to Customers location
+     when ticket is at "Received at Sales Centre" stage.
+
+2. FIX: x_studio_pick_id STORED ON RECEIVED AT SALES CENTRE
+   File: models/helpdesk_ticket.py (action_received_at_sales_centre)
+   - Finds the most-recent done incoming picking for the partner/company
+     and stores its ID in x_studio_pick_id so the 2nd return popup can
+     pre-load the correct picking.
+
+3. FIX: PATH B PRECISE TICKET MATCHING
+   File: models/stock_picking.py (_action_done Path B)
+   - Primary match: picking.return_id.id == ticket.x_studio_pick_id
+   - Fallback: partner + stage + company (for pickings not via wizard)
+   - Prevents moving the wrong ticket when a partner has multiple tickets
+     at the same stage.
+
+4. IS_ISSUED VIRTUAL FIELD ON STOCK.LOT
+   File: models/stock_lot.py (new file)
+   - Adds is_issued computed/searchable boolean field.
+   - _search_is_issued queries stock.move.line for lots issued via sale orders.
+   - Used to filter Serial Number field on helpdesk ticket to only show
+     serials that have been issued to customers.
+
+5. RUG APPROVE DECOUPLED FROM SO CONFIRM
+   File: models/sale_order.py (action_approve_rug_direct, _get_view)
+   - action_approve_rug_direct only sets x_studio_rug_approved=True.
+   - Confirm button hidden on Repair SOs until x_studio_rug_approved=True.
+   - User must click Confirm manually after RUG approval.
+
+6. GUARD _ACTION_DONE FROM PRE-REPAIR STAGES
+   File: models/stock_picking.py (_action_done Path A)
+   - _pre_repair_stages set blocks auto-advancement at:
+     New, Sent to Factory, Received at Factory, Diagnosis,
+     Estimation Sent to Customer, Repair Completed,
+     Sent to Sales Centre, Handed Over to Customer.
+   - Allows advancement from Estimation Approval Received → Repair Started.
+
+7. MARK AS DONE BUTTON GATED ON REPAIR COMPLETED STAGE
+   File: models/project_task.py (_get_view)
+   - ticket_repair_stage_state field mirrors linked ticket's stage.
+   - action_fsm_validate (Mark as Done) only visible when
+     ticket_repair_stage_state == 'repair_completed'.
+
+8. SEND TO SALES CENTRE GATED ON TASK_DONE
+   File: models/helpdesk_ticket.py (task_done field, _get_view XML)
+   - task_done computed boolean: True when linked FSM task has fsm_done=True.
+   - "Send to Sales Centre" button invisible="not task_done".
+
+9. PATH A AUTO-ADVANCE TO REPAIR COMPLETED
+   File: models/stock_picking.py (_action_done Path A)
+   - After moving to Repair Started, checks if ALL SO pickings are
+     done/cancelled; if so, auto-advances ticket to Repair Completed.
+
+
+═══════════════════════════════════════════════════════════════
+CURRENT WORK (not-under-warranty-with-serial-no branch)
+═══════════════════════════════════════════════════════════════
+
+GOAL
+----
+Add support for "Normal Repair (With Serial No)" / "Not Under Warranty"
+repair type. These repairs skip the RUG approval flow and instead send
+the quotation directly to the customer via Send by Email.
+
+
+10. PLAN INTERVENTION BUTTON FOR NON-WARRANTY REPAIRS
+    File: models/helpdesk_ticket.py (_get_view)
+    - Old condition required x_studio_valid_return for ALL repairs.
+    - Warranty (RUG) repairs need a return picking to confirm the item
+      is physically at the factory.
+    - Non-warranty customers bring the item directly — no return picking.
+    - New condition: (x_studio_rug_repair and not x_studio_valid_return)
+      so non-warranty repairs show Plan Intervention without a return.
+
+11. NOT UNDER WARRANTY QUOTATION TYPE — SEND BY EMAIL BUTTON
+    File: models/sale_order.py (_get_view)
+    - Studio has disabled all action_quotation_send buttons via
+      `or (state not in ['False'])` (always-true kill switch).
+    - Injected a clean Send by Email button via lxml in _get_view:
+        name="action_quotation_send"
+        invisible="x_studio_quotation_type != 'Not Under Warranty'
+                   or state not in ('draft', 'sent')"
+    - Request RUG Approval (1980) already gates on type == 'Repair',
+      so it hides automatically for 'Not Under Warranty'.
+    - Confirm button guard only applies to type == 'Repair', so it
+      works normally for 'Not Under Warranty'.
+
+12. ADDING 'NOT UNDER WARRANTY' AS A VALID SELECTION VALUE
+    File: models/sale_order.py (_ensure_not_under_warranty_selection)
+    File: data/fix_repair_data.xml (<function> call)
+    File: __manifest__.py (data file registered)
+
+    Problem history:
+      - selection_add in Python fails on Studio fields (no Python base).
+      - _auto_init override not called during upgrade of fix_repair
+        (sale.order is owned by the 'sale' module, not fix_repair).
+      - Raw SQL on ir_model_fields failed: no 'selection' column in Odoo 17.
+
+    Final solution:
+      - _ensure_not_under_warranty_selection() uses ir.model.fields.selection
+        ORM to search for the value and create it if absent.
+      - Called from data/fix_repair_data.xml (<function>) on every
+        install/upgrade.
+      - Also called inline in _fsm_ensure_sale_order before writing the
+        value, so it self-heals even if the data file hasn't run yet.
+
+13. QUOTATION TYPE FIELD — READONLY CONDITION RELAXED
+    File: models/sale_order.py (_get_view)
+    - Old: readonly when type == 'Repair' OR task linked OR not draft/sent.
+    - New: readonly only when task linked OR not draft/sent.
+    - Allows switching between Repair and Not Under Warranty in draft/sent
+      state as long as no FSM task has been created yet.
+
+14. AUTO-SET SO TYPE FROM TICKET FLAG ON PLAN INTERVENTION
+    File: models/project_task.py (_fsm_ensure_sale_order)
+    - When Plan Intervention creates the FSM sale order, reads the ticket's
+      x_studio_normal_repair_with_serial_no flag:
+        True  → x_studio_quotation_type = 'Not Under Warranty'
+        False → x_studio_quotation_type = 'Repair'
+    - Ensures the selection value exists before writing (self-healing guard).
+
+    Ticket fields that distinguish the 4 repair types:
+      x_studio_rug_repair                    → Warranty / RUG repair
+      x_studio_normal_repair_with_serial_no  → Not Under Warranty (with SN)
+      x_studio_normal_repair_without_serial_no → Normal repair (no SN)
+      x_studio_quick_repair_status           → Quick repair
+
+
+═══════════════════════════════════════════════════════════════
+FILE SUMMARY
+═══════════════════════════════════════════════════════════════
+
+models/helpdesk_ticket.py
+  - repair_stage_state (stored computed Selection)
+  - x_studio_handed_over (override — remove side effects)
+  - task_done (computed Boolean — True when FSM task fsm_done)
+  - _compute_repair_stage_state
+  - _compute_x_studio_handed_over
+  - _compute_task_done
+  - _get_view: stage_id domain, Plan Intervention visibility,
+    Return button (195) context, serial number domain
+  - _get_or_create_stage, _move_to_stage
+  - action_assign_to_me, action_send_to_factory,
+    action_received_at_factory, action_send_to_sales_centre,
+    action_received_at_sales_centre
+
+models/sale_order.py
+  - _ensure_not_under_warranty_selection (ORM on ir.model.fields.selection)
+  - _get_view: payment method readonly, quotation type readonly,
+    RUG buttons visibility, Confirm button guard,
+    Send by Email injection for Not Under Warranty
+  - _onchange_partner_payment_method
+  - create (auto-fill payment method)
+  - action_approve_rug_direct
+  - _move_ticket_to_stage
+  - write (sync payment method, ticket stage on RUG events, reprice on approve)
+
+models/project_task.py
+  - ticket_repair_stage_state (computed Char)
+  - _fsm_ensure_sale_order (no confirm, auto-set SO type from ticket flag)
+  - _fsm_create_sale_order (delegate to fsm_sale, skip fsm_stock)
+  - _get_view: inject ticket_repair_stage_state field,
+    gate Mark as Done on repair_stage_state == repair_completed
+
+models/stock_picking.py
+  - _action_done: Path A (Repair SO pickings → ticket stage via task chain)
+                  Path B (inventory→customer handover → Handed Over)
+
+models/stock_lot.py
+  - is_issued (virtual field with _search querying stock.move.line)
+
+views/helpdesk_ticket_views.xml
+  - Injects: repair_stage_state, task_done (invisible fields)
+  - Buttons: Send to Factory, Received at Factory, Send to Sales Centre,
+    Received at Sales Centre, Assign to Me
+
+data/fix_repair_data.xml
+  - <function> call to _ensure_not_under_warranty_selection on install/upgrade
+
+
+═══════════════════════════════════════════════════════════════
+KEY DESIGN DECISIONS
+═══════════════════════════════════════════════════════════════
+
+- Studio fields (x_studio_*) cannot be extended with selection_add in Python
+  because they have no Python base definition. Use ir.model.fields.selection
+  ORM instead.
+
+- _auto_init in _inherit classes is NOT called during module upgrade for
+  models owned by other modules. Use XML <function> data calls instead.
+
+- Stage transitions for repair tickets are handled in two places:
+    Path A: stock_picking._action_done (picking validation → ticket stage)
+    Path B: stock_picking._action_done (return picking → Handed Over)
+  NOT in Mark as Done (action_fsm_validate) — that only gates the button.
+
+- Confirm button on Repair SOs is blocked until x_studio_rug_approved=True.
+  Not Under Warranty SOs skip this guard entirely (no RUG flow).
+
+- Send by Email on sale.order is disabled for all types by Studio via
+  `or (state not in ['False'])`. Injected fresh via _get_view for
+  Not Under Warranty type only.
