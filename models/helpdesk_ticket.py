@@ -60,6 +60,12 @@ class HelpdeskTicket(models.Model):
                 ('fsm_done', '=', True),
             ]) > 0
 
+    @api.onchange('x_studio_serial_no')
+    def _onchange_serial_no_product(self):
+        for ticket in self:
+            if ticket.x_studio_serial_no and ticket.x_studio_serial_no.product_id:
+                ticket.product_id = ticket.x_studio_serial_no.product_id
+
     @api.model
     def _get_view(self, view_id=None, view_type='form', **options):
         arch, view = super()._get_view(view_id, view_type, **options)
