@@ -113,7 +113,7 @@ class HelpdeskTicket(models.Model):
             cust_loc = self.env.ref('stock.stock_location_customers', raise_if_not_found=False)
             cust_loc_id = cust_loc.id if cust_loc else 5
             for btn in arch.xpath("//button[@name='195']"):
-                btn.set('invisible', "not x_studio_rug_repair")
+                btn.set('invisible', "False")
                 btn.set('context',
                     "{'default_ticket_id': (repair_stage_state == 'new' and id) or False, "
                     "'default_company_id': company_id, "
