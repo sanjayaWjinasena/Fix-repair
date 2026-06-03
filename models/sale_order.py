@@ -116,6 +116,38 @@ class SaleOrder(models.Model):
                         vals['x_studio_order_payment_method'] = partner.x_studio_payment_method
         return super().create(vals_list)
 
+    def action_quotation_send(self):
+        action = super().action_quotation_send()
+        if self.x_studio_quotation_type != 'Not Under Warranty':
+            return action
+
+        # Build the full portal URL (get_portal_url returns a relative path)
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url', '')
+        portal_url = base_url + self.get_portal_url()
+
+        link_line = (
+            '<p style="margin-top:16px;">'
+            'You can also check the Quotation on: '
+            f'<a href="{portal_url}">{portal_url}</a>'
+            '</p>'
+        )
+
+        ctx = action.get('context', {})
+        template_id = ctx.get('default_template_id')
+        if template_id:
+            template = self.env['mail.template'].browse(template_id)
+            rendered = template._render_field('body_html', self.ids, options={'post_process': True})
+            body = rendered.get(self.id, '') or ''
+            ctx['default_body'] = body + link_line
+            # Clear the template so the composer uses our pre-built body directly
+            ctx['default_template_id'] = False
+            ctx['default_use_template'] = False
+        else:
+            ctx['default_body'] = ctx.get('default_body', '') + link_line
+
+        action['context'] = ctx
+        return action
+
     def action_approve_rug_direct(self):
         self.write({'x_studio_rug_approved': True})
         # write() moves the ticket to 'Estimation Approval Received'.
