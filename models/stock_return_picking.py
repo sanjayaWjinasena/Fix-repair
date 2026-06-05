@@ -21,13 +21,11 @@ class StockReturnPicking(models.TransientModel):
                 )
         return arch, view
 
-    @api.depends('picking_id')
-    def _compute_moves_locations(self):
-        super()._compute_moves_locations()
-        for wizard in self:
-            # Auto-set Return Location to match Suggested Return Location
-            # (original_location_id = picking's source location).
-            # For outgoing deliveries this is warehouse stock; for incoming
-            # return pickings (Received at Sales Centre) it is the customer.
-            if wizard.original_location_id:
-                wizard.location_id = wizard.original_location_id
+    @api.onchange('picking_id')
+    def _onchange_sync_return_location(self):
+        # Mirror the Suggested Return Location (picking's source location)
+        # into the Return Location field so the user sees a sensible default.
+        # Runs after _compute_moves_locations so it overrides the picking-type
+        # default_location_return_id that Odoo would otherwise use.
+        if self.picking_id and self.picking_id.location_id:
+            self.location_id = self.picking_id.location_id
