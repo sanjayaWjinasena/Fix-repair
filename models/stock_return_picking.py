@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import models
+from odoo import api, models
 
 
 class StockReturnPicking(models.TransientModel):
@@ -20,3 +20,14 @@ class StockReturnPicking(models.TransientModel):
                     "[('state', 'in', ['sale', 'done'])]"
                 )
         return arch, view
+
+    @api.depends('picking_id')
+    def _compute_moves_locations(self):
+        super()._compute_moves_locations()
+        for wizard in self:
+            # Auto-set Return Location to match Suggested Return Location
+            # (original_location_id = picking's source location).
+            # For outgoing deliveries this is warehouse stock; for incoming
+            # return pickings (Received at Sales Centre) it is the customer.
+            if wizard.original_location_id:
+                wizard.location_id = wizard.original_location_id
