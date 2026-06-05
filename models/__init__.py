@@ -5,3 +5,4 @@ from . import project_task
 from . import sale_order
 from . import stock_lot
 from . import stock_picking
+from . import stock_return_picking
