@@ -21,14 +21,23 @@ class StockReturnPicking(models.TransientModel):
                 )
         return arch, view
 
-    @api.depends('picking_id')
+    @api.depends('picking_id', 'ticket_id')
     def _compute_moves_locations(self):
         # Run the full chain (product_return_moves, original_location_id, etc.)
         super()._compute_moves_locations()
-        # Override location_id to match Suggested Return Location.
+        # Override location_id to the Studio-defined suggested repair location.
+        # x_studio_suggested_location_id_1 = ticket.x_studio_virtual_location_1 (company 2)
+        # x_studio_suggested_location_id   = ticket.x_studio_virtual_location   (company 1)
+        # The Studio automation (id 174) validates location_id against these fields —
+        # setting them here ensures we pass validation and land on the correct bin.
         # Must be done inside the compute — writing location_id anywhere else
         # triggers a forced re-run of this same compute (Odoo re-syncs all
         # co-computed fields), which would undo the change.
         for wizard in self:
-            if wizard.original_location_id:
-                wizard.location_id = wizard.original_location_id
+            suggested = (
+                wizard.x_studio_suggested_location_id_1
+                or wizard.x_studio_suggested_location_id
+                or wizard.original_location_id
+            )
+            if suggested:
+                wizard.location_id = suggested
