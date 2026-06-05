@@ -21,11 +21,22 @@ class StockReturnPicking(models.TransientModel):
                 )
         return arch, view
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        # After super().create() all stored computes have run, including
+        # _compute_moves_locations which sets location_id to the picking
+        # type's default_location_return_id.  We override it here so that
+        # Return Location matches Suggested Return Location (original_location_id
+        # = picking's source location) when the wizard opens with a pre-set picking.
+        records = super().create(vals_list)
+        for rec in records:
+            if rec.original_location_id:
+                rec.location_id = rec.original_location_id
+        return records
+
     @api.onchange('picking_id')
     def _onchange_sync_return_location(self):
-        # Mirror the Suggested Return Location (picking's source location)
-        # into the Return Location field so the user sees a sensible default.
-        # Runs after _compute_moves_locations so it overrides the picking-type
-        # default_location_return_id that Odoo would otherwise use.
+        # Handles the case where the user changes the Delivery to Return
+        # field (or picking_id cascades from a sale_order_id selection).
         if self.picking_id and self.picking_id.location_id:
             self.location_id = self.picking_id.location_id
