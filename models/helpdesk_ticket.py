@@ -64,21 +64,48 @@ class HelpdeskTicket(models.Model):
     def _onchange_serial_no_product(self):
         if self.x_studio_serial_no and self.x_studio_serial_no.product_id:
             self.product_id = self.x_studio_serial_no.product_id
+            self.sale_order_id = self._get_so_from_serial(self.x_studio_serial_no)
         elif not self.x_studio_serial_no:
             self.product_id = False
+            self.sale_order_id = False
+
+    def _get_so_from_serial(self, serial):
+        """Return the Sale Order that last delivered this serial number to a customer."""
+        if not serial:
+            return self.env['sale.order']
+        cust_locs = self.env['stock.location'].sudo().search([('usage', '=', 'customer')])
+        move_line = self.env['stock.move.line'].sudo().search([
+            ('product_id', '=', serial.product_id.id),
+            ('lot_id', '=', serial.id),
+            ('picking_code', '=', 'outgoing'),
+            ('location_dest_id', 'in', cust_locs.ids),
+            ('state', '=', 'done'),
+        ], limit=1, order='date desc')
+        if not move_line:
+            return self.env['sale.order']
+        # Prefer direct FK traversal; fall back to origin string match
+        if move_line.move_id.sale_line_id:
+            return move_line.move_id.sale_line_id.order_id
+        return self.env['sale.order'].sudo().search([
+            ('name', '=', move_line.origin),
+        ], limit=1)
 
     def write(self, vals):
         result = super().write(vals)
-        # Re-assert product_id after super() completes — Studio automations that
-        # clear product_id run inside super().write(), so writing here overrides them.
-        # Context flag prevents infinite recursion on the re-assert write.
+        # Re-assert product_id and sale_order_id after super() completes — Studio
+        # automations that clear these fields run inside super().write(), so writing
+        # here overrides them. Context flag prevents infinite recursion.
         if 'x_studio_serial_no' in vals and not self.env.context.get('_syncing_serial_product'):
             for rec in self:
                 if rec.x_studio_serial_no and rec.x_studio_serial_no.product_id:
+                    updates = {}
                     if rec.product_id != rec.x_studio_serial_no.product_id:
-                        rec.with_context(_syncing_serial_product=True).sudo().write(
-                            {'product_id': rec.x_studio_serial_no.product_id.id}
-                        )
+                        updates['product_id'] = rec.x_studio_serial_no.product_id.id
+                    so = rec._get_so_from_serial(rec.x_studio_serial_no)
+                    if so and rec.sale_order_id != so:
+                        updates['sale_order_id'] = so.id
+                    if updates:
+                        rec.with_context(_syncing_serial_product=True).sudo().write(updates)
         return result
 
     @api.model
@@ -168,6 +195,17 @@ class HelpdeskTicket(models.Model):
             for field in arch.xpath("//field[@name='x_studio_serial_no']"):
                 field.set('domain', serial_domain)
                 field.set('options', serial_options)
+                # Inject Sale Order field immediately after Serial Number if not
+                # already present. Readonly — auto-populated from the serial's
+                # outgoing delivery; editing is done via the serial field.
+                if not arch.xpath("//field[@name='sale_order_id']"):
+                    from lxml import etree
+                    so_node = etree.Element('field')
+                    so_node.set('name', 'sale_order_id')
+                    so_node.set('readonly', '1')
+                    so_node.set('string', 'Sales Order')
+                    so_node.set('invisible', 'not sale_order_id')
+                    field.addnext(so_node)
             for field in arch.xpath("//field[@name='lot_id']"):
                 field.set('domain', serial_domain)
                 field.set('options', serial_options)
