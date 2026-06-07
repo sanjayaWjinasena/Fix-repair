@@ -195,20 +195,23 @@ class HelpdeskTicket(models.Model):
             for field in arch.xpath("//field[@name='x_studio_serial_no']"):
                 field.set('domain', serial_domain)
                 field.set('options', serial_options)
-                # Inject Sale Order field immediately after Serial Number if not
-                # already present. Readonly — auto-populated from the serial's
-                # outgoing delivery; editing is done via the serial field.
-                if not arch.xpath("//field[@name='sale_order_id']"):
-                    from lxml import etree
-                    so_node = etree.Element('field')
-                    so_node.set('name', 'sale_order_id')
-                    so_node.set('readonly', '1')
-                    so_node.set('string', 'Sales Order')
-                    so_node.set('invisible', 'not sale_order_id')
-                    field.addnext(so_node)
             for field in arch.xpath("//field[@name='lot_id']"):
                 field.set('domain', serial_domain)
                 field.set('options', serial_options)
+
+            # sale_order_id exists in the arch as invisible="1" (hidden input used
+            # by helpdesk_sale onchange machinery). Reposition it to appear right
+            # after x_studio_serial_no as a visible readonly field.
+            serial_nodes = arch.xpath("//field[@name='x_studio_serial_no']")
+            so_nodes = arch.xpath("//field[@name='sale_order_id']")
+            if serial_nodes and so_nodes:
+                so_node = so_nodes[0]
+                so_node.getparent().remove(so_node)
+                so_node.set('readonly', '1')
+                so_node.set('string', 'Sales Order')
+                so_node.attrib.pop('invisible', None)
+                so_node.set('invisible', 'not sale_order_id')
+                serial_nodes[0].addnext(so_node)
         return arch, view
 
     # ── Helpers ──────────────────────────────────────────────────────────────
