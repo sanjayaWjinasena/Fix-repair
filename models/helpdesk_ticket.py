@@ -83,15 +83,22 @@ class HelpdeskTicket(models.Model):
 
     @api.model
     def _deactivate_clearing_serial_automation(self):
-        """Deactivate any Studio automation that triggers on x_studio_serial_no
-        changes and clears product_id — our _onchange_serial_no_product and write()
-        override handle the correct auto-population instead.
-        Search by field trigger (not name) so renamed automations are still caught.
+        """Deactivate automation 243 ('RR - Auto Select Product for RUG Repairs-33')
+        which unconditionally clears product_id/lot_id/sale_order_id whenever
+        x_studio_serial_no changes — even when a valid serial is selected.
+
+        Search by x_studio_serial_no field ID (26809) in on_change_field_ids, NOT
+        by name, so renamed copies are also caught. Using field ID avoids
+        accidentally deactivating automation 172 ('RR - Auto Select Product for
+        RUG Repairs') which triggers on ticket_type_id and correctly auto-populates
+        product when the ticket type changes.
         """
         serial_field = self.env['ir.model.fields'].sudo().search([
             ('model', '=', 'helpdesk.ticket'),
             ('name', '=', 'x_studio_serial_no'),
         ], limit=1)
+        if not serial_field:
+            return
 
         automations = self.env['base.automation'].sudo().with_context(active_test=False).search([
             ('model_id.model', '=', 'helpdesk.ticket'),
@@ -99,11 +106,9 @@ class HelpdeskTicket(models.Model):
 
         to_deactivate = self.env['base.automation'].sudo()
         for auto in automations:
-            # Triggered on x_studio_serial_no field change
-            if serial_field and serial_field.id in auto.on_change_field_ids.ids:
-                to_deactivate |= auto
-            # Fallback: catch by name fragment (handles original and any copies)
-            elif 'RR - Auto Select Product for RUG Repairs' in (auto.name or ''):
+            # Only deactivate automations that fire specifically on x_studio_serial_no.
+            # Automation 172 fires on ticket_type_id (field 22830), so it is safe.
+            if serial_field.id in auto.on_change_field_ids.ids:
                 to_deactivate |= auto
 
         if to_deactivate:
