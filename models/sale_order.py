@@ -36,8 +36,22 @@ class SaleOrder(models.Model):
             "'x_studio_project_no_1': record.id,",
         ):
             if old in code:
-                action.write({'code': code.replace(old, new)})
-                return
+                code = code.replace(old, new)
+                break
+
+        # Odoo 17 requires payment_method_line_id on account.payment.
+        # Use the first inbound method line from the journal chosen above.
+        pm_old = "'journal_id':journal.id})"
+        pm_new = (
+            "'journal_id':journal.id,"
+            "'payment_method_line_id':"
+            "journal.inbound_payment_method_line_ids[:1].id "
+            "if journal.inbound_payment_method_line_ids else False})"
+        )
+        if pm_old in code:
+            code = code.replace(pm_old, pm_new)
+
+        action.write({'code': code})
 
     @api.model
     def _ensure_not_under_warranty_selection(self):
