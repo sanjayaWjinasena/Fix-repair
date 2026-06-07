@@ -63,11 +63,19 @@ class StockReturnPicking(models.TransientModel):
             self.product_return_moves.write({'quantity': 1})
         new_picking_id, pick_type_id = super()._create_returns()
         if self.ticket_id:
+            new_picking = self.env['stock.picking'].browse(new_picking_id)
             # Decouple return moves from the original SO line so the SO's
             # delivered qty is not reduced (repair ≠ commercial return).
-            new_picking = self.env['stock.picking'].browse(new_picking_id)
             new_picking.move_ids.write({
                 'to_refund': False,
                 'sale_line_id': False,
             })
+            # The return wizard copies the lot from the original delivery, which
+            # may differ from the serial number the customer is actually handing
+            # back (e.g. the SO delivered BR-EK-0106 but the ticket is for
+            # BR-EK-0104). Override the lot on all move lines to match the
+            # serial number explicitly selected on the repair ticket.
+            serial = self.ticket_id.x_studio_serial_no
+            if serial:
+                new_picking.move_line_ids.write({'lot_id': serial.id})
         return new_picking_id, pick_type_id
