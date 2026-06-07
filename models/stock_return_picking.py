@@ -20,14 +20,7 @@ class StockReturnPicking(models.TransientModel):
                     "[('state', 'in', ['sale', 'done'])]"
                 )
 
-            # When opened from a repair ticket:
-            #   - Lock quantity to 1 (repairs are single-item)
-            #   - Hide the To Refund column (we force it False in _create_returns)
-            for qty_field in arch.xpath(
-                "//field[@name='product_return_moves']//field[@name='quantity']"
-            ):
-                qty_field.set('readonly', '1')
-
+            # Hide the To Refund column — forced False in _create_returns anyway.
             for refund_field in arch.xpath(
                 "//field[@name='product_return_moves']//field[@name='to_refund']"
             ):
@@ -63,6 +56,11 @@ class StockReturnPicking(models.TransientModel):
                         line.quantity = 1
 
     def _create_returns(self):
+        if self.ticket_id:
+            # Repair tickets are single-item — enforce qty=1 before creating
+            # the return. Done here rather than readonly in the view to avoid
+            # the One2many submission dropping the required quantity value.
+            self.product_return_moves.write({'quantity': 1})
         new_picking_id, pick_type_id = super()._create_returns()
         if self.ticket_id:
             # Decouple return moves from the original SO line so the SO's
