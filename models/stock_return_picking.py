@@ -26,7 +26,7 @@ class StockReturnPicking(models.TransientModel):
             for qty_field in arch.xpath(
                 "//field[@name='product_return_moves']//field[@name='quantity']"
             ):
-                qty_field.set('readonly', 'ticket_id')
+                qty_field.set('readonly', '1')
 
             for refund_field in arch.xpath(
                 "//field[@name='product_return_moves']//field[@name='to_refund']"
