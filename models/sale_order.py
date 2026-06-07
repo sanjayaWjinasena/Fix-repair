@@ -8,6 +8,31 @@ class SaleOrder(models.Model):
     _inherit = 'sale.order'
 
     @api.model
+    def _fix_advance_payment_project_field(self):
+        """Fix Studio server action 'Create Advance Payment' that passes
+        record.id (sale.order ID) to x_studio_project_no_1 which is a
+        Many2one to project.project — causing a FK violation when the SO id
+        does not match any project.project id.
+
+        Correct substitution: record.x_studio_project_no.id (the Project No
+        field on sale.order, also Many2one to project.project).
+        Search by code content so it survives action ID changes in Studio.
+        """
+        action = self.env['ir.actions.server'].sudo().search([
+            ('model_id.model', '=', 'sale.order'),
+            ('code', 'like', "x_studio_project_no_1"),
+            ('code', 'like', "account.payment"),
+        ], limit=1)
+        if not action:
+            return
+        old = "'x_studio_project_no_1': record.id,"
+        new = ("'x_studio_project_no_1': "
+               "record.x_studio_project_no.id if record.x_studio_project_no else False,")
+        if old not in (action.code or ''):
+            return  # already patched or structure changed
+        action.write({'code': action.code.replace(old, new)})
+
+    @api.model
     def _ensure_not_under_warranty_selection(self):
         """Add 'Not Under Warranty' to x_studio_quotation_type if absent.
 

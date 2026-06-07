@@ -8,4 +8,9 @@
          which unconditionally clears product_id when x_studio_serial_no changes,
          overwriting our Python onchange. Clearing logic is in _onchange_serial_no_product. -->
     <function model="helpdesk.ticket" name="_deactivate_clearing_serial_automation"/>
+
+    <!-- Fix Studio server action "Create Advance Payment" that passes record.id
+         (sale.order id) into x_studio_project_no_1 (Many2one → project.project),
+         causing a FK violation. Replaces it with record.x_studio_project_no.id. -->
+    <function model="sale.order" name="_fix_advance_payment_project_field"/>
 </odoo>
