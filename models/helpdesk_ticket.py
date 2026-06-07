@@ -67,19 +67,47 @@ class HelpdeskTicket(models.Model):
         elif not self.x_studio_serial_no:
             self.product_id = False
 
+    def write(self, vals):
+        result = super().write(vals)
+        # Re-assert product_id after super() completes — Studio automations that
+        # clear product_id run inside super().write(), so writing here overrides them.
+        # Context flag prevents infinite recursion on the re-assert write.
+        if 'x_studio_serial_no' in vals and not self.env.context.get('_syncing_serial_product'):
+            for rec in self:
+                if rec.x_studio_serial_no and rec.x_studio_serial_no.product_id:
+                    if rec.product_id != rec.x_studio_serial_no.product_id:
+                        rec.with_context(_syncing_serial_product=True).sudo().write(
+                            {'product_id': rec.x_studio_serial_no.product_id.id}
+                        )
+        return result
+
     @api.model
     def _deactivate_clearing_serial_automation(self):
-        """Deactivate the Studio automation that unconditionally clears product_id,
-        lot_id, etc. whenever x_studio_serial_no changes — it overwrites our
-        onchange and prevents the product from auto-populating from the serial.
-        The clearing logic is now handled by _onchange_serial_no_product instead.
+        """Deactivate any Studio automation that triggers on x_studio_serial_no
+        changes and clears product_id — our _onchange_serial_no_product and write()
+        override handle the correct auto-population instead.
+        Search by field trigger (not name) so renamed automations are still caught.
         """
-        automation = self.env['base.automation'].sudo().search([
-            ('name', '=', 'RR - Auto Select Product for RUG Repairs-33'),
-            ('model_id.model', '=', 'helpdesk.ticket'),
+        serial_field = self.env['ir.model.fields'].sudo().search([
+            ('model', '=', 'helpdesk.ticket'),
+            ('name', '=', 'x_studio_serial_no'),
         ], limit=1)
-        if automation and automation.active:
-            automation.write({'active': False})
+
+        automations = self.env['base.automation'].sudo().with_context(active_test=False).search([
+            ('model_id.model', '=', 'helpdesk.ticket'),
+        ])
+
+        to_deactivate = self.env['base.automation'].sudo()
+        for auto in automations:
+            # Triggered on x_studio_serial_no field change
+            if serial_field and serial_field.id in auto.on_change_field_ids.ids:
+                to_deactivate |= auto
+            # Fallback: catch by name fragment (handles original and any copies)
+            elif 'RR - Auto Select Product for RUG Repairs' in (auto.name or ''):
+                to_deactivate |= auto
+
+        if to_deactivate:
+            to_deactivate.write({'active': False})
 
     @api.model
     def _get_view(self, view_id=None, view_type='form', **options):
