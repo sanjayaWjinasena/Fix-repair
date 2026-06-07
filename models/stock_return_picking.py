@@ -5,6 +5,41 @@ from odoo import api, models
 class StockReturnPicking(models.TransientModel):
     _inherit = 'stock.return.picking'
 
+    @api.model
+    def default_get(self, fields_list):
+        defaults = super().default_get(fields_list)
+        # When opened from a repair ticket that has a serial number but no
+        # pre-selected delivery (New stage, not-under-warranty flow), look up
+        # the outgoing delivery that shipped that serial to the customer and
+        # pre-populate picking_id and sale_order_id so the user only needs to
+        # confirm instead of manually searching.
+        ticket_id = defaults.get('ticket_id') or self.env.context.get('default_ticket_id')
+        if ticket_id and not defaults.get('picking_id'):
+            ticket = self.env['helpdesk.ticket'].browse(ticket_id)
+            serial = ticket.x_studio_serial_no
+            if serial and serial.product_id:
+                cust_locs = self.env['stock.location'].sudo().search(
+                    [('usage', '=', 'customer')]
+                )
+                move_line = self.env['stock.move.line'].sudo().search([
+                    ('product_id', '=', serial.product_id.id),
+                    ('lot_id', '=', serial.id),
+                    ('picking_code', '=', 'outgoing'),
+                    ('location_dest_id', 'in', cust_locs.ids),
+                    ('state', '=', 'done'),
+                ], limit=1, order='date desc')
+                if move_line:
+                    defaults['picking_id'] = move_line.picking_id.id
+                    so = (
+                        move_line.move_id.sale_line_id.order_id
+                        or self.env['sale.order'].sudo().search(
+                            [('name', '=', move_line.origin)], limit=1
+                        )
+                    )
+                    if so:
+                        defaults['sale_order_id'] = so.id
+        return defaults
+
     def _get_view(self, view_id=None, view_type='form', **options):
         arch, view = super()._get_view(view_id, view_type, **options)
         if view_type == 'form':
