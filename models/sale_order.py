@@ -17,6 +17,8 @@ class SaleOrder(models.Model):
         Correct substitution: record.x_studio_project_no.id (the Project No
         field on sale.order, also Many2one to project.project).
         Search by code content so it survives action ID changes in Studio.
+        Handles both space variants Studio may write (with or without space
+        after the colon).
         """
         action = self.env['ir.actions.server'].sudo().search([
             ('model_id.model', '=', 'sale.order'),
@@ -25,12 +27,17 @@ class SaleOrder(models.Model):
         ], limit=1)
         if not action:
             return
-        old = "'x_studio_project_no_1': record.id,"
         new = ("'x_studio_project_no_1': "
                "record.x_studio_project_no.id if record.x_studio_project_no else False,")
-        if old not in (action.code or ''):
-            return  # already patched or structure changed
-        action.write({'code': action.code.replace(old, new)})
+        code = action.code or ''
+        # Studio may write the dict with or without a space after the colon
+        for old in (
+            "'x_studio_project_no_1':record.id,",
+            "'x_studio_project_no_1': record.id,",
+        ):
+            if old in code:
+                action.write({'code': code.replace(old, new)})
+                return
 
     @api.model
     def _ensure_not_under_warranty_selection(self):
