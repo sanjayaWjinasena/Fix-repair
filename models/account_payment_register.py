@@ -18,5 +18,10 @@ class AccountPaymentRegister(models.TransientModel):
             for order in orders.filtered(
                 lambda o: o.x_studio_quotation_type == 'Not Under Warranty'
             ):
-                order._move_ticket_to_stage(order, 'Advance Received')
+                task = order.sudo().task_id or self.env['project.task'].sudo().search(
+                    [('sale_order_id', '=', order.id)], limit=1
+                )
+                ticket = task.sudo().helpdesk_ticket_id if task else None
+                if ticket and (ticket.sudo().stage_id.name or '').strip() == 'Estimation Approval Received':
+                    order._move_ticket_to_stage(order, 'Advance Received')
         return result
