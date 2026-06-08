@@ -25,7 +25,7 @@ class StockPicking(models.Model):
                 picking.nuw_block_validate = False
                 continue
             stage_name = (ticket.sudo().stage_id.name or '').strip()
-            picking.nuw_block_validate = stage_name != 'Advance Received'
+            picking.nuw_block_validate = stage_name not in ('Advance Received', 'Repair Started')
 
     def _get_view(self, view_id=None, view_type='form', **options):
         arch, view = super()._get_view(view_id, view_type, **options)
