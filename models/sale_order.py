@@ -205,6 +205,13 @@ class SaleOrder(models.Model):
         action['context'] = ctx
         return action
 
+    def action_confirm(self):
+        result = super().action_confirm()
+        for order in self:
+            if order.x_studio_quotation_type == 'Not Under Warranty':
+                self._move_ticket_to_stage(order, 'Estimation Approval Received')
+        return result
+
     def action_approve_rug_direct(self):
         self.write({'x_studio_rug_approved': True})
         # write() moves the ticket to 'Estimation Approval Received'.
