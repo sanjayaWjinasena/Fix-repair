@@ -49,6 +49,45 @@ class StockPicking(models.Model):
                 if all_pickings and all(p.state in ('done', 'cancel') for p in all_pickings):
                     self.env['sale.order']._move_ticket_to_stage(so, 'Repair Completed')
 
+        # ── Path C: Not Under Warranty SO pickings ───────────────────────────
+        nuw_so_ids = set()
+        for picking in self.filtered(lambda p: p.state == 'done' and p.sale_id):
+            if picking.sale_id.x_studio_quotation_type == 'Not Under Warranty':
+                nuw_so_ids.add(picking.sale_id.id)
+
+        for so in self.env['sale.order'].sudo().browse(list(nuw_so_ids)):
+            task = so.task_id or self.env['project.task'].sudo().search(
+                [('sale_order_id', '=', so.id)], limit=1
+            )
+            ticket = task.helpdesk_ticket_id if task else None
+            if not ticket:
+                continue
+
+            current_stage = (ticket.stage_id.name or '').strip()
+
+            # Stages where a delivery validation must not advance the ticket.
+            # Everything before Advance Received = customer hasn't paid yet.
+            # Everything after Repair Started = don't regress.
+            _pre_repair_stages_nuw = {
+                'New', 'Sent to Factory', 'Received at Factory', 'Diagnosis',
+                'Estimation Sent to Customer', 'Estimation Approval Received',
+                'Repair Completed', 'Sent to Sales Centre',
+                'Handed Over to Customer',
+            }
+
+            if current_stage == 'Received at Sales Centre':
+                self.env['sale.order']._move_ticket_to_stage(so, 'Handed Over to Customer')
+            elif current_stage in _pre_repair_stages_nuw:
+                pass
+            else:
+                # Stage is 'Advance Received' (or 'Repair Started' for subsequent pickings)
+                self.env['sale.order']._move_ticket_to_stage(so, 'Repair Started')
+                all_pickings = self.env['stock.picking'].sudo().search(
+                    [('sale_id', '=', so.id)]
+                )
+                if all_pickings and all(p.state in ('done', 'cancel') for p in all_pickings):
+                    self.env['sale.order']._move_ticket_to_stage(so, 'Repair Completed')
+
         # ── Path B: Return-to-customer handover pickings ──────────────────────
         # Pickings: Virtual/inventory location → Customer location.
         # Primary match: picking.return_id.id == ticket.x_studio_pick_id
