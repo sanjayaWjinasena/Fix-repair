@@ -168,6 +168,11 @@ class SaleOrder(models.Model):
         if self.x_studio_quotation_type != 'Not Under Warranty':
             return action
 
+        # Move linked helpdesk ticket from Diagnosis → Estimation Sent to Customer
+        # when the Send by Email button is clicked (mirrors the RUG flow where
+        # clicking Request RUG Approval triggers the same transition).
+        self._move_ticket_to_stage(self, 'Estimation Sent to Customer')
+
         # Build the full portal URL (get_portal_url returns a relative path)
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url', '')
         portal_url = base_url + self.get_portal_url()
