@@ -1,9 +1,46 @@
 # -*- coding: utf-8 -*-
-from odoo import models
+from lxml import etree
+from odoo import api, fields, models
 
 
 class StockPicking(models.Model):
     _inherit = 'stock.picking'
+
+    nuw_block_validate = fields.Boolean(
+        compute='_compute_nuw_block_validate',
+    )
+
+    @api.depends('sale_id', 'sale_id.x_studio_quotation_type')
+    def _compute_nuw_block_validate(self):
+        for picking in self:
+            so = picking.sale_id
+            if not so or so.x_studio_quotation_type != 'Not Under Warranty':
+                picking.nuw_block_validate = False
+                continue
+            task = so.sudo().task_id or self.env['project.task'].sudo().search(
+                [('sale_order_id', '=', so.id)], limit=1
+            )
+            ticket = task.sudo().helpdesk_ticket_id if task else None
+            if not ticket:
+                picking.nuw_block_validate = False
+                continue
+            stage_name = (ticket.sudo().stage_id.name or '').strip()
+            picking.nuw_block_validate = stage_name != 'Advance Received'
+
+    def _get_view(self, view_id=None, view_type='form', **options):
+        arch, view = super()._get_view(view_id, view_type, **options)
+        if view_type == 'form':
+            for sheet in arch.xpath("//sheet"):
+                fld = etree.Element('field')
+                fld.set('name', 'nuw_block_validate')
+                fld.set('invisible', '1')
+                sheet.insert(0, fld)
+                break
+            for btn in arch.xpath("//button[@name='button_validate']"):
+                existing = btn.get('invisible', '')
+                extra = 'nuw_block_validate'
+                btn.set('invisible', f"({existing}) or {extra}" if existing else extra)
+        return arch, view
 
     def _action_done(self):
         res = super()._action_done()
