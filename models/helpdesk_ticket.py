@@ -155,13 +155,26 @@ class HelpdeskTicket(models.Model):
     def _get_view(self, view_id=None, view_type='form', **options):
         arch, view = super()._get_view(view_id, view_type, **options)
         if view_type == 'form':
-            # Inject has_return_picking so OWL can evaluate it in button conditions
+            # Inject computed/Studio fields that are used in conditions below
+            # but may not already be in the arch.
             for sheet in arch.xpath("//sheet"):
-                fld = etree.Element('field')
-                fld.set('name', 'has_return_picking')
-                fld.set('invisible', '1')
-                sheet.insert(0, fld)
+                for fname in ('has_return_picking', 'x_studio_normal_repair_without_serial_no'):
+                    if not arch.xpath(f"//field[@name='{fname}']"):
+                        fld = etree.Element('field')
+                        fld.set('name', fname)
+                        fld.set('invisible', '1')
+                        sheet.insert(0, fld)
                 break
+
+            # product_id: manually selectable (serial-tracked products only) for
+            # the "Without Serial No" ticket type; readonly for all other types
+            # where product is auto-populated from x_studio_serial_no.
+            for field in arch.xpath("//field[@name='product_id']"):
+                field.set('readonly', "not x_studio_normal_repair_without_serial_no")
+                field.set('domain',
+                    "[('tracking', '=', 'serial')] "
+                    "if x_studio_normal_repair_without_serial_no else []"
+                )
 
             # Restrict stage selection to the ticket's own company
             for field in arch.xpath("//field[@name='stage_id']"):
