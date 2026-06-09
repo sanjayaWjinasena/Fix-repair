@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from lxml import etree
 from odoo import api, fields, models
+from odoo.exceptions import UserError
 
 
 class HelpdeskTicket(models.Model):
@@ -176,6 +177,22 @@ class HelpdeskTicket(models.Model):
                     "if x_studio_normal_repair_without_serial_no else []"
                 )
 
+            # Create Serial No button — Without Serial No type only, once product is set
+            # and no serial has been created yet.
+            for header in arch.xpath("//header"):
+                btn = etree.Element('button')
+                btn.set('name', 'action_create_repair_serial')
+                btn.set('string', 'Create Serial No')
+                btn.set('type', 'object')
+                btn.set('class', 'btn-secondary')
+                btn.set('invisible',
+                    "not x_studio_normal_repair_without_serial_no "
+                    "or not product_id "
+                    "or x_studio_serial_no"
+                )
+                header.insert(0, btn)
+                break
+
             # Restrict stage selection to the ticket's own company
             for field in arch.xpath("//field[@name='stage_id']"):
                 field.set('domain',
@@ -249,6 +266,25 @@ class HelpdeskTicket(models.Model):
                 so_node.set('invisible', 'not sale_order_id')
                 serial_nodes[0].addnext(so_node)
         return arch, view
+
+    # ── Button actions ─ Without Serial No flow ──────────────────────────────
+
+    def action_create_repair_serial(self):
+        self.ensure_one()
+        if not self.product_id:
+            raise UserError("Select a product before creating a serial number.")
+        if self.x_studio_serial_no:
+            raise UserError("A serial number already exists for this ticket.")
+        lot = self.env['stock.lot'].sudo().create({
+            'name': self.name,
+            'product_id': self.product_id.id,
+            'company_id': self.company_id.id,
+        })
+        self.write({
+            'x_studio_serial_no': lot.id,
+            'lot_id': lot.id,
+            'x_studio_repair_serial_created': True,
+        })
 
     # ── Helpers ──────────────────────────────────────────────────────────────
 
