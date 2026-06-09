@@ -66,10 +66,29 @@ class HelpdeskTicket(models.Model):
                 ('fsm_done', '=', True),
             ]) > 0
 
-    @api.depends('picking_ids')
+    @api.depends('picking_ids', 'x_studio_serial_no')
     def _compute_has_return_picking(self):
         for ticket in self:
-            ticket.has_return_picking = bool(ticket.picking_ids)
+            if ticket.picking_ids:
+                ticket.has_return_picking = True
+                continue
+            # Without Serial No tickets have no sale order → picking_ids is always
+            # empty. Fall back to checking whether the serial has already been
+            # collected (incoming move from a customer location, done state).
+            serial = ticket.x_studio_serial_no
+            if serial and ticket.x_studio_normal_repair_without_serial_no:
+                cust_locs = self.env['stock.location'].sudo().search(
+                    [('usage', '=', 'customer')]
+                )
+                collected = self.env['stock.move.line'].sudo().search_count([
+                    ('lot_id', '=', serial.id),
+                    ('picking_code', '=', 'incoming'),
+                    ('location_id', 'in', cust_locs.ids),
+                    ('state', '=', 'done'),
+                ]) > 0
+                ticket.has_return_picking = collected
+            else:
+                ticket.has_return_picking = False
 
     @api.onchange('x_studio_serial_no')
     def _onchange_serial_no_product(self):
