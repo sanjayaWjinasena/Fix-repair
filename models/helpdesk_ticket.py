@@ -155,6 +155,14 @@ class HelpdeskTicket(models.Model):
     def _get_view(self, view_id=None, view_type='form', **options):
         arch, view = super()._get_view(view_id, view_type, **options)
         if view_type == 'form':
+            # Inject has_return_picking so OWL can evaluate it in button conditions
+            for sheet in arch.xpath("//sheet"):
+                fld = etree.Element('field')
+                fld.set('name', 'has_return_picking')
+                fld.set('invisible', '1')
+                sheet.insert(0, fld)
+                break
+
             # Restrict stage selection to the ticket's own company
             for field in arch.xpath("//field[@name='stage_id']"):
                 field.set('domain',
