@@ -29,6 +29,10 @@ class HelpdeskTicket(models.Model):
     # Used to gate the Send to Sales Centre button.
     task_done = fields.Boolean(compute='_compute_task_done')
 
+    # True when at least one return/transfer picking already exists on this ticket.
+    # Used to relabel the Return button as Dispatch on the second trip.
+    has_return_picking = fields.Boolean(compute='_compute_has_return_picking')
+
     @api.depends('stage_id')
     def _compute_repair_stage_state(self):
         mapping = {
@@ -59,6 +63,11 @@ class HelpdeskTicket(models.Model):
                 ('is_fsm', '=', True),
                 ('fsm_done', '=', True),
             ]) > 0
+
+    @api.depends('picking_ids')
+    def _compute_has_return_picking(self):
+        for ticket in self:
+            ticket.has_return_picking = bool(ticket.picking_ids)
 
     @api.onchange('x_studio_serial_no')
     def _onchange_serial_no_product(self):
@@ -172,20 +181,25 @@ class HelpdeskTicket(models.Model):
             #                              the picking; return location defaults to Customers
             cust_loc = self.env.ref('stock.stock_location_customers', raise_if_not_found=False)
             cust_loc_id = cust_loc.id if cust_loc else 5
+            btn_context = (
+                "{'default_ticket_id': (repair_stage_state == 'new' and id) or False, "
+                "'default_picking_id': x_studio_pick_id or False, "
+                "'default_partner_id': partner_id, "
+                f"'default_location_id': (repair_stage_state == 'received_at_sales_centre' and {cust_loc_id}) or False, "
+                "'default_company_id': company_id}"
+            )
             for btn in arch.xpath("//button[@name='195']"):
-                btn.set('invisible', "False")
-                btn.set('context',
-                    # ticket_id: always at New stage — makes the SO + Delivery group visible
-                    #            (helpdesk_stock hides that group when ticket_id is absent)
-                    # picking_id: pre-loads the delivery when x_studio_pick_id is known;
-                    #             at Received at Sales Centre it holds the incoming return picking
-                    # partner_id: lets stock_return_picking._get_view filter SOs by customer
-                    "{'default_ticket_id': (repair_stage_state == 'new' and id) or False, "
-                    "'default_picking_id': x_studio_pick_id or False, "
-                    "'default_partner_id': partner_id, "
-                    f"'default_location_id': (repair_stage_state == 'received_at_sales_centre' and {cust_loc_id}) or False, "
-                    "'default_company_id': company_id}"
-                )
+                btn.set('invisible', "has_return_picking")
+                btn.set('context', btn_context)
+                # Add Dispatch sibling — same action, shown once a return picking exists
+                dispatch = etree.Element('button')
+                dispatch.set('name', '195')
+                dispatch.set('string', 'Dispatch')
+                dispatch.set('type', 'action')
+                dispatch.set('class', btn.get('class', 'btn-secondary'))
+                dispatch.set('invisible', "not has_return_picking")
+                dispatch.set('context', btn_context)
+                btn.addnext(dispatch)
 
             # Serial Number: only show lots already issued via a sale order.
             # sale_order_ids is non-stored so domain filters on it are ignored.
