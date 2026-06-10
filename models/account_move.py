@@ -38,6 +38,11 @@ class AccountMove(models.Model):
                 btn.set('invisible', 'not is_rug_invoice or state != "draft"')
                 header.insert(0, btn)
                 break
+
+            # Register Payment: hide on RUG-confirmed invoices.
+            for btn in arch.xpath("//button[@name='action_register_payment']"):
+                existing = btn.get('invisible', '')
+                btn.set('invisible', f"({existing}) or x_studio_rug_confirmed" if existing else 'x_studio_rug_confirmed')
         return arch, view
 
     def action_change_to_rug_account(self):
