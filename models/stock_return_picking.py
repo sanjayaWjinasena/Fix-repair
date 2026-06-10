@@ -197,6 +197,13 @@ class StockReturnPicking(models.TransientModel):
     def _create_returns(self):
         if self.ticket_id:
             self.product_return_moves.write({'quantity': 1})
+        if self.is_dispatch_wizard:
+            # Odoo validates that location_id equals original_location_id or is
+            # a child of parent_location_id.  For dispatch we move to the customer
+            # location which is outside the warehouse tree, so we neutralise both
+            # fields to match our chosen location_id before calling super.
+            self.original_location_id = self.location_id
+            self.parent_location_id = self.location_id
         new_picking_id, pick_type_id = super()._create_returns()
         if self.ticket_id:
             new_picking = self.env['stock.picking'].browse(new_picking_id)
