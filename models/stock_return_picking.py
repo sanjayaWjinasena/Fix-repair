@@ -30,6 +30,12 @@ class StockReturnPicking(models.TransientModel):
                     ('company_id', '=', ticket.company_id.id),
                 ], order='sequence asc', limit=1)
                 if repair_loc and cust_loc and pick_type_out:
+                    # The serial was just created (no quant exists yet).
+                    # Put 1 unit into the repair location so the outgoing
+                    # picking can consume it without a serial-conflict error.
+                    self.env['stock.quant'].sudo()._update_available_quantity(
+                        ticket.product_id, repair_loc, 1.0, lot_id=serial
+                    )
                     new_picking = self.env['stock.picking'].sudo().create({
                         'partner_id': ticket.partner_id.id,
                         'picking_type_id': pick_type_out.id,
