@@ -1,11 +1,23 @@
 # -*- coding: utf-8 -*-
 from lxml import etree
 from markupsafe import Markup, escape
-from odoo import api, models
+from odoo import api, fields, models
 
 
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
+
+    # Mirrors the linked helpdesk ticket's repair_stage_state for use in view
+    # expressions (e.g. gating Create Invoice on Repair Completed for RUG SOs).
+    ticket_repair_stage_state = fields.Char(compute='_compute_ticket_repair_stage_state')
+
+    def _compute_ticket_repair_stage_state(self):
+        for order in self:
+            task = order.sudo().task_id or self.env['project.task'].sudo().search(
+                [('sale_order_id', '=', order.id)], limit=1
+            )
+            ticket = task.helpdesk_ticket_id if task else None
+            order.ticket_repair_stage_state = (ticket.repair_stage_state or '') if ticket else ''
 
     @api.model
     def _fix_advance_payment_project_field(self):
@@ -83,6 +95,21 @@ class SaleOrder(models.Model):
     def _get_view(self, view_id=None, view_type='form', **options):
         arch, view = super()._get_view(view_id, view_type, **options)
         if view_type == 'form':
+            # Inject ticket_repair_stage_state so client can evaluate button conditions.
+            for sheet in arch.xpath("//sheet"):
+                fld = etree.Element('field')
+                fld.set('name', 'ticket_repair_stage_state')
+                fld.set('invisible', '1')
+                sheet.insert(0, fld)
+                break
+
+            # Create Invoice: for RUG-confirmed SOs, only show once the ticket
+            # reaches Repair Completed stage.
+            for btn in arch.xpath("//button[@id='create_invoice']"):
+                existing = btn.get('invisible', '')
+                extra = "(x_studio_rug_confirmed and ticket_repair_stage_state != 'repair_completed')"
+                btn.set('invisible', f"({existing}) or {extra}" if existing else extra)
+
             # Order Payment Type: editable in draft/sent for all customers
             for el in arch.xpath("//field[@name='x_studio_order_payment_method']"):
                 el.set('readonly', "state in ('cancel', 'done', 'sale')")
