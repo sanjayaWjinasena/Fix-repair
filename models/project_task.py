@@ -93,4 +93,14 @@ class ProjectTask(models.Model):
                 btn.set('invisible',
                     f"not display_mark_as_done_secondary or ({repair_guard})")
 
+            # New Quotation: not used in the repair workflow — hide entirely.
+            for btn in arch.xpath("//button[@name='action_fsm_create_quotation']"):
+                btn.set('invisible', '1')
+
+            # Tested OK: Studio button 2316. Only show when no SO has been
+            # created for this task — i.e. the repair needs no materials/billing.
+            for btn in arch.xpath("//button[@name='2316']"):
+                existing = btn.get('invisible', 'False')
+                btn.set('invisible', f"({existing}) or sale_order_id")
+
         return arch, view
