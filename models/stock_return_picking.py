@@ -203,10 +203,18 @@ class StockReturnPicking(models.TransientModel):
         location fails that check against the warehouse tree).
         """
         src = self.picking_id  # collection picking: Customer → Repair
-        pick_type = self.env['stock.picking.type'].sudo().search([
-            ('code', '=', 'outgoing'),
-            ('company_id', '=', src.company_id.id),
-        ], order='sequence asc', limit=1) or src.picking_type_id
+        # Use the original outgoing delivery's picking type so the dispatch
+        # picking gets the correct operation type (e.g. BR-EK/OUT, not PW-JM/OUT).
+        # src.return_id is the outgoing delivery that was reversed into src.
+        pick_type = (
+            src.return_id.picking_type_id
+            or self.env['stock.picking.type'].sudo().search([
+                ('code', '=', 'outgoing'),
+                ('warehouse_id.lot_stock_id.location_id', 'parent_of', src.location_dest_id.id),
+                ('company_id', '=', src.company_id.id),
+            ], limit=1)
+            or src.picking_type_id
+        )
 
         new_picking = self.env['stock.picking'].sudo().create({
             'partner_id': src.partner_id.id,
@@ -216,16 +224,19 @@ class StockReturnPicking(models.TransientModel):
             'company_id': src.company_id.id,
             'origin': src.name,
             'return_id': src.id,
-            'x_studio_helpdesk_ticket_id': self.ticket_id.id,
+            'x_studio_helpdesk_ticket_id': self.ticket_id.id if self.ticket_id else False,
         })
 
-        serial = self.ticket_id.x_studio_serial_no
-        for ret_line in self.product_return_moves:
-            move = self.env['stock.move'].sudo().create({
-                'name': ret_line.product_id.display_name,
-                'product_id': ret_line.product_id.id,
-                'product_uom_qty': ret_line.quantity,
-                'product_uom': ret_line.uom_id.id,
+        serial = self.ticket_id.x_studio_serial_no if self.ticket_id else False
+        # product_return_moves is not populated when the wizard is opened via
+        # default_picking_id context (Odoo only fills it via active_id).
+        # Read moves directly from the source picking instead.
+        for src_move in src.move_ids.filtered(lambda m: m.state == 'done'):
+            new_move = self.env['stock.move'].sudo().create({
+                'name': src_move.product_id.display_name,
+                'product_id': src_move.product_id.id,
+                'product_uom_qty': src_move.quantity,
+                'product_uom': src_move.product_uom.id,
                 'location_id': src.location_dest_id.id,
                 'location_dest_id': self.location_id.id,
                 'picking_id': new_picking.id,
@@ -235,9 +246,9 @@ class StockReturnPicking(models.TransientModel):
             if serial:
                 self.env['stock.move.line'].sudo().create({
                     'picking_id': new_picking.id,
-                    'move_id': move.id,
-                    'product_id': ret_line.product_id.id,
-                    'product_uom_id': ret_line.uom_id.id,
+                    'move_id': new_move.id,
+                    'product_id': src_move.product_id.id,
+                    'product_uom_id': src_move.product_uom.id,
                     'lot_id': serial.id,
                     'location_id': src.location_dest_id.id,
                     'location_dest_id': self.location_id.id,
