@@ -183,6 +183,7 @@ class HelpdeskTicket(models.Model):
             for sheet in arch.xpath("//sheet"):
                 for fname in (
                     'has_return_picking',
+                    'task_done',
                     'x_studio_normal_repair_without_serial_no',
                     'x_studio_job_location',
                     'so_invoice_status',
@@ -318,7 +319,8 @@ class HelpdeskTicket(models.Model):
                 dispatch.set('class', btn.get('class', 'btn-secondary'))
                 dispatch.set('invisible',
                     "not has_return_picking or "
-                    "so_invoice_status != 'invoiced' or "
+                    "(x_studio_rug_confirmed and not task_done) or "
+                    "(not x_studio_rug_confirmed and so_invoice_status != 'invoiced') or "
                     "not ("
                     "(x_studio_job_location == 'Factory Repair' and repair_stage_state == 'received_at_sales_centre') or "
                     "(x_studio_job_location == 'Centre Repair' and repair_stage_state == 'repair_completed')"
