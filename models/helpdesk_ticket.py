@@ -35,6 +35,9 @@ class HelpdeskTicket(models.Model):
     # Used to relabel the Return button as Dispatch on the second trip.
     has_return_picking = fields.Boolean(compute='_compute_has_return_picking')
 
+    # Mirrors the linked SO's invoice_status so it can be used in view expressions.
+    so_invoice_status = fields.Selection(related='sale_order_id.invoice_status')
+
     @api.depends('stage_id')
     def _compute_repair_stage_state(self):
         mapping = {
@@ -182,6 +185,7 @@ class HelpdeskTicket(models.Model):
                     'has_return_picking',
                     'x_studio_normal_repair_without_serial_no',
                     'x_studio_job_location',
+                    'so_invoice_status',
                 ):
                     if not arch.xpath(f"//field[@name='{fname}']"):
                         fld = etree.Element('field')
@@ -278,7 +282,14 @@ class HelpdeskTicket(models.Model):
                 dispatch.set('string', 'Dispatch')
                 dispatch.set('type', 'action')
                 dispatch.set('class', btn.get('class', 'btn-secondary'))
-                dispatch.set('invisible', "not has_return_picking")
+                dispatch.set('invisible',
+                    "not has_return_picking or "
+                    "so_invoice_status != 'invoiced' or "
+                    "not ("
+                    "(x_studio_job_location == 'Factory Repair' and repair_stage_state == 'received_at_sales_centre') or "
+                    "(x_studio_job_location == 'Centre Repair' and repair_stage_state == 'repair_completed')"
+                    ")"
+                )
                 dispatch.set('context', btn_context)
                 btn.addnext(dispatch)
 
