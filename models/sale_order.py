@@ -144,6 +144,17 @@ class SaleOrder(models.Model):
                 )
                 header.insert(0, btn)
 
+            # Send PRO-FORMA Invoice: not applicable for repair SOs.
+            repair_so = "x_studio_quotation_type in ('Repair', 'Not Under Warranty')"
+            for btn in arch.xpath("//button[contains(@string, 'PRO-FORMA')]"):
+                existing = btn.get('invisible', '')
+                btn.set('invisible', f"({existing}) or ({repair_so})" if existing else repair_so)
+
+            # Cancel: hide on repair SOs — cancellation is managed via ticket workflow.
+            for btn in arch.xpath("//button[@name='action_cancel']"):
+                existing = btn.get('invisible', '')
+                btn.set('invisible', f"({existing}) or ({repair_so})" if existing else repair_so)
+
         return arch, view
 
     @api.onchange('partner_id')
