@@ -194,16 +194,63 @@ class StockReturnPicking(models.TransientModel):
                     if line.quantity != 1:
                         line.quantity = 1
 
+    def _create_dispatch_picking(self):
+        """Create a direct outgoing picking (Repair → Customer) for dispatch.
+
+        Called instead of super()._create_returns() when is_dispatch_wizard is
+        True so we never hit Odoo's location validation (location_id must equal
+        original_location_id or be a child of parent_location_id — customer
+        location fails that check against the warehouse tree).
+        """
+        src = self.picking_id  # collection picking: Customer → Repair
+        pick_type = self.env['stock.picking.type'].sudo().search([
+            ('code', '=', 'outgoing'),
+            ('company_id', '=', src.company_id.id),
+        ], order='sequence asc', limit=1) or src.picking_type_id
+
+        new_picking = self.env['stock.picking'].sudo().create({
+            'partner_id': src.partner_id.id,
+            'picking_type_id': pick_type.id,
+            'location_id': src.location_dest_id.id,   # Repair location
+            'location_dest_id': self.location_id.id,  # Customer
+            'company_id': src.company_id.id,
+            'origin': src.name,
+            'return_id': src.id,
+            'x_studio_helpdesk_ticket_id': self.ticket_id.id,
+        })
+
+        serial = self.ticket_id.x_studio_serial_no
+        for ret_line in self.product_return_moves:
+            move = self.env['stock.move'].sudo().create({
+                'name': ret_line.product_id.display_name,
+                'product_id': ret_line.product_id.id,
+                'product_uom_qty': ret_line.quantity,
+                'product_uom': ret_line.uom_id.id,
+                'location_id': src.location_dest_id.id,
+                'location_dest_id': self.location_id.id,
+                'picking_id': new_picking.id,
+                'company_id': src.company_id.id,
+                'to_refund': False,
+            })
+            if serial:
+                self.env['stock.move.line'].sudo().create({
+                    'picking_id': new_picking.id,
+                    'move_id': move.id,
+                    'product_id': ret_line.product_id.id,
+                    'product_uom_id': ret_line.uom_id.id,
+                    'lot_id': serial.id,
+                    'location_id': src.location_dest_id.id,
+                    'location_dest_id': self.location_id.id,
+                    'company_id': src.company_id.id,
+                })
+
+        return new_picking.id, pick_type.id
+
     def _create_returns(self):
         if self.ticket_id:
             self.product_return_moves.write({'quantity': 1})
         if self.is_dispatch_wizard:
-            # Odoo validates that location_id equals original_location_id or is
-            # a child of parent_location_id.  For dispatch we move to the customer
-            # location which is outside the warehouse tree, so we neutralise both
-            # fields to match our chosen location_id before calling super.
-            self.original_location_id = self.location_id
-            self.parent_location_id = self.location_id
+            return self._create_dispatch_picking()
         new_picking_id, pick_type_id = super()._create_returns()
         if self.ticket_id:
             new_picking = self.env['stock.picking'].browse(new_picking_id)
