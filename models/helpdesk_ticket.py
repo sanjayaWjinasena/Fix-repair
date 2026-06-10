@@ -271,6 +271,12 @@ class HelpdeskTicket(models.Model):
             )
             # Return button: only show once required data is filled
             # (product, serial, job location set) and no collection yet.
+            # Dispatch sibling: same action 195, shown only at
+            # 'Received at Sales Centre' — opens wizard pre-loaded with the
+            # stored collection picking (x_studio_pick_id) and customer return
+            # location so the user just clicks Return to create the dispatch.
+            # Path B in _action_done then moves the ticket to
+            # 'Handed Over to Customer' on validate.
             for btn in arch.xpath("//button[@name='195']"):
                 btn.set('invisible',
                     "has_return_picking or "
@@ -279,6 +285,14 @@ class HelpdeskTicket(models.Model):
                     "not x_studio_job_location"
                 )
                 btn.set('context', btn_context)
+                dispatch = etree.Element('button')
+                dispatch.set('name', '195')
+                dispatch.set('string', 'Dispatch')
+                dispatch.set('type', 'action')
+                dispatch.set('class', btn.get('class', 'btn-secondary'))
+                dispatch.set('invisible', "repair_stage_state != 'received_at_sales_centre'")
+                dispatch.set('context', btn_context)
+                btn.addnext(dispatch)
 
             # Serial Number: only show lots already issued via a sale order.
             # sale_order_ids is non-stored so domain filters on it are ignored.
