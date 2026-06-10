@@ -137,6 +137,10 @@ class SaleOrder(models.Model):
             for btn in arch.xpath("//button[@name='action_cancel']"):
                 btn.set('invisible', '1')
 
+            # Create Advance Payment: not used — hide entirely.
+            for btn in arch.xpath("//button[@name='2341']"):
+                btn.set('invisible', '1')
+
             # Send by Email: Not Under Warranty type has no RUG flow — show directly
             # Studio has hidden all action_quotation_send buttons via an always-true
             # `state not in ['False']` guard; inject a clean button for this type.
