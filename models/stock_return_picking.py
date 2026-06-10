@@ -124,6 +124,11 @@ class StockReturnPicking(models.TransientModel):
                 for field in arch.xpath("//field[@name='picking_id']"):
                     field.set('readonly', '1')
 
+            # Hide the Studio-added duplicate Return button (action 1997) —
+            # the standard create_returns button already handles the flow.
+            for btn in arch.xpath("//button[@name='1997']"):
+                btn.set('invisible', '1')
+
             # Hide the To Refund column — forced False in _create_returns anyway.
             for refund_field in arch.xpath(
                 "//field[@name='product_return_moves']//field[@name='to_refund']"

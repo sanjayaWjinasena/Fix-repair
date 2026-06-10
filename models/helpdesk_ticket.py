@@ -228,12 +228,37 @@ class HelpdeskTicket(models.Model):
                     "('x_studio_company_id', '=', False)]"
                 )
 
-            # Send to Sales Centre: hide once the ticket is already at or past that
-            # stage — Studio only guards on task_done with no stage check.
+            # Change to RUG: visible on External-not-RUG tickets (rug_repair=True,
+            # rug_confirmed=False) that have a serial, at early stages only.
+            for header in arch.xpath("//header"):
+                btn = etree.Element('button')
+                btn.set('name', 'action_change_to_rug')
+                btn.set('string', 'Change to RUG')
+                btn.set('type', 'object')
+                btn.set('class', 'btn-secondary')
+                btn.set('invisible',
+                    "not x_studio_rug_repair or "
+                    "x_studio_rug_confirmed or "
+                    "not x_studio_serial_no or "
+                    "repair_stage_state not in ('new', 'sent_to_factory', 'received_at_factory')"
+                )
+                header.append(btn)
+                break
+
+            # Send to Sales Centre: hide once already at/past that stage,
+            # and hide entirely for Centre Repair jobs (no factory trip).
             for btn in arch.xpath("//button[@name='action_send_to_sales_centre']"):
                 existing = btn.get('invisible', '')
-                extra = "repair_stage_state in ('sent_to_sales_centre', 'received_at_sales_centre', 'other')"
+                extra = (
+                    "repair_stage_state in ('sent_to_sales_centre', 'received_at_sales_centre', 'other') or "
+                    "x_studio_job_location == 'Centre Repair'"
+                )
                 btn.set('invisible', f"({existing}) or ({extra})" if existing else extra)
+
+            # Received at Sales Centre: hide for Centre Repair jobs.
+            for btn in arch.xpath("//button[@name='action_received_at_sales_centre']"):
+                existing = btn.get('invisible', '')
+                btn.set('invisible', f"({existing}) or x_studio_job_location == 'Centre Repair'" if existing else "x_studio_job_location == 'Centre Repair'")
 
             # Send to Factory: only after collection (has_return_picking) and only
             # for Factory Repair jobs while the ticket is still in New stage.
@@ -328,6 +353,14 @@ class HelpdeskTicket(models.Model):
                 so_node.set('invisible', 'not sale_order_id')
                 serial_nodes[0].addnext(so_node)
         return arch, view
+
+    def action_change_to_rug(self):
+        """Change ticket type from External-not-RUG to RUG (Under Warranty - RUG)."""
+        rug_type = self.env['helpdesk.ticket.type'].sudo().search(
+            [('name', 'ilike', 'Under Warranty - RUG')], limit=1
+        )
+        if rug_type:
+            self.sudo().write({'ticket_type_id': rug_type.id})
 
     # ── Button actions ─ Without Serial No flow ──────────────────────────────
 
