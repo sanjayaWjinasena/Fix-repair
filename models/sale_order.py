@@ -123,11 +123,16 @@ class SaleOrder(models.Model):
             for btn in arch.xpath("//button[@name='2004']"):
                 btn.set('invisible', rug_approve_invisible)
 
-            # Confirm button: hide on Repair SOs until RUG is approved
+            # Confirm button: hide on all repair SOs until RUG is approved.
+            # NUW SOs also stay hidden — x_studio_rug_approved never becomes True
+            # for NUW so Confirm is suppressed on both repair types.
             for btn in arch.xpath("//button[@name='action_confirm']"):
                 existing = btn.get('invisible', '')
-                extra = "(x_studio_quotation_type == 'Repair' and not x_studio_rug_approved)"
-                btn.set('invisible', f"({existing}) or {extra}" if existing else extra)
+                extra = (
+                    "x_studio_quotation_type in ('Repair', 'Not Under Warranty') "
+                    "and not x_studio_rug_approved"
+                )
+                btn.set('invisible', f"({existing}) or ({extra})" if existing else extra)
 
             # Send by Email: Not Under Warranty type has no RUG flow — show directly
             # Studio has hidden all action_quotation_send buttons via an always-true
@@ -143,6 +148,10 @@ class SaleOrder(models.Model):
                     "or state not in ('draft', 'sent')"
                 )
                 header.insert(0, btn)
+
+            # Create Advance Payment: not used in repair workflow — hide entirely.
+            for btn in arch.xpath("//button[@name='2341']"):
+                btn.set('invisible', '1')
 
             # Send PRO-FORMA Invoice: not applicable for repair SOs.
             repair_so = "x_studio_quotation_type in ('Repair', 'Not Under Warranty')"
