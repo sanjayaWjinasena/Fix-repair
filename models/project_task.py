@@ -43,7 +43,7 @@ class ProjectTask(models.Model):
             if not task.helpdesk_ticket_id or not task.sale_order_id:
                 continue
             ticket = task.helpdesk_ticket_id
-            qtype = 'Repair' if ticket.x_studio_rug_repair else 'Not Under Warranty'
+            qtype = 'Repair' if ticket.x_studio_rug_confirmed else 'Not Under Warranty'
             if task.sale_order_id.x_studio_quotation_type == qtype:
                 continue
             if qtype == 'Not Under Warranty':
