@@ -73,18 +73,22 @@ class StockReturnPicking(models.TransientModel):
                     fake_picking.sudo().write({'state': 'done'})
                     defaults['picking_id'] = fake_picking.id
 
-        elif serial and serial.product_id:
-            # With Serial No / RUG: look up the existing outgoing delivery.
+        elif serial:
+            # With Serial No / RUG: product may come from the ticket or from
+            # the lot itself (Studio automations sometimes clear ticket.product_id).
+            product = ticket.product_id or serial.product_id
             cust_locs = self.env['stock.location'].sudo().search(
                 [('usage', '=', 'customer')]
             )
-            move_line = self.env['stock.move.line'].sudo().search([
-                ('product_id', '=', serial.product_id.id),
-                ('lot_id', '=', serial.id),
-                ('picking_code', '=', 'outgoing'),
-                ('location_dest_id', 'in', cust_locs.ids),
-                ('state', '=', 'done'),
-            ], limit=1, order='date desc')
+            move_line = False
+            if product:
+                move_line = self.env['stock.move.line'].sudo().search([
+                    ('product_id', '=', product.id),
+                    ('lot_id', '=', serial.id),
+                    ('picking_code', '=', 'outgoing'),
+                    ('location_dest_id', 'in', cust_locs.ids),
+                    ('state', '=', 'done'),
+                ], limit=1, order='date desc')
             if move_line:
                 defaults['picking_id'] = move_line.picking_id.id
                 so = (
@@ -95,10 +99,10 @@ class StockReturnPicking(models.TransientModel):
                 )
                 if so:
                     defaults['sale_order_id'] = so.id
-            elif ticket.product_id:
+            elif product:
                 # No historical delivery found (e.g. item sold outside this
-                # system). Fall back to a synthetic done outgoing picking so
-                # the wizard has something to reverse — same approach as the
+                # system). Create a synthetic done outgoing picking so the
+                # wizard has something to reverse — same approach as the
                 # Without Serial No flow.
                 repair_loc = (
                     ticket.x_studio_virtual_location_1
@@ -125,10 +129,10 @@ class StockReturnPicking(models.TransientModel):
                         'date_done': now,
                     })
                     fake_move = self.env['stock.move'].sudo().create({
-                        'name': ticket.product_id.display_name,
-                        'product_id': ticket.product_id.id,
+                        'name': product.display_name,
+                        'product_id': product.id,
                         'product_uom_qty': 1.0,
-                        'product_uom': ticket.product_id.uom_id.id,
+                        'product_uom': product.uom_id.id,
                         'location_id': repair_loc.id,
                         'location_dest_id': cust_loc.id,
                         'picking_id': fake_picking.id,
@@ -139,8 +143,8 @@ class StockReturnPicking(models.TransientModel):
                     self.env['stock.move.line'].sudo().create({
                         'picking_id': fake_picking.id,
                         'move_id': fake_move.id,
-                        'product_id': ticket.product_id.id,
-                        'product_uom_id': ticket.product_id.uom_id.id,
+                        'product_id': product.id,
+                        'product_uom_id': product.uom_id.id,
                         'lot_id': serial.id,
                         'qty_done': 1.0,
                         'location_id': repair_loc.id,
