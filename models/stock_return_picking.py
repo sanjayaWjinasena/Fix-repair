@@ -27,12 +27,12 @@ class StockReturnPicking(models.TransientModel):
             # from its "already assigned" check, so the two transient quants
             # (inventory +1 and customer +1) during _action_done don't conflict.
             if serial and ticket.product_id:
-                inv_loc = (
-                    self.env.ref('stock.location_inventory', raise_if_not_found=False)
-                    or self.env['stock.location'].sudo().search(
-                        [('usage', '=', 'inventory')], limit=1
-                    )
-                )
+                inv_loc = self.env['stock.location'].sudo().search([
+                    ('usage', '=', 'inventory'),
+                    '|',
+                    ('company_id', '=', ticket.company_id.id),
+                    ('company_id', '=', False),
+                ], order='company_id desc nulls last', limit=1)
                 cust_loc = self.env['stock.location'].sudo().search(
                     [('usage', '=', 'customer')], limit=1
                 )
