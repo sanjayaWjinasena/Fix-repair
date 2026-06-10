@@ -224,10 +224,17 @@ class StockReturnPicking(models.TransientModel):
             'company_id': src.company_id.id,
             'origin': src.name,
             'return_id': src.id,
-            'x_studio_helpdesk_ticket_id': self.ticket_id.id if self.ticket_id else False,
+            'x_studio_helpdesk_ticket_id': (
+                self.ticket_id.id
+                or src.sudo().x_studio_helpdesk_ticket_id.id
+                or False
+            ),
         })
 
-        serial = self.ticket_id.x_studio_serial_no if self.ticket_id else False
+        # ticket_id may be False when wizard opened without default_ticket_id;
+        # fall back to the collection picking's linked ticket.
+        ticket = self.ticket_id or src.sudo().x_studio_helpdesk_ticket_id
+        serial = ticket.x_studio_serial_no if ticket else False
         # product_return_moves is not populated when the wizard is opened via
         # default_picking_id context (Odoo only fills it via active_id).
         # Read moves directly from the source picking instead.
