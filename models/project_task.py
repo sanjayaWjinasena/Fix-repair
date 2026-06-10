@@ -77,6 +77,14 @@ class ProjectTask(models.Model):
             for btn in arch.xpath("//button[@name='action_fsm_create_quotation']"):
                 btn.set('invisible', '1')
 
+            # Products (material) stat button: for repair tickets only show once
+            # both the Repair Diagnosis Validation and Image Validation are present.
+            # Non-repair FSM tasks keep their original allow_material condition.
+            for btn in arch.xpath("//button[@name='action_fsm_view_material']"):
+                existing = btn.get('invisible', '')
+                extra = "helpdesk_ticket_id and not (x_studio_valid_diagnosis and x_studio_repair_image_01)"
+                btn.set('invisible', f"({existing}) or ({extra})" if existing else extra)
+
             # Mark as Done: only show for repair tickets when the repair is
             # complete (ticket at Repair Completed). Non-repair FSM tasks have
             # no helpdesk_ticket_id so the guard is False and they show normally.
