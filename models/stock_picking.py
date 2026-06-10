@@ -191,13 +191,18 @@ class StockPicking(models.Model):
                     ticket._move_to_stage('Handed Over to Customer')
 
         # ── Path D: Dispatch pickings created via the Dispatch button ─────────
-        # _create_returns stamps x_studio_helpdesk_ticket_id on the new picking
-        # when default_ticket_id is passed via the button context. When that
-        # dispatch picking (→ customer location) is validated, move the ticket
-        # directly from 'Received at Sales Centre' to 'Handed Over to Customer'.
+        # _create_returns stamps x_studio_helpdesk_ticket_id on the new picking.
+        # When that picking is validated and either endpoint is a customer
+        # location, move the ticket from 'Received at Sales Centre' to
+        # 'Handed Over to Customer'.
+        # The stage guard ensures the initial collection picking (also
+        # customer-location, but ticket at 'New') never triggers this path.
         for picking in self.filtered(
             lambda p: p.state == 'done'
-            and p.location_dest_id.usage == 'customer'
+            and (
+                p.location_dest_id.usage == 'customer'
+                or p.location_id.usage == 'customer'
+            )
         ):
             ticket = picking.sudo().x_studio_helpdesk_ticket_id
             if not ticket:
