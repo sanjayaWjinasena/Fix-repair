@@ -10,19 +10,6 @@ class StockPicking(models.Model):
         compute='_compute_nuw_block_validate',
     )
 
-    repair_ticket_sent_to_sales_centre = fields.Boolean(
-        compute='_compute_repair_ticket_sent_to_sales_centre',
-    )
-
-    @api.depends('x_studio_helpdesk_ticket_id', 'x_studio_helpdesk_ticket_id.stage_id')
-    def _compute_repair_ticket_sent_to_sales_centre(self):
-        for picking in self:
-            ticket = picking.sudo().x_studio_helpdesk_ticket_id
-            stage_name = (ticket.stage_id.name or '').strip() if ticket else ''
-            picking.repair_ticket_sent_to_sales_centre = (
-                stage_name == 'Received at Sales Centre'
-            )
-
     @api.depends('sale_id', 'sale_id.x_studio_quotation_type')
     def _compute_nuw_block_validate(self):
         for picking in self:
@@ -44,36 +31,19 @@ class StockPicking(models.Model):
         arch, view = super()._get_view(view_id, view_type, **options)
         if view_type == 'form':
             for sheet in arch.xpath("//sheet"):
-                for fname in ('nuw_block_validate', 'repair_ticket_sent_to_sales_centre'):
-                    fld = etree.Element('field')
-                    fld.set('name', fname)
-                    fld.set('invisible', '1')
-                    sheet.insert(0, fld)
+                fld = etree.Element('field')
+                fld.set('name', 'nuw_block_validate')
+                fld.set('invisible', '1')
+                sheet.insert(0, fld)
                 break
             for btn in arch.xpath("//button[@name='button_validate']"):
                 existing = btn.get('invisible', '')
                 extra = 'nuw_block_validate'
                 btn.set('invisible', f"({existing}) or {extra}" if existing else extra)
-            # Dispatch button: shown on repair collection pickings only when the
-            # ticket has physically arrived ('Received at Sales Centre').
-            # The arch has two button[@name='195'] elements — a Studio-injected
-            # duplicate (no data-hotkey) and the standard Odoo return button
-            # (data-hotkey="k"). Hide the duplicate; configure only the standard one.
-            # Pass default_location_id so the wizard pre-fills the customer
-            # location and _get_view / _compute_moves_locations lock it.
-            cust_loc = self.env.ref('stock.stock_location_customers', raise_if_not_found=False)
-            cust_loc_id = cust_loc.id if cust_loc else 5
+            # Hide both button[@name='195'] elements on the picking form —
+            # Dispatch is handled exclusively from the repair ticket form.
             for btn in arch.xpath("//button[@name='195'][@type='action']"):
-                if not btn.get('data-hotkey'):
-                    btn.set('invisible', '1')
-                else:
-                    btn.set('string', 'Dispatch')
-                    btn.set('invisible', 'not repair_ticket_sent_to_sales_centre')
-                    btn.set('context',
-                        f"{{'default_ticket_id': x_studio_helpdesk_ticket_id, "
-                        f"'default_location_id': {cust_loc_id}, "
-                        f"'default_picking_id': id}}"
-                    )
+                btn.set('invisible', '1')
         return arch, view
 
     def _action_done(self):

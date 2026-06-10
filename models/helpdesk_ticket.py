@@ -35,6 +35,10 @@ class HelpdeskTicket(models.Model):
     # Used to relabel the Return button as Dispatch on the second trip.
     has_return_picking = fields.Boolean(compute='_compute_has_return_picking')
 
+    # True when the linked SO has no outstanding invoice balance (warranty tickets
+    # with no invoices also qualify). Gates the Dispatch button on the ticket form.
+    repair_so_fully_paid = fields.Boolean(compute='_compute_repair_so_fully_paid')
+
     @api.depends('stage_id')
     def _compute_repair_stage_state(self):
         mapping = {
@@ -89,6 +93,30 @@ class HelpdeskTicket(models.Model):
                 ticket.has_return_picking = collected
             else:
                 ticket.has_return_picking = False
+
+    @api.depends(
+        'sale_order_id',
+        'sale_order_id.invoice_ids',
+        'sale_order_id.invoice_ids.state',
+        'sale_order_id.invoice_ids.payment_state',
+    )
+    def _compute_repair_so_fully_paid(self):
+        for ticket in self:
+            so = ticket.sudo().sale_order_id
+            if not so:
+                ticket.repair_so_fully_paid = False
+                continue
+            invoices = so.sudo().invoice_ids.filtered(
+                lambda inv: inv.state == 'posted' and inv.move_type == 'out_invoice'
+            )
+            if not invoices:
+                # No posted invoices — warranty / zero-cost repair, allow dispatch.
+                ticket.repair_so_fully_paid = True
+                continue
+            ticket.repair_so_fully_paid = all(
+                inv.payment_state in ('paid', 'in_payment', 'reversed')
+                for inv in invoices
+            )
 
     @api.onchange('x_studio_serial_no')
     def _onchange_serial_no_product(self):
@@ -182,6 +210,7 @@ class HelpdeskTicket(models.Model):
                     'has_return_picking',
                     'x_studio_normal_repair_without_serial_no',
                     'x_studio_job_location',
+                    'repair_so_fully_paid',
                 ):
                     if not arch.xpath(f"//field[@name='{fname}']"):
                         fld = etree.Element('field')
@@ -290,7 +319,10 @@ class HelpdeskTicket(models.Model):
                 dispatch.set('string', 'Dispatch')
                 dispatch.set('type', 'action')
                 dispatch.set('class', btn.get('class', 'btn-secondary'))
-                dispatch.set('invisible', "False")
+                dispatch.set('invisible',
+                    "repair_stage_state != 'received_at_sales_centre' or "
+                    "not repair_so_fully_paid"
+                )
                 dispatch.set('context', btn_context)
                 btn.addnext(dispatch)
 
