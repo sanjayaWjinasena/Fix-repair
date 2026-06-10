@@ -292,7 +292,7 @@ class HelpdeskTicket(models.Model):
             cust_loc = self.env.ref('stock.stock_location_customers', raise_if_not_found=False)
             cust_loc_id = cust_loc.id if cust_loc else 5
             btn_context = (
-                "{'default_ticket_id': id, "
+                "{'default_ticket_id': (repair_stage_state == 'new' and id) or False, "
                 "'default_picking_id': x_studio_pick_id or False, "
                 "'default_partner_id': partner_id, "
                 f"'default_location_id': (repair_stage_state == 'received_at_sales_centre' and {cust_loc_id}) or False, "
