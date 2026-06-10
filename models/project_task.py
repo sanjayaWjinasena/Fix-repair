@@ -31,7 +31,8 @@ class ProjectTask(models.Model):
             self._fsm_create_sale_order()
             if self.helpdesk_ticket_id and self.sale_order_id:
                 ticket = self.helpdesk_ticket_id
-                if ticket.x_studio_normal_repair_with_serial_no:
+                if (ticket.x_studio_normal_repair_with_serial_no
+                        or ticket.x_studio_normal_repair_without_serial_no):
                     # Ensure the selection value exists before writing it —
                     # guards against the module being partially upgraded.
                     self.env['sale.order']._ensure_not_under_warranty_selection()
