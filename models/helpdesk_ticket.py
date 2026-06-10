@@ -224,6 +224,13 @@ class HelpdeskTicket(models.Model):
                     "('x_studio_company_id', '=', False)]"
                 )
 
+            # Send to Sales Centre: hide once the ticket is already at or past that
+            # stage — Studio only guards on task_done with no stage check.
+            for btn in arch.xpath("//button[@name='action_send_to_sales_centre']"):
+                existing = btn.get('invisible', '')
+                extra = "repair_stage_state in ('sent_to_sales_centre', 'received_at_sales_centre', 'other')"
+                btn.set('invisible', f"({existing}) or ({extra})" if existing else extra)
+
             # Send to Factory: only after collection (has_return_picking) and only
             # for Factory Repair jobs while the ticket is still in New stage.
             for btn in arch.xpath("//button[@name='action_send_to_factory']"):
