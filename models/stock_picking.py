@@ -190,4 +190,19 @@ class StockPicking(models.Model):
                 if ticket:
                     ticket._move_to_stage('Handed Over to Customer')
 
+        # ── Path D: Dispatch pickings created via the Dispatch button ─────────
+        # _create_returns stamps x_studio_helpdesk_ticket_id on the new picking
+        # when default_ticket_id is passed via the button context. When that
+        # dispatch picking (→ customer location) is validated, move the ticket
+        # directly from 'Received at Sales Centre' to 'Handed Over to Customer'.
+        for picking in self.filtered(
+            lambda p: p.state == 'done'
+            and p.location_dest_id.usage == 'customer'
+        ):
+            ticket = picking.sudo().x_studio_helpdesk_ticket_id
+            if not ticket:
+                continue
+            if (ticket.sudo().stage_id.name or '').strip() == 'Received at Sales Centre':
+                ticket._move_to_stage('Handed Over to Customer')
+
         return res
