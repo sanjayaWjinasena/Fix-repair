@@ -124,6 +124,12 @@ class StockReturnPicking(models.TransientModel):
                 for field in arch.xpath("//field[@name='picking_id']"):
                     field.set('readonly', '1')
 
+            # Dispatch from ticket: default_location_id is pre-set to the
+            # customer location — lock it so the user can't change it.
+            if self.env.context.get('default_location_id'):
+                for field in arch.xpath("//field[@name='location_id']"):
+                    field.set('readonly', '1')
+
             # Hide the To Refund column — forced False in _create_returns anyway.
             for refund_field in arch.xpath(
                 "//field[@name='product_return_moves']//field[@name='to_refund']"
@@ -136,14 +142,17 @@ class StockReturnPicking(models.TransientModel):
     def _compute_moves_locations(self):
         super()._compute_moves_locations()
         for wizard in self:
-            # Override location_id to the Studio-defined suggested repair location.
-            suggested = (
-                wizard.x_studio_suggested_location_id_1
-                or wizard.x_studio_suggested_location_id
-                or wizard.original_location_id
-            )
-            if suggested:
-                wizard.location_id = suggested
+            # When the caller pre-specifies a location (Dispatch button passes
+            # default_location_id = customer location), honour it and skip the
+            # repair-location override so it isn't clobbered.
+            if not self.env.context.get('default_location_id'):
+                suggested = (
+                    wizard.x_studio_suggested_location_id_1
+                    or wizard.x_studio_suggested_location_id
+                    or wizard.original_location_id
+                )
+                if suggested:
+                    wizard.location_id = suggested
 
             # Repair tickets are always single-item — cap return qty to 1.
             if wizard.ticket_id:
