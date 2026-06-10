@@ -54,14 +54,6 @@ class ProjectTask(models.Model):
         result = super().write(vals)
         if 'sale_order_id' in vals and vals.get('sale_order_id'):
             self._sync_quotation_type()
-        # Centre Repair: when the technician marks the FSM task done, advance
-        # the linked ticket to "Received at Sales Centre" (repair complete at
-        # centre, item ready for dispatch).
-        if vals.get('fsm_done'):
-            for task in self:
-                ticket = task.helpdesk_ticket_id
-                if ticket and ticket.x_studio_job_location == 'Centre Repair':
-                    ticket._move_to_stage('Received at Sales Centre')
         return result
 
     def _fsm_create_sale_order(self):
@@ -93,14 +85,12 @@ class ProjectTask(models.Model):
                 extra = "helpdesk_ticket_id and not (x_studio_valid_diagnosis and x_studio_repair_image_01)"
                 btn.set('invisible', f"({existing}) or ({extra})" if existing else extra)
 
-            # Mark as Done: show only at the stage where repair is done.
-            # Factory Repair tasks are created at received_at_factory → done at repair_completed.
-            # Centre Repair tasks are created at new → done at new (no factory trip).
-            # Using stage values directly avoids needing a job_location field on the task.
-            # Non-repair tasks have no helpdesk_ticket_id so the guard is False → show normally.
+            # Mark as Done: only show for repair tickets when the repair is
+            # complete (ticket at Repair Completed). Non-repair FSM tasks have
+            # no helpdesk_ticket_id so the guard is False and they show normally.
             repair_guard = (
                 "helpdesk_ticket_id and "
-                "ticket_repair_stage_state not in ('repair_completed', 'new')"
+                "ticket_repair_stage_state != 'repair_completed'"
             )
             for btn in arch.xpath(
                 "//button[@name='action_fsm_validate'][@class='btn-primary']"
