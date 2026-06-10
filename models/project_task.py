@@ -73,6 +73,10 @@ class ProjectTask(models.Model):
                 field_el.set('invisible', '1')
                 targets[0].insert(0, field_el)
 
+            # New Quotation: not used in the repair workflow — hide entirely.
+            for btn in arch.xpath("//button[@name='action_fsm_create_quotation']"):
+                btn.set('invisible', '1')
+
             # Mark as Done: only show for repair tickets when the repair is
             # complete (ticket at Repair Completed). Non-repair FSM tasks have
             # no helpdesk_ticket_id so the guard is False and they show normally.
