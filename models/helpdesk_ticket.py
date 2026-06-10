@@ -175,10 +175,14 @@ class HelpdeskTicket(models.Model):
     def _get_view(self, view_id=None, view_type='form', **options):
         arch, view = super()._get_view(view_id, view_type, **options)
         if view_type == 'form':
-            # Inject computed/Studio fields that are used in conditions below
-            # but may not already be in the arch.
+            # Inject computed/Studio fields used in button conditions below
+            # that may not already be present in the arch.
             for sheet in arch.xpath("//sheet"):
-                for fname in ('has_return_picking', 'x_studio_normal_repair_without_serial_no'):
+                for fname in (
+                    'has_return_picking',
+                    'x_studio_normal_repair_without_serial_no',
+                    'x_studio_job_location',
+                ):
                     if not arch.xpath(f"//field[@name='{fname}']"):
                         fld = etree.Element('field')
                         fld.set('name', fname)
@@ -220,16 +224,35 @@ class HelpdeskTicket(models.Model):
                     "('x_studio_company_id', '=', False)]"
                 )
 
-            # Plan Intervention: show at Received at Factory with no task yet.
-            # Warranty (RUG) repairs also require a valid return picking to confirm
-            # the item is physically at the factory; non-warranty customers bring
-            # the item in directly so no return picking exists.
+            # Send to Sales Centre: hide once the ticket is already at or past that
+            # stage — Studio only guards on task_done with no stage check.
+            for btn in arch.xpath("//button[@name='action_send_to_sales_centre']"):
+                existing = btn.get('invisible', '')
+                extra = "repair_stage_state in ('sent_to_sales_centre', 'received_at_sales_centre', 'other')"
+                btn.set('invisible', f"({existing}) or ({extra})" if existing else extra)
+
+            # Send to Factory: only after collection (has_return_picking) and only
+            # for Factory Repair jobs while the ticket is still in New stage.
+            for btn in arch.xpath("//button[@name='action_send_to_factory']"):
+                btn.set('invisible',
+                    "repair_stage_state != 'new' or "
+                    "not has_return_picking or "
+                    "x_studio_job_location != 'Factory Repair'"
+                )
+
+            # Plan Intervention:
+            #   Factory Repair → show at Received at Factory (item arrived at factory).
+            #   Centre Repair  → show in New stage once the item has been collected
+            #                    (has_return_picking), skipping the factory trip entirely.
+            # RUG tickets additionally require x_studio_valid_return before proceeding.
             for btn in arch.xpath("//button[@name='action_generate_fsm_task']"):
                 btn.set('invisible',
                     "not use_fsm or "
                     "fsm_task_count > 0 or "
-                    "repair_stage_state != 'received_at_factory' or "
-                    "(x_studio_rug_repair and not x_studio_valid_return)"
+                    "(x_studio_rug_repair and not x_studio_valid_return) or "
+                    "(x_studio_job_location == 'Factory Repair' and repair_stage_state != 'received_at_factory') or "
+                    "(x_studio_job_location == 'Centre Repair' and (repair_stage_state != 'new' or not has_return_picking)) or "
+                    "not x_studio_job_location"
                 )
             # Return button — same action 195, two distinct popup behaviours:
             #   New stage:                 default_ticket_id=id → wizard shows Sale Order
