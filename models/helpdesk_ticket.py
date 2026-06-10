@@ -249,15 +249,6 @@ class HelpdeskTicket(models.Model):
             for btn in arch.xpath("//button[@name='195']"):
                 btn.set('invisible', "has_return_picking")
                 btn.set('context', btn_context)
-                # Add Dispatch sibling — same action, shown once a return picking exists
-                dispatch = etree.Element('button')
-                dispatch.set('name', '195')
-                dispatch.set('string', 'Dispatch')
-                dispatch.set('type', 'action')
-                dispatch.set('class', btn.get('class', 'btn-secondary'))
-                dispatch.set('invisible', "not has_return_picking")
-                dispatch.set('context', btn_context)
-                btn.addnext(dispatch)
 
             # Serial Number: only show lots already issued via a sale order.
             # sale_order_ids is non-stored so domain filters on it are ignored.

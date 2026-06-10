@@ -161,6 +161,9 @@ class StockReturnPicking(models.TransientModel):
                 'to_refund': False,
                 'sale_line_id': False,
             })
+            # Link the picking back to the ticket so the Return to Customer
+            # button on the picking form can check the ticket's stage.
+            new_picking.sudo().write({'x_studio_helpdesk_ticket_id': self.ticket_id.id})
             serial = self.ticket_id.x_studio_serial_no
             if serial:
                 if new_picking.move_line_ids:

@@ -10,6 +10,17 @@ class StockPicking(models.Model):
         compute='_compute_nuw_block_validate',
     )
 
+    repair_ticket_sent_to_sales_centre = fields.Boolean(
+        compute='_compute_repair_ticket_sent_to_sales_centre',
+    )
+
+    @api.depends('x_studio_helpdesk_ticket_id', 'x_studio_helpdesk_ticket_id.stage_id')
+    def _compute_repair_ticket_sent_to_sales_centre(self):
+        for picking in self:
+            ticket = picking.sudo().x_studio_helpdesk_ticket_id
+            stage_name = (ticket.stage_id.name or '').strip() if ticket else ''
+            picking.repair_ticket_sent_to_sales_centre = stage_name == 'Sent to Sales Centre'
+
     @api.depends('sale_id', 'sale_id.x_studio_quotation_type')
     def _compute_nuw_block_validate(self):
         for picking in self:
@@ -31,15 +42,25 @@ class StockPicking(models.Model):
         arch, view = super()._get_view(view_id, view_type, **options)
         if view_type == 'form':
             for sheet in arch.xpath("//sheet"):
-                fld = etree.Element('field')
-                fld.set('name', 'nuw_block_validate')
-                fld.set('invisible', '1')
-                sheet.insert(0, fld)
+                for fname in ('nuw_block_validate', 'repair_ticket_sent_to_sales_centre'):
+                    fld = etree.Element('field')
+                    fld.set('name', fname)
+                    fld.set('invisible', '1')
+                    sheet.insert(0, fld)
                 break
             for btn in arch.xpath("//button[@name='button_validate']"):
                 existing = btn.get('invisible', '')
                 extra = 'nuw_block_validate'
                 btn.set('invisible', f"({existing}) or {extra}" if existing else extra)
+            # Return to Customer: shown on repair collection pickings when ticket
+            # is at 'Sent to Sales Centre'. Passes ticket context so _create_returns
+            # stamps the serial on the outgoing dispatch picking.
+            for btn in arch.xpath("//button[@name='195'][@type='action']"):
+                btn.set('string', 'Return to Customer')
+                btn.set('invisible', 'not repair_ticket_sent_to_sales_centre')
+                btn.set('context',
+                    "{'default_ticket_id': x_studio_helpdesk_ticket_id}"
+                )
         return arch, view
 
     def _action_done(self):
