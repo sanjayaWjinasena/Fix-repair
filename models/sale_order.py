@@ -129,6 +129,14 @@ class SaleOrder(models.Model):
                 extra = "(x_studio_quotation_type == 'Repair' and not x_studio_rug_approved)"
                 btn.set('invisible', f"({existing}) or {extra}" if existing else extra)
 
+            # Send PRO-FORMA Invoice: not used — hide both instances.
+            for btn in arch.xpath("//button[contains(@id, 'send_proforma')]"):
+                btn.set('invisible', '1')
+
+            # Cancel: not used in the repair workflow — hide entirely.
+            for btn in arch.xpath("//button[@name='action_cancel']"):
+                btn.set('invisible', '1')
+
             # Send by Email: Not Under Warranty type has no RUG flow — show directly
             # Studio has hidden all action_quotation_send buttons via an always-true
             # `state not in ['False']` guard; inject a clean button for this type.
