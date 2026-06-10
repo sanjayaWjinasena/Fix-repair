@@ -274,7 +274,16 @@ class HelpdeskTicket(models.Model):
                 "'default_company_id': company_id}"
             )
             for btn in arch.xpath("//button[@name='195']"):
-                btn.set('invisible', "has_return_picking")
+                btn.set('invisible',
+                    "has_return_picking or "
+                    "not partner_id or "
+                    "not ticket_type_id or "
+                    "not x_studio_job_location or "
+                    "not x_studio_repair_reason or "
+                    "not x_studio_serial_no or "
+                    "not product_id or "
+                    "(x_studio_rug_confirmed and not x_studio_warranty_card)"
+                )
                 btn.set('context', btn_context)
                 # Add Dispatch sibling — same action, shown once a return picking exists
                 dispatch = etree.Element('button')
