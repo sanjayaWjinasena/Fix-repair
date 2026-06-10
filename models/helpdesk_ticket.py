@@ -247,9 +247,27 @@ class HelpdeskTicket(models.Model):
                 "'default_company_id': company_id}"
             )
             for btn in arch.xpath("//button[@name='195']"):
-                btn.set('invisible', "has_return_picking")
+                # Return (action 195) — only for tickets that have a historical
+                # delivery to reverse (RUG / With Serial No). Without Serial No
+                # tickets use a direct Python method instead (no wizard needed).
+                btn.set('invisible',
+                    "has_return_picking or x_studio_normal_repair_without_serial_no")
                 btn.set('context', btn_context)
-                # Add Dispatch sibling — same action, shown once a return picking exists
+
+                # Collect button — Without Serial No only, creates the incoming
+                # collection picking directly (bypasses the return wizard which
+                # requires a done outgoing picking to reverse).
+                collect = etree.Element('button')
+                collect.set('name', 'action_collect_without_serial')
+                collect.set('string', 'Return')
+                collect.set('type', 'object')
+                collect.set('class', btn.get('class', 'btn-secondary'))
+                collect.set('invisible',
+                    "has_return_picking or not x_studio_normal_repair_without_serial_no")
+                btn.addnext(collect)
+
+                # Dispatch — shown for all ticket types once a return/collection
+                # picking exists (has_return_picking = True).
                 dispatch = etree.Element('button')
                 dispatch.set('name', '195')
                 dispatch.set('string', 'Dispatch')
@@ -287,6 +305,54 @@ class HelpdeskTicket(models.Model):
         return arch, view
 
     # ── Button actions ─ Without Serial No flow ──────────────────────────────
+
+    def action_collect_without_serial(self):
+        """Create an incoming collection picking (Customer → Repair Loc) directly.
+
+        The standard return wizard (action 195) requires a done outgoing picking
+        to reverse. For Without Serial No tickets no such delivery exists, and
+        creating one triggers Odoo 17's serial-number quant constraint (two
+        positive quants for the same serial during _action_done). We bypass the
+        wizard entirely and create the incoming picking directly instead.
+        """
+        self.ensure_one()
+        if not self.x_studio_serial_no or not self.product_id:
+            raise UserError("Serial number and product must be set before collecting.")
+        repair_loc = self.x_studio_virtual_location_1 or self.x_studio_virtual_location
+        if not repair_loc:
+            raise UserError("No repair location configured for this ticket.")
+        cust_loc = self.env['stock.location'].sudo().search(
+            [('usage', '=', 'customer')], limit=1
+        )
+        pick_type_in = self.env['stock.picking.type'].sudo().search([
+            ('code', '=', 'incoming'),
+            ('company_id', '=', self.company_id.id),
+        ], order='sequence asc', limit=1)
+        if not cust_loc or not pick_type_in:
+            raise UserError("Could not find incoming picking type or customer location.")
+        picking = self.env['stock.picking'].sudo().create({
+            'partner_id': self.partner_id.id,
+            'picking_type_id': pick_type_in.id,
+            'location_id': cust_loc.id,
+            'location_dest_id': repair_loc.id,
+            'company_id': self.company_id.id,
+            'move_ids': [(0, 0, {
+                'name': self.product_id.display_name,
+                'product_id': self.product_id.id,
+                'product_uom_qty': 1.0,
+                'product_uom': self.product_id.uom_id.id,
+                'location_id': cust_loc.id,
+                'location_dest_id': repair_loc.id,
+            })],
+        })
+        picking.move_line_ids.write({'lot_id': self.x_studio_serial_no.id})
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'stock.picking',
+            'res_id': picking.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
 
     def action_create_repair_serial(self):
         self.ensure_one()
