@@ -7,11 +7,12 @@ from odoo.addons.industry_fsm_sale.models.project_task import Task as FsmSaleTas
 class ProjectTask(models.Model):
     _inherit = 'project.task'
 
-    # Mirrors the linked ticket's repair_stage_state so it can be used in
-    # view invisible expressions without a full related-model traversal.
+    # Mirrors the linked ticket's repair_stage_state and job_location so they
+    # can be used in view invisible expressions without a full related traversal.
     ticket_repair_stage_state = fields.Char(
         compute='_compute_ticket_repair_stage_state',
     )
+    ticket_job_location = fields.Char(related='helpdesk_ticket_id.x_studio_job_location')
 
     def _compute_ticket_repair_stage_state(self):
         for task in self:
@@ -54,6 +55,14 @@ class ProjectTask(models.Model):
         result = super().write(vals)
         if 'sale_order_id' in vals and vals.get('sale_order_id'):
             self._sync_quotation_type()
+        # Centre Repair: when the technician marks the FSM task done, advance
+        # the linked ticket to "Received at Factory" (signals repair complete
+        # at centre, item ready for dispatch).
+        if vals.get('fsm_done'):
+            for task in self:
+                ticket = task.helpdesk_ticket_id
+                if ticket and ticket.x_studio_job_location == 'Centre Repair':
+                    ticket._move_to_stage('Received at Factory')
         return result
 
     def _fsm_create_sale_order(self):
@@ -64,14 +73,14 @@ class ProjectTask(models.Model):
     def _get_view(self, view_id=None, view_type='form', **options):
         arch, view = super()._get_view(view_id, view_type, **options)
         if view_type == 'form':
-            # Inject ticket_repair_stage_state as invisible so it is
-            # available in button invisible expressions below.
+            # Inject ticket computed fields as invisible for button expressions.
             targets = arch.xpath("//sheet") or arch.xpath("//form")
             if targets:
-                field_el = etree.Element('field')
-                field_el.set('name', 'ticket_repair_stage_state')
-                field_el.set('invisible', '1')
-                targets[0].insert(0, field_el)
+                for fname in ('ticket_repair_stage_state', 'ticket_job_location'):
+                    fld = etree.Element('field')
+                    fld.set('name', fname)
+                    fld.set('invisible', '1')
+                    targets[0].insert(0, fld)
 
             # New Quotation: not used in the repair workflow — hide entirely.
             for btn in arch.xpath("//button[@name='action_fsm_create_quotation']"):
@@ -85,12 +94,18 @@ class ProjectTask(models.Model):
                 extra = "helpdesk_ticket_id and not (x_studio_valid_diagnosis and x_studio_repair_image_01)"
                 btn.set('invisible', f"({existing}) or ({extra})" if existing else extra)
 
-            # Mark as Done: only show for repair tickets when the repair is
-            # complete (ticket at Repair Completed). Non-repair FSM tasks have
-            # no helpdesk_ticket_id so the guard is False and they show normally.
+            # Mark as Done: show only at the stage where the repair is actually
+            # done per job location:
+            #   Factory Repair → ticket at Repair Completed (factory finished, item back)
+            #   Centre Repair  → ticket at New (repair happens on-site; no factory trip)
+            # Non-repair tasks have no helpdesk_ticket_id so the guard is False
+            # and they show normally.
             repair_guard = (
                 "helpdesk_ticket_id and "
-                "ticket_repair_stage_state != 'repair_completed'"
+                "not ("
+                "(ticket_job_location == 'Factory Repair' and ticket_repair_stage_state == 'repair_completed') or "
+                "(ticket_job_location == 'Centre Repair' and ticket_repair_stage_state == 'new')"
+                ")"
             )
             for btn in arch.xpath(
                 "//button[@name='action_fsm_validate'][@class='btn-primary']"
