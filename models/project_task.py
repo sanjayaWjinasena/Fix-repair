@@ -29,17 +29,32 @@ class ProjectTask(models.Model):
         """
         if not self.sale_order_id:
             self._fsm_create_sale_order()
-            if self.helpdesk_ticket_id and self.sale_order_id:
-                ticket = self.helpdesk_ticket_id
-                if not ticket.x_studio_rug_repair:
-                    # All non-RUG types (With Serial No, Without Serial No,
-                    # External not RUG) follow the NUW quotation flow.
-                    self.env['sale.order']._ensure_not_under_warranty_selection()
-                    qtype = 'Not Under Warranty'
-                else:
-                    qtype = 'Repair'
-                self.sale_order_id.sudo().write({'x_studio_quotation_type': qtype})
+        self._sync_quotation_type()
         return self.sale_order_id
+
+    def _sync_quotation_type(self):
+        """Set x_studio_quotation_type on the linked SO based on ticket type.
+
+        Called both when a new SO is created (via _fsm_ensure_sale_order) and
+        when an existing SO is linked to the task (write). This ensures the
+        type is correct regardless of how the SO was created.
+        """
+        for task in self:
+            if not task.helpdesk_ticket_id or not task.sale_order_id:
+                continue
+            ticket = task.helpdesk_ticket_id
+            qtype = 'Repair' if ticket.x_studio_rug_repair else 'Not Under Warranty'
+            if task.sale_order_id.x_studio_quotation_type == qtype:
+                continue
+            if qtype == 'Not Under Warranty':
+                self.env['sale.order']._ensure_not_under_warranty_selection()
+            task.sale_order_id.sudo().write({'x_studio_quotation_type': qtype})
+
+    def write(self, vals):
+        result = super().write(vals)
+        if 'sale_order_id' in vals and vals.get('sale_order_id'):
+            self._sync_quotation_type()
+        return result
 
     def _fsm_create_sale_order(self):
         """Delegate to industry_fsm_sale's implementation, skipping industry_fsm_stock."""
