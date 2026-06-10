@@ -71,7 +71,8 @@ class StockPicking(models.Model):
                     btn.set('invisible', 'not repair_ticket_sent_to_sales_centre')
                     btn.set('context',
                         f"{{'default_ticket_id': x_studio_helpdesk_ticket_id, "
-                        f"'default_location_id': {cust_loc_id}}}"
+                        f"'default_location_id': {cust_loc_id}, "
+                        f"'default_picking_id': id}}"
                     )
         return arch, view
 
