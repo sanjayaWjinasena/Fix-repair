@@ -19,7 +19,9 @@ class StockPicking(models.Model):
         for picking in self:
             ticket = picking.sudo().x_studio_helpdesk_ticket_id
             stage_name = (ticket.stage_id.name or '').strip() if ticket else ''
-            picking.repair_ticket_sent_to_sales_centre = stage_name == 'Sent to Sales Centre'
+            picking.repair_ticket_sent_to_sales_centre = stage_name in (
+                'Sent to Sales Centre', 'Received at Sales Centre'
+            )
 
     @api.depends('sale_id', 'sale_id.x_studio_quotation_type')
     def _compute_nuw_block_validate(self):
