@@ -104,6 +104,11 @@ class StockReturnPicking(models.TransientModel):
                     ticket.x_studio_virtual_location_1
                     or ticket.x_studio_virtual_location
                 )
+                if not repair_loc:
+                    warehouse = self.env['stock.warehouse'].sudo().search(
+                        [('company_id', '=', ticket.company_id.id)], limit=1
+                    )
+                    repair_loc = warehouse.lot_stock_id if warehouse else False
                 cust_loc = cust_locs[:1]
                 pick_type_out = self.env['stock.picking.type'].sudo().search([
                     ('code', '=', 'outgoing'),
