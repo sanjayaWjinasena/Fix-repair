@@ -19,8 +19,8 @@ class StockPicking(models.Model):
         for picking in self:
             ticket = picking.sudo().x_studio_helpdesk_ticket_id
             stage_name = (ticket.stage_id.name or '').strip() if ticket else ''
-            picking.repair_ticket_sent_to_sales_centre = stage_name in (
-                'Sent to Sales Centre', 'Received at Sales Centre'
+            picking.repair_ticket_sent_to_sales_centre = (
+                stage_name == 'Received at Sales Centre'
             )
 
     @api.depends('sale_id', 'sale_id.x_studio_quotation_type')
@@ -54,15 +54,20 @@ class StockPicking(models.Model):
                 existing = btn.get('invisible', '')
                 extra = 'nuw_block_validate'
                 btn.set('invisible', f"({existing}) or {extra}" if existing else extra)
-            # Return to Customer: shown on repair collection pickings when ticket
-            # is at 'Sent to Sales Centre'. Passes ticket context so _create_returns
-            # stamps the serial on the outgoing dispatch picking.
+            # Dispatch button: shown on repair collection pickings only when the
+            # ticket has physically arrived ('Received at Sales Centre').
+            # The arch has two button[@name='195'] elements — a Studio-injected
+            # duplicate (no data-hotkey) and the standard Odoo return button
+            # (data-hotkey="k"). Hide the duplicate; configure only the standard one.
             for btn in arch.xpath("//button[@name='195'][@type='action']"):
-                btn.set('string', 'Return to Customer')
-                btn.set('invisible', 'not repair_ticket_sent_to_sales_centre')
-                btn.set('context',
-                    "{'default_ticket_id': x_studio_helpdesk_ticket_id}"
-                )
+                if not btn.get('data-hotkey'):
+                    btn.set('invisible', '1')
+                else:
+                    btn.set('string', 'Dispatch')
+                    btn.set('invisible', 'not repair_ticket_sent_to_sales_centre')
+                    btn.set('context',
+                        "{'default_ticket_id': x_studio_helpdesk_ticket_id}"
+                    )
         return arch, view
 
     def _action_done(self):
