@@ -153,14 +153,15 @@ class StockReturnPicking(models.TransientModel):
 
         return arch, view
 
-    @api.depends('picking_id', 'ticket_id')
+    @api.depends('picking_id', 'ticket_id', 'is_dispatch_wizard')
     def _compute_moves_locations(self):
         super()._compute_moves_locations()
         for wizard in self:
-            # When the caller pre-specifies a location (Dispatch button passes
-            # default_location_id = customer location), honour it and skip the
-            # repair-location override so it isn't clobbered.
-            if not self.env.context.get('default_location_id'):
+            # When opened from the Dispatch button, location_id is pre-set to
+            # the customer location — skip the repair-location override.
+            # Use is_dispatch_wizard (not context) because this compute reruns
+            # on picking_id change when context no longer carries default_location_id.
+            if not wizard.is_dispatch_wizard:
                 suggested = (
                     wizard.x_studio_suggested_location_id_1
                     or wizard.x_studio_suggested_location_id
