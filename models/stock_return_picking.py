@@ -95,6 +95,56 @@ class StockReturnPicking(models.TransientModel):
                 )
                 if so:
                     defaults['sale_order_id'] = so.id
+            elif ticket.product_id:
+                # No historical delivery found (e.g. item sold outside this
+                # system). Fall back to a synthetic done outgoing picking so
+                # the wizard has something to reverse — same approach as the
+                # Without Serial No flow.
+                repair_loc = (
+                    ticket.x_studio_virtual_location_1
+                    or ticket.x_studio_virtual_location
+                )
+                cust_loc = cust_locs[:1]
+                pick_type_out = self.env['stock.picking.type'].sudo().search([
+                    ('code', '=', 'outgoing'),
+                    ('company_id', '=', ticket.company_id.id),
+                ], order='sequence asc', limit=1)
+                if repair_loc and cust_loc and pick_type_out:
+                    now = fields.Datetime.now()
+                    fake_picking = self.env['stock.picking'].sudo().create({
+                        'partner_id': ticket.partner_id.id,
+                        'picking_type_id': pick_type_out.id,
+                        'location_id': repair_loc.id,
+                        'location_dest_id': cust_loc.id,
+                        'company_id': ticket.company_id.id,
+                        'date_done': now,
+                    })
+                    fake_move = self.env['stock.move'].sudo().create({
+                        'name': ticket.product_id.display_name,
+                        'product_id': ticket.product_id.id,
+                        'product_uom_qty': 1.0,
+                        'product_uom': ticket.product_id.uom_id.id,
+                        'location_id': repair_loc.id,
+                        'location_dest_id': cust_loc.id,
+                        'picking_id': fake_picking.id,
+                        'company_id': ticket.company_id.id,
+                        'date': now,
+                        'quantity': 1.0,
+                    })
+                    self.env['stock.move.line'].sudo().create({
+                        'picking_id': fake_picking.id,
+                        'move_id': fake_move.id,
+                        'product_id': ticket.product_id.id,
+                        'product_uom_id': ticket.product_id.uom_id.id,
+                        'lot_id': serial.id,
+                        'qty_done': 1.0,
+                        'location_id': repair_loc.id,
+                        'location_dest_id': cust_loc.id,
+                        'company_id': ticket.company_id.id,
+                    })
+                    fake_move.sudo().write({'state': 'done'})
+                    fake_picking.sudo().write({'state': 'done'})
+                    defaults['picking_id'] = fake_picking.id
 
         return defaults
 
