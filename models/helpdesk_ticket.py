@@ -290,7 +290,7 @@ class HelpdeskTicket(models.Model):
                 dispatch.set('string', 'Dispatch')
                 dispatch.set('type', 'action')
                 dispatch.set('class', btn.get('class', 'btn-secondary'))
-                dispatch.set('invisible', "repair_stage_state != 'received_at_sales_centre'")
+                dispatch.set('invisible', "False")
                 dispatch.set('context', btn_context)
                 btn.addnext(dispatch)
 
