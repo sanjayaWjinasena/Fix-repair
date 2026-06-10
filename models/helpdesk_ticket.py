@@ -323,7 +323,7 @@ class HelpdeskTicket(models.Model):
                     "(not x_studio_rug_confirmed and so_invoice_status != 'invoiced') or "
                     "not ("
                     "(x_studio_job_location == 'Factory Repair' and repair_stage_state == 'received_at_sales_centre') or "
-                    "(x_studio_job_location == 'Centre Repair' and repair_stage_state == 'repair_completed')"
+                    "(x_studio_job_location == 'Centre Repair' and repair_stage_state == 'received_at_sales_centre')"
                     ")"
                 )
                 dispatch.set('context', btn_context)
