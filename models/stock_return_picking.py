@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import api, models
+from odoo.exceptions import UserError
 
 
 class StockReturnPicking(models.TransientModel):
@@ -13,77 +14,17 @@ class StockReturnPicking(models.TransientModel):
             return defaults
 
         ticket = self.env['helpdesk.ticket'].browse(ticket_id)
-        serial = ticket.x_studio_serial_no
 
         if ticket.x_studio_normal_repair_without_serial_no:
-            # No historical delivery exists for this ticket type — create a
-            # synthetic outgoing picking (Inventory → Customer, validated) as the
-            # "Delivery to Return" so the wizard can reverse it into the collection
-            # picking (incoming: Customer → Repair Location).
-            #
-            # KEY: use an inventory-adjustment location (usage='inventory') as the
-            # source, NOT the repair location. Odoo 17's serial constraint
-            # (_check_serial_number) explicitly excludes usage='inventory' locations
-            # from its "already assigned" check, so the two transient quants
-            # (inventory +1 and customer +1) during _action_done don't conflict.
-            if serial and ticket.product_id:
-                inv_loc = self.env['stock.location'].sudo().search([
-                    ('usage', '=', 'inventory'),
-                    '|',
-                    ('company_id', '=', ticket.company_id.id),
-                    ('company_id', '=', False),
-                ], order='company_id desc nulls last', limit=1)
-                cust_loc = self.env['stock.location'].sudo().search(
-                    [('usage', '=', 'customer')], limit=1
-                )
-                pick_type_out = self.env['stock.picking.type'].sudo().search([
-                    ('code', '=', 'outgoing'),
-                    ('company_id', '=', ticket.company_id.id),
-                ], order='sequence asc', limit=1)
-                if inv_loc and cust_loc and pick_type_out:
-                    # Place 1 unit in the inventory location.
-                    self.env['stock.quant'].sudo()._update_available_quantity(
-                        ticket.product_id, inv_loc, 1.0, lot_id=serial
-                    )
-                    new_picking = self.env['stock.picking'].sudo().create({
-                        'partner_id': ticket.partner_id.id,
-                        'picking_type_id': pick_type_out.id,
-                        'location_id': inv_loc.id,
-                        'location_dest_id': cust_loc.id,
-                        'company_id': ticket.company_id.id,
-                        'move_ids': [(0, 0, {
-                            'name': ticket.product_id.display_name,
-                            'product_id': ticket.product_id.id,
-                            'product_uom_qty': 1.0,
-                            'product_uom': ticket.product_id.uom_id.id,
-                            'location_id': inv_loc.id,
-                            'location_dest_id': cust_loc.id,
-                        })],
-                    })
-                    new_picking.action_confirm()
-                    new_picking.action_assign()
-                    if not new_picking.move_line_ids:
-                        self.env['stock.move.line'].sudo().create({
-                            'picking_id': new_picking.id,
-                            'move_id': new_picking.move_ids[0].id,
-                            'product_id': ticket.product_id.id,
-                            'product_uom_id': ticket.product_id.uom_id.id,
-                            'lot_id': serial.id,
-                            'qty_done': 1.0,
-                            'location_id': inv_loc.id,
-                            'location_dest_id': cust_loc.id,
-                        })
-                    else:
-                        new_picking.move_line_ids.write({
-                            'lot_id': serial.id,
-                            'qty_done': 1.0,
-                        })
-                    new_picking.with_context(cancel_backorder=True)._action_done()
-                    defaults['picking_id'] = new_picking.id
+            # No historical delivery exists. Leave picking_id empty — the wizard
+            # lines will be populated by _compute_moves_locations from the ticket,
+            # and _create_returns will build the collection picking directly.
+            pass
 
-        elif serial and serial.product_id:
+        elif ticket.x_studio_serial_no and ticket.x_studio_serial_no.product_id:
             # With Serial No / RUG: look up the existing outgoing delivery for
             # this serial and pre-populate the wizard.
+            serial = ticket.x_studio_serial_no
             cust_locs = self.env['stock.location'].sudo().search(
                 [('usage', '=', 'customer')]
             )
@@ -127,6 +68,12 @@ class StockReturnPicking(models.TransientModel):
                         "[('state', 'in', ['sale', 'done'])]"
                     )
 
+            if is_without_serial_no:
+                # No "Delivery to Return" exists for this flow — hide the picking
+                # selector so the wizard looks clean.
+                for field in arch.xpath("//field[@name='picking_id']"):
+                    field.set('invisible', '1')
+
             # Hide the To Refund column — forced False in _create_returns anyway.
             for refund_field in arch.xpath(
                 "//field[@name='product_return_moves']//field[@name='to_refund']"
@@ -139,11 +86,29 @@ class StockReturnPicking(models.TransientModel):
     def _compute_moves_locations(self):
         super()._compute_moves_locations()
         for wizard in self:
-            # Override location_id to the Studio-defined suggested repair location.
-            # x_studio_suggested_location_id_1 = ticket.x_studio_virtual_location_1 (company 2)
-            # x_studio_suggested_location_id   = ticket.x_studio_virtual_location   (company 1)
-            # This also corrects the destination for Without Serial No wizards where
-            # original_location_id is the inventory adjustment location, not repair_loc.
+            if (not wizard.picking_id
+                    and wizard.ticket_id
+                    and wizard.ticket_id.x_studio_normal_repair_without_serial_no):
+                # super() cleared product_return_moves (no picking). Manually
+                # populate one line from the ticket so the wizard shows the product.
+                ticket = wizard.ticket_id
+                repair_loc = (
+                    ticket.x_studio_virtual_location_1
+                    or ticket.x_studio_virtual_location
+                )
+                if ticket.product_id:
+                    wizard.product_return_moves = [(0, 0, {
+                        'product_id': ticket.product_id.id,
+                        'quantity': 1.0,
+                        'uom_id': ticket.product_id.uom_id.id,
+                        'move_id': False,
+                    })]
+                if repair_loc:
+                    wizard.location_id = repair_loc
+                continue
+
+            # For all other tickets (With Serial No / RUG): override location_id
+            # to the Studio-defined suggested repair location.
             suggested = (
                 wizard.x_studio_suggested_location_id_1
                 or wizard.x_studio_suggested_location_id
@@ -159,6 +124,62 @@ class StockReturnPicking(models.TransientModel):
                         line.quantity = 1
 
     def _create_returns(self):
+        if (self.ticket_id
+                and self.ticket_id.x_studio_normal_repair_without_serial_no
+                and not self.picking_id):
+            # Without Serial No: no "Delivery to Return" exists. Create the
+            # collection picking directly (incoming: Customer → Repair Loc).
+            # A fresh serial (created via "Create Serial No") has no quants
+            # anywhere, so only one positive quant is created (at repair_loc)
+            # — the serial constraint never fires.
+            ticket = self.ticket_id
+            serial = ticket.x_studio_serial_no
+            repair_loc = self.location_id
+            cust_loc = self.env['stock.location'].sudo().search(
+                [('usage', '=', 'customer')], limit=1
+            )
+            pick_type_in = self.env['stock.picking.type'].sudo().search([
+                ('code', '=', 'incoming'),
+                ('company_id', '=', ticket.company_id.id),
+            ], order='sequence asc', limit=1)
+            if not repair_loc or not cust_loc or not pick_type_in:
+                raise UserError(
+                    "Could not find required repair location or incoming picking type."
+                )
+            new_picking = self.env['stock.picking'].sudo().create({
+                'partner_id': ticket.partner_id.id,
+                'picking_type_id': pick_type_in.id,
+                'location_id': cust_loc.id,
+                'location_dest_id': repair_loc.id,
+                'company_id': ticket.company_id.id,
+                'move_ids': [(0, 0, {
+                    'name': ticket.product_id.display_name,
+                    'product_id': ticket.product_id.id,
+                    'product_uom_qty': 1.0,
+                    'product_uom': ticket.product_id.uom_id.id,
+                    'location_id': cust_loc.id,
+                    'location_dest_id': repair_loc.id,
+                    'to_refund': False,
+                })],
+            })
+            new_picking.action_confirm()
+            # Pre-fill the serial on move_lines so the user just clicks Validate.
+            if new_picking.move_line_ids:
+                if serial:
+                    new_picking.move_line_ids.write({'lot_id': serial.id})
+            elif serial:
+                self.env['stock.move.line'].sudo().create({
+                    'picking_id': new_picking.id,
+                    'move_id': new_picking.move_ids[0].id,
+                    'product_id': ticket.product_id.id,
+                    'product_uom_id': ticket.product_id.uom_id.id,
+                    'lot_id': serial.id,
+                    'location_id': cust_loc.id,
+                    'location_dest_id': repair_loc.id,
+                })
+            return new_picking.id, pick_type_in.id
+
+        # Standard path for With Serial No / RUG.
         if self.ticket_id:
             self.product_return_moves.write({'quantity': 1})
         new_picking_id, pick_type_id = super()._create_returns()
@@ -168,7 +189,6 @@ class StockReturnPicking(models.TransientModel):
                 'to_refund': False,
                 'sale_line_id': False,
             })
-            # Override lot to match the serial on the repair ticket.
             serial = self.ticket_id.x_studio_serial_no
             if serial:
                 new_picking.move_line_ids.write({'lot_id': serial.id})
