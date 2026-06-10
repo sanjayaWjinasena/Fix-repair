@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from lxml import etree
 from odoo import api, fields, models
 from odoo.exceptions import UserError
 
@@ -6,9 +7,13 @@ from odoo.exceptions import UserError
 class StockReturnPicking(models.TransientModel):
     _inherit = 'stock.return.picking'
 
+    is_dispatch_wizard = fields.Boolean(default=False)
+
     @api.model
     def default_get(self, fields_list):
         defaults = super().default_get(fields_list)
+        if self.env.context.get('default_location_id'):
+            defaults['is_dispatch_wizard'] = True
         ticket_id = defaults.get('ticket_id') or self.env.context.get('default_ticket_id')
         if not ticket_id or defaults.get('picking_id'):
             return defaults
@@ -124,11 +129,21 @@ class StockReturnPicking(models.TransientModel):
                 for field in arch.xpath("//field[@name='picking_id']"):
                     field.set('readonly', '1')
 
+            # Inject is_dispatch_wizard as an invisible field so the client
+            # can evaluate the readonly expression without a context check.
+            # (Context-based _get_view modifications are cached and may be
+            #  returned without the modification on subsequent opens.)
+            for form in arch.xpath("//form"):
+                fld = etree.Element('field')
+                fld.set('name', 'is_dispatch_wizard')
+                fld.set('invisible', '1')
+                form.insert(0, fld)
+                break
+
             # Dispatch from ticket: default_location_id is pre-set to the
             # customer location — lock it so the user can't change it.
-            if self.env.context.get('default_location_id'):
-                for field in arch.xpath("//field[@name='location_id']"):
-                    field.set('readonly', '1')
+            for field in arch.xpath("//field[@name='location_id']"):
+                field.set('readonly', 'is_dispatch_wizard')
 
             # Hide the To Refund column — forced False in _create_returns anyway.
             for refund_field in arch.xpath(
