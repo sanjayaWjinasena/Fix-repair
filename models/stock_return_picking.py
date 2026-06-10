@@ -122,12 +122,30 @@ class StockReturnPicking(models.TransientModel):
                         "if partner_id else "
                         "[('state', 'in', ['sale', 'done'])]"
                     )
+                # Hide entirely when opened from the Dispatch button
+                existing = field.get('invisible', '')
+                field.set('invisible', f"({existing}) or is_dispatch_wizard" if existing else 'is_dispatch_wizard')
 
             if is_without_serial_no:
                 # Delivery to Return is auto-created — lock the field so the
                 # user cannot swap it out.
                 for field in arch.xpath("//field[@name='picking_id']"):
                     field.set('readonly', '1')
+
+            # Hide Sales Order / Delivery to Return group when dispatch wizard.
+            # The group's parent has invisible="not ticket_id"; extend it.
+            for group in arch.xpath("//group[.//field[@name='sale_order_id']]"):
+                existing = group.get('invisible', '')
+                group.set('invisible', f"({existing}) or is_dispatch_wizard" if existing else 'is_dispatch_wizard')
+                break
+
+            # Hide Suggested Return Location fields when dispatch wizard.
+            for field in arch.xpath(
+                "//field[@name='x_studio_suggested_location_id'] | "
+                "//field[@name='x_studio_suggested_location_id_1']"
+            ):
+                existing = field.get('invisible', '')
+                field.set('invisible', f"({existing}) or is_dispatch_wizard" if existing else 'is_dispatch_wizard')
 
             # Inject is_dispatch_wizard as an invisible field so the client
             # can evaluate the readonly expression without a context check.
