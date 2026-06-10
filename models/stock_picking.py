@@ -59,6 +59,10 @@ class StockPicking(models.Model):
             # The arch has two button[@name='195'] elements — a Studio-injected
             # duplicate (no data-hotkey) and the standard Odoo return button
             # (data-hotkey="k"). Hide the duplicate; configure only the standard one.
+            # Pass default_location_id so the wizard pre-fills the customer
+            # location and _get_view / _compute_moves_locations lock it.
+            cust_loc = self.env.ref('stock.stock_location_customers', raise_if_not_found=False)
+            cust_loc_id = cust_loc.id if cust_loc else 5
             for btn in arch.xpath("//button[@name='195'][@type='action']"):
                 if not btn.get('data-hotkey'):
                     btn.set('invisible', '1')
@@ -66,7 +70,8 @@ class StockPicking(models.Model):
                     btn.set('string', 'Dispatch')
                     btn.set('invisible', 'not repair_ticket_sent_to_sales_centre')
                     btn.set('context',
-                        "{'default_ticket_id': x_studio_helpdesk_ticket_id}"
+                        f"{{'default_ticket_id': x_studio_helpdesk_ticket_id, "
+                        f"'default_location_id': {cust_loc_id}}}"
                     )
         return arch, view
 
