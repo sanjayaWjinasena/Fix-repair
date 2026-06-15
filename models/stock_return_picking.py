@@ -222,10 +222,13 @@ class StockReturnPicking(models.TransientModel):
         if self.ticket_id:
             new_picking = self.env['stock.picking'].browse(new_picking_id)
 
-            # Swap the picking type to one belonging to the Return Receipt
-            # Location's warehouse, so the new picking's name prefix matches
-            # that warehouse (e.g. BR-AM/Stock → BR-AM/... instead of inheriting
-            # the original outgoing picking's BR-EK/... prefix).
+            # Rename the new picking so its number/prefix matches the Return
+            # Receipt Location's warehouse (e.g. BR-AM/Stock → BR-AM/...).
+            # We can't change picking_type_id after the picking is confirmed
+            # (Odoo raises "Changing the operation type ... is forbidden"),
+            # so we only override the name. The picking_type_id stays as
+            # whatever super() chose, but the name comes from the target
+            # warehouse's sequence.
             #
             # Prefer a "Returns" picking type if the warehouse has one (gives
             # a /RET/ prefix); otherwise fall back to any incoming picking
@@ -242,12 +245,11 @@ class StockReturnPicking(models.TransientModel):
                         ('warehouse_id', '=', loc.warehouse_id.id),
                         ('code', '=', 'incoming'),
                     ], limit=1)
-                if target_type and new_picking.picking_type_id != target_type:
+                if target_type and target_type.sequence_id and \
+                        new_picking.picking_type_id != target_type:
                     new_picking.sudo().write({
-                        'picking_type_id': target_type.id,
                         'name': target_type.sequence_id.next_by_id(),
                     })
-                    pick_type_id = target_type.id
 
             new_picking.move_ids.write({
                 'to_refund': False,
