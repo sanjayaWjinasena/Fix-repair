@@ -223,33 +223,35 @@ class StockReturnPicking(models.TransientModel):
             new_picking = self.env['stock.picking'].browse(new_picking_id)
 
             # Rename the new picking so its number/prefix matches the Return
-            # Receipt Location's warehouse (e.g. BR-AM/Stock → BR-AM/...).
-            # We can't change picking_type_id after the picking is confirmed
-            # (Odoo raises "Changing the operation type ... is forbidden"),
-            # so we only override the name. The picking_type_id stays as
-            # whatever super() chose, but the name comes from the target
-            # warehouse's sequence.
+            # Receipt Location's warehouse, e.g. BR-AM/Stock → BR-AM/RET/xxxxx.
+            # We can't change picking_type_id once the picking is confirmed
+            # ("Changing the operation type ... is forbidden"), so we only
+            # overwrite the name.
             #
-            # Prefer a "Returns" picking type if the warehouse has one (gives
-            # a /RET/ prefix); otherwise fall back to any incoming picking
-            # type for the warehouse (typically "Receipts" → /IN/ prefix).
+            # Always target a "<WH_CODE>/RET/" sequence. If none exists for
+            # the warehouse yet, create it on the fly so every warehouse ends
+            # up with a consistent /RET/-style return numbering scheme.
             loc = self.ticket_id.x_studio_return_receipt_location
-            if loc and loc.warehouse_id:
-                target_type = self.env['stock.picking.type'].sudo().search([
-                    ('warehouse_id', '=', loc.warehouse_id.id),
-                    ('code', '=', 'incoming'),
-                    ('name', '=', 'Returns'),
+            wh = loc.warehouse_id if loc else False
+            if wh and wh.code:
+                ret_prefix = f"{wh.code}/RET/"
+                seq = self.env['ir.sequence'].sudo().search([
+                    ('prefix', '=', ret_prefix),
+                    '|',
+                    ('company_id', '=', wh.company_id.id),
+                    ('company_id', '=', False),
                 ], limit=1)
-                if not target_type:
-                    target_type = self.env['stock.picking.type'].sudo().search([
-                        ('warehouse_id', '=', loc.warehouse_id.id),
-                        ('code', '=', 'incoming'),
-                    ], limit=1)
-                if target_type and target_type.sequence_id and \
-                        new_picking.picking_type_id != target_type:
-                    new_picking.sudo().write({
-                        'name': target_type.sequence_id.next_by_id(),
+                if not seq:
+                    seq = self.env['ir.sequence'].sudo().create({
+                        'name': f"{wh.name} Sequence return",
+                        'prefix': ret_prefix,
+                        'padding': 5,
+                        'number_increment': 1,
+                        'number_next': 1,
+                        'implementation': 'standard',
+                        'company_id': wh.company_id.id,
                     })
+                new_picking.sudo().write({'name': seq.next_by_id()})
 
             new_picking.move_ids.write({
                 'to_refund': False,
