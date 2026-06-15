@@ -222,10 +222,14 @@ class StockReturnPicking(models.TransientModel):
         if self.ticket_id:
             new_picking = self.env['stock.picking'].browse(new_picking_id)
 
-            # Swap the picking type to match the Return Receipt Location's
-            # warehouse so the new picking uses that warehouse's RET sequence
-            # (e.g. BR-AM/Stock → BR-AM/RET/xxxxx instead of inheriting the
-            # original outgoing picking's BR-EK/RET/... sequence).
+            # Swap the picking type to one belonging to the Return Receipt
+            # Location's warehouse, so the new picking's name prefix matches
+            # that warehouse (e.g. BR-AM/Stock → BR-AM/... instead of inheriting
+            # the original outgoing picking's BR-EK/... prefix).
+            #
+            # Prefer a "Returns" picking type if the warehouse has one (gives
+            # a /RET/ prefix); otherwise fall back to any incoming picking
+            # type for the warehouse (typically "Receipts" → /IN/ prefix).
             loc = self.ticket_id.x_studio_return_receipt_location
             if loc and loc.warehouse_id:
                 target_type = self.env['stock.picking.type'].sudo().search([
@@ -233,6 +237,11 @@ class StockReturnPicking(models.TransientModel):
                     ('code', '=', 'incoming'),
                     ('name', '=', 'Returns'),
                 ], limit=1)
+                if not target_type:
+                    target_type = self.env['stock.picking.type'].sudo().search([
+                        ('warehouse_id', '=', loc.warehouse_id.id),
+                        ('code', '=', 'incoming'),
+                    ], limit=1)
                 if target_type and new_picking.picking_type_id != target_type:
                     new_picking.sudo().write({
                         'picking_type_id': target_type.id,
