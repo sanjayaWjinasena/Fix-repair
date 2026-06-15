@@ -221,6 +221,25 @@ class StockReturnPicking(models.TransientModel):
         new_picking_id, pick_type_id = super()._create_returns()
         if self.ticket_id:
             new_picking = self.env['stock.picking'].browse(new_picking_id)
+
+            # Swap the picking type to match the Return Receipt Location's
+            # warehouse so the new picking uses that warehouse's RET sequence
+            # (e.g. BR-AM/Stock → BR-AM/RET/xxxxx instead of inheriting the
+            # original outgoing picking's BR-EK/RET/... sequence).
+            loc = self.ticket_id.x_studio_return_receipt_location
+            if loc and loc.warehouse_id:
+                target_type = self.env['stock.picking.type'].sudo().search([
+                    ('warehouse_id', '=', loc.warehouse_id.id),
+                    ('code', '=', 'incoming'),
+                    ('name', '=', 'Returns'),
+                ], limit=1)
+                if target_type and new_picking.picking_type_id != target_type:
+                    new_picking.sudo().write({
+                        'picking_type_id': target_type.id,
+                        'name': target_type.sequence_id.next_by_id(),
+                    })
+                    pick_type_id = target_type.id
+
             new_picking.move_ids.write({
                 'to_refund': False,
                 'sale_line_id': False,
