@@ -227,6 +227,14 @@ class HelpdeskTicket(models.Model):
                     "('x_studio_company_id', '=', False)]"
                 )
 
+            # Return Receipt Location: only show stock.locations where the
+            # ticket's Assigned-to user appears in Users (Stock Location).
+            # When the ticket is unassigned, show all locations.
+            for field in arch.xpath("//field[@name='x_studio_return_receipt_location']"):
+                field.set('domain',
+                    "[('x_studio_users_stock_location', 'in', user_id)] if user_id else []"
+                )
+
             # Change to RUG: visible on External-not-RUG tickets (rug_repair=True,
             # rug_confirmed=False) that have a serial, at early stages only.
             for header in arch.xpath("//header"):
