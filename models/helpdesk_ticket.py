@@ -38,6 +38,19 @@ class HelpdeskTicket(models.Model):
     # Mirrors the linked SO's invoice_status so it can be used in view expressions.
     so_invoice_status = fields.Selection(related='sale_order_id.invoice_status')
 
+    # True once the linked SO is fully invoiced AND fully paid — used to gate
+    # the Dispatch button (don't hand the item back until the customer has
+    # settled the bill).
+    so_fully_paid = fields.Boolean(compute='_compute_so_fully_paid')
+
+    @api.depends('sale_order_id.invoice_status', 'sale_order_id.amount_unpaid')
+    def _compute_so_fully_paid(self):
+        for ticket in self:
+            so = ticket.sale_order_id
+            ticket.so_fully_paid = bool(so) \
+                and so.invoice_status == 'invoiced' \
+                and so.amount_unpaid == 0
+
     @api.depends('stage_id')
     def _compute_repair_stage_state(self):
         mapping = {
@@ -185,6 +198,7 @@ class HelpdeskTicket(models.Model):
                     'has_return_picking',
                     'x_studio_normal_repair_without_serial_no',
                     'x_studio_job_location',
+                    'so_fully_paid',
                 ):
                     if not arch.xpath(f"//field[@name='{fname}']"):
                         fld = etree.Element('field')
@@ -325,6 +339,7 @@ class HelpdeskTicket(models.Model):
                 dispatch.set('class', btn.get('class', 'btn-secondary'))
                 dispatch.set('invisible',
                     "not has_return_picking or "
+                    "not so_fully_paid or "
                     "not ("
                     "(x_studio_job_location == 'Factory Repair' and repair_stage_state == 'received_at_sales_centre') or "
                     "(x_studio_job_location == 'Centre Repair' and repair_stage_state == 'repair_completed') or "
