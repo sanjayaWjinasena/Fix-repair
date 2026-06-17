@@ -96,12 +96,16 @@ class SaleOrder(models.Model):
     def _get_view(self, view_id=None, view_type='form', **options):
         arch, view = super()._get_view(view_id, view_type, **options)
         if view_type == 'form':
-            # Inject ticket_repair_stage_state so client can evaluate button conditions.
+            # Inject fields referenced by button invisible/readonly expressions
+            # below — the client evaluator can only see fields present in the
+            # arch, so add anything that isn't already there as invisible.
             for sheet in arch.xpath("//sheet"):
-                fld = etree.Element('field')
-                fld.set('name', 'ticket_repair_stage_state')
-                fld.set('invisible', '1')
-                sheet.insert(0, fld)
+                for fname in ('ticket_repair_stage_state', 'signed_on'):
+                    if not arch.xpath(f"//field[@name='{fname}']"):
+                        fld = etree.Element('field')
+                        fld.set('name', fname)
+                        fld.set('invisible', '1')
+                        sheet.insert(0, fld)
                 break
 
             # Create Invoice: for RUG-confirmed SOs, only show once the ticket
@@ -155,8 +159,9 @@ class SaleOrder(models.Model):
             # salesperson can confirm either path:
             #   • Repair + RUG approved          → standard repair-warranty flow
             #   • Repair + RUG rejected          → only AFTER customer signs
-            #                                      on the portal preview
-            #   • Not Under Warranty             → customer-pays from the start
+            #                                      the portal preview
+            #   • Not Under Warranty             → only AFTER customer signs
+            #                                      the portal preview
             # Stays hidden on Repair quotations while RUG is still pending
             # (neither approved nor rejected yet).
             # Studio's arch has two action_confirm buttons — we want the
@@ -172,7 +177,9 @@ class SaleOrder(models.Model):
                         "(x_studio_quotation_type == 'Repair' "
                         "and not x_studio_rug_approved "
                         "and not x_studio_rug_rejected) or "
-                        "(x_studio_rug_rejected and not signed_on)"
+                        "(x_studio_rug_rejected and not signed_on) or "
+                        "(x_studio_quotation_type == 'Not Under Warranty' "
+                        "and not signed_on)"
                     )
                     for btn in confirm_btns[2:]:
                         btn.set('invisible', '1')
