@@ -2,6 +2,7 @@
 from lxml import etree
 from markupsafe import Markup, escape
 from odoo import api, fields, models
+from odoo.http import request
 
 
 class SaleOrder(models.Model):
@@ -254,8 +255,32 @@ class SaleOrder(models.Model):
         return action
 
     def action_confirm(self):
-        result = super().action_confirm()
-        for order in self:
+        # When the customer signs+accepts on the portal preview, Odoo's
+        # portal_quote_accept route calls action_confirm() which would
+        # move the quotation straight to Sales Order. For Not Under
+        # Warranty and Reject-RUG quotations we want the salesperson to
+        # review and click Confirm in the backend manually — so skip the
+        # state transition when the call originates from a /my/... portal
+        # request. The signature/signed_by/signed_on fields are still
+        # captured by the prior portal _sign step, and the backend Confirm
+        # button stays visible (state is still draft/sent).
+        portal_call = bool(
+            request and request.httprequest
+            and (request.httprequest.path or '').startswith('/my/')
+        )
+        if portal_call:
+            skip = self.filtered(
+                lambda o: o.x_studio_quotation_type == 'Not Under Warranty'
+                          or o.x_studio_rug_rejected
+            )
+            rest = self - skip
+            result = super(SaleOrder, rest).action_confirm() if rest else True
+            confirmed = rest
+        else:
+            result = super().action_confirm()
+            confirmed = self
+
+        for order in confirmed:
             if order.x_studio_quotation_type == 'Not Under Warranty':
                 self._move_ticket_to_stage(order, 'Estimation Approval Received')
         return result
