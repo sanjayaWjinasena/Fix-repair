@@ -158,13 +158,19 @@ class SaleOrder(models.Model):
             #   • Not Under Warranty             → customer-pays from the start
             # Stays hidden on Repair quotations while RUG is still pending
             # (neither approved nor rejected yet).
-            for btn in arch.xpath("//button[@name='action_confirm']"):
-                btn.set('invisible',
+            # If multiple action_confirm buttons exist in the arch (Studio can
+            # duplicate them), keep only the first one visible and force-hide
+            # the rest so the user never sees two Confirm buttons.
+            confirm_btns = arch.xpath("//button[@name='action_confirm']")
+            if confirm_btns:
+                confirm_btns[0].set('invisible',
                     "(state not in ('draft', 'sent')) or "
                     "(x_studio_quotation_type == 'Repair' "
                     "and not x_studio_rug_approved "
                     "and not x_studio_rug_rejected)"
                 )
+                for btn in confirm_btns[1:]:
+                    btn.set('invisible', '1')
 
             # Send PRO-FORMA Invoice: not used — hide both instances.
             for btn in arch.xpath("//button[contains(@id, 'send_proforma')]"):
