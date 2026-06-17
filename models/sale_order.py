@@ -151,16 +151,19 @@ class SaleOrder(models.Model):
             for btn in arch.xpath("//button[@name='2004']"):
                 btn.set('invisible', rug_approve_invisible)
 
-            # Confirm button: visible in both draft AND sent states (so the
-            # salesperson can confirm after the customer signs+accepts on the
-            # portal). Hide on Repair SOs until RUG is approved. Replace any
-            # pre-existing invisible expression that may have over-restricted
-            # the button to draft-only.
+            # Confirm button: visible in both draft AND sent states so the
+            # salesperson can confirm either path:
+            #   • Repair + RUG approved          → standard repair-warranty flow
+            #   • Repair + RUG rejected          → customer-pays after portal accept
+            #   • Not Under Warranty             → customer-pays from the start
+            # Stays hidden on Repair quotations while RUG is still pending
+            # (neither approved nor rejected yet).
             for btn in arch.xpath("//button[@name='action_confirm']"):
                 btn.set('invisible',
                     "(state not in ('draft', 'sent')) or "
                     "(x_studio_quotation_type == 'Repair' "
-                    "and not x_studio_rug_approved)"
+                    "and not x_studio_rug_approved "
+                    "and not x_studio_rug_rejected)"
                 )
 
             # Send PRO-FORMA Invoice: not used — hide both instances.
