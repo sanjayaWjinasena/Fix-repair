@@ -96,16 +96,17 @@ class SaleOrder(models.Model):
     def _get_view(self, view_id=None, view_type='form', **options):
         arch, view = super()._get_view(view_id, view_type, **options)
         if view_type == 'form':
-            # Inject fields referenced by button invisible/readonly expressions
-            # below — the client evaluator can only see fields present in the
-            # arch, so add anything that isn't already there as invisible.
+            # Inject ticket_repair_stage_state so button expressions below can
+            # read it. (signed_on / signed_by are injected via the XML view
+            # inheritance in views/sale_order_views.xml — Python injection
+            # didn't survive Odoo's view post-processing for those for some
+            # reason; XML inheritance is more reliable.)
             for sheet in arch.xpath("//sheet"):
-                for fname in ('ticket_repair_stage_state', 'signed_on'):
-                    if not arch.xpath(f"//field[@name='{fname}']"):
-                        fld = etree.Element('field')
-                        fld.set('name', fname)
-                        fld.set('invisible', '1')
-                        sheet.insert(0, fld)
+                if not arch.xpath("//field[@name='ticket_repair_stage_state']"):
+                    fld = etree.Element('field')
+                    fld.set('name', 'ticket_repair_stage_state')
+                    fld.set('invisible', '1')
+                    sheet.insert(0, fld)
                 break
 
             # Create Invoice: for RUG-confirmed SOs, only show once the ticket
