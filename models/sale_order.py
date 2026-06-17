@@ -159,10 +159,8 @@ class SaleOrder(models.Model):
             # Confirm button: visible in both draft AND sent states so the
             # salesperson can confirm either path:
             #   • Repair + RUG approved          → standard repair-warranty flow
-            #   • Repair + RUG rejected          → only AFTER customer signs
-            #                                      the portal preview
-            #   • Not Under Warranty             → only AFTER customer signs
-            #                                      the portal preview
+            #   • Repair + RUG rejected          → customer-pays after portal accept
+            #   • Not Under Warranty             → customer-pays from the start
             # Stays hidden on Repair quotations while RUG is still pending
             # (neither approved nor rejected yet).
             # Studio's arch has two action_confirm buttons — we want the
@@ -177,10 +175,7 @@ class SaleOrder(models.Model):
                         "(state not in ('draft', 'sent')) or "
                         "(x_studio_quotation_type == 'Repair' "
                         "and not x_studio_rug_approved "
-                        "and not x_studio_rug_rejected) or "
-                        "(x_studio_rug_rejected and not signed_on) or "
-                        "(x_studio_quotation_type == 'Not Under Warranty' "
-                        "and not signed_on)"
+                        "and not x_studio_rug_rejected)"
                     )
                     for btn in confirm_btns[2:]:
                         btn.set('invisible', '1')
