@@ -207,9 +207,11 @@ class SaleOrder(models.Model):
             for btn in arch.xpath("//button[contains(@id, 'send_proforma')]"):
                 btn.set('invisible', '1')
 
-            # Cancel: not used in the repair workflow — hide entirely.
+            # Cancel: hidden by default for the repair workflow, but shown
+            # once at least one quotation email has been sent (state = 'sent')
+            # so the salesperson can cancel after sending if needed.
             for btn in arch.xpath("//button[@name='action_cancel']"):
-                btn.set('invisible', '1')
+                btn.set('invisible', "state != 'sent'")
 
             # Create Advance Payment: not used — hide entirely.
             for btn in arch.xpath("//button[@name='2341']"):
