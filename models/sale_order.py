@@ -151,11 +151,17 @@ class SaleOrder(models.Model):
             for btn in arch.xpath("//button[@name='2004']"):
                 btn.set('invisible', rug_approve_invisible)
 
-            # Confirm button: hide on Repair SOs until RUG is approved
+            # Confirm button: visible in both draft AND sent states (so the
+            # salesperson can confirm after the customer signs+accepts on the
+            # portal). Hide on Repair SOs until RUG is approved. Replace any
+            # pre-existing invisible expression that may have over-restricted
+            # the button to draft-only.
             for btn in arch.xpath("//button[@name='action_confirm']"):
-                existing = btn.get('invisible', '')
-                extra = "(x_studio_quotation_type == 'Repair' and not x_studio_rug_approved)"
-                btn.set('invisible', f"({existing}) or {extra}" if existing else extra)
+                btn.set('invisible',
+                    "(state not in ('draft', 'sent')) or "
+                    "(x_studio_quotation_type == 'Repair' "
+                    "and not x_studio_rug_approved)"
+                )
 
             # Send PRO-FORMA Invoice: not used — hide both instances.
             for btn in arch.xpath("//button[contains(@id, 'send_proforma')]"):
