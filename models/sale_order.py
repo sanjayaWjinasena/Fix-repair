@@ -168,9 +168,12 @@ class SaleOrder(models.Model):
             for btn in arch.xpath("//button[@name='2341']"):
                 btn.set('invisible', '1')
 
-            # Send by Email: Not Under Warranty type has no RUG flow — show directly
-            # Studio has hidden all action_quotation_send buttons via an always-true
-            # `state not in ['False']` guard; inject a clean button for this type.
+            # Send by Email: shown for Not Under Warranty (no RUG flow) AND for
+            # Repair tickets where the RUG was rejected — once rejected the
+            # quotation falls back to the customer-pays flow so the salesperson
+            # needs to email the quote.
+            # Studio has hidden all action_quotation_send buttons via an
+            # always-true `state not in ['False']` guard; inject a clean one.
             for header in arch.xpath("//header"):
                 btn = etree.Element('button')
                 btn.set('name', 'action_quotation_send')
@@ -178,7 +181,8 @@ class SaleOrder(models.Model):
                 btn.set('type', 'object')
                 btn.set('class', 'btn-primary')
                 btn.set('invisible',
-                    "x_studio_quotation_type != 'Not Under Warranty' "
+                    "(x_studio_quotation_type != 'Not Under Warranty' "
+                    "and not x_studio_rug_rejected) "
                     "or state not in ('draft', 'sent')"
                 )
                 header.insert(0, btn)
