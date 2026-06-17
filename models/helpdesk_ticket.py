@@ -38,18 +38,26 @@ class HelpdeskTicket(models.Model):
     # Mirrors the linked SO's invoice_status so it can be used in view expressions.
     so_invoice_status = fields.Selection(related='sale_order_id.invoice_status')
 
-    # True once the linked SO is fully invoiced AND fully paid — used to gate
-    # the Dispatch button (don't hand the item back until the customer has
-    # settled the bill).
+    # True once the repair quotation (SO on the linked FSM task — NOT the
+    # ticket's sale_order_id, which points at the original product sale) is
+    # fully invoiced AND fully paid. Used to gate the Dispatch button: don't
+    # hand the item back until the customer has settled the repair bill.
     so_fully_paid = fields.Boolean(compute='_compute_so_fully_paid')
 
-    @api.depends('sale_order_id.invoice_status', 'sale_order_id.amount_unpaid')
+    @api.depends(
+        'fsm_task_ids.sale_order_id.invoice_status',
+        'fsm_task_ids.sale_order_id.amount_unpaid',
+    )
     def _compute_so_fully_paid(self):
         for ticket in self:
-            so = ticket.sale_order_id
-            ticket.so_fully_paid = bool(so) \
-                and so.invoice_status == 'invoiced' \
-                and so.amount_unpaid == 0
+            task_sos = ticket.fsm_task_ids.mapped('sale_order_id')
+            if not task_sos:
+                ticket.so_fully_paid = False
+                continue
+            ticket.so_fully_paid = all(
+                so.invoice_status == 'invoiced' and so.amount_unpaid == 0
+                for so in task_sos
+            )
 
     @api.depends('stage_id')
     def _compute_repair_stage_state(self):
