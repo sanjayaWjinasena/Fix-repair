@@ -12,6 +12,16 @@ class SaleOrder(models.Model):
     # expressions (e.g. gating Create Invoice on Repair Completed for RUG SOs).
     ticket_repair_stage_state = fields.Char(compute='_compute_ticket_repair_stage_state')
 
+    # True once the customer has signed the quotation on the portal preview.
+    # Used as the gate for the backend Confirm button on NUW / Reject-RUG
+    # quotations. Wraps signed_on/signature because directly referencing
+    # 'signed_on' in a view expression fails ("Name not defined") — the
+    # standard signed_on field doesn't survive injection into our form arch,
+    # but this custom field, which we declare and own, does.
+    x_customer_signed = fields.Boolean(
+        compute='_compute_x_customer_signed',
+    )
+
     def _compute_ticket_repair_stage_state(self):
         for order in self:
             task = order.sudo().task_id or self.env['project.task'].sudo().search(
@@ -19,6 +29,13 @@ class SaleOrder(models.Model):
             )
             ticket = task.helpdesk_ticket_id if task else None
             order.ticket_repair_stage_state = (ticket.repair_stage_state or '') if ticket else ''
+
+    @api.depends('signed_on', 'signed_by', 'signature')
+    def _compute_x_customer_signed(self):
+        for order in self:
+            order.x_customer_signed = bool(
+                order.signed_on or order.signed_by or order.signature
+            )
 
     @api.model
     def _fix_advance_payment_project_field(self):
@@ -96,17 +113,18 @@ class SaleOrder(models.Model):
     def _get_view(self, view_id=None, view_type='form', **options):
         arch, view = super()._get_view(view_id, view_type, **options)
         if view_type == 'form':
-            # Inject ticket_repair_stage_state so button expressions below can
-            # read it. (signed_on / signed_by are injected via the XML view
-            # inheritance in views/sale_order_views.xml — Python injection
-            # didn't survive Odoo's view post-processing for those for some
-            # reason; XML inheritance is more reliable.)
+            # Inject our custom helper fields so button expressions can read
+            # them. We use x_customer_signed (computed from signed_on /
+            # signed_by / signature) instead of signed_on directly, because
+            # the standard signed_on field somehow doesn't survive
+            # Studio's view post-processing — but our own fields do.
             for sheet in arch.xpath("//sheet"):
-                if not arch.xpath("//field[@name='ticket_repair_stage_state']"):
-                    fld = etree.Element('field')
-                    fld.set('name', 'ticket_repair_stage_state')
-                    fld.set('invisible', '1')
-                    sheet.insert(0, fld)
+                for fname in ('ticket_repair_stage_state', 'x_customer_signed'):
+                    if not arch.xpath(f"//field[@name='{fname}']"):
+                        fld = etree.Element('field')
+                        fld.set('name', fname)
+                        fld.set('invisible', '1')
+                        sheet.insert(0, fld)
                 break
 
             # Create Invoice: for RUG-confirmed SOs, only show once the ticket
@@ -159,8 +177,10 @@ class SaleOrder(models.Model):
             # Confirm button: visible in both draft AND sent states so the
             # salesperson can confirm either path:
             #   • Repair + RUG approved          → standard repair-warranty flow
-            #   • Repair + RUG rejected          → customer-pays after portal accept
-            #   • Not Under Warranty             → customer-pays from the start
+            #   • Repair + RUG rejected          → only AFTER customer signs
+            #                                      the portal preview
+            #   • Not Under Warranty             → only AFTER customer signs
+            #                                      the portal preview
             # Stays hidden on Repair quotations while RUG is still pending
             # (neither approved nor rejected yet).
             # Studio's arch has two action_confirm buttons — we want the
@@ -175,7 +195,10 @@ class SaleOrder(models.Model):
                         "(state not in ('draft', 'sent')) or "
                         "(x_studio_quotation_type == 'Repair' "
                         "and not x_studio_rug_approved "
-                        "and not x_studio_rug_rejected)"
+                        "and not x_studio_rug_rejected) or "
+                        "(x_studio_rug_rejected and not x_customer_signed) or "
+                        "(x_studio_quotation_type == 'Not Under Warranty' "
+                        "and not x_customer_signed)"
                     )
                     for btn in confirm_btns[2:]:
                         btn.set('invisible', '1')
