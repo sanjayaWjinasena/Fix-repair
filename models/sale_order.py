@@ -208,7 +208,12 @@ class SaleOrder(models.Model):
 
     def action_quotation_send(self):
         action = super().action_quotation_send()
-        if self.x_studio_quotation_type != 'Not Under Warranty':
+        # Apply the custom body / stage-transition treatment for:
+        #   • Not Under Warranty quotations (customer-pays from the start), and
+        #   • Repair quotations whose RUG has been rejected (customer now pays).
+        # Both should produce the same email body as the Not Under Warranty flow.
+        if self.x_studio_quotation_type != 'Not Under Warranty' \
+                and not self.x_studio_rug_rejected:
             return action
 
         # Move linked helpdesk ticket from Diagnosis → Estimation Sent to Customer
