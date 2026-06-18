@@ -114,6 +114,12 @@ class ProjectTask(models.Model):
                     field.set('options', "{'clickable': '0', 'fold_field': 'fold'}")
                     field.set('readonly', '1')
 
+            # In Progress / Changes Requested / Approved … state button:
+            # lock it readonly so the user can't pick a new state from the
+            # dropdown. State changes happen via Mark as Done / automations.
+            for field in arch.xpath("//field[@name='state']"):
+                field.set('readonly', '1')
+
             # Worksheet stat buttons (action_fsm_worksheet) — not used in
             # the repair workflow, hide entirely.
             for btn in arch.xpath("//button[@name='action_fsm_worksheet']"):
