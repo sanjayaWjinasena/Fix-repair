@@ -225,6 +225,18 @@ class HelpdeskTicket(models.Model):
                     "if x_studio_normal_repair_without_serial_no else []"
                 )
 
+            # Assigned-to user: always readonly. The Assign to Me button is the
+            # only way to change it (so reassignment is intentional, not a
+            # stray click on the dropdown).
+            for field in arch.xpath("//field[@name='user_id']"):
+                field.set('readonly', '1')
+
+            # Assign to Me: hide as soon as ANY user is assigned (previously
+            # only hidden when assigned to the current user — meaning logged-in
+            # users could re-grab a ticket from someone else with one click).
+            for btn in arch.xpath("//button[@name='action_assign_to_me']"):
+                btn.set('invisible', 'user_id')
+
             # Create Serial No button — Without Serial No type only, once product is set
             # and no serial has been created yet.
             for header in arch.xpath("//header"):
