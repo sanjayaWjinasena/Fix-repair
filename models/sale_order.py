@@ -198,9 +198,16 @@ class SaleOrder(models.Model):
                 btn.set('invisible', rug_approve_invisible)
                 btn.set('type', 'object')
                 btn.set('name', 'action_approve_rug_direct')
-            # Reject: keep Studio server action, only override visibility
+            # Reject: rewire to our own method. The Studio server action 2004
+            # also resets each line's price_unit to x_studio_price_unit_original,
+            # but that "original" is only captured by another Studio action
+            # when x_studio_rug_confirmed flips True — in a request → reject
+            # cycle where rug_confirmed never flips, the original stays at 0,
+            # and the reset zeros the perfectly-good current price.
             for btn in arch.xpath("//button[@name='2004']"):
                 btn.set('invisible', rug_approve_invisible)
+                btn.set('type', 'object')
+                btn.set('name', 'action_reject_rug_direct')
 
             # Confirm button: visible in both draft AND sent states so the
             # salesperson can confirm either path:
@@ -368,6 +375,19 @@ class SaleOrder(models.Model):
         self.write({'x_studio_rug_approved': True})
         # write() moves the ticket to 'Estimation Approval Received'.
         # Confirm button becomes visible once rug_approved=True; user clicks it manually.
+
+    def action_reject_rug_direct(self):
+        """Reject RUG without zeroing the order lines' price_unit.
+
+        The Studio server action 2004 also writes price_unit from
+        x_studio_price_unit_original on each line. That field is only
+        captured by Studio action 2144 when x_studio_rug_confirmed flips
+        True, which doesn't always happen in a request → reject cycle —
+        leaving the original at 0 and the reset zeroes the line. Our
+        override skips the line touch entirely; the lines keep whatever
+        price they already had.
+        """
+        self.write({'x_studio_rug_rejected': True})
 
     def _move_ticket_to_stage(self, order, stage_name):
         """Find the linked helpdesk ticket and move it to the named stage."""
