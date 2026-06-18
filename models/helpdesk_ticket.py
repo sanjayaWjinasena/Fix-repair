@@ -238,13 +238,16 @@ class HelpdeskTicket(models.Model):
                 btn.set('invisible', 'user_id')
 
             # Required-fields gate (same fields the Return button needs):
-            #   • ticket_type_id must always be filled — user picks the type first.
+            #   • A user must first claim the ticket (Assign to Me) — the
+            #     button stays clickable on a brand-new ticket because no
+            #     other field is required yet.
+            #   • Once assigned (user_id set), ticket_type_id becomes required.
             #   • Once a type is picked, the rest become required so the ticket
             #     can't be saved in a half-filled state that would also leave
             #     the Return button hidden.
             #   • Warranty card is required only on RUG-confirmed tickets.
             for field in arch.xpath("//field[@name='ticket_type_id']"):
-                field.set('required', '1')
+                field.set('required', 'user_id')
             for fname in (
                 'partner_id',
                 'x_studio_job_location',
