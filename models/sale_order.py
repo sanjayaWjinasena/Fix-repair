@@ -409,28 +409,11 @@ class SaleOrder(models.Model):
                 self._move_ticket_to_stage(order, 'Estimation Approval Received')
 
         # RUG approved → reprice all lines to product cost price
-        # (Jinasena absorbs the cost under warranty)
         if vals.get('x_studio_rug_approved'):
             for order in self:
                 if order.x_studio_quotation_type == 'Repair':
                     for line in order.order_line:
                         if line.product_id:
                             line.write({'price_unit': line.product_id.standard_price})
-
-        # RUG rejected → reprice all lines via the SO's sales pricelist.
-        # The warranty initially set every line to 0; once the RUG is
-        # rejected the customer pays at the configured sales price, so the
-        # invoice has something to bill against.
-        if vals.get('x_studio_rug_rejected'):
-            for order in self:
-                if order.x_studio_quotation_type != 'Repair':
-                    continue
-                lines = order.order_line.filtered(
-                    lambda l: l.product_id and not l.display_type
-                )
-                # Force a recompute from the sales pricelist — the standard
-                # _compute_price_unit on sale.order.line uses
-                # order_id.pricelist_id to derive the price.
-                lines._compute_price_unit()
 
         return res
