@@ -256,6 +256,14 @@ class StockReturnPicking(models.TransientModel):
         if self.ticket_id:
             new_picking = self.env['stock.picking'].browse(new_picking_id)
 
+            # Record this collection picking on the ticket so the later
+            # Dispatch click can pre-load it via default_picking_id. For
+            # Factory Repair this also gets overwritten by
+            # action_received_at_sales_centre when that fires, but Centre
+            # Repair skips that step — without this write, Centre Repair
+            # Dispatch would launch the wizard with no picking_id.
+            self.ticket_id.sudo().write({'x_studio_pick_id': new_picking_id})
+
             # Rename the new picking so its number/prefix matches the Return
             # Receipt Location's warehouse, e.g. BR-AM/Stock → BR-AM/RET/xxxxx.
             # We can't change picking_type_id once the picking is confirmed

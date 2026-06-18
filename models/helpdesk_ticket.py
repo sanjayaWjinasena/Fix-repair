@@ -364,11 +364,24 @@ class HelpdeskTicket(models.Model):
             #                              the picking; return location defaults to Customers
             cust_loc = self.env.ref('stock.stock_location_customers', raise_if_not_found=False)
             cust_loc_id = cust_loc.id if cust_loc else 5
+            # default_location_id (Return Location) → Customer for any
+            # hand-back-to-customer scenario:
+            #   • Factory Repair  at Received at Sales Centre
+            #   • NUW with serial at Received at Sales Centre
+            #   • Centre Repair   at Repair Completed (Centre Repair skips
+            #     the factory trip — the item is already at the sales centre
+            #     by the time the ticket hits Repair Completed, so this is
+            #     equivalent to Received at Sales Centre for that flow).
+            ship_back_cond = (
+                "(repair_stage_state == 'received_at_sales_centre' "
+                "or (x_studio_job_location == 'Centre Repair' "
+                "and repair_stage_state == 'repair_completed'))"
+            )
             btn_context = (
                 "{'default_ticket_id': (repair_stage_state == 'new' and id) or False, "
                 "'default_picking_id': x_studio_pick_id or False, "
                 "'default_partner_id': partner_id, "
-                f"'default_location_id': (repair_stage_state == 'received_at_sales_centre' and {cust_loc_id}) or False, "
+                f"'default_location_id': ({ship_back_cond} and {cust_loc_id}) or False, "
                 "'default_company_id': company_id}"
             )
             for btn in arch.xpath("//button[@name='195']"):
