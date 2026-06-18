@@ -155,11 +155,19 @@ class StockPicking(models.Model):
         # (the wizard stores the original RET picking on the ticket; the
         #  2nd return reverses it, so return_id points back to that picking).
         # Fallback: partner + company + stage (for pickings not via wizard).
-        received_stage_ids = self.env['helpdesk.stage'].sudo().search(
-            [('name', '=', 'Received at Sales Centre')]
-        ).ids
+        #
+        # Tickets eligible to move to "Handed Over to Customer":
+        #   • Factory Repair / NUW-with-serial → stage = Received at Sales Centre
+        #   • Centre Repair                    → stage = Repair Completed
+        #     (Centre Repair skips the factory trip, so the ticket sits at
+        #      Repair Completed at the moment of Dispatch)
+        handover_stage_ids = self.env['helpdesk.stage'].sudo().search([
+            '|',
+            ('name', '=', 'Received at Sales Centre'),
+            ('name', '=', 'Repair Completed'),
+        ]).ids
 
-        if received_stage_ids:
+        if handover_stage_ids:
             handover_pickings = self.filtered(
                 lambda p: (
                     p.state == 'done'
@@ -173,13 +181,13 @@ class StockPicking(models.Model):
                 if picking.return_id:
                     ticket = self.env['helpdesk.ticket'].sudo().search([
                         ('x_studio_pick_id', '=', picking.return_id.id),
-                        ('stage_id', 'in', received_stage_ids),
+                        ('stage_id', 'in', handover_stage_ids),
                         ('company_id', '=', picking.company_id.id),
                     ], limit=1)
                 if not ticket:
                     ticket = self.env['helpdesk.ticket'].sudo().search([
                         ('partner_id', '=', picking.partner_id.id),
-                        ('stage_id', 'in', received_stage_ids),
+                        ('stage_id', 'in', handover_stage_ids),
                         ('company_id', '=', picking.company_id.id),
                         ('x_studio_rug_repair', '=', True),
                     ], limit=1)
