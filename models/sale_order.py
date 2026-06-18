@@ -127,18 +127,40 @@ class SaleOrder(models.Model):
                         sheet.insert(0, fld)
                 break
 
-            # Create Invoice: for RUG-confirmed SOs that are STILL under
-            # warranty (RUG not yet rejected), only show once the ticket
-            # reaches Repair Completed. If the RUG was rejected the customer
-            # pays, so we drop the gate (same behaviour as Not Under Warranty).
+            # Create Invoice buttons — three variants ship by default:
+            #   • create_invoice (purple)             : invoice_status='to invoice'
+            #   • create_invoice_sub (gray)           : subscription-only
+            #   • create_invoice_percentage (gray)    : percentage advance
+            #
+            # Behaviour we want:
+            #   • RUG-confirmed (warranty path):
+            #       - Purple available once the ticket hits Repair Completed
+            #       - Percentage variant follows its default visibility
+            #   • Reject-RUG (customer-pays path):
+            #       - Hide the Purple variant entirely
+            #       - Always offer the Percentage advance variant while the
+            #         SO is in 'sale' state (regardless of invoice_status),
+            #         so the salesperson collects a percentage advance from
+            #         the customer to unblock delivery.
             for btn in arch.xpath("//button[@id='create_invoice']"):
                 existing = btn.get('invisible', '')
                 extra = (
                     "(x_studio_rug_confirmed "
                     "and not x_studio_rug_rejected "
-                    "and ticket_repair_stage_state != 'repair_completed')"
+                    "and ticket_repair_stage_state != 'repair_completed') "
+                    "or x_studio_rug_rejected"
                 )
                 btn.set('invisible', f"({existing}) or {extra}" if existing else extra)
+
+            for btn in arch.xpath("//button[@id='create_invoice_percentage']"):
+                # Standard expression: is_subscription or invoice_status != 'no'
+                # or state != 'sale'. Loosen the invoice_status='no' gate when
+                # the RUG was rejected — that case needs the % advance even
+                # after deliveries have produced "to invoice" status.
+                btn.set('invisible',
+                    "is_subscription or state != 'sale' or "
+                    "(invoice_status != 'no' and not x_studio_rug_rejected)"
+                )
 
             # Order Payment Type: editable in draft/sent for all customers
             for el in arch.xpath("//field[@name='x_studio_order_payment_method']"):
