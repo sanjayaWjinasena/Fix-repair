@@ -274,12 +274,13 @@ class HelpdeskTicket(models.Model):
                 btn.set('string', 'Create Serial No')
                 btn.set('type', 'object')
                 btn.set('class', 'btn-secondary')
-                # Stays clickable even when a serial is already linked so
-                # the user can swap to a fresh one without first detaching
-                # the existing serial.
+                # Visible only on Without-Serial-No tickets that have a
+                # product set AND no serial linked yet. Hides as soon as
+                # x_studio_serial_no is populated (after a click).
                 btn.set('invisible',
                     "not x_studio_normal_repair_without_serial_no "
-                    "or not product_id"
+                    "or not product_id "
+                    "or x_studio_serial_no"
                 )
                 header.insert(0, btn)
                 break
