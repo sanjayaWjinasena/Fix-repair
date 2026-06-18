@@ -7,6 +7,31 @@ class StockReturnPicking(models.TransientModel):
     _inherit = 'stock.return.picking'
 
     @api.model
+    def _next_warehouse_ret_name(self, warehouse):
+        """Return next value from the <WH_CODE>/RET/ sequence for the
+        given warehouse. Auto-creates the sequence if it doesn't exist."""
+        if not warehouse or not warehouse.code:
+            return False
+        ret_prefix = f"{warehouse.code}/RET/"
+        seq = self.env['ir.sequence'].sudo().search([
+            ('prefix', '=', ret_prefix),
+            '|',
+            ('company_id', '=', warehouse.company_id.id),
+            ('company_id', '=', False),
+        ], limit=1)
+        if not seq:
+            seq = self.env['ir.sequence'].sudo().create({
+                'name': f"{warehouse.name} Sequence return",
+                'prefix': ret_prefix,
+                'padding': 5,
+                'number_increment': 1,
+                'number_next': 1,
+                'implementation': 'standard',
+                'company_id': warehouse.company_id.id,
+            })
+        return seq.next_by_id()
+
+    @api.model
     def default_get(self, fields_list):
         defaults = super().default_get(fields_list)
         ticket_id = defaults.get('ticket_id') or self.env.context.get('default_ticket_id')
@@ -71,6 +96,15 @@ class StockReturnPicking(models.TransientModel):
                     # _compute_state sees done moves and stays done.
                     fake_move.sudo().write({'state': 'done'})
                     fake_picking.sudo().write({'state': 'done'})
+
+                    # Rename the synthetic Delivery to Return so it uses the
+                    # Return Receipt Location's <WH_CODE>/RET/ sequence —
+                    # matches the naming we give the collection picking below.
+                    rrl = ticket.x_studio_return_receipt_location
+                    ret_name = self._next_warehouse_ret_name(rrl.warehouse_id if rrl else False)
+                    if ret_name:
+                        fake_picking.sudo().write({'name': ret_name})
+
                     defaults['picking_id'] = fake_picking.id
 
         elif serial:
@@ -227,31 +261,10 @@ class StockReturnPicking(models.TransientModel):
             # We can't change picking_type_id once the picking is confirmed
             # ("Changing the operation type ... is forbidden"), so we only
             # overwrite the name.
-            #
-            # Always target a "<WH_CODE>/RET/" sequence. If none exists for
-            # the warehouse yet, create it on the fly so every warehouse ends
-            # up with a consistent /RET/-style return numbering scheme.
             loc = self.ticket_id.x_studio_return_receipt_location
-            wh = loc.warehouse_id if loc else False
-            if wh and wh.code:
-                ret_prefix = f"{wh.code}/RET/"
-                seq = self.env['ir.sequence'].sudo().search([
-                    ('prefix', '=', ret_prefix),
-                    '|',
-                    ('company_id', '=', wh.company_id.id),
-                    ('company_id', '=', False),
-                ], limit=1)
-                if not seq:
-                    seq = self.env['ir.sequence'].sudo().create({
-                        'name': f"{wh.name} Sequence return",
-                        'prefix': ret_prefix,
-                        'padding': 5,
-                        'number_increment': 1,
-                        'number_next': 1,
-                        'implementation': 'standard',
-                        'company_id': wh.company_id.id,
-                    })
-                new_picking.sudo().write({'name': seq.next_by_id()})
+            ret_name = self._next_warehouse_ret_name(loc.warehouse_id if loc else False)
+            if ret_name:
+                new_picking.sudo().write({'name': ret_name})
 
             new_picking.move_ids.write({
                 'to_refund': False,
