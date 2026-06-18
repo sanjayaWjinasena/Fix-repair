@@ -10,36 +10,6 @@ class StockPicking(models.Model):
         compute='_compute_nuw_block_validate',
     )
 
-    # True when this picking belongs to a repair-helpdesk flow — used to
-    # hide the standard Return button on stock.picking, because returns
-    # for repair tickets are initiated from the ticket itself (Return /
-    # Dispatch action 195 on helpdesk.ticket), not from the picking.
-    is_repair_related = fields.Boolean(
-        compute='_compute_is_repair_related',
-    )
-
-    @api.depends(
-        'x_studio_helpdesk_ticket_id',
-        'x_studio_created_from_help_ticket',
-        'sale_id', 'sale_id.x_studio_quotation_type',
-        'return_id',
-        'return_id.x_studio_helpdesk_ticket_id',
-        'return_id.x_studio_created_from_help_ticket',
-    )
-    def _compute_is_repair_related(self):
-        for p in self:
-            so = p.sale_id
-            ret = p.return_id
-            p.is_repair_related = bool(
-                p.x_studio_helpdesk_ticket_id
-                or p.x_studio_created_from_help_ticket
-                or (so and so.x_studio_quotation_type in ('Repair', 'Not Under Warranty'))
-                or (ret and (
-                    ret.x_studio_helpdesk_ticket_id
-                    or ret.x_studio_created_from_help_ticket
-                ))
-            )
-
     @api.depends('sale_id', 'sale_id.x_studio_quotation_type')
     def _compute_nuw_block_validate(self):
         for picking in self:
@@ -61,24 +31,20 @@ class StockPicking(models.Model):
         arch, view = super()._get_view(view_id, view_type, **options)
         if view_type == 'form':
             for sheet in arch.xpath("//sheet"):
-                for fname in ('nuw_block_validate', 'is_repair_related'):
-                    if not arch.xpath(f"//field[@name='{fname}']"):
-                        fld = etree.Element('field')
-                        fld.set('name', fname)
-                        fld.set('invisible', '1')
-                        sheet.insert(0, fld)
+                fld = etree.Element('field')
+                fld.set('name', 'nuw_block_validate')
+                fld.set('invisible', '1')
+                sheet.insert(0, fld)
                 break
             for btn in arch.xpath("//button[@name='button_validate']"):
                 existing = btn.get('invisible', '')
                 extra = 'nuw_block_validate'
                 btn.set('invisible', f"({existing}) or {extra}" if existing else extra)
-            # Hide the Return button (action 195) on pickings that belong to a
-            # repair-helpdesk flow — returns there are initiated from the
-            # ticket itself, not the picking.
+            # Hide the Return button (action 195) entirely — returns are
+            # initiated from the helpdesk ticket itself, never from the
+            # picking form.
             for btn in arch.xpath("//button[@name='195']"):
-                existing = btn.get('invisible', '')
-                extra = 'is_repair_related'
-                btn.set('invisible', f"({existing}) or {extra}" if existing else extra)
+                btn.set('invisible', '1')
         return arch, view
 
     def _action_done(self):
