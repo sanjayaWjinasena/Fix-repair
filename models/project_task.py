@@ -105,4 +105,18 @@ class ProjectTask(models.Model):
                 btn.set('invisible',
                     f"not display_mark_as_done_secondary or ({repair_guard})")
 
+            # Stage statusbar: make it read-only (no clicking between stages).
+            # Stage transitions on repair tasks are driven by Mark as Done /
+            # automations — the salesperson shouldn't be able to skip stages
+            # by clicking on the bar.
+            for field in arch.xpath("//field[@name='stage_id']"):
+                if field.get('widget', '').startswith('statusbar'):
+                    field.set('options', "{'clickable': '0', 'fold_field': 'fold'}")
+                    field.set('readonly', '1')
+
+            # Worksheet stat buttons (action_fsm_worksheet) — not used in
+            # the repair workflow, hide entirely.
+            for btn in arch.xpath("//button[@name='action_fsm_worksheet']"):
+                btn.set('invisible', '1')
+
         return arch, view
