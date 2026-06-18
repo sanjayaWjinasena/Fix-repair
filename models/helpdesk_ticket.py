@@ -245,6 +245,10 @@ class HelpdeskTicket(models.Model):
             #   • Once a type is picked, the rest become required so the ticket
             #     can't be saved in a half-filled state that would also leave
             #     the Return button hidden.
+            #   • Serial number is NOT required for the Without Serial No
+            #     type — that flow generates the serial via the Create Serial
+            #     No button, which needs to be clickable before x_studio_serial_no
+            #     can be populated.
             #   • Warranty card is required only on RUG-confirmed tickets.
             for field in arch.xpath("//field[@name='ticket_type_id']"):
                 field.set('required', 'user_id')
@@ -252,11 +256,13 @@ class HelpdeskTicket(models.Model):
                 'partner_id',
                 'x_studio_job_location',
                 'x_studio_repair_reason',
-                'x_studio_serial_no',
                 'product_id',
             ):
                 for field in arch.xpath(f"//field[@name='{fname}']"):
                     field.set('required', 'ticket_type_id')
+            for field in arch.xpath("//field[@name='x_studio_serial_no']"):
+                field.set('required',
+                    'ticket_type_id and not x_studio_normal_repair_without_serial_no')
             for field in arch.xpath("//field[@name='x_studio_warranty_card']"):
                 field.set('required', 'x_studio_rug_confirmed')
 
