@@ -127,11 +127,17 @@ class SaleOrder(models.Model):
                         sheet.insert(0, fld)
                 break
 
-            # Create Invoice: for RUG-confirmed SOs, only show once the ticket
-            # reaches Repair Completed stage.
+            # Create Invoice: for RUG-confirmed SOs that are STILL under
+            # warranty (RUG not yet rejected), only show once the ticket
+            # reaches Repair Completed. If the RUG was rejected the customer
+            # pays, so we drop the gate (same behaviour as Not Under Warranty).
             for btn in arch.xpath("//button[@id='create_invoice']"):
                 existing = btn.get('invisible', '')
-                extra = "(x_studio_rug_confirmed and ticket_repair_stage_state != 'repair_completed')"
+                extra = (
+                    "(x_studio_rug_confirmed "
+                    "and not x_studio_rug_rejected "
+                    "and ticket_repair_stage_state != 'repair_completed')"
+                )
                 btn.set('invisible', f"({existing}) or {extra}" if existing else extra)
 
             # Order Payment Type: editable in draft/sent for all customers

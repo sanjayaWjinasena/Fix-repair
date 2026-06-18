@@ -10,11 +10,22 @@ class StockPicking(models.Model):
         compute='_compute_nuw_block_validate',
     )
 
-    @api.depends('sale_id', 'sale_id.x_studio_quotation_type')
+    @api.depends(
+        'sale_id',
+        'sale_id.x_studio_quotation_type',
+        'sale_id.x_studio_rug_rejected',
+    )
     def _compute_nuw_block_validate(self):
+        # The same delivery-validation gate that applies to Not Under
+        # Warranty SOs must also apply to Repair SOs whose RUG has been
+        # rejected — in both cases the customer pays before delivery.
         for picking in self:
             so = picking.sale_id
-            if not so or so.x_studio_quotation_type != 'Not Under Warranty':
+            customer_pays = bool(so) and (
+                so.x_studio_quotation_type == 'Not Under Warranty'
+                or so.x_studio_rug_rejected
+            )
+            if not customer_pays:
                 picking.nuw_block_validate = False
                 continue
             task = so.sudo().task_id or self.env['project.task'].sudo().search(
@@ -50,12 +61,16 @@ class StockPicking(models.Model):
     def _action_done(self):
         res = super()._action_done()
 
-        # ── Path A: Repair SO pickings ────────────────────────────────────────
-        # Move ticket through repair stages based on picking completion
+        # ── Path A: Repair SO pickings (warranty path only) ───────────────────
+        # Move ticket through repair stages based on picking completion.
+        # Reject-RUG repairs go through Path C instead — once the RUG is
+        # rejected the SO behaves like Not Under Warranty (customer pays).
         repair_so_ids = set()
         for picking in self.filtered(lambda p: p.state == 'done' and p.sale_id):
-            if picking.sale_id.x_studio_quotation_type == 'Repair':
-                repair_so_ids.add(picking.sale_id.id)
+            so = picking.sale_id
+            if (so.x_studio_quotation_type == 'Repair'
+                    and not so.x_studio_rug_rejected):
+                repair_so_ids.add(so.id)
 
         for so in self.env['sale.order'].sudo().browse(list(repair_so_ids)):
             task = so.task_id or self.env['project.task'].sudo().search(
@@ -91,11 +106,15 @@ class StockPicking(models.Model):
                 if all_pickings and all(p.state in ('done', 'cancel') for p in all_pickings):
                     self.env['sale.order']._move_ticket_to_stage(so, 'Repair Completed')
 
-        # ── Path C: Not Under Warranty SO pickings ───────────────────────────
+        # ── Path C: Customer-pays SO pickings (NUW + Reject-RUG) ─────────────
+        # Same flow for both: customer must pay before pickings can advance
+        # the ticket past Repair Started.
         nuw_so_ids = set()
         for picking in self.filtered(lambda p: p.state == 'done' and p.sale_id):
-            if picking.sale_id.x_studio_quotation_type == 'Not Under Warranty':
-                nuw_so_ids.add(picking.sale_id.id)
+            so = picking.sale_id
+            if (so.x_studio_quotation_type == 'Not Under Warranty'
+                    or so.x_studio_rug_rejected):
+                nuw_so_ids.add(so.id)
 
         for so in self.env['sale.order'].sudo().browse(list(nuw_so_ids)):
             task = so.task_id or self.env['project.task'].sudo().search(
