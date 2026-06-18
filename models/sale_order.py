@@ -221,6 +221,9 @@ class SaleOrder(models.Model):
             # Repair tickets where the RUG was rejected — once rejected the
             # quotation falls back to the customer-pays flow so the salesperson
             # needs to email the quote.
+            # Only visible in 'draft' — once an email has been sent (state
+            # becomes 'sent'), hide the button so the salesperson doesn't
+            # accidentally fire a duplicate email.
             # Studio has hidden all action_quotation_send buttons via an
             # always-true `state not in ['False']` guard; inject a clean one.
             for header in arch.xpath("//header"):
@@ -232,7 +235,7 @@ class SaleOrder(models.Model):
                 btn.set('invisible',
                     "(x_studio_quotation_type != 'Not Under Warranty' "
                     "and not x_studio_rug_rejected) "
-                    "or state not in ('draft', 'sent')"
+                    "or state != 'draft'"
                 )
                 header.insert(0, btn)
 
