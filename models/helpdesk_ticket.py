@@ -237,6 +237,26 @@ class HelpdeskTicket(models.Model):
             for btn in arch.xpath("//button[@name='action_assign_to_me']"):
                 btn.set('invisible', 'user_id')
 
+            # Required-fields gate (same fields the Return button needs):
+            #   • ticket_type_id must always be filled — user picks the type first.
+            #   • Once a type is picked, the rest become required so the ticket
+            #     can't be saved in a half-filled state that would also leave
+            #     the Return button hidden.
+            #   • Warranty card is required only on RUG-confirmed tickets.
+            for field in arch.xpath("//field[@name='ticket_type_id']"):
+                field.set('required', '1')
+            for fname in (
+                'partner_id',
+                'x_studio_job_location',
+                'x_studio_repair_reason',
+                'x_studio_serial_no',
+                'product_id',
+            ):
+                for field in arch.xpath(f"//field[@name='{fname}']"):
+                    field.set('required', 'ticket_type_id')
+            for field in arch.xpath("//field[@name='x_studio_warranty_card']"):
+                field.set('required', 'x_studio_rug_confirmed')
+
             # Create Serial No button — Without Serial No type only, once product is set
             # and no serial has been created yet.
             for header in arch.xpath("//header"):
