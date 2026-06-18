@@ -268,10 +268,12 @@ class HelpdeskTicket(models.Model):
                 btn.set('string', 'Create Serial No')
                 btn.set('type', 'object')
                 btn.set('class', 'btn-secondary')
+                # Stays clickable even when a serial is already linked so
+                # the user can swap to a fresh one without first detaching
+                # the existing serial.
                 btn.set('invisible',
                     "not x_studio_normal_repair_without_serial_no "
-                    "or not product_id "
-                    "or x_studio_serial_no"
+                    "or not product_id"
                 )
                 header.insert(0, btn)
                 break
@@ -433,8 +435,9 @@ class HelpdeskTicket(models.Model):
         self.ensure_one()
         if not self.product_id:
             raise UserError("Select a product before creating a serial number.")
-        if self.x_studio_serial_no:
-            raise UserError("A serial number already exists for this ticket.")
+        # No "already exists" guard — clicking again creates a fresh lot
+        # and re-points the ticket to it, so the user can change the
+        # serial after the fact.
         lot = self.env['stock.lot'].sudo().create({
             'name': self.name,
             'product_id': self.product_id.id,
