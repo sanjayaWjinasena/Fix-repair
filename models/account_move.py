@@ -18,7 +18,14 @@ class AccountMove(models.Model):
             so = self.env['sale.order'].sudo().search(
                 [('name', '=', move.invoice_origin)], limit=1
             )
-            move.is_rug_invoice = so.x_studio_quotation_type == 'Repair'
+            # Once the RUG has been rejected the invoice falls back to the
+            # customer-pays flow — it should no longer be treated as a RUG
+            # invoice (no "Change to RUG Account" gate, Register Payment
+            # available, Confirm visible).
+            move.is_rug_invoice = (
+                so.x_studio_quotation_type == 'Repair'
+                and not so.x_studio_rug_rejected
+            )
 
     def _get_view(self, view_id=None, view_type='form', **options):
         arch, view = super()._get_view(view_id, view_type, **options)
@@ -39,10 +46,13 @@ class AccountMove(models.Model):
                 header.insert(0, btn)
                 break
 
-            # Register Payment: hide on RUG-confirmed invoices.
+            # Register Payment: hide on RUG-confirmed invoices, but ONLY while
+            # the RUG is still confirmed. If it's been rejected the customer
+            # pays the invoice and we want Register Payment available again.
             for btn in arch.xpath("//button[@name='action_register_payment']"):
                 existing = btn.get('invisible', '')
-                btn.set('invisible', f"({existing}) or x_studio_rug_confirmed" if existing else 'x_studio_rug_confirmed')
+                extra = "(x_studio_rug_confirmed and not x_studio_rug_rejected)"
+                btn.set('invisible', f"({existing}) or {extra}" if existing else extra)
         return arch, view
 
     def action_change_to_rug_account(self):
