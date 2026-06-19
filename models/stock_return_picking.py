@@ -223,6 +223,13 @@ class StockReturnPicking(models.TransientModel):
                     field.set('invisible', '1')
                 for field in arch.xpath("//field[@name='picking_id']"):
                     field.set('invisible', '1')
+                # The standard arch wraps both fields in a <group
+                # invisible="not ticket_id">. For a repair context ticket_id
+                # is truthy, so without overriding the group it would render
+                # with just the section header. Force the whole group
+                # invisible so nothing of that block appears.
+                for grp in arch.xpath("//group[@invisible='not ticket_id']"):
+                    grp.set('invisible', '1')
             else:
                 # Non-repair callers keep the standard sale_order domain.
                 for field in arch.xpath("//field[@name='sale_order_id']"):
