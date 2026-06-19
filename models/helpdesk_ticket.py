@@ -207,6 +207,8 @@ class HelpdeskTicket(models.Model):
                     'x_studio_normal_repair_without_serial_no',
                     'x_studio_job_location',
                     'so_fully_paid',
+                    'x_studio_cancelled',
+                    'x_studio_quick_repair_status',
                 ):
                     if not arch.xpath(f"//field[@name='{fname}']"):
                         fld = etree.Element('field')
@@ -402,9 +404,15 @@ class HelpdeskTicket(models.Model):
                 dispatch.set('string', 'Dispatch')
                 dispatch.set('type', 'action')
                 dispatch.set('class', btn.get('class', 'btn-secondary'))
+                # Cancelled and Tested OK (x_studio_quick_repair_status =
+                # 'Quick Repair') tickets never produce invoices, so the
+                # payment gate doesn't apply to them — skip so_fully_paid in
+                # those two cases. Stage / job-location conditions still hold.
                 dispatch.set('invisible',
                     "not has_return_picking or "
-                    "not so_fully_paid or "
+                    "(not so_fully_paid "
+                    " and not x_studio_cancelled "
+                    " and x_studio_quick_repair_status != 'Quick Repair') or "
                     "not ("
                     "(x_studio_job_location == 'Factory Repair' and repair_stage_state == 'received_at_sales_centre') or "
                     "(x_studio_job_location == 'Centre Repair' and repair_stage_state == 'repair_completed') or "
