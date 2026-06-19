@@ -249,6 +249,7 @@ class StockReturnPicking(models.TransientModel):
                     if line.quantity != 1:
                         line.quantity = 1
 
+    def _create_returns(self):
         # Look up the related helpdesk ticket. For Return clicks (stage='new')
         # the wizard's ticket_id is set from default_ticket_id in context.
         # For Dispatch clicks (later stages) the button deliberately drops
