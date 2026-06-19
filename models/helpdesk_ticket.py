@@ -44,6 +44,15 @@ class HelpdeskTicket(models.Model):
     # hand the item back until the customer has settled the repair bill.
     so_fully_paid = fields.Boolean(compute='_compute_so_fully_paid')
 
+    # True when any linked FSM task sits on a stage named "Tested OK".
+    # Used to bypass the payment gate on Dispatch — Tested OK tickets never
+    # produce an invoice so the customer has nothing to pay.
+    is_tested_ok = fields.Boolean(compute='_compute_is_tested_ok')
+
+    # True when the repair-task SO is cancelled. Same reason as is_tested_ok:
+    # cancelled orders never produce invoices.
+    is_so_cancelled = fields.Boolean(compute='_compute_is_so_cancelled')
+
     @api.depends(
         'fsm_task_ids.sale_order_id.invoice_status',
         'fsm_task_ids.sale_order_id.amount_unpaid',
@@ -57,6 +66,22 @@ class HelpdeskTicket(models.Model):
             ticket.so_fully_paid = all(
                 so.invoice_status == 'invoiced' and so.amount_unpaid == 0
                 for so in task_sos
+            )
+
+    @api.depends('fsm_task_ids.stage_id.name')
+    def _compute_is_tested_ok(self):
+        for ticket in self:
+            ticket.is_tested_ok = any(
+                (t.stage_id.name or '').strip() == 'Tested OK'
+                for t in ticket.fsm_task_ids
+            )
+
+    @api.depends('fsm_task_ids.sale_order_id.state')
+    def _compute_is_so_cancelled(self):
+        for ticket in self:
+            sos = ticket.fsm_task_ids.mapped('sale_order_id')
+            ticket.is_so_cancelled = bool(sos) and any(
+                so.state == 'cancel' for so in sos
             )
 
     @api.depends('stage_id')
@@ -207,8 +232,8 @@ class HelpdeskTicket(models.Model):
                     'x_studio_normal_repair_without_serial_no',
                     'x_studio_job_location',
                     'so_fully_paid',
-                    'x_studio_cancelled',
-                    'x_studio_quick_repair_status',
+                    'is_tested_ok',
+                    'is_so_cancelled',
                 ):
                     if not arch.xpath(f"//field[@name='{fname}']"):
                         fld = etree.Element('field')
@@ -404,15 +429,15 @@ class HelpdeskTicket(models.Model):
                 dispatch.set('string', 'Dispatch')
                 dispatch.set('type', 'action')
                 dispatch.set('class', btn.get('class', 'btn-secondary'))
-                # Cancelled and Tested OK (x_studio_quick_repair_status =
-                # 'Quick Repair') tickets never produce invoices, so the
-                # payment gate doesn't apply to them — skip so_fully_paid in
-                # those two cases. Stage / job-location conditions still hold.
+                # Cancelled SO and Tested OK task tickets never produce
+                # invoices, so the payment gate doesn't apply to them —
+                # skip so_fully_paid in those two cases. Stage /
+                # job-location conditions still hold.
                 dispatch.set('invisible',
                     "not has_return_picking or "
                     "(not so_fully_paid "
-                    " and not x_studio_cancelled "
-                    " and x_studio_quick_repair_status != 'Quick Repair') or "
+                    " and not is_so_cancelled "
+                    " and not is_tested_ok) or "
                     "not ("
                     "(x_studio_job_location == 'Factory Repair' and repair_stage_state == 'received_at_sales_centre') or "
                     "(x_studio_job_location == 'Centre Repair' and repair_stage_state == 'repair_completed') or "
