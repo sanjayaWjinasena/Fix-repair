@@ -346,14 +346,19 @@ class HelpdeskTicket(models.Model):
                 header.append(btn)
                 break
 
-            # Send to Sales Centre: visible only once Mark as Done has been
-            # clicked on the linked FSM task (task_done = True). No stage
-            # checks — at any stage, the moment the task is done, the button
-            # surfaces. Centre Repair still hidden because that flow skips
-            # the sales-centre trip entirely.
+            # Send to Sales Centre: visible once Mark as Done has been
+            # clicked on the linked FSM task (task_done = True), and only
+            # while the ticket hasn't yet reached the Sales Centre. Once
+            # the user clicks the button the ticket moves to
+            # 'sent_to_sales_centre' and beyond, so we hide it there.
+            # Centre Repair still hidden because that flow skips the
+            # sales-centre trip entirely.
             for btn in arch.xpath("//button[@name='action_send_to_sales_centre']"):
                 btn.set('invisible',
-                    "not task_done or x_studio_job_location == 'Centre Repair'"
+                    "not task_done or "
+                    "x_studio_job_location == 'Centre Repair' or "
+                    "repair_stage_state in ('sent_to_sales_centre', "
+                    "'received_at_sales_centre', 'other')"
                 )
 
             # Received at Sales Centre: hide for Centre Repair jobs.
