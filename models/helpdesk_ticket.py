@@ -68,11 +68,20 @@ class HelpdeskTicket(models.Model):
                 for so in task_sos
             )
 
-    @api.depends('fsm_task_ids.stage_id.name')
+    @api.depends(
+        'fsm_task_ids.x_studio_quick_repair_status_1',
+        'fsm_task_ids.x_studio_end_quick_repair',
+    )
     def _compute_is_tested_ok(self):
+        # "Tested OK" on a project.task is a Studio selection value
+        # x_studio_quick_repair_status_1 == 'Quick Repair' (the label
+        # displayed in the UI is "Tested OK"). The Studio automations
+        # also flip x_studio_end_quick_repair to True on the same event,
+        # so either marker counts.
         for ticket in self:
             ticket.is_tested_ok = any(
-                (t.stage_id.name or '').strip() == 'Tested OK'
+                t.x_studio_quick_repair_status_1 == 'Quick Repair'
+                or t.x_studio_end_quick_repair
                 for t in ticket.fsm_task_ids
             )
 
