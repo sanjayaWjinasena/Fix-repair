@@ -13,11 +13,24 @@ class ProjectTask(models.Model):
         compute='_compute_ticket_repair_stage_state',
     )
 
+    # True when this task's sale order has been cancelled. Used to bypass
+    # the repair-stage gate on Mark as Done — once the SO is cancelled
+    # the repair never completes, so we let the user close the task
+    # anyway.
+    so_cancelled = fields.Boolean(
+        compute='_compute_so_cancelled',
+    )
+
     def _compute_ticket_repair_stage_state(self):
         for task in self:
             task.ticket_repair_stage_state = (
                 task.helpdesk_ticket_id.repair_stage_state or ''
             ) if task.helpdesk_ticket_id else ''
+
+    @api.depends('sale_order_id.state')
+    def _compute_so_cancelled(self):
+        for task in self:
+            task.so_cancelled = task.sale_order_id.state == 'cancel'
 
     def _fsm_ensure_sale_order(self):
         """Create the SO if absent, then return it — without confirming.
@@ -64,14 +77,16 @@ class ProjectTask(models.Model):
     def _get_view(self, view_id=None, view_type='form', **options):
         arch, view = super()._get_view(view_id, view_type, **options)
         if view_type == 'form':
-            # Inject ticket_repair_stage_state as invisible so it is
-            # available in button invisible expressions below.
+            # Inject helper fields as invisible so they are available in
+            # button invisible expressions below.
             targets = arch.xpath("//sheet") or arch.xpath("//form")
             if targets:
-                field_el = etree.Element('field')
-                field_el.set('name', 'ticket_repair_stage_state')
-                field_el.set('invisible', '1')
-                targets[0].insert(0, field_el)
+                for fname in ('ticket_repair_stage_state', 'so_cancelled'):
+                    if not arch.xpath(f"//field[@name='{fname}']"):
+                        field_el = etree.Element('field')
+                        field_el.set('name', fname)
+                        field_el.set('invisible', '1')
+                        targets[0].insert(0, field_el)
 
             # New Quotation: not used in the repair workflow — hide entirely.
             for btn in arch.xpath("//button[@name='action_fsm_create_quotation']"):
@@ -88,9 +103,13 @@ class ProjectTask(models.Model):
             # Mark as Done: only show for repair tickets when the repair is
             # complete (ticket at Repair Completed). Non-repair FSM tasks have
             # no helpdesk_ticket_id so the guard is False and they show normally.
+            # When the linked SO has been cancelled the repair never reaches
+            # 'Repair Completed', so bypass the stage gate in that case so the
+            # user can still close the task.
             repair_guard = (
                 "helpdesk_ticket_id and "
-                "ticket_repair_stage_state != 'repair_completed'"
+                "ticket_repair_stage_state != 'repair_completed' and "
+                "not so_cancelled"
             )
             for btn in arch.xpath(
                 "//button[@name='action_fsm_validate'][@class='btn-primary']"
