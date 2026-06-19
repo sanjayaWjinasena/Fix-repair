@@ -194,28 +194,44 @@ class StockReturnPicking(models.TransientModel):
     def _get_view(self, view_id=None, view_type='form', **options):
         arch, view = super()._get_view(view_id, view_type, **options)
         if view_type == 'form':
-            ticket_id = self.env.context.get('default_ticket_id')
-            is_without_serial_no = False
-            if ticket_id:
-                ticket = self.env['helpdesk.ticket'].sudo().browse(ticket_id)
-                is_without_serial_no = bool(ticket.x_studio_normal_repair_without_serial_no)
+            ctx = self.env.context
+            ticket_id = ctx.get('default_ticket_id')
+            picking_id_ctx = ctx.get('default_picking_id')
 
-            for field in arch.xpath("//field[@name='sale_order_id']"):
-                if is_without_serial_no:
+            # Detect whether the wizard is opened from a repair ticket. The
+            # Return button passes default_ticket_id directly; the Dispatch
+            # button passes only default_picking_id, so we follow the picking
+            # back to its ticket (via picking_ids m2m or x_studio_pick_id).
+            related_ticket = self.env['helpdesk.ticket']
+            if ticket_id:
+                related_ticket = self.env['helpdesk.ticket'].sudo().browse(ticket_id)
+            elif picking_id_ctx:
+                related_ticket = self.env['helpdesk.ticket'].sudo().search([
+                    '|',
+                    ('picking_ids', 'in', [picking_id_ctx]),
+                    ('x_studio_pick_id', '=', picking_id_ctx),
+                ], limit=1)
+            is_repair = bool(related_ticket and related_ticket.exists())
+
+            if is_repair:
+                # Sales Order field and Delivery to Return picking field are
+                # entirely driven by our backend logic (context defaults +
+                # default_get fallbacks). The user has no business editing
+                # them, so hide entirely. Their values continue to flow into
+                # _create_returns as before.
+                for field in arch.xpath("//field[@name='sale_order_id']"):
                     field.set('invisible', '1')
-                else:
+                for field in arch.xpath("//field[@name='picking_id']"):
+                    field.set('invisible', '1')
+            else:
+                # Non-repair callers keep the standard sale_order domain.
+                for field in arch.xpath("//field[@name='sale_order_id']"):
                     field.set('domain',
                         "[('partner_id', 'child_of', partner_id), "
                         "('state', 'in', ['sale', 'done'])] "
                         "if partner_id else "
                         "[('state', 'in', ['sale', 'done'])]"
                     )
-
-            if is_without_serial_no:
-                # Delivery to Return is auto-created — lock the field so the
-                # user cannot swap it out.
-                for field in arch.xpath("//field[@name='picking_id']"):
-                    field.set('readonly', '1')
 
             # Hide the Studio-added duplicate Return button (action 1997) —
             # the standard create_returns button already handles the flow.
