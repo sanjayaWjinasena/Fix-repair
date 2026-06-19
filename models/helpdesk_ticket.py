@@ -8,13 +8,14 @@ class HelpdeskTicket(models.Model):
     _inherit = 'helpdesk.ticket'
 
     repair_stage_state = fields.Selection([
-        ('new',                      'New'),
-        ('sent_to_factory',          'Sent to Factory'),
-        ('received_at_factory',      'Received at Factory'),
-        ('repair_completed',         'Repair Completed'),
-        ('sent_to_sales_centre',     'Sent to Sales Centre'),
-        ('received_at_sales_centre', 'Received at Sales Centre'),
-        ('other',                    'Other'),
+        ('new',                          'New'),
+        ('sent_to_factory',              'Sent to Factory'),
+        ('received_at_factory',          'Received at Factory'),
+        ('estimation_sent_to_customer',  'Estimation Sent to Customer'),
+        ('repair_completed',             'Repair Completed'),
+        ('sent_to_sales_centre',         'Sent to Sales Centre'),
+        ('received_at_sales_centre',     'Received at Sales Centre'),
+        ('other',                        'Other'),
     ], compute='_compute_repair_stage_state', store=True)
 
     # Override the Studio-defined x_studio_handed_over compute to:
@@ -96,12 +97,13 @@ class HelpdeskTicket(models.Model):
     @api.depends('stage_id')
     def _compute_repair_stage_state(self):
         mapping = {
-            'New':                      'new',
-            'Sent to Factory':          'sent_to_factory',
-            'Received at Factory':      'received_at_factory',
-            'Repair Completed':         'repair_completed',
-            'Sent to Sales Centre':     'sent_to_sales_centre',
-            'Received at Sales Centre': 'received_at_sales_centre',
+            'New':                          'new',
+            'Sent to Factory':              'sent_to_factory',
+            'Received at Factory':          'received_at_factory',
+            'Estimation Sent to Customer':  'estimation_sent_to_customer',
+            'Repair Completed':             'repair_completed',
+            'Sent to Sales Centre':         'sent_to_sales_centre',
+            'Received at Sales Centre':     'received_at_sales_centre',
         }
         for ticket in self:
             # sudo() so users without perm_read on helpdesk.stage can still
@@ -360,14 +362,20 @@ class HelpdeskTicket(models.Model):
             # while the ticket hasn't yet reached the Sales Centre. Once
             # the user clicks the button the ticket moves to
             # 'sent_to_sales_centre' and beyond, so we hide it there.
-            # Centre Repair still hidden because that flow skips the
-            # sales-centre trip entirely.
+            # Centre Repair still hidden — that flow skips the sales-centre
+            # trip entirely. Extra carve-out: when the SO is cancelled the
+            # ticket gets stuck at Estimation Sent to Customer, so we let
+            # Factory Repair surface the button there too (once Mark as
+            # Done is hit); the normal-flow at Estimation Sent to Customer
+            # stays hidden because is_so_cancelled is False.
             for btn in arch.xpath("//button[@name='action_send_to_sales_centre']"):
                 btn.set('invisible',
                     "not task_done or "
                     "x_studio_job_location == 'Centre Repair' or "
                     "repair_stage_state in ('sent_to_sales_centre', "
-                    "'received_at_sales_centre', 'other')"
+                    "'received_at_sales_centre', 'other') or "
+                    "(repair_stage_state == 'estimation_sent_to_customer' "
+                    " and not is_so_cancelled)"
                 )
 
             # Received at Sales Centre: hide for Centre Repair jobs.
@@ -449,10 +457,10 @@ class HelpdeskTicket(models.Model):
                 #  2. Payment-or-bypass: so_fully_paid OR is_tested_ok OR
                 #     is_so_cancelled (the latter two never invoice, so they
                 #     stand in for payment)
-                #  3. Stage + job-location match for one of the supported
-                #     repair paths (same for every ticket — Tested OK and
-                #     Cancelled use the same stage gate as their flow's
-                #     normal counterpart)
+                #  3. Stage + job-location match — normal flows plus an
+                #     extra Centre Repair case: when the SO is cancelled
+                #     the ticket gets stuck at Estimation Sent to Customer,
+                #     so Dispatch surfaces there once Mark as Done is hit.
                 dispatch.set('invisible',
                     "not has_return_picking or "
                     "(not so_fully_paid "
@@ -461,7 +469,8 @@ class HelpdeskTicket(models.Model):
                     "not ("
                     "(x_studio_job_location == 'Factory Repair' and repair_stage_state == 'received_at_sales_centre') or "
                     "(x_studio_job_location == 'Centre Repair' and repair_stage_state == 'repair_completed') or "
-                    "(x_studio_normal_repair_with_serial_no and repair_stage_state == 'received_at_sales_centre')"
+                    "(x_studio_normal_repair_with_serial_no and repair_stage_state == 'received_at_sales_centre') or "
+                    "(x_studio_job_location == 'Centre Repair' and is_so_cancelled and task_done and repair_stage_state == 'estimation_sent_to_customer')"
                     ")"
                 )
                 dispatch.set('context', btn_context)
