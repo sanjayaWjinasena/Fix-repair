@@ -249,13 +249,35 @@ class StockReturnPicking(models.TransientModel):
                     if line.quantity != 1:
                         line.quantity = 1
 
-    def _create_returns(self):
+        # Look up the related helpdesk ticket. For Return clicks (stage='new')
+        # the wizard's ticket_id is set from default_ticket_id in context.
+        # For Dispatch clicks (later stages) the button deliberately drops
+        # ticket_id from the context, so we fall back to finding the ticket
+        # via the picking we're reversing.
+        ticket = self.ticket_id
+        if not ticket and self.picking_id:
+            ticket = self.env['helpdesk.ticket'].sudo().search([
+                '|',
+                ('picking_ids', 'in', self.picking_id.ids),
+                ('x_studio_pick_id', '=', self.picking_id.id),
+            ], limit=1)
+
         if self.ticket_id:
             self.product_return_moves.write({'quantity': 1})
         new_picking_id, pick_type_id = super()._create_returns()
-        if self.ticket_id:
-            new_picking = self.env['stock.picking'].browse(new_picking_id)
+        new_picking = self.env['stock.picking'].browse(new_picking_id)
 
+        # Rename the new picking to <WH_CODE>/RET/xxxxx based on the
+        # ticket's Return Receipt Location warehouse — applies to BOTH
+        # Return and Dispatch flows so every reverse transfer for a repair
+        # ticket uses the consistent <REPAIR_LOC_WH>/RET/ naming.
+        if ticket and ticket.x_studio_return_receipt_location:
+            loc = ticket.x_studio_return_receipt_location
+            ret_name = self._next_warehouse_ret_name(loc.warehouse_id)
+            if ret_name:
+                new_picking.sudo().write({'name': ret_name})
+
+        if self.ticket_id:
             # Record this collection picking on the ticket so the later
             # Dispatch click can pre-load it via default_picking_id. For
             # Factory Repair this also gets overwritten by
@@ -263,16 +285,6 @@ class StockReturnPicking(models.TransientModel):
             # Repair skips that step — without this write, Centre Repair
             # Dispatch would launch the wizard with no picking_id.
             self.ticket_id.sudo().write({'x_studio_pick_id': new_picking_id})
-
-            # Rename the new picking so its number/prefix matches the Return
-            # Receipt Location's warehouse, e.g. BR-AM/Stock → BR-AM/RET/xxxxx.
-            # We can't change picking_type_id once the picking is confirmed
-            # ("Changing the operation type ... is forbidden"), so we only
-            # overwrite the name.
-            loc = self.ticket_id.x_studio_return_receipt_location
-            ret_name = self._next_warehouse_ret_name(loc.warehouse_id if loc else False)
-            if ret_name:
-                new_picking.sudo().write({'name': ret_name})
 
             new_picking.move_ids.write({
                 'to_refund': False,
