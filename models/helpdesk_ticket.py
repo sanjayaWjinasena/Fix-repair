@@ -435,20 +435,28 @@ class HelpdeskTicket(models.Model):
                 dispatch.set('string', 'Dispatch')
                 dispatch.set('type', 'action')
                 dispatch.set('class', btn.get('class', 'btn-secondary'))
-                # Cancelled SO and Tested OK task tickets never produce
-                # invoices, so the payment gate doesn't apply to them —
-                # skip so_fully_paid in those two cases. Stage /
-                # job-location conditions still hold.
+                # Dispatch visibility:
+                #  1. Always requires has_return_picking (the item came in).
+                #  2. Payment gate (so_fully_paid) — bypassed for Cancelled
+                #     SO and Tested OK task, since those never invoice.
+                #  3. Stage + job-location gate — for the normal repair
+                #     paths. Tested OK tickets skip the normal stage
+                #     progression, so for them we replace the stage gate
+                #     with task_done (Mark as Done clicked).
                 dispatch.set('invisible',
                     "not has_return_picking or "
                     "(not so_fully_paid "
                     " and not is_so_cancelled "
                     " and not is_tested_ok) or "
-                    "not ("
-                    "(x_studio_job_location == 'Factory Repair' and repair_stage_state == 'received_at_sales_centre') or "
-                    "(x_studio_job_location == 'Centre Repair' and repair_stage_state == 'repair_completed') or "
-                    "(x_studio_normal_repair_with_serial_no and repair_stage_state == 'received_at_sales_centre')"
-                    ")"
+                    "("
+                    "  not is_tested_ok and "
+                    "  not ("
+                    "    (x_studio_job_location == 'Factory Repair' and repair_stage_state == 'received_at_sales_centre') or "
+                    "    (x_studio_job_location == 'Centre Repair' and repair_stage_state == 'repair_completed') or "
+                    "    (x_studio_normal_repair_with_serial_no and repair_stage_state == 'received_at_sales_centre')"
+                    "  )"
+                    ") or "
+                    "(is_tested_ok and not task_done)"
                 )
                 dispatch.set('context', btn_context)
                 btn.addnext(dispatch)
