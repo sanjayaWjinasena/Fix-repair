@@ -234,6 +234,7 @@ class HelpdeskTicket(models.Model):
                     'so_fully_paid',
                     'is_tested_ok',
                     'is_so_cancelled',
+                    'task_done',
                 ):
                     if not arch.xpath(f"//field[@name='{fname}']"):
                         fld = etree.Element('field')
@@ -345,15 +346,15 @@ class HelpdeskTicket(models.Model):
                 header.append(btn)
                 break
 
-            # Send to Sales Centre: hide once already at/past that stage,
-            # and hide entirely for Centre Repair jobs (no factory trip).
+            # Send to Sales Centre: visible only once Mark as Done has been
+            # clicked on the linked FSM task (task_done = True). No stage
+            # checks — at any stage, the moment the task is done, the button
+            # surfaces. Centre Repair still hidden because that flow skips
+            # the sales-centre trip entirely.
             for btn in arch.xpath("//button[@name='action_send_to_sales_centre']"):
-                existing = btn.get('invisible', '')
-                extra = (
-                    "repair_stage_state in ('sent_to_sales_centre', 'received_at_sales_centre', 'other') or "
-                    "x_studio_job_location == 'Centre Repair'"
+                btn.set('invisible',
+                    "not task_done or x_studio_job_location == 'Centre Repair'"
                 )
-                btn.set('invisible', f"({existing}) or ({extra})" if existing else extra)
 
             # Received at Sales Centre: hide for Centre Repair jobs.
             for btn in arch.xpath("//button[@name='action_received_at_sales_centre']"):
