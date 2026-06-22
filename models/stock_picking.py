@@ -14,11 +14,16 @@ class StockPicking(models.Model):
         'sale_id',
         'sale_id.x_studio_quotation_type',
         'sale_id.x_studio_rug_rejected',
+        'sale_id.invoice_ids',
     )
     def _compute_nuw_block_validate(self):
         # The same delivery-validation gate that applies to Not Under
         # Warranty SOs must also apply to Repair SOs whose RUG has been
         # rejected — in both cases the customer pays before delivery.
+        # Once at least one invoice exists on the SO (the customer-pays
+        # cycle has started — typically the percentage advance invoice),
+        # we unblock Validate so the salesperson can finalise the
+        # delivery.
         for picking in self:
             so = picking.sale_id
             customer_pays = bool(so) and (
@@ -26,6 +31,9 @@ class StockPicking(models.Model):
                 or so.x_studio_rug_rejected
             )
             if not customer_pays:
+                picking.nuw_block_validate = False
+                continue
+            if so.invoice_ids:
                 picking.nuw_block_validate = False
                 continue
             task = so.sudo().task_id or self.env['project.task'].sudo().search(
