@@ -40,155 +40,80 @@ class StockReturnPicking(models.TransientModel):
 
         ticket = self.env['helpdesk.ticket'].browse(ticket_id)
         serial = ticket.x_studio_serial_no
+        product = ticket.product_id or (serial and serial.product_id)
+        if not (serial and product):
+            return defaults
 
-        if ticket.x_studio_normal_repair_without_serial_no:
-            # No historical delivery exists. Create a synthetic done outgoing
-            # picking (Repair Loc → Customer) by writing state='done' directly —
-            # this bypasses _action_done() entirely so no quants are touched and
-            # the serial constraint never fires. The wizard uses this as its
-            # "Delivery to Return" and reverses it into the collection picking.
-            if serial and ticket.product_id:
-                repair_loc = (
-                    ticket.x_studio_virtual_location_1
-                    or ticket.x_studio_virtual_location
-                )
-                cust_loc = self.env['stock.location'].sudo().search(
-                    [('usage', '=', 'customer')], limit=1
-                )
-                pick_type_out = self.env['stock.picking.type'].sudo().search([
-                    ('code', '=', 'outgoing'),
-                    ('company_id', '=', ticket.company_id.id),
-                ], order='sequence asc', limit=1)
-                if repair_loc and cust_loc and pick_type_out:
-                    now = fields.Datetime.now()
-                    fake_picking = self.env['stock.picking'].sudo().create({
-                        'partner_id': ticket.partner_id.id,
-                        'picking_type_id': pick_type_out.id,
-                        'location_id': repair_loc.id,
-                        'location_dest_id': cust_loc.id,
-                        'company_id': ticket.company_id.id,
-                        'date_done': now,
-                    })
-                    fake_move = self.env['stock.move'].sudo().create({
-                        'name': ticket.product_id.display_name,
-                        'product_id': ticket.product_id.id,
-                        'product_uom_qty': 1.0,
-                        'product_uom': ticket.product_id.uom_id.id,
-                        'location_id': repair_loc.id,
-                        'location_dest_id': cust_loc.id,
-                        'picking_id': fake_picking.id,
-                        'company_id': ticket.company_id.id,
-                        'date': now,
-                        'quantity': 1.0,
-                    })
-                    self.env['stock.move.line'].sudo().create({
-                        'picking_id': fake_picking.id,
-                        'move_id': fake_move.id,
-                        'product_id': ticket.product_id.id,
-                        'product_uom_id': ticket.product_id.uom_id.id,
-                        'lot_id': serial.id,
-                        'qty_done': 1.0,
-                        'location_id': repair_loc.id,
-                        'location_dest_id': cust_loc.id,
-                        'company_id': ticket.company_id.id,
-                    })
-                    # Force state to done AFTER creating related records so
-                    # _compute_state sees done moves and stays done.
-                    fake_move.sudo().write({'state': 'done'})
-                    fake_picking.sudo().write({'state': 'done'})
-
-                    # Rename the synthetic Delivery to Return so it uses the
-                    # Return Receipt Location's <WH_CODE>/RET/ sequence —
-                    # matches the naming we give the collection picking below.
-                    rrl = ticket.x_studio_return_receipt_location
-                    ret_name = self._next_warehouse_ret_name(rrl.warehouse_id if rrl else False)
-                    if ret_name:
-                        fake_picking.sudo().write({'name': ret_name})
-
-                    defaults['picking_id'] = fake_picking.id
-
-        elif serial:
-            # With Serial No / RUG: product may come from the ticket or from
-            # the lot itself (Studio automations sometimes clear ticket.product_id).
-            product = ticket.product_id or serial.product_id
-            cust_locs = self.env['stock.location'].sudo().search(
-                [('usage', '=', 'customer')]
+        # ALWAYS synthesise the "Delivery to Return" — for every ticket
+        # type. We deliberately do NOT look up the historical outgoing
+        # delivery / its original sale order: the repair flow doesn't
+        # care which sale put the item in the customer's hands. The
+        # repair SO that the FSM task creates later is the SO that owns
+        # all these movements; project_task._bind_ticket_pickings_to_so
+        # re-points them once that SO exists.
+        repair_loc = (
+            ticket.x_studio_virtual_location_1
+            or ticket.x_studio_virtual_location
+        )
+        if not repair_loc:
+            warehouse = self.env['stock.warehouse'].sudo().search(
+                [('company_id', '=', ticket.company_id.id)], limit=1
             )
-            move_line = False
-            if product:
-                move_line = self.env['stock.move.line'].sudo().search([
-                    ('product_id', '=', product.id),
-                    ('lot_id', '=', serial.id),
-                    ('picking_code', '=', 'outgoing'),
-                    ('location_dest_id', 'in', cust_locs.ids),
-                    ('state', '=', 'done'),
-                ], limit=1, order='date desc')
-            if move_line:
-                defaults['picking_id'] = move_line.picking_id.id
-                so = (
-                    move_line.move_id.sale_line_id.order_id
-                    or self.env['sale.order'].sudo().search(
-                        [('name', '=', move_line.origin)], limit=1
-                    )
-                )
-                if so:
-                    defaults['sale_order_id'] = so.id
-            elif product:
-                # No historical delivery found (e.g. item sold outside this
-                # system). Create a synthetic done outgoing picking so the
-                # wizard has something to reverse — same approach as the
-                # Without Serial No flow.
-                repair_loc = (
-                    ticket.x_studio_virtual_location_1
-                    or ticket.x_studio_virtual_location
-                )
-                if not repair_loc:
-                    warehouse = self.env['stock.warehouse'].sudo().search(
-                        [('company_id', '=', ticket.company_id.id)], limit=1
-                    )
-                    repair_loc = warehouse.lot_stock_id if warehouse else False
-                cust_loc = cust_locs[:1]
-                pick_type_out = self.env['stock.picking.type'].sudo().search([
-                    ('code', '=', 'outgoing'),
-                    ('company_id', '=', ticket.company_id.id),
-                ], order='sequence asc', limit=1)
-                if repair_loc and cust_loc and pick_type_out:
-                    now = fields.Datetime.now()
-                    fake_picking = self.env['stock.picking'].sudo().create({
-                        'partner_id': ticket.partner_id.id,
-                        'picking_type_id': pick_type_out.id,
-                        'location_id': repair_loc.id,
-                        'location_dest_id': cust_loc.id,
-                        'company_id': ticket.company_id.id,
-                        'date_done': now,
-                    })
-                    fake_move = self.env['stock.move'].sudo().create({
-                        'name': product.display_name,
-                        'product_id': product.id,
-                        'product_uom_qty': 1.0,
-                        'product_uom': product.uom_id.id,
-                        'location_id': repair_loc.id,
-                        'location_dest_id': cust_loc.id,
-                        'picking_id': fake_picking.id,
-                        'company_id': ticket.company_id.id,
-                        'date': now,
-                        'quantity': 1.0,
-                    })
-                    self.env['stock.move.line'].sudo().create({
-                        'picking_id': fake_picking.id,
-                        'move_id': fake_move.id,
-                        'product_id': product.id,
-                        'product_uom_id': product.uom_id.id,
-                        'lot_id': serial.id,
-                        'qty_done': 1.0,
-                        'location_id': repair_loc.id,
-                        'location_dest_id': cust_loc.id,
-                        'company_id': ticket.company_id.id,
-                    })
-                    fake_move.sudo().write({'state': 'done'})
-                    fake_picking.sudo().write({'state': 'done'})
-                    defaults['picking_id'] = fake_picking.id
+            repair_loc = warehouse.lot_stock_id if warehouse else False
+        cust_loc = self.env['stock.location'].sudo().search(
+            [('usage', '=', 'customer')], limit=1
+        )
+        pick_type_out = self.env['stock.picking.type'].sudo().search([
+            ('code', '=', 'outgoing'),
+            ('company_id', '=', ticket.company_id.id),
+        ], order='sequence asc', limit=1)
+        if not (repair_loc and cust_loc and pick_type_out):
+            return defaults
 
+        now = fields.Datetime.now()
+        fake_picking = self.env['stock.picking'].sudo().create({
+            'partner_id': ticket.partner_id.id,
+            'picking_type_id': pick_type_out.id,
+            'location_id': repair_loc.id,
+            'location_dest_id': cust_loc.id,
+            'company_id': ticket.company_id.id,
+            'date_done': now,
+            'x_studio_helpdesk_ticket_id': ticket.id,
+        })
+        fake_move = self.env['stock.move'].sudo().create({
+            'name': product.display_name,
+            'product_id': product.id,
+            'product_uom_qty': 1.0,
+            'product_uom': product.uom_id.id,
+            'location_id': repair_loc.id,
+            'location_dest_id': cust_loc.id,
+            'picking_id': fake_picking.id,
+            'company_id': ticket.company_id.id,
+            'date': now,
+            'quantity': 1.0,
+        })
+        self.env['stock.move.line'].sudo().create({
+            'picking_id': fake_picking.id,
+            'move_id': fake_move.id,
+            'product_id': product.id,
+            'product_uom_id': product.uom_id.id,
+            'lot_id': serial.id,
+            'qty_done': 1.0,
+            'location_id': repair_loc.id,
+            'location_dest_id': cust_loc.id,
+            'company_id': ticket.company_id.id,
+        })
+        # Force state to done AFTER linking so _compute_state stays done.
+        fake_move.sudo().write({'state': 'done'})
+        fake_picking.sudo().write({'state': 'done'})
+
+        # Rename to the ticket's Return-Receipt-Location warehouse RET sequence
+        rrl = ticket.x_studio_return_receipt_location
+        ret_name = self._next_warehouse_ret_name(rrl.warehouse_id if rrl else False)
+        if ret_name:
+            fake_picking.sudo().write({'name': ret_name})
+
+        defaults['picking_id'] = fake_picking.id
         return defaults
 
     def _get_view(self, view_id=None, view_type='form', **options):
@@ -294,12 +219,16 @@ class StockReturnPicking(models.TransientModel):
         # Rename the new picking to <WH_CODE>/RET/xxxxx based on the
         # ticket's Return Receipt Location warehouse — applies to BOTH
         # Return and Dispatch flows so every reverse transfer for a repair
-        # ticket uses the consistent <REPAIR_LOC_WH>/RET/ naming.
-        if ticket and ticket.x_studio_return_receipt_location:
-            loc = ticket.x_studio_return_receipt_location
-            ret_name = self._next_warehouse_ret_name(loc.warehouse_id)
-            if ret_name:
-                new_picking.sudo().write({'name': ret_name})
+        # ticket uses the consistent <REPAIR_LOC_WH>/RET/ naming. Also
+        # stamp the ticket on the picking via the Studio link so we can
+        # find every ticket-related picking deterministically later.
+        if ticket:
+            new_picking.sudo().write({'x_studio_helpdesk_ticket_id': ticket.id})
+            if ticket.x_studio_return_receipt_location:
+                loc = ticket.x_studio_return_receipt_location
+                ret_name = self._next_warehouse_ret_name(loc.warehouse_id)
+                if ret_name:
+                    new_picking.sudo().write({'name': ret_name})
 
         if self.ticket_id:
             # Record this collection picking on the ticket so the later

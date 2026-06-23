@@ -70,8 +70,95 @@ class ProjectTask(models.Model):
         return result
 
     def _fsm_create_sale_order(self):
-        """Delegate to industry_fsm_sale's implementation, skipping industry_fsm_stock."""
+        """Delegate to industry_fsm_sale's implementation, skipping industry_fsm_stock.
+
+        After the SO is created, immediately bind every existing return
+        picking on the linked ticket to it (origin / group_id /
+        sale_line_id on moves) so the SO's Delivery smart button counts
+        those movements going forward.
+        """
         FsmSaleTask._fsm_create_sale_order(self)
+        for task in self:
+            if task.sale_order_id and task.helpdesk_ticket_id:
+                task._bind_ticket_pickings_to_so()
+
+    def _bind_ticket_pickings_to_so(self):
+        """Re-point every existing return picking on this task's ticket
+        to this task's sale order.
+
+        The default_get of stock.return.picking creates pickings without
+        any sale-order link (we don't care about the original sale that
+        put the item in the customer's hands). Once the repair SO is
+        born on this task, this method:
+
+          1. Ensures a sale.order.line exists on the SO for the ticket's
+             product (creates a price=0 placeholder line if missing).
+          2. Ensures the SO has a procurement.group.
+          3. For every picking linked to the ticket via
+             x_studio_helpdesk_ticket_id or the standard picking_ids m2m:
+             writes origin = SO.name, group_id = SO.procurement_group_id.
+          4. For every move on those pickings whose product matches the
+             ticket's product: writes sale_line_id = the placeholder line
+             and group_id = SO.procurement_group_id.
+
+        After this, picking.sale_id (computed from move.sale_line_id) will
+        resolve to the repair SO and the SO's Delivery smart button picks
+        these movements up.
+        """
+        self.ensure_one()
+        ticket = self.helpdesk_ticket_id
+        so = self.sale_order_id
+        product = ticket.product_id
+        if not (so and product):
+            return
+
+        # 1. Find or create a placeholder line for the customer's item
+        line = so.order_line.filtered(
+            lambda l: l.product_id == product and not l.display_type
+        )[:1]
+        if not line:
+            line = self.env['sale.order.line'].sudo().create({
+                'order_id': so.id,
+                'product_id': product.id,
+                'product_uom_qty': 1.0,
+                'price_unit': 0.0,
+                'name': product.display_name,
+            })
+
+        # 2. Ensure the SO has a procurement group
+        if not so.procurement_group_id:
+            group = self.env['procurement.group'].sudo().create({
+                'name': so.name,
+                'sale_id': so.id,
+                'partner_id': so.partner_id.id,
+            })
+            so.sudo().write({'procurement_group_id': group.id})
+        group = so.procurement_group_id
+
+        # 3 + 4. Find every picking that belongs to this ticket and bind it.
+        Picking = self.env['stock.picking'].sudo()
+        pickings = (
+            Picking.search([('x_studio_helpdesk_ticket_id', '=', ticket.id)])
+            | ticket.picking_ids.sudo()
+        )
+        for picking in pickings:
+            vals = {}
+            if picking.origin != so.name:
+                vals['origin'] = so.name
+            if picking.group_id != group:
+                vals['group_id'] = group.id
+            if not picking.x_studio_helpdesk_ticket_id:
+                vals['x_studio_helpdesk_ticket_id'] = ticket.id
+            if vals:
+                picking.sudo().write(vals)
+            for move in picking.move_ids:
+                mvals = {}
+                if move.product_id == product and move.sale_line_id != line:
+                    mvals['sale_line_id'] = line.id
+                if move.group_id != group:
+                    mvals['group_id'] = group.id
+                if mvals:
+                    move.sudo().write(mvals)
 
     def action_fsm_validate(self, stop_running_timers=False):
         """After Mark as Done, advance the linked helpdesk ticket to
