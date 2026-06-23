@@ -71,6 +71,11 @@ class StockReturnPicking(models.TransientModel):
             return defaults
 
         now = fields.Datetime.now()
+        # Phantom outgoing left intentionally unstamped: it exists only so
+        # the wizard has a source to reverse. _bind_ticket_pickings_to_so
+        # searches by x_studio_helpdesk_ticket_id, so leaving the stamp off
+        # keeps the phantom out of the repair SO's Delivery smart button.
+        # The real return picking gets stamped in _create_returns below.
         fake_picking = self.env['stock.picking'].sudo().create({
             'partner_id': ticket.partner_id.id,
             'picking_type_id': pick_type_out.id,
@@ -78,7 +83,6 @@ class StockReturnPicking(models.TransientModel):
             'location_dest_id': cust_loc.id,
             'company_id': ticket.company_id.id,
             'date_done': now,
-            'x_studio_helpdesk_ticket_id': ticket.id,
         })
         fake_move = self.env['stock.move'].sudo().create({
             'name': product.display_name,
