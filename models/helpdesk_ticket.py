@@ -566,6 +566,8 @@ class HelpdeskTicket(models.Model):
         self.write({'user_id': self.env.uid})
 
     def action_send_to_factory(self):
+        for ticket in self:
+            ticket._create_send_to_factory_picking()
         stage = self._get_or_create_stage('Sent to Factory', 20)
         self.write({
             'stage_id': stage.id,
@@ -574,12 +576,102 @@ class HelpdeskTicket(models.Model):
         })
 
     def action_received_at_factory(self):
+        for ticket in self:
+            ticket._create_received_at_factory_picking()
         stage = self._get_or_create_stage('Received at Factory', 30)
         self.write({
             'stage_id': stage.id,
             'x_studio_f_received_date': fields.Datetime.now(),
             'x_studio_f_received_by': self.env.uid,
         })
+
+    # ── Stock movements for factory transit ──────────────────────────────────
+
+    def _create_send_to_factory_picking(self):
+        """centre.stock -> centre.intransit.stock (state='done')."""
+        self.ensure_one()
+        src_loc = self.x_studio_return_receipt_location
+        if not (src_loc and src_loc.warehouse_id):
+            return False
+        intransit = src_loc.warehouse_id._ensure_intransit_warehouse()
+        return self._create_repair_transfer(src_loc, intransit.lot_stock_id)
+
+    def _create_received_at_factory_picking(self):
+        """centre.intransit.stock -> company.factory_repair_location."""
+        self.ensure_one()
+        src_loc = self.x_studio_return_receipt_location
+        if not (src_loc and src_loc.warehouse_id):
+            return False
+        intransit = src_loc.warehouse_id._ensure_intransit_warehouse()
+        dest_loc = self.company_id.factory_repair_location_id
+        if not dest_loc:
+            raise UserError(
+                "Factory Repair Location is not configured for company "
+                f"'{self.company_id.name}'. Set it in Settings → Companies."
+            )
+        return self._create_repair_transfer(intransit.lot_stock_id, dest_loc)
+
+    def _create_repair_transfer(self, source_loc, dest_loc):
+        """Create a state='done' internal picking for self.product_id +
+        self.x_studio_serial_no from source_loc to dest_loc. Stamps the
+        picking with x_studio_helpdesk_ticket_id so
+        _bind_ticket_pickings_to_so picks it up once the repair SO is
+        created on the FSM task.
+        """
+        self.ensure_one()
+        serial = self.x_studio_serial_no
+        product = self.product_id or (serial and serial.product_id)
+        if not (product and source_loc and dest_loc):
+            return False
+
+        pick_type = self.env['stock.picking.type'].sudo().search([
+            ('code', '=', 'internal'),
+            ('warehouse_id', '=', source_loc.warehouse_id.id),
+        ], limit=1) or self.env['stock.picking.type'].sudo().search([
+            ('code', '=', 'internal'),
+            ('warehouse_id.company_id', '=', self.company_id.id),
+        ], limit=1)
+        if not pick_type:
+            return False
+
+        now = fields.Datetime.now()
+        picking = self.env['stock.picking'].sudo().create({
+            'partner_id': self.partner_id.id,
+            'picking_type_id': pick_type.id,
+            'location_id': source_loc.id,
+            'location_dest_id': dest_loc.id,
+            'company_id': self.company_id.id,
+            'date_done': now,
+            'x_studio_helpdesk_ticket_id': self.id,
+        })
+        move = self.env['stock.move'].sudo().create({
+            'name': product.display_name,
+            'product_id': product.id,
+            'product_uom_qty': 1.0,
+            'product_uom': product.uom_id.id,
+            'location_id': source_loc.id,
+            'location_dest_id': dest_loc.id,
+            'picking_id': picking.id,
+            'company_id': self.company_id.id,
+            'date': now,
+            'quantity': 1.0,
+        })
+        ml_vals = {
+            'picking_id': picking.id,
+            'move_id': move.id,
+            'product_id': product.id,
+            'product_uom_id': product.uom_id.id,
+            'qty_done': 1.0,
+            'location_id': source_loc.id,
+            'location_dest_id': dest_loc.id,
+            'company_id': self.company_id.id,
+        }
+        if serial:
+            ml_vals['lot_id'] = serial.id
+        self.env['stock.move.line'].sudo().create(ml_vals)
+        move.sudo().write({'state': 'done'})
+        picking.sudo().write({'state': 'done'})
+        return picking
 
     def action_send_to_sales_centre(self):
         stage = self._get_or_create_stage('Sent to Sales Centre', 100)
