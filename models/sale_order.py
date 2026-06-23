@@ -248,6 +248,11 @@ class SaleOrder(models.Model):
             for btn in arch.xpath("//button[@name='action_cancel']"):
                 btn.set('invisible', "state != 'sent'")
 
+            # Set to Quotation (action_draft): not used — once a sale order
+            # has been cancelled it stays cancelled, no reverting to draft.
+            for btn in arch.xpath("//button[@name='action_draft']"):
+                btn.set('invisible', '1')
+
             # Create Advance Payment: not used — hide entirely.
             for btn in arch.xpath("//button[@name='2341']"):
                 btn.set('invisible', '1')
