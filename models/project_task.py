@@ -73,6 +73,18 @@ class ProjectTask(models.Model):
         """Delegate to industry_fsm_sale's implementation, skipping industry_fsm_stock."""
         FsmSaleTask._fsm_create_sale_order(self)
 
+    def action_fsm_validate(self, stop_running_timers=False):
+        """After Mark as Done, advance the linked helpdesk ticket to
+        'Repair Completed'. Non-repair FSM tasks have no
+        helpdesk_ticket_id and so are unaffected.
+        """
+        res = super().action_fsm_validate(stop_running_timers=stop_running_timers)
+        for task in self:
+            ticket = task.helpdesk_ticket_id
+            if ticket and task.fsm_done:
+                ticket._move_to_stage('Repair Completed')
+        return res
+
     @api.model
     def _get_view(self, view_id=None, view_type='form', **options):
         arch, view = super()._get_view(view_id, view_type, **options)
