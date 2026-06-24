@@ -624,19 +624,38 @@ class HelpdeskTicket(models.Model):
         return self._create_repair_transfer(src_loc, intransit.lot_stock_id)
 
     def _create_received_at_factory_picking(self):
-        """centre.intransit.stock -> company.factory_repair_location."""
+        """centre.intransit.stock -> company factory_repair_location."""
         self.ensure_one()
         src_loc = self.x_studio_return_receipt_location
         if not (src_loc and src_loc.warehouse_id):
             return False
         intransit = src_loc.warehouse_id._ensure_intransit_warehouse()
-        dest_loc = self.company_id.factory_repair_location_id
+        dest_loc = self._get_factory_repair_location()
         if not dest_loc:
             raise UserError(
                 "Factory Repair Location is not configured for company "
-                f"'{self.company_id.name}'. Set it in Settings → Companies."
+                f"'{self.company_id.name}'. Add a System Parameter "
+                f"'fix_repair.factory_repair_location.{self.company_id.id}' "
+                "with the destination stock.location ID as the value."
             )
         return self._create_repair_transfer(intransit.lot_stock_id, dest_loc)
+
+    def _get_factory_repair_location(self):
+        """Read the per-company factory repair location from ir.config_parameter.
+
+        Key: fix_repair.factory_repair_location.<company_id>
+        Value: stock.location ID (stored as string)
+        """
+        self.ensure_one()
+        key = f'fix_repair.factory_repair_location.{self.company_id.id}'
+        raw = self.env['ir.config_parameter'].sudo().get_param(key)
+        if not raw:
+            return self.env['stock.location']
+        try:
+            loc_id = int(raw)
+        except (TypeError, ValueError):
+            return self.env['stock.location']
+        return self.env['stock.location'].sudo().browse(loc_id).exists()
 
     def _create_repair_transfer(self, source_loc, dest_loc):
         """Create a state='done' internal picking for self.product_id +
