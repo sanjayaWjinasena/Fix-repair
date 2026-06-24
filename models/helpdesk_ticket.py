@@ -629,9 +629,8 @@ class HelpdeskTicket(models.Model):
         """After repair completes, take the item out of the Repair
         location to the next step's anchor:
           - Centre Repair  -> centre virtual repair loc (Dispatch source)
-          - Factory Repair -> the Plan-Intervention source (typically
-            factory_repair_location), so Send to Sales Centre picks up
-            from there.
+          - Factory Repair -> factory_repair_location.warehouse/Intransit
+            (item is now bound back to the centre).
         No-op when no Repair-destined picking exists yet or src == dest.
         """
         self.ensure_one()
@@ -649,7 +648,11 @@ class HelpdeskTicket(models.Model):
                 or self.x_studio_virtual_location
             )
         else:
-            dest_loc = last_into_repair.location_id
+            factory = self._get_factory_repair_location()
+            dest_loc = (
+                factory.warehouse_id._ensure_intransit_location()
+                if factory and factory.warehouse_id else False
+            )
         if not src_loc or not dest_loc or src_loc == dest_loc:
             return False
         return self._create_repair_transfer(src_loc, dest_loc)
