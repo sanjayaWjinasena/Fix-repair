@@ -15,6 +15,19 @@ class StockWarehouse(models.Model):
     _inherit = 'stock.warehouse'
 
     @api.model
+    def _seed_intransit_warehouses(self):
+        """For every non-intransit warehouse on every company, ensure a
+        paired intransit warehouse exists. Idempotent: skips any source
+        whose suffix already resolves to an IT-/IW-/IB- companion.
+        Safe to run on every module upgrade.
+        """
+        skip_prefixes = ('IT-', 'IW-', 'IB-')
+        for wh in self.sudo().search([]):
+            if not wh.code or wh.code.startswith(skip_prefixes):
+                continue
+            wh._ensure_intransit_warehouse()
+
+    @api.model
     def _seed_factory_repair_locations(self):
         """Populate ir.config_parameter
         'fix_repair.factory_repair_location.<company_id>' for every
