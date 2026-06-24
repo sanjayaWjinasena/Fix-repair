@@ -14,11 +14,11 @@ FACTORY_LOCATION_DEFAULTS = [
 class StockWarehouse(models.Model):
     _inherit = 'stock.warehouse'
 
-    def _ensure_intransit_location(self):
-        """Return self's child 'Intransit' transit-usage location.
-        Auto-creates one under the warehouse view location if missing,
-        so the resulting location's complete_name follows the same
-        convention as <CODE>/Stock — e.g. PW-JM/Intransit.
+    def _ensure_child_location(self, name, usage):
+        """Return self's child stock.location with the given name,
+        auto-creating one with the given usage under the warehouse view
+        location if missing. complete_name follows the <CODE>/<name>
+        convention (e.g. PW-JM/Intransit, PW-JM/Repair).
         """
         self.ensure_one()
         Loc = self.env['stock.location'].sudo()
@@ -27,28 +27,44 @@ class StockWarehouse(models.Model):
             return Loc
         existing = Loc.search([
             ('location_id', '=', parent.id),
-            ('name', '=', 'Intransit'),
+            ('name', '=', name),
         ], limit=1)
         if existing:
             return existing
         return Loc.create({
-            'name': 'Intransit',
-            'usage': 'transit',
+            'name': name,
+            'usage': usage,
             'location_id': parent.id,
             'company_id': self.company_id.id,
         })
+
+    def _ensure_intransit_location(self):
+        return self._ensure_child_location('Intransit', 'transit')
+
+    def _ensure_repair_location(self):
+        return self._ensure_child_location('Repair', 'repair')
 
     @api.model
     def _seed_intransit_locations(self):
         """For every non-intransit warehouse on every company, ensure a
         child Intransit (usage='transit') location exists under its view.
-        Idempotent: skipped when the child already exists.
-        """
+        Idempotent."""
         skip_prefixes = ('IT-', 'IW-', 'IB-')
         for wh in self.sudo().search([]):
             if not wh.code or wh.code.startswith(skip_prefixes):
                 continue
             wh._ensure_intransit_location()
+
+    @api.model
+    def _seed_repair_locations(self):
+        """For every non-intransit warehouse on every company, ensure a
+        child Repair (usage='repair') location exists under its view.
+        Idempotent."""
+        skip_prefixes = ('IT-', 'IW-', 'IB-')
+        for wh in self.sudo().search([]):
+            if not wh.code or wh.code.startswith(skip_prefixes):
+                continue
+            wh._ensure_repair_location()
 
     @api.model
     def _seed_factory_repair_locations(self):

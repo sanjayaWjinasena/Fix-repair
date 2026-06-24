@@ -25,4 +25,9 @@
          <CODE>/Intransit convention (e.g. PW-JM/Intransit, BR-AM/Intransit).
          Idempotent: skipped when the child already exists. -->
     <function model="stock.warehouse" name="_seed_intransit_locations"/>
+
+    <!-- Add a child 'Repair' (usage='repair') location under every
+         non-intransit warehouse on every company, mirroring the
+         Intransit seeding above. Idempotent. -->
+    <function model="stock.warehouse" name="_seed_repair_locations"/>
 </odoo>

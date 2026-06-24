@@ -6,6 +6,7 @@ from . import ir_actions_report
 from . import project_task
 from . import res_config_settings
 from . import sale_order
+from . import stock_location
 from . import stock_lot
 from . import stock_picking
 from . import stock_return_picking
