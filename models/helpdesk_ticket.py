@@ -775,13 +775,28 @@ class HelpdeskTicket(models.Model):
         if not (product and source_loc and dest_loc):
             return False
 
-        pick_type = self.env['stock.picking.type'].sudo().search([
-            ('code', '=', 'internal'),
-            ('warehouse_id', '=', source_loc.warehouse_id.id),
-        ], limit=1) or self.env['stock.picking.type'].sudo().search([
-            ('code', '=', 'internal'),
-            ('warehouse_id.company_id', '=', self.company_id.id),
-        ], limit=1)
+        # Resolve picking_type by warehouse, preferring the source's
+        # warehouse for the picking's name prefix. When source is a
+        # virtual / warehouse-less location, fall back to the destination
+        # warehouse (still gives a sensible XX-YY prefix) before the
+        # generic any-internal-in-this-company fallback.
+        PickType = self.env['stock.picking.type'].sudo()
+        pick_type = False
+        if source_loc.warehouse_id:
+            pick_type = PickType.search([
+                ('code', '=', 'internal'),
+                ('warehouse_id', '=', source_loc.warehouse_id.id),
+            ], limit=1)
+        if not pick_type and dest_loc.warehouse_id:
+            pick_type = PickType.search([
+                ('code', '=', 'internal'),
+                ('warehouse_id', '=', dest_loc.warehouse_id.id),
+            ], limit=1)
+        if not pick_type:
+            pick_type = PickType.search([
+                ('code', '=', 'internal'),
+                ('warehouse_id.company_id', '=', self.company_id.id),
+            ], limit=1)
         if not pick_type:
             return False
 
