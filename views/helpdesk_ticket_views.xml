@@ -23,6 +23,15 @@
                 </button>
             </xpath>
 
+            <!-- Hide the standard helpdesk_stock 'Returns' button — it
+                 shows only the ticket's standard picking_ids subset, while
+                 our Movements button above captures every transfer
+                 stamped with x_studio_helpdesk_ticket_id (returns,
+                 dispatches, factory transit, etc). -->
+            <xpath expr="//button[@name='action_view_pickings']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
             <xpath expr="//header" position="inside">
 
                 <button name="action_send_to_factory"
