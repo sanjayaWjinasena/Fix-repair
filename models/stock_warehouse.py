@@ -5,7 +5,7 @@ from odoo import api, models
 # Known per-company defaults for the Factory Repair Location. The first
 # entry whose name fragment appears (case-insensitive) in company.name
 # wins. Keep this list small and additive — operators can always override
-# the seeded value via Settings → Technical → System Parameters.
+# the seeded value via Settings → Fix Repair → Factory Repair Location.
 FACTORY_LOCATION_DEFAULTS = [
     ('Jinasena Agricultural Machinery', 'PW-JM'),
 ]
@@ -14,18 +14,41 @@ FACTORY_LOCATION_DEFAULTS = [
 class StockWarehouse(models.Model):
     _inherit = 'stock.warehouse'
 
+    def _ensure_intransit_location(self):
+        """Return self's child 'Intransit' transit-usage location.
+        Auto-creates one under the warehouse view location if missing,
+        so the resulting location's complete_name follows the same
+        convention as <CODE>/Stock — e.g. PW-JM/Intransit.
+        """
+        self.ensure_one()
+        Loc = self.env['stock.location'].sudo()
+        parent = self.view_location_id
+        if not parent:
+            return Loc
+        existing = Loc.search([
+            ('location_id', '=', parent.id),
+            ('name', '=', 'Intransit'),
+        ], limit=1)
+        if existing:
+            return existing
+        return Loc.create({
+            'name': 'Intransit',
+            'usage': 'transit',
+            'location_id': parent.id,
+            'company_id': self.company_id.id,
+        })
+
     @api.model
-    def _seed_intransit_warehouses(self):
+    def _seed_intransit_locations(self):
         """For every non-intransit warehouse on every company, ensure a
-        paired intransit warehouse exists. Idempotent: skips any source
-        whose suffix already resolves to an IT-/IW-/IB- companion.
-        Safe to run on every module upgrade.
+        child Intransit (usage='transit') location exists under its view.
+        Idempotent: skipped when the child already exists.
         """
         skip_prefixes = ('IT-', 'IW-', 'IB-')
         for wh in self.sudo().search([]):
             if not wh.code or wh.code.startswith(skip_prefixes):
                 continue
-            wh._ensure_intransit_warehouse()
+            wh._ensure_intransit_location()
 
     @api.model
     def _seed_factory_repair_locations(self):
@@ -54,43 +77,3 @@ class StockWarehouse(models.Model):
             ], limit=1)
             if wh and wh.lot_stock_id:
                 Param.set_param(key, str(wh.lot_stock_id.id))
-
-    def _ensure_intransit_warehouse(self):
-        """Return an intransit warehouse paired with self by code,
-        creating an IT-<suffix> one if it doesn't exist yet.
-
-        Reuses existing IW-<suffix> / IB-<suffix> warehouses (Jinasena's
-        historical naming) before creating a new IT-<suffix>.
-        """
-        self.ensure_one()
-        Wh = self.env['stock.warehouse'].sudo()
-        suffix = (self.code or '')[-2:].upper() or 'XX'
-
-        for candidate in (f'IT-{suffix}', f'IW-{suffix}', f'IB-{suffix}'):
-            existing = Wh.search([
-                ('code', '=', candidate),
-                ('company_id', '=', self.company_id.id),
-            ], limit=1)
-            if existing:
-                return existing
-
-        code = f'IT-{suffix}'
-        if Wh.search_count([('code', '=', code)]):
-            i = 1
-            while Wh.search_count([('code', '=', f'IT{i:03d}')]):
-                i += 1
-            code = f'IT{i:03d}'
-        new_wh = Wh.create({
-            'name': f'In-transit – {self.name}',
-            'code': code,
-            'company_id': self.company_id.id,
-        })
-        # Standard warehouse creation gives us an internal-usage Stock
-        # location. Convert it to a proper Transit location so reports
-        # don't count in-flight items as on-hand inventory.
-        if new_wh.lot_stock_id:
-            new_wh.lot_stock_id.sudo().write({
-                'name': 'Intransit',
-                'usage': 'transit',
-            })
-        return new_wh

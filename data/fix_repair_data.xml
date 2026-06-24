@@ -20,9 +20,9 @@
          survive subsequent upgrades. -->
     <function model="stock.warehouse" name="_seed_factory_repair_locations"/>
 
-    <!-- Pre-create one in-transit warehouse (IT-<XX>) per source warehouse
-         across all companies. Idempotent: leaves existing IW-/IB-/IT-
-         intransit pairings alone. Ensures the Send/Received-at-Factory
-         flow has a destination ready without lazy creation on click. -->
-    <function model="stock.warehouse" name="_seed_intransit_warehouses"/>
+    <!-- Add a child 'Intransit' (usage='transit') location under every
+         non-intransit warehouse on every company, so we get the
+         <CODE>/Intransit convention (e.g. PW-JM/Intransit, BR-AM/Intransit).
+         Idempotent: skipped when the child already exists. -->
+    <function model="stock.warehouse" name="_seed_intransit_locations"/>
 </odoo>

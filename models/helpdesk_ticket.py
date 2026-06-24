@@ -615,21 +615,21 @@ class HelpdeskTicket(models.Model):
     # ── Stock movements for factory transit ──────────────────────────────────
 
     def _create_send_to_factory_picking(self):
-        """centre.stock -> centre.intransit.stock (state='done')."""
+        """centre.stock -> centre/Intransit (state='done')."""
         self.ensure_one()
         src_loc = self.x_studio_return_receipt_location
         if not (src_loc and src_loc.warehouse_id):
             return False
-        intransit = src_loc.warehouse_id._ensure_intransit_warehouse()
-        return self._create_repair_transfer(src_loc, intransit.lot_stock_id)
+        intransit = src_loc.warehouse_id._ensure_intransit_location()
+        return self._create_repair_transfer(src_loc, intransit)
 
     def _create_received_at_factory_picking(self):
-        """centre.intransit.stock -> company factory_repair_location."""
+        """centre/Intransit -> company factory_repair_location."""
         self.ensure_one()
         src_loc = self.x_studio_return_receipt_location
         if not (src_loc and src_loc.warehouse_id):
             return False
-        intransit = src_loc.warehouse_id._ensure_intransit_warehouse()
+        intransit = src_loc.warehouse_id._ensure_intransit_location()
         dest_loc = self._get_factory_repair_location()
         if not dest_loc:
             raise UserError(
@@ -638,7 +638,7 @@ class HelpdeskTicket(models.Model):
                 f"'fix_repair.factory_repair_location.{self.company_id.id}' "
                 "with the destination stock.location ID as the value."
             )
-        return self._create_repair_transfer(intransit.lot_stock_id, dest_loc)
+        return self._create_repair_transfer(intransit, dest_loc)
 
     def _get_factory_repair_location(self):
         """Read the per-company factory repair location from ir.config_parameter.
