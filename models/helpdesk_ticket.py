@@ -704,13 +704,17 @@ class HelpdeskTicket(models.Model):
         return self._create_repair_transfer(src_loc, intransit)
 
     def _create_send_to_sales_centre_picking(self):
-        """current location -> factory_repair_location.warehouse/Intransit."""
+        """current location (factory/Intransit) -> centre/Intransit.
+
+        Centre = x_studio_return_receipt_location.warehouse_id, i.e. the
+        warehouse that originally received the customer's item.
+        """
         self.ensure_one()
         src_loc = self._current_item_location()
-        factory = self._get_factory_repair_location()
-        if not (src_loc and factory and factory.warehouse_id):
+        anchor = self.x_studio_return_receipt_location
+        if not (src_loc and anchor and anchor.warehouse_id):
             return False
-        intransit = factory.warehouse_id._ensure_intransit_location()
+        intransit = anchor.warehouse_id._ensure_intransit_location()
         if not intransit or src_loc == intransit:
             return False
         return self._create_repair_transfer(src_loc, intransit)
