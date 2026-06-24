@@ -625,6 +625,24 @@ class HelpdeskTicket(models.Model):
             ticket._create_plan_intervention_picking()
         return res
 
+    def _create_mark_as_done_picking(self):
+        """Reverse the most recent Plan-Intervention hop: move the item
+        from the Repair location back to wherever Plan Intervention
+        picked it up from. No-op if no Repair-destined picking exists."""
+        self.ensure_one()
+        last_into_repair = self.env['stock.picking'].sudo().search(
+            [('x_studio_helpdesk_ticket_id', '=', self.id),
+             ('location_dest_id.usage', '=', 'repair')],
+            order='date_done desc, id desc', limit=1,
+        )
+        if not last_into_repair:
+            return False
+        src_loc = last_into_repair.location_dest_id
+        dest_loc = last_into_repair.location_id
+        if not src_loc or not dest_loc or src_loc == dest_loc:
+            return False
+        return self._create_repair_transfer(src_loc, dest_loc)
+
     def _create_plan_intervention_picking(self):
         self.ensure_one()
         src_loc = self._current_item_location()

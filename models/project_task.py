@@ -74,14 +74,18 @@ class ProjectTask(models.Model):
         FsmSaleTask._fsm_create_sale_order(self)
 
     def action_fsm_validate(self, stop_running_timers=False):
-        """After Mark as Done, advance the linked helpdesk ticket to
-        'Repair Completed'. Non-repair FSM tasks have no
-        helpdesk_ticket_id and so are unaffected.
+        """After Mark as Done:
+          - create a state='done' picking reversing the Plan-Intervention
+            hop (item leaves the Repair location, back to its prior spot)
+          - advance the linked helpdesk ticket to 'Repair Completed'.
+        Non-repair FSM tasks have no helpdesk_ticket_id and so are
+        unaffected.
         """
         res = super().action_fsm_validate(stop_running_timers=stop_running_timers)
         for task in self:
             ticket = task.helpdesk_ticket_id
             if ticket and task.fsm_done:
+                ticket._create_mark_as_done_picking()
                 ticket._move_to_stage('Repair Completed')
         return res
 
