@@ -13,4 +13,10 @@
          (sale.order id) into x_studio_project_no_1 (Many2one → project.project),
          causing a FK violation. Replaces it with record.x_studio_project_no.id. -->
     <function model="sale.order" name="_fix_advance_payment_project_field"/>
+
+    <!-- Seed default factory_repair_location per company. Idempotent:
+         only sets when ir.config_parameter for that company is empty,
+         so manual overrides via Settings → Technical → System Parameters
+         survive subsequent upgrades. -->
+    <function model="stock.warehouse" name="_seed_factory_repair_locations"/>
 </odoo>
