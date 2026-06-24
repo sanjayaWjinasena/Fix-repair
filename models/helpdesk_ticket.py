@@ -702,10 +702,13 @@ class HelpdeskTicket(models.Model):
         return self._create_repair_transfer(src_loc, intransit)
 
     def _create_received_at_sales_centre_picking(self):
-        """current location (factory Intransit) -> centre return_receipt_location."""
+        """current location (factory Intransit) -> centre virtual repair loc."""
         self.ensure_one()
         src_loc = self._current_item_location()
-        dest_loc = self.x_studio_return_receipt_location
+        dest_loc = (
+            self.x_studio_virtual_location_1
+            or self.x_studio_virtual_location
+        )
         if not (src_loc and dest_loc) or src_loc == dest_loc:
             return False
         return self._create_repair_transfer(src_loc, dest_loc)
