@@ -80,8 +80,17 @@ class StockWarehouse(models.Model):
             while Wh.search_count([('code', '=', f'IT{i:03d}')]):
                 i += 1
             code = f'IT{i:03d}'
-        return Wh.create({
+        new_wh = Wh.create({
             'name': f'In-transit – {self.name}',
             'code': code,
             'company_id': self.company_id.id,
         })
+        # Standard warehouse creation gives us an internal-usage Stock
+        # location. Convert it to a proper Transit location so reports
+        # don't count in-flight items as on-hand inventory.
+        if new_wh.lot_stock_id:
+            new_wh.lot_stock_id.sudo().write({
+                'name': 'Intransit',
+                'usage': 'transit',
+            })
+        return new_wh
