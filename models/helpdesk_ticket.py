@@ -727,18 +727,21 @@ class HelpdeskTicket(models.Model):
         return self._create_repair_transfer(src_loc, dest_loc)
 
     def _create_received_at_factory_picking(self):
-        """current location (centre/Intransit) -> factory_repair_location."""
+        """current location (centre/Intransit) -> factory warehouse/Intransit."""
         self.ensure_one()
         src_loc = self._current_item_location()
-        dest_loc = self._get_factory_repair_location()
         if not src_loc:
             return False
-        if not dest_loc:
+        anchor = self._get_factory_repair_location()
+        if not anchor or not anchor.warehouse_id:
             raise UserError(
                 "Factory Repair Location is not configured for company "
                 f"'{self.company_id.name}'. Set it in "
                 "Settings → Fix Repair → Factory Repair Location."
             )
+        dest_loc = anchor.warehouse_id._ensure_intransit_location()
+        if not dest_loc or src_loc == dest_loc:
+            return False
         return self._create_repair_transfer(src_loc, dest_loc)
 
     def _get_factory_repair_location(self):
