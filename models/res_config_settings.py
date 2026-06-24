@@ -14,7 +14,7 @@ class ResConfigSettings(models.TransientModel):
         string='Factory Repair Location',
         compute='_compute_factory_repair_location_id',
         inverse='_inverse_factory_repair_location_id',
-        domain="[('usage', '=', 'internal'), ('company_id', 'in', (False, allowed_company_ids))]",
+        domain="[('usage', '=', 'internal'), '|', ('company_id', '=', False), ('company_id', 'in', allowed_company_ids)]",
         help="Internal stock location items land at when a repair ticket "
              "reaches 'Received at Factory'. Stored per company under "
              "ir.config_parameter 'fix_repair.factory_repair_location.<company_id>'.",
