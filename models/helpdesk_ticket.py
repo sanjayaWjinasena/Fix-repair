@@ -614,6 +614,40 @@ class HelpdeskTicket(models.Model):
 
     # ── Stock movements for factory transit ──────────────────────────────────
 
+    def action_generate_fsm_task(self):
+        """After the standard Plan Intervention behaviour runs, move the
+        item to the right Repair child location:
+          - Centre Repair  -> return_receipt_location.warehouse / Repair
+          - Factory Repair -> factory_repair_location.warehouse / Repair
+        """
+        res = super().action_generate_fsm_task()
+        for ticket in self:
+            ticket._create_plan_intervention_picking()
+        return res
+
+    def _create_plan_intervention_picking(self):
+        self.ensure_one()
+        src_loc = self._current_item_location()
+        if not src_loc:
+            return False
+
+        job_loc = self.x_studio_job_location
+        if job_loc == 'Centre Repair':
+            anchor = self.x_studio_return_receipt_location
+            wh = anchor.warehouse_id if anchor else False
+        elif job_loc == 'Factory Repair':
+            factory = self._get_factory_repair_location()
+            wh = factory.warehouse_id if factory else False
+        else:
+            return False
+
+        if not wh:
+            return False
+        dest_loc = wh._ensure_repair_location()
+        if not dest_loc or dest_loc == src_loc:
+            return False
+        return self._create_repair_transfer(src_loc, dest_loc)
+
     def _current_item_location(self):
         """Where the item physically sits right now: destination of the
         most recent picking stamped to this ticket. Falls back to
