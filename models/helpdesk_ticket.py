@@ -626,22 +626,17 @@ class HelpdeskTicket(models.Model):
         return res
 
     def _create_mark_as_done_picking(self):
-        """After repair completes, take the item out of the Repair
-        location to the next step's anchor:
+        """After repair completes, take the item from its current location
+        to the next step's anchor:
           - Centre Repair  -> centre virtual repair loc (Dispatch source)
           - Factory Repair -> factory_repair_location.warehouse/Intransit
             (item is now bound back to the centre).
-        No-op when no Repair-destined picking exists yet or src == dest.
+        No-op when src == dest or required anchor is missing.
         """
         self.ensure_one()
-        last_into_repair = self.env['stock.picking'].sudo().search(
-            [('x_studio_helpdesk_ticket_id', '=', self.id),
-             ('location_dest_id.usage', '=', 'repair')],
-            order='date_done desc, id desc', limit=1,
-        )
-        if not last_into_repair:
+        src_loc = self._current_item_location()
+        if not src_loc:
             return False
-        src_loc = last_into_repair.location_dest_id
         if self.x_studio_job_location == 'Centre Repair':
             dest_loc = (
                 self.x_studio_virtual_location_1
@@ -653,7 +648,7 @@ class HelpdeskTicket(models.Model):
                 factory.warehouse_id._ensure_intransit_location()
                 if factory and factory.warehouse_id else False
             )
-        if not src_loc or not dest_loc or src_loc == dest_loc:
+        if not dest_loc or src_loc == dest_loc:
             return False
         return self._create_repair_transfer(src_loc, dest_loc)
 
