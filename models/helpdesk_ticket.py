@@ -54,6 +54,33 @@ class HelpdeskTicket(models.Model):
     # cancelled orders never produce invoices.
     is_so_cancelled = fields.Boolean(compute='_compute_is_so_cancelled')
 
+    # Every stock.picking stamped with x_studio_helpdesk_ticket_id == self.id.
+    # Powers the Movements smart button on the ticket form. Source-of-truth
+    # for "every transfer that happened for this repair", regardless of
+    # whether a sale order was ever linked.
+    repair_picking_ids = fields.One2many(
+        'stock.picking',
+        'x_studio_helpdesk_ticket_id',
+        string='Movements',
+    )
+    repair_picking_count = fields.Integer(compute='_compute_repair_picking_count')
+
+    @api.depends('repair_picking_ids')
+    def _compute_repair_picking_count(self):
+        for ticket in self:
+            ticket.repair_picking_count = len(ticket.repair_picking_ids)
+
+    def action_view_repair_pickings(self):
+        self.ensure_one()
+        return {
+            'name': 'Movements',
+            'type': 'ir.actions.act_window',
+            'res_model': 'stock.picking',
+            'view_mode': 'tree,form',
+            'domain': [('x_studio_helpdesk_ticket_id', '=', self.id)],
+            'context': {'default_x_studio_helpdesk_ticket_id': self.id},
+        }
+
     @api.depends(
         'fsm_task_ids.sale_order_id.invoice_status',
         'fsm_task_ids.sale_order_id.amount_unpaid',
