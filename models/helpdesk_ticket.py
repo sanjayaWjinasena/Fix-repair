@@ -626,9 +626,11 @@ class HelpdeskTicket(models.Model):
         return res
 
     def _create_mark_as_done_picking(self):
-        """Reverse the most recent Plan-Intervention hop: move the item
-        from the Repair location back to wherever Plan Intervention
-        picked it up from. No-op if no Repair-destined picking exists."""
+        """After repair completes, take the item out of the Repair
+        location and back to the centre's virtual repair location, ready
+        for either Send to Sales Centre (Factory flow) or Dispatch
+        (Centre flow). No-op if there's no Repair-destined picking yet
+        or the destination matches the source."""
         self.ensure_one()
         last_into_repair = self.env['stock.picking'].sudo().search(
             [('x_studio_helpdesk_ticket_id', '=', self.id),
@@ -638,7 +640,10 @@ class HelpdeskTicket(models.Model):
         if not last_into_repair:
             return False
         src_loc = last_into_repair.location_dest_id
-        dest_loc = last_into_repair.location_id
+        dest_loc = (
+            self.x_studio_virtual_location_1
+            or self.x_studio_virtual_location
+        )
         if not src_loc or not dest_loc or src_loc == dest_loc:
             return False
         return self._create_repair_transfer(src_loc, dest_loc)
