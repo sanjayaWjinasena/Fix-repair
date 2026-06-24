@@ -689,6 +689,27 @@ class HelpdeskTicket(models.Model):
         intransit = repair_loc.warehouse_id._ensure_intransit_location()
         return self._create_repair_transfer(src_loc, intransit)
 
+    def _create_send_to_sales_centre_picking(self):
+        """current location -> factory_repair_location.warehouse/Intransit."""
+        self.ensure_one()
+        src_loc = self._current_item_location()
+        factory = self._get_factory_repair_location()
+        if not (src_loc and factory and factory.warehouse_id):
+            return False
+        intransit = factory.warehouse_id._ensure_intransit_location()
+        if not intransit or src_loc == intransit:
+            return False
+        return self._create_repair_transfer(src_loc, intransit)
+
+    def _create_received_at_sales_centre_picking(self):
+        """current location (factory Intransit) -> centre return_receipt_location."""
+        self.ensure_one()
+        src_loc = self._current_item_location()
+        dest_loc = self.x_studio_return_receipt_location
+        if not (src_loc and dest_loc) or src_loc == dest_loc:
+            return False
+        return self._create_repair_transfer(src_loc, dest_loc)
+
     def _create_received_at_factory_picking(self):
         """current location (centre/Intransit) -> factory_repair_location."""
         self.ensure_one()
@@ -784,6 +805,8 @@ class HelpdeskTicket(models.Model):
         return picking
 
     def action_send_to_sales_centre(self):
+        for ticket in self:
+            ticket._create_send_to_sales_centre_picking()
         stage = self._get_or_create_stage('Sent to Sales Centre', 100)
         self.write({
             'stage_id': stage.id,
@@ -792,6 +815,8 @@ class HelpdeskTicket(models.Model):
         })
 
     def action_received_at_sales_centre(self):
+        for ticket in self:
+            ticket._create_received_at_sales_centre_picking()
         stage = self._get_or_create_stage('Received at Sales Centre', 110)
         for ticket in self:
             # Find the most-recent done incoming picking that collected this
