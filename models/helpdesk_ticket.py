@@ -761,9 +761,10 @@ class HelpdeskTicket(models.Model):
     def _create_repair_transfer(self, source_loc, dest_loc):
         """Create a state='done' internal picking for self.product_id +
         self.x_studio_serial_no from source_loc to dest_loc. Stamps the
-        picking with x_studio_helpdesk_ticket_id so
-        _bind_ticket_pickings_to_so picks it up once the repair SO is
-        created on the FSM task.
+        picking with x_studio_helpdesk_ticket_id so it surfaces under
+        the ticket's Movements smart button. Deliberately does NOT
+        write sale_id / sale_line_id / group_id / origin — repair-flow
+        pickings live on the ticket, not on the repair sale order.
         """
         self.ensure_one()
         serial = self.x_studio_serial_no
