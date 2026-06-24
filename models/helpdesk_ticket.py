@@ -614,31 +614,43 @@ class HelpdeskTicket(models.Model):
 
     # ── Stock movements for factory transit ──────────────────────────────────
 
-    def _create_send_to_factory_picking(self):
-        """centre.stock -> centre/Intransit (state='done')."""
+    def _current_item_location(self):
+        """Where the item physically sits right now: destination of the
+        most recent picking stamped to this ticket. Falls back to
+        x_studio_repair_location when no movement exists yet (e.g. the
+        ticket was opened straight into Send to Factory without a
+        prior return)."""
         self.ensure_one()
-        src_loc = self.x_studio_return_receipt_location
-        if not (src_loc and src_loc.warehouse_id):
+        last = self.env['stock.picking'].sudo().search(
+            [('x_studio_helpdesk_ticket_id', '=', self.id)],
+            order='date_done desc, id desc', limit=1,
+        )
+        return last.location_dest_id or self.x_studio_repair_location
+
+    def _create_send_to_factory_picking(self):
+        """current location -> Repair Location's warehouse/Intransit."""
+        self.ensure_one()
+        src_loc = self._current_item_location()
+        repair_loc = self.x_studio_repair_location
+        if not (src_loc and repair_loc and repair_loc.warehouse_id):
             return False
-        intransit = src_loc.warehouse_id._ensure_intransit_location()
+        intransit = repair_loc.warehouse_id._ensure_intransit_location()
         return self._create_repair_transfer(src_loc, intransit)
 
     def _create_received_at_factory_picking(self):
-        """centre/Intransit -> company factory_repair_location."""
+        """current location (centre/Intransit) -> factory_repair_location."""
         self.ensure_one()
-        src_loc = self.x_studio_return_receipt_location
-        if not (src_loc and src_loc.warehouse_id):
-            return False
-        intransit = src_loc.warehouse_id._ensure_intransit_location()
+        src_loc = self._current_item_location()
         dest_loc = self._get_factory_repair_location()
+        if not src_loc:
+            return False
         if not dest_loc:
             raise UserError(
                 "Factory Repair Location is not configured for company "
-                f"'{self.company_id.name}'. Add a System Parameter "
-                f"'fix_repair.factory_repair_location.{self.company_id.id}' "
-                "with the destination stock.location ID as the value."
+                f"'{self.company_id.name}'. Set it in "
+                "Settings → Fix Repair → Factory Repair Location."
             )
-        return self._create_repair_transfer(intransit, dest_loc)
+        return self._create_repair_transfer(src_loc, dest_loc)
 
     def _get_factory_repair_location(self):
         """Read the per-company factory repair location from ir.config_parameter.
