@@ -17,6 +17,7 @@ class AccountPaymentRegister(models.TransientModel):
             orders = invoice.invoice_line_ids.sale_line_ids.order_id
             for order in orders.filtered(
                 lambda o: o.x_studio_quotation_type == 'Not Under Warranty'
+                          or o.x_studio_rug_rejected
             ):
                 task = order.sudo().task_id or self.env['project.task'].sudo().search(
                     [('sale_order_id', '=', order.id)], limit=1
