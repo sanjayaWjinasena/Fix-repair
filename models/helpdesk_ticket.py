@@ -36,6 +36,25 @@ class HelpdeskTicket(models.Model):
     # Used to relabel the Return button as Dispatch on the second trip.
     has_return_picking = fields.Boolean(compute='_compute_has_return_picking')
 
+    # True when there is a 'Ready' (state='assigned') outgoing-to-customer
+    # picking stamped to the ticket — i.e. a dispatch already in progress.
+    # Used to hide the Dispatch button so the user can't create a duplicate.
+    has_ready_dispatch_picking = fields.Boolean(
+        compute='_compute_has_ready_dispatch_picking',
+    )
+
+    @api.depends(
+        'repair_picking_ids.state',
+        'repair_picking_ids.location_dest_id.usage',
+    )
+    def _compute_has_ready_dispatch_picking(self):
+        for ticket in self:
+            ticket.has_ready_dispatch_picking = any(
+                p.state == 'assigned'
+                and p.location_dest_id.usage == 'customer'
+                for p in ticket.repair_picking_ids
+            )
+
     # Mirrors the linked SO's invoice_status so it can be used in view expressions.
     so_invoice_status = fields.Selection(related='sale_order_id.invoice_status')
 
@@ -493,6 +512,7 @@ class HelpdeskTicket(models.Model):
                 #     so Dispatch surfaces there once Mark as Done is hit.
                 dispatch.set('invisible',
                     "not has_return_picking or "
+                    "has_ready_dispatch_picking or "
                     "(not so_fully_paid "
                     " and not is_tested_ok "
                     " and not is_so_cancelled) or "
