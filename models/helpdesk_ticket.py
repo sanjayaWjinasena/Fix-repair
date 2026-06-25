@@ -36,25 +36,6 @@ class HelpdeskTicket(models.Model):
     # Used to relabel the Return button as Dispatch on the second trip.
     has_return_picking = fields.Boolean(compute='_compute_has_return_picking')
 
-    # True once a done handover picking exists (virtual/inventory -> customer).
-    # Used to hide the Dispatch button so a second dispatch can't be created
-    # after the item is already back with the customer.
-    has_handover_picking = fields.Boolean(compute='_compute_has_handover_picking')
-
-    @api.depends(
-        'repair_picking_ids.state',
-        'repair_picking_ids.location_id.usage',
-        'repair_picking_ids.location_dest_id.usage',
-    )
-    def _compute_has_handover_picking(self):
-        for ticket in self:
-            ticket.has_handover_picking = any(
-                p.state == 'done'
-                and p.location_id.usage == 'inventory'
-                and p.location_dest_id.usage == 'customer'
-                for p in ticket.repair_picking_ids
-            )
-
     # Mirrors the linked SO's invoice_status so it can be used in view expressions.
     so_invoice_status = fields.Selection(related='sale_order_id.invoice_status')
 
@@ -509,7 +490,6 @@ class HelpdeskTicket(models.Model):
                 #     so Dispatch surfaces there once Mark as Done is hit.
                 dispatch.set('invisible',
                     "not has_return_picking or "
-                    "has_handover_picking or "
                     "(not so_fully_paid "
                     " and not is_tested_ok "
                     " and not is_so_cancelled) or "
