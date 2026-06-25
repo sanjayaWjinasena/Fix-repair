@@ -612,6 +612,41 @@ class HelpdeskTicket(models.Model):
             ('new_value_char', '=', stage_name),
         ]))
 
+    def write(self, vals):
+        """Defensive guard at the write boundary:
+
+        'Repair Completed' is a one-way milestone. Any caller — Studio
+        server action, computed cascade, our own helpers, an automation
+        chain we haven't traced — that tries to set stage_id back to
+        'Repair Completed' on a ticket that has already been there has
+        its stage_id stripped from this write call.
+
+        Catches the regression even when the path isn't through our
+        _move_to_stage helper. Other writes pass through unchanged.
+        """
+        if vals.get('stage_id'):
+            try:
+                stage_id = int(vals['stage_id'])
+            except (TypeError, ValueError):
+                stage_id = False
+            new_stage = (
+                self.env['helpdesk.stage'].sudo().browse(stage_id)
+                if stage_id else False
+            )
+            if new_stage and new_stage.exists() and new_stage.name == 'Repair Completed':
+                skip = self.filtered(
+                    lambda t: t._has_been_at_stage('Repair Completed')
+                )
+                if skip:
+                    vals_no_stage = {k: v for k, v in vals.items() if k != 'stage_id'}
+                    allow = self - skip
+                    if allow:
+                        super(HelpdeskTicket, allow).write(vals)
+                    if vals_no_stage:
+                        super(HelpdeskTicket, skip).write(vals_no_stage)
+                    return True
+        return super().write(vals)
+
     # ── Button actions ───────────────────────────────────────────────────────
 
     def action_assign_to_me(self):
