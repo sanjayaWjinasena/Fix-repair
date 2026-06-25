@@ -143,23 +143,25 @@ class SaleOrder(models.Model):
             #         so the salesperson collects a percentage advance from
             #         the customer to unblock delivery.
             for btn in arch.xpath("//button[@id='create_invoice']"):
+                # Hide the purple Create Invoice button only while RUG is
+                # confirmed-and-pending (waiting for Repair Completed).
+                # Reject-RUG falls through to the NUW behaviour: purple
+                # button visible per standard Odoo gating.
                 existing = btn.get('invisible', '')
                 extra = (
-                    "(x_studio_rug_confirmed "
+                    "x_studio_rug_confirmed "
                     "and not x_studio_rug_rejected "
-                    "and ticket_repair_stage_state != 'repair_completed') "
-                    "or x_studio_rug_rejected"
+                    "and ticket_repair_stage_state != 'repair_completed'"
                 )
-                btn.set('invisible', f"({existing}) or {extra}" if existing else extra)
+                btn.set('invisible', f"({existing}) or ({extra})" if existing else extra)
 
             for btn in arch.xpath("//button[@id='create_invoice_percentage']"):
-                # Standard expression: is_subscription or invoice_status != 'no'
-                # or state != 'sale'. Loosen the invoice_status='no' gate when
-                # the RUG was rejected — that case needs the % advance even
-                # after deliveries have produced "to invoice" status.
+                # Standard Odoo expression: is_subscription or invoice_status != 'no'
+                # or state != 'sale'. Both NUW and Reject-RUG follow the same
+                # standard gate now — percentage advance visible while SO is
+                # confirmed and no invoice has been created yet.
                 btn.set('invisible',
-                    "is_subscription or state != 'sale' or "
-                    "(invoice_status != 'no' and not x_studio_rug_rejected)"
+                    "is_subscription or state != 'sale' or invoice_status != 'no'"
                 )
 
             # Order Payment Type: editable in draft/sent for all customers
