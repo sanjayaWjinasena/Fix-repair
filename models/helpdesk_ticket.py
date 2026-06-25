@@ -613,26 +613,17 @@ class HelpdeskTicket(models.Model):
         ]))
 
     def write(self, vals):
-        """Defensive guards at the write boundary.
+        """Defensive guard at the write boundary:
 
-        Guard 1 — Dispatch context: if the current call originates from
-        stock.return.picking._create_returns (flag in context), drop
-        stage_id from this write. Stops every cascaded path — Studio
-        automations, Odoo computes, indirect chains — from changing the
-        ticket stage during dispatch creation.
-
-        Guard 2 — Repair Completed regression: 'Repair Completed' is a
-        one-way milestone. Any caller trying to set stage_id back to
+        'Repair Completed' is a one-way milestone. Any caller — Studio
+        server action, computed cascade, our own helpers, an automation
+        chain we haven't traced — that tries to set stage_id back to
         'Repair Completed' on a ticket that has already been there has
-        its stage_id stripped, even when guard 1 doesn't apply.
-        """
-        # Guard 1: dispatch creation must not change ticket stage.
-        if vals.get('stage_id') and self.env.context.get('fix_repair_skip_ticket_stage_change'):
-            vals = {k: v for k, v in vals.items() if k != 'stage_id'}
-            if not vals:
-                return True
+        its stage_id stripped from this write call.
 
-        # Guard 2: never regress to Repair Completed.
+        Catches the regression even when the path isn't through our
+        _move_to_stage helper. Other writes pass through unchanged.
+        """
         if vals.get('stage_id'):
             try:
                 stage_id = int(vals['stage_id'])

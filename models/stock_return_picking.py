@@ -214,12 +214,6 @@ class StockReturnPicking(models.TransientModel):
                 ('x_studio_pick_id', '=', self.picking_id.id),
             ], limit=1)
 
-        # Mark the wizard's execution so any cascaded write to
-        # helpdesk.ticket.stage_id (Studio automations, Odoo computes,
-        # any path triggered indirectly by picking creation) is suppressed.
-        # helpdesk_ticket.write() honours this flag.
-        self = self.with_context(fix_repair_skip_ticket_stage_change=True)
-
         if self.ticket_id:
             self.product_return_moves.write({'quantity': 1})
         new_picking_id, pick_type_id = super()._create_returns()
