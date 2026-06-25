@@ -372,7 +372,14 @@ class SaleOrder(models.Model):
             confirmed = self
 
         for order in confirmed:
-            if order.x_studio_quotation_type == 'Not Under Warranty':
+            # Both customer-pays flavours land at Estimation Approval
+            # Received when the salesperson clicks Confirm in the backend.
+            # Reject-RUG is also moved by the rug_rejected write hook, so
+            # this is a no-op when the rejection happened before Confirm —
+            # but if the salesperson Confirms first and rejects later, this
+            # explicit move keeps the stage consistent.
+            if (order.x_studio_quotation_type == 'Not Under Warranty'
+                    or order.x_studio_rug_rejected):
                 self._move_ticket_to_stage(order, 'Estimation Approval Received')
         return result
 
