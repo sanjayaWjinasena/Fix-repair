@@ -888,7 +888,17 @@ class HelpdeskTicket(models.Model):
             return False
 
         now = fields.Datetime.now()
-        picking = self.env['stock.picking'].sudo().create({
+        # industry_fsm_stock auto-sets group_id on stock.move when a task
+        # is active in context (e.g. inside action_fsm_validate). That
+        # makes the picking show up on the task's SO Delivery smart
+        # button, which we don't want — repair-flow pickings live on the
+        # ticket via x_studio_helpdesk_ticket_id, not on the SO.
+        # Strip default_group_id from the env so the auto-binding hook
+        # has nothing to use.
+        env_no_group = self.env(
+            context={**self.env.context, 'default_group_id': False}
+        )
+        picking = env_no_group['stock.picking'].sudo().create({
             'partner_id': self.partner_id.id,
             'picking_type_id': pick_type.id,
             'location_id': source_loc.id,
@@ -896,12 +906,13 @@ class HelpdeskTicket(models.Model):
             'company_id': self.company_id.id,
             'date_done': now,
             'x_studio_helpdesk_ticket_id': self.id,
+            'group_id': False,
         })
         # Do NOT pass `quantity=1.0` here. In Odoo 17 that field on
         # stock.move auto-materializes a move_line; if we then create
         # our own move_line (to carry lot_id/qty_done), the move ends up
         # with two ML records and move.quantity computes to 2.
-        move = self.env['stock.move'].sudo().create({
+        move = env_no_group['stock.move'].sudo().create({
             'name': product.display_name,
             'product_id': product.id,
             'product_uom_qty': 1.0,
@@ -911,6 +922,7 @@ class HelpdeskTicket(models.Model):
             'picking_id': picking.id,
             'company_id': self.company_id.id,
             'date': now,
+            'group_id': False,
         })
         ml_vals = {
             'picking_id': picking.id,
@@ -925,6 +937,14 @@ class HelpdeskTicket(models.Model):
         if serial:
             ml_vals['lot_id'] = serial.id
         self.env['stock.move.line'].sudo().create(ml_vals)
+        # Defensive re-clear: if any cascade between create and now set
+        # group_id (e.g. via an inverse on a related field), strip it
+        # before state='done' so picking.sale_id stays False and the SO
+        # never sees this picking on its Delivery smart button.
+        if picking.group_id:
+            picking.sudo().write({'group_id': False})
+        if move.group_id:
+            move.sudo().write({'group_id': False})
         move.sudo().write({'state': 'done'})
         picking.sudo().write({'state': 'done'})
         return picking
