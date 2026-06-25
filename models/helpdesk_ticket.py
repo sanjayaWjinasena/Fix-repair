@@ -295,6 +295,7 @@ class HelpdeskTicket(models.Model):
                     'is_tested_ok',
                     'is_so_cancelled',
                     'task_done',
+                    'has_ready_dispatch_picking',
                 ):
                     if not arch.xpath(f"//field[@name='{fname}']"):
                         fld = etree.Element('field')
