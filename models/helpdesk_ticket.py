@@ -810,6 +810,10 @@ class HelpdeskTicket(models.Model):
             'date_done': now,
             'x_studio_helpdesk_ticket_id': self.id,
         })
+        # Do NOT pass `quantity=1.0` here. In Odoo 17 that field on
+        # stock.move auto-materializes a move_line; if we then create
+        # our own move_line (to carry lot_id/qty_done), the move ends up
+        # with two ML records and move.quantity computes to 2.
         move = self.env['stock.move'].sudo().create({
             'name': product.display_name,
             'product_id': product.id,
@@ -820,7 +824,6 @@ class HelpdeskTicket(models.Model):
             'picking_id': picking.id,
             'company_id': self.company_id.id,
             'date': now,
-            'quantity': 1.0,
         })
         ml_vals = {
             'picking_id': picking.id,

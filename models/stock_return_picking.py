@@ -94,7 +94,6 @@ class StockReturnPicking(models.TransientModel):
             'picking_id': fake_picking.id,
             'company_id': ticket.company_id.id,
             'date': now,
-            'quantity': 1.0,
         })
         self.env['stock.move.line'].sudo().create({
             'picking_id': fake_picking.id,
