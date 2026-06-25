@@ -575,8 +575,20 @@ class HelpdeskTicket(models.Model):
         return stage
 
     def _move_to_stage(self, stage_name):
-        """Move each ticket to the named stage, scoped to the ticket's company and team."""
+        """Move each ticket to the named stage, scoped to the ticket's company and team.
+
+        Repair Completed is treated as a one-way milestone: if a ticket has
+        ever been at that stage before (per mail.tracking.value history),
+        this method silently no-ops for that ticket when the target is
+        'Repair Completed'. Prevents downstream stages
+        (Sent to Sales Centre / Received at Sales Centre / Handed Over)
+        from being clobbered back to Repair Completed by stray automation
+        chains.
+        """
         for ticket in self:
+            if (stage_name == 'Repair Completed'
+                    and ticket._has_been_at_stage('Repair Completed')):
+                continue
             stage = self.env['helpdesk.stage'].sudo().search([
                 ('name', '=', stage_name),
                 ('team_ids', 'in', ticket.team_id.ids),
@@ -586,6 +598,19 @@ class HelpdeskTicket(models.Model):
             ], limit=1)
             if stage:
                 ticket.sudo().write({'stage_id': stage.id})
+
+    def _has_been_at_stage(self, stage_name):
+        """True iff this ticket has ever been at stage_name, based on
+        mail.tracking.value history. Counts the historical milestone
+        even if the ticket has since moved on."""
+        self.ensure_one()
+        return bool(self.env['mail.tracking.value'].sudo().search_count([
+            ('mail_message_id.model', '=', 'helpdesk.ticket'),
+            ('mail_message_id.res_id', '=', self.id),
+            ('field_id.model', '=', 'helpdesk.ticket'),
+            ('field_id.name', '=', 'stage_id'),
+            ('new_value_char', '=', stage_name),
+        ]))
 
     # ── Button actions ───────────────────────────────────────────────────────
 

@@ -395,13 +395,21 @@ class SaleOrder(models.Model):
         self.write({'x_studio_rug_rejected': True})
 
     def _move_ticket_to_stage(self, order, stage_name):
-        """Find the linked helpdesk ticket and move it to the named stage."""
+        """Find the linked helpdesk ticket and move it to the named stage.
+
+        Mirrors the guard in helpdesk.ticket._move_to_stage:
+        Repair Completed is a one-way milestone — never regress to it once
+        the ticket has been there at any point in its history.
+        """
         sudo_order = order.sudo()
         task = sudo_order.task_id or self.env['project.task'].sudo().search(
             [('sale_order_id', '=', order.id)], limit=1
         )
         ticket = task.sudo().helpdesk_ticket_id if task else False
         if not ticket:
+            return
+        if (stage_name == 'Repair Completed'
+                and ticket._has_been_at_stage('Repair Completed')):
             return
         stage = self.env['helpdesk.stage'].sudo().search(
             [('name', '=', stage_name),
