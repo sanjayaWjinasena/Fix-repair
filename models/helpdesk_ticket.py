@@ -207,23 +207,26 @@ class HelpdeskTicket(models.Model):
             ('name', '=', move_line.origin),
         ], limit=1)
 
-    def write(self, vals):
-        result = super().write(vals)
-        # Re-assert product_id and sale_order_id after super() completes — Studio
-        # automations that clear these fields run inside super().write(), so writing
-        # here overrides them. Context flag prevents infinite recursion.
-        if 'x_studio_serial_no' in vals and not self.env.context.get('_syncing_serial_product'):
-            for rec in self:
-                if rec.x_studio_serial_no and rec.x_studio_serial_no.product_id:
-                    updates = {}
-                    if rec.product_id != rec.x_studio_serial_no.product_id:
-                        updates['product_id'] = rec.x_studio_serial_no.product_id.id
-                    so = rec._get_so_from_serial(rec.x_studio_serial_no)
-                    if so and rec.sale_order_id != so:
-                        updates['sale_order_id'] = so.id
-                    if updates:
-                        rec.with_context(_syncing_serial_product=True).sudo().write(updates)
-        return result
+    def _post_write_serial_product_sync(self, vals):
+        """Re-assert product_id and sale_order_id from x_studio_serial_no after
+        super().write() runs. Studio automations that clear these fields fire
+        inside super().write(), so this overrides them. Context flag prevents
+        infinite recursion."""
+        if 'x_studio_serial_no' not in vals:
+            return
+        if self.env.context.get('_syncing_serial_product'):
+            return
+        for rec in self:
+            if not (rec.x_studio_serial_no and rec.x_studio_serial_no.product_id):
+                continue
+            updates = {}
+            if rec.product_id != rec.x_studio_serial_no.product_id:
+                updates['product_id'] = rec.x_studio_serial_no.product_id.id
+            so = rec._get_so_from_serial(rec.x_studio_serial_no)
+            if so and rec.sale_order_id != so:
+                updates['sale_order_id'] = so.id
+            if updates:
+                rec.with_context(_syncing_serial_product=True).sudo().write(updates)
 
     @api.model
     def _deactivate_clearing_serial_automation(self):
@@ -613,17 +616,15 @@ class HelpdeskTicket(models.Model):
         ]))
 
     def write(self, vals):
-        """Defensive guard at the write boundary:
-
-        'Repair Completed' is a one-way milestone. Any caller — Studio
-        server action, computed cascade, our own helpers, an automation
-        chain we haven't traced — that tries to set stage_id back to
-        'Repair Completed' on a ticket that has already been there has
-        its stage_id stripped from this write call.
-
-        Catches the regression even when the path isn't through our
-        _move_to_stage helper. Other writes pass through unchanged.
+        """Combined write override:
+          1. Repair-Completed regression guard: strip stage_id from writes
+             that target 'Repair Completed' on tickets that have already
+             been there (one-way milestone).
+          2. Serial -> product/SO re-assertion: after super().write runs,
+             re-apply product_id and sale_order_id from x_studio_serial_no
+             so Studio automations that clear them are overridden.
         """
+        # 1. Repair Completed regression guard
         if vals.get('stage_id'):
             try:
                 stage_id = int(vals['stage_id'])
@@ -642,10 +643,15 @@ class HelpdeskTicket(models.Model):
                     allow = self - skip
                     if allow:
                         super(HelpdeskTicket, allow).write(vals)
+                        allow._post_write_serial_product_sync(vals)
                     if vals_no_stage:
                         super(HelpdeskTicket, skip).write(vals_no_stage)
+                        skip._post_write_serial_product_sync(vals_no_stage)
                     return True
-        return super().write(vals)
+        result = super().write(vals)
+        # 2. Serial -> product/SO re-assert
+        self._post_write_serial_product_sync(vals)
+        return result
 
     # ── Button actions ───────────────────────────────────────────────────────
 
