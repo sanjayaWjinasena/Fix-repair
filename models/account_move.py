@@ -8,6 +8,7 @@ class AccountMove(models.Model):
     _inherit = 'account.move'
 
     is_rug_invoice = fields.Boolean(compute='_compute_is_rug_invoice')
+    is_rug_account_set = fields.Boolean(compute='_compute_is_rug_account_set')
 
     @api.depends('invoice_origin', 'move_type')
     def _compute_is_rug_invoice(self):
@@ -27,14 +28,35 @@ class AccountMove(models.Model):
                 and not so.x_studio_rug_rejected
             )
 
+    @api.depends('invoice_line_ids.account_id', 'company_id')
+    def _compute_is_rug_account_set(self):
+        """True when every product line on this invoice already uses the
+        company's configured RUG account. Used to hide the 'Change to
+        RUG Account' button once it has been clicked (or the lines were
+        created on that account already)."""
+        for move in self:
+            config = self.env['x_repair_accounts'].sudo().search(
+                [('x_studio_company_id', '=', move.company_id.id)], limit=1
+            )
+            rug_account = config.x_studio_rug_account if config else False
+            product_lines = move.invoice_line_ids.filtered(
+                lambda l: l.display_type not in ('line_section', 'line_note')
+            )
+            move.is_rug_account_set = bool(
+                rug_account
+                and product_lines
+                and all(l.account_id == rug_account for l in product_lines)
+            )
+
     def _get_view(self, view_id=None, view_type='form', **options):
         arch, view = super()._get_view(view_id, view_type, **options)
         if view_type == 'form':
             for sheet in arch.xpath('//sheet'):
-                fld = etree.Element('field')
-                fld.set('name', 'is_rug_invoice')
-                fld.set('invisible', '1')
-                sheet.insert(0, fld)
+                for fname in ('is_rug_invoice', 'is_rug_account_set'):
+                    fld = etree.Element('field')
+                    fld.set('name', fname)
+                    fld.set('invisible', '1')
+                    sheet.insert(0, fld)
                 break
             for header in arch.xpath('//header'):
                 btn = etree.Element('button')
@@ -42,7 +64,8 @@ class AccountMove(models.Model):
                 btn.set('string', 'Change to RUG Account')
                 btn.set('type', 'object')
                 btn.set('class', 'btn-secondary')
-                btn.set('invisible', 'not is_rug_invoice or state != "draft"')
+                btn.set('invisible',
+                        'not is_rug_invoice or state != "draft" or is_rug_account_set')
                 header.insert(0, btn)
                 break
 
