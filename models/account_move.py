@@ -70,3 +70,106 @@ class AccountMove(models.Model):
                 lambda l: l.display_type not in ('line_section', 'line_note')
             )
             product_lines.write({'account_id': rug_account.id})
+
+    def action_post(self):
+        res = super().action_post()
+        for move in self:
+            if (move.move_type == 'out_invoice'
+                    and move.is_rug_invoice
+                    and move.state == 'posted'):
+                move._rug_auto_settle()
+        return res
+
+    def _rug_auto_settle(self):
+        """Skip the Register Payment step on a freshly posted RUG invoice
+        by creating an internal clearing entry DR <RUG account> / CR
+        <Debtors> for the receivable balance, then reconciling the two
+        Debtors lines. The invoice's payment_state moves straight to
+        'paid'; the RUG account's CR (from the invoice) and DR (from
+        the clearing) net to zero so no real bank movement is involved.
+
+        No-op when:
+          • no unreconciled receivable line exists (already settled)
+          • the configured per-company RUG account is missing
+          • the invoice doesn't have any line on the RUG account (i.e.
+            'Change to RUG Account' wasn't clicked before post)
+        """
+        self.ensure_one()
+        if self.payment_state in ('paid', 'partial', 'reversed'):
+            return
+
+        receivable_lines = self.line_ids.filtered(
+            lambda l: l.account_id.account_type == 'asset_receivable'
+            and not l.reconciled
+            and (l.debit or l.credit)
+        )
+        if not receivable_lines:
+            return
+
+        config = self.env['x_repair_accounts'].sudo().search(
+            [('x_studio_company_id', '=', self.company_id.id)], limit=1
+        )
+        if not config or not config.x_studio_rug_account:
+            return
+        rug_account = config.x_studio_rug_account
+
+        invoice_rug_lines = self.line_ids.filtered(
+            lambda l: l.account_id == rug_account
+        )
+        if not invoice_rug_lines:
+            return
+
+        journal = self.env['account.journal'].sudo().search(
+            [('type', '=', 'general'),
+             ('company_id', '=', self.company_id.id)],
+            limit=1,
+        )
+        if not journal:
+            raise UserError(
+                f"No miscellaneous (type='general') journal found for "
+                f"'{self.company_id.name}'. Cannot auto-settle the RUG invoice."
+            )
+
+        amount = sum(receivable_lines.mapped('debit')) - sum(receivable_lines.mapped('credit'))
+        if amount <= 0:
+            return
+
+        receivable_account = receivable_lines[0].account_id
+        clearing = self.env['account.move'].sudo().create({
+            'journal_id': journal.id,
+            'company_id': self.company_id.id,
+            'partner_id': self.partner_id.id,
+            'date': self.invoice_date or fields.Date.context_today(self),
+            'ref': f'RUG settlement — {self.name}',
+            'line_ids': [
+                (0, 0, {
+                    'account_id': rug_account.id,
+                    'partner_id': self.partner_id.id,
+                    'debit': amount,
+                    'credit': 0,
+                    'name': f'RUG settlement — {self.name}',
+                }),
+                (0, 0, {
+                    'account_id': receivable_account.id,
+                    'partner_id': self.partner_id.id,
+                    'debit': 0,
+                    'credit': amount,
+                    'name': f'RUG settlement — {self.name}',
+                }),
+            ],
+        })
+        clearing.action_post()
+
+        # Reconcile Debtors: invoice DR ↔ clearing CR → invoice goes 'paid'
+        (
+            receivable_lines
+            | clearing.line_ids.filtered(lambda l: l.account_id == receivable_account)
+        ).reconcile()
+
+        # Reconcile RUG account: invoice CR ↔ clearing DR → both net to zero
+        invoice_rug_unrec = invoice_rug_lines.filtered(lambda l: not l.reconciled)
+        if invoice_rug_unrec and rug_account.reconcile:
+            (
+                invoice_rug_unrec
+                | clearing.line_ids.filtered(lambda l: l.account_id == rug_account)
+            ).reconcile()
