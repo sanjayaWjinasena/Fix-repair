@@ -403,6 +403,43 @@ class SaleOrder(models.Model):
         """
         self.write({'x_studio_rug_rejected': True})
 
+    def _re_estimate_reset(self):
+        """Put the SO back to draft so the salesperson can edit lines
+        and re-run the quote cycle. Resets the customer sign and RUG
+        approval state; increments the re-estimate counter. No-op when
+        the SO is still in draft.
+
+        Raises UserError if any outgoing delivery on the SO has already
+        been validated — re-estimate is only valid before the first
+        physical delivery."""
+        self.ensure_one()
+        done_outgoing = self.picking_ids.filtered(
+            lambda p: p.state == 'done'
+            and p.picking_type_id.code == 'outgoing'
+        )
+        if done_outgoing:
+            raise UserError(
+                "Cannot re-estimate: a delivery has already been validated "
+                "on this Sales Order. Re-estimate is only allowed before the "
+                "first delivery."
+            )
+
+        if self.state in ('sale', 'done'):
+            self.action_draft()
+
+        # Reset customer sign and RUG approval cycle so they re-run on
+        # the next round. Deliberately leave x_studio_rug_rejected alone
+        # — that is a deliberate operator decision and shouldn't reset.
+        self.write({
+            'signed_by': False,
+            'signed_on': False,
+            'x_studio_rug_request_sent': False,
+            'x_studio_rug_approved': False,
+            'x_studio_rug_confirmed': False,
+            'x_studio_re_estimate_count': (self.x_studio_re_estimate_count or 0) + 1,
+            'x_studio_re_estimate_request_sent': True,
+        })
+
     def _move_ticket_to_stage(self, order, stage_name):
         """Find the linked helpdesk ticket and move it to the named stage.
 

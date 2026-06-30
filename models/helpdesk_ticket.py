@@ -43,6 +43,37 @@ class HelpdeskTicket(models.Model):
         compute='_compute_has_ready_dispatch_picking',
     )
 
+    # True when the linked repair SO is eligible for re-estimation:
+    # customer signed the quote AND no outgoing delivery has been validated
+    # yet. Powers the Re-estimate button on the ticket header.
+    can_re_estimate = fields.Boolean(compute='_compute_can_re_estimate')
+
+    @api.depends(
+        'fsm_task_ids.sale_order_id.signed_on',
+        'fsm_task_ids.sale_order_id.signed_by',
+        'fsm_task_ids.sale_order_id.picking_ids.state',
+        'fsm_task_ids.sale_order_id.picking_ids.picking_type_id.code',
+    )
+    def _compute_can_re_estimate(self):
+        for ticket in self:
+            sos = ticket.fsm_task_ids.mapped('sale_order_id')
+            if not sos:
+                ticket.can_re_estimate = False
+                continue
+            customer_signed = any(
+                so.signed_on or so.signed_by for so in sos
+            )
+            if not customer_signed:
+                ticket.can_re_estimate = False
+                continue
+            any_outgoing_done = any(
+                p.state == 'done'
+                and p.picking_type_id.code == 'outgoing'
+                for so in sos
+                for p in so.picking_ids
+            )
+            ticket.can_re_estimate = not any_outgoing_done
+
     @api.depends(
         'repair_picking_ids.state',
         'repair_picking_ids.location_dest_id.usage',
@@ -296,6 +327,7 @@ class HelpdeskTicket(models.Model):
                     'is_so_cancelled',
                     'task_done',
                     'has_ready_dispatch_picking',
+                    'can_re_estimate',
                 ):
                     if not arch.xpath(f"//field[@name='{fname}']"):
                         fld = etree.Element('field')
@@ -678,6 +710,17 @@ class HelpdeskTicket(models.Model):
 
     def action_assign_to_me(self):
         self.write({'user_id': self.env.uid})
+
+    def action_re_estimate(self):
+        """Put each linked repair SO back into draft so the salesperson
+        can edit lines and re-send the quotation. Resets the customer
+        sign + RUG approval cycle on the SO, moves the ticket back to
+        Diagnosis, and bumps the re-estimate counter."""
+        for ticket in self:
+            sos = ticket.fsm_task_ids.mapped('sale_order_id')
+            for so in sos:
+                so._re_estimate_reset()
+            ticket._move_to_stage('Diagnosis')
 
     def action_send_to_factory(self):
         for ticket in self:
