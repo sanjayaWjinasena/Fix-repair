@@ -477,15 +477,26 @@ class SaleOrder(models.Model):
                 "first delivery."
             )
 
+        # Take the SO back to 'draft' regardless of current state.
+        # action_draft only accepts state in ('sent', 'cancel'); for 'sale'
+        # or 'done' we first cancel. Standard procurement pickings get
+        # cancelled along the way — our ticket-stamped repair-flow pickings
+        # have group_id=False so they're unaffected.
         if self.state in ('sale', 'done'):
+            self.with_context(disable_cancel_warning=True)._action_cancel()
+        if self.state in ('sent', 'cancel'):
             self.action_draft()
 
         # Reset customer sign and RUG approval cycle so they re-run on
         # the next round. Deliberately leave x_studio_rug_rejected alone
         # — that is a deliberate operator decision and shouldn't reset.
+        # signature is included so x_customer_signed (computed from
+        # signed_on / signed_by / signature) flips back to False
+        # regardless of which of the three was set.
         self.write({
             'signed_by': False,
             'signed_on': False,
+            'signature': False,
             'x_studio_rug_request_sent': False,
             'x_studio_rug_approved': False,
             'x_studio_rug_confirmed': False,
