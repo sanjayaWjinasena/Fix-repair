@@ -477,15 +477,20 @@ class SaleOrder(models.Model):
                 "first delivery."
             )
 
-        # Take the SO back to 'draft' regardless of current state.
-        # action_draft only accepts state in ('sent', 'cancel'); for 'sale'
-        # or 'done' we first cancel. Standard procurement pickings get
-        # cancelled along the way — our ticket-stamped repair-flow pickings
-        # have group_id=False so they're unaffected.
-        if self.state in ('sale', 'done'):
-            self.with_context(disable_cancel_warning=True)._action_cancel()
-        if self.state in ('sent', 'cancel'):
-            self.action_draft()
+        # Force the SO back to 'draft' WITHOUT cancelling the procurement
+        # pickings. Standard action_cancel cascades to picking.action_cancel
+        # on the procurement group, which we don't want — the existing
+        # deliveries must stay so any new lines added during re-estimate
+        # land in those same pickings via the existing procurement group.
+        # Standard action_draft only accepts state in ('sent','cancel'),
+        # so direct write is the only way to take a 'sale' state SO back
+        # to 'draft' without the cancel cascade.
+        # After re-confirm, sale.order.line._action_launch_stock_rule skips
+        # lines whose qty is already procured; only the new lines trigger
+        # fresh moves, which merge into the existing pickings via the
+        # preserved procurement_group_id.
+        if self.state != 'draft':
+            self.write({'state': 'draft'})
 
         # Reset customer sign and RUG approval cycle so they re-run on
         # the next round. Deliberately leave x_studio_rug_rejected alone
