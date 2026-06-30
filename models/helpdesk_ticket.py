@@ -43,36 +43,6 @@ class HelpdeskTicket(models.Model):
         compute='_compute_has_ready_dispatch_picking',
     )
 
-    # True when the linked repair SO is eligible for re-estimation:
-    # customer signed the quote AND no outgoing delivery has been validated
-    # yet. Powers the Re-estimate button on the ticket header.
-    can_re_estimate = fields.Boolean(compute='_compute_can_re_estimate')
-
-    @api.depends(
-        'fsm_task_ids.sale_order_id.signed_on',
-        'fsm_task_ids.sale_order_id.signed_by',
-        'fsm_task_ids.sale_order_id.picking_ids.state',
-        'fsm_task_ids.sale_order_id.picking_ids.picking_type_id.code',
-    )
-    def _compute_can_re_estimate(self):
-        for ticket in self:
-            sos = ticket.fsm_task_ids.mapped('sale_order_id')
-            if not sos:
-                ticket.can_re_estimate = False
-                continue
-            customer_signed = any(
-                so.signed_on or so.signed_by for so in sos
-            )
-            if not customer_signed:
-                ticket.can_re_estimate = False
-                continue
-            any_outgoing_done = any(
-                p.state == 'done'
-                and p.picking_type_id.code == 'outgoing'
-                for so in sos
-                for p in so.picking_ids
-            )
-            ticket.can_re_estimate = not any_outgoing_done
 
     @api.depends(
         'repair_picking_ids.state',
@@ -327,7 +297,6 @@ class HelpdeskTicket(models.Model):
                     'is_so_cancelled',
                     'task_done',
                     'has_ready_dispatch_picking',
-                    'can_re_estimate',
                 ):
                     if not arch.xpath(f"//field[@name='{fname}']"):
                         fld = etree.Element('field')
@@ -559,27 +528,6 @@ class HelpdeskTicket(models.Model):
                 dispatch.set('context', btn_context)
                 btn.addnext(dispatch)
 
-            # Re-estimate button — injected dynamically (in addition to the
-            # static XML inheritance) so it shows up immediately after a
-            # code push even when the module's view inheritance hasn't been
-            # re-applied. Idempotent: skipped if a button by this name
-            # already exists in the arch.
-            for header in arch.xpath("//header"):
-                if arch.xpath("//button[@name='action_re_estimate']"):
-                    break
-                re_est = etree.Element('button')
-                re_est.set('name', 'action_re_estimate')
-                re_est.set('string', 'Re-estimate')
-                re_est.set('type', 'object')
-                re_est.set('class', 'btn-secondary')
-                re_est.set('confirm',
-                    "Re-estimate this repair? The Sales Order will be reset "
-                    "to draft, the customer's signature cleared, and the RUG "
-                    "approval cycle restarted.")
-                re_est.set('invisible', "not can_re_estimate")
-                header.insert(0, re_est)
-                break
-
             # Serial Number: only show lots already issued via a sale order.
             # sale_order_ids is non-stored so domain filters on it are ignored.
             # is_issued is a virtual field with a _search that queries move lines.
@@ -731,17 +679,6 @@ class HelpdeskTicket(models.Model):
 
     def action_assign_to_me(self):
         self.write({'user_id': self.env.uid})
-
-    def action_re_estimate(self):
-        """Put each linked repair SO back into draft so the salesperson
-        can edit lines and re-send the quotation. Resets the customer
-        sign + RUG approval cycle on the SO, moves the ticket back to
-        Diagnosis, and bumps the re-estimate counter."""
-        for ticket in self:
-            sos = ticket.fsm_task_ids.mapped('sale_order_id')
-            for so in sos:
-                so._re_estimate_reset()
-            ticket._move_to_stage('Diagnosis')
 
     def action_send_to_factory(self):
         for ticket in self:
