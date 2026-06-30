@@ -37,6 +37,37 @@ class SaleOrder(models.Model):
                 order.signed_on or order.signed_by or order.signature
             )
 
+    # True when this SO can be re-estimated: customer has signed AND no
+    # outgoing delivery on it is validated yet. Powers the Re-estimate
+    # button on the SO form.
+    can_re_estimate = fields.Boolean(compute='_compute_can_re_estimate')
+
+    @api.depends('signed_on', 'signed_by', 'picking_ids.state',
+                 'picking_ids.picking_type_id.code')
+    def _compute_can_re_estimate(self):
+        for order in self:
+            if not (order.signed_on or order.signed_by):
+                order.can_re_estimate = False
+                continue
+            any_outgoing_done = any(
+                p.state == 'done' and p.picking_type_id.code == 'outgoing'
+                for p in order.picking_ids
+            )
+            order.can_re_estimate = not any_outgoing_done
+
+    def action_re_estimate(self):
+        """Reset this SO for re-estimation and move the linked helpdesk
+        ticket back to Diagnosis. Mirrors helpdesk.ticket.action_re_estimate
+        so the button can live on either side."""
+        for order in self:
+            order._re_estimate_reset()
+            task = order.sudo().task_id or self.env['project.task'].sudo().search(
+                [('sale_order_id', '=', order.id)], limit=1
+            )
+            ticket = task.helpdesk_ticket_id if task else None
+            if ticket:
+                ticket._move_to_stage('Diagnosis')
+
     @api.model
     def _fix_advance_payment_project_field(self):
         """Fix Studio server action 'Create Advance Payment' that passes
@@ -119,12 +150,34 @@ class SaleOrder(models.Model):
             # the standard signed_on field somehow doesn't survive
             # Studio's view post-processing — but our own fields do.
             for sheet in arch.xpath("//sheet"):
-                for fname in ('ticket_repair_stage_state', 'x_customer_signed'):
+                for fname in ('ticket_repair_stage_state', 'x_customer_signed',
+                              'can_re_estimate'):
                     if not arch.xpath(f"//field[@name='{fname}']"):
                         fld = etree.Element('field')
                         fld.set('name', fname)
                         fld.set('invisible', '1')
                         sheet.insert(0, fld)
+                break
+
+            # Re-estimate button in the SO header. Visible when the SO
+            # is signed AND no outgoing delivery is validated. Confirm
+            # dialog spells out the side effects (state -> draft, signed
+            # cleared, RUG cycle restarted) so the salesperson knows.
+            for header in arch.xpath("//header"):
+                if arch.xpath("//button[@name='action_re_estimate']"):
+                    break
+                re_est = etree.Element('button')
+                re_est.set('name', 'action_re_estimate')
+                re_est.set('string', 'Re-estimate')
+                re_est.set('type', 'object')
+                re_est.set('class', 'btn-secondary')
+                re_est.set('confirm',
+                    "Re-estimate this Sales Order? It will be reset to draft, "
+                    "the customer's signature cleared, and the RUG approval "
+                    "cycle restarted. The linked helpdesk ticket will move "
+                    "back to Diagnosis.")
+                re_est.set('invisible', "not can_re_estimate")
+                header.insert(0, re_est)
                 break
 
             # Create Invoice buttons — three variants ship by default:
