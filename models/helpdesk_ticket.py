@@ -43,6 +43,19 @@ class HelpdeskTicket(models.Model):
         compute='_compute_has_ready_dispatch_picking',
     )
 
+    # Legacy field kept on the model to avoid view-load crashes on
+    # databases whose helpdesk.ticket form inheritance was applied while
+    # this field existed (v90/v91). The button + UI references have been
+    # removed; this exists only so old view arch resolves cleanly. Safe
+    # to drop after module upgrade has reapplied the v93+ view XML.
+    can_re_estimate = fields.Boolean(
+        compute='_compute_can_re_estimate',
+    )
+
+    def _compute_can_re_estimate(self):
+        for ticket in self:
+            ticket.can_re_estimate = False
+
 
     @api.depends(
         'repair_picking_ids.state',
