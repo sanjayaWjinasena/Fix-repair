@@ -559,6 +559,27 @@ class HelpdeskTicket(models.Model):
                 dispatch.set('context', btn_context)
                 btn.addnext(dispatch)
 
+            # Re-estimate button — injected dynamically (in addition to the
+            # static XML inheritance) so it shows up immediately after a
+            # code push even when the module's view inheritance hasn't been
+            # re-applied. Idempotent: skipped if a button by this name
+            # already exists in the arch.
+            for header in arch.xpath("//header"):
+                if arch.xpath("//button[@name='action_re_estimate']"):
+                    break
+                re_est = etree.Element('button')
+                re_est.set('name', 'action_re_estimate')
+                re_est.set('string', 'Re-estimate')
+                re_est.set('type', 'object')
+                re_est.set('class', 'btn-secondary')
+                re_est.set('confirm',
+                    "Re-estimate this repair? The Sales Order will be reset "
+                    "to draft, the customer's signature cleared, and the RUG "
+                    "approval cycle restarted.")
+                re_est.set('invisible', "not can_re_estimate")
+                header.insert(0, re_est)
+                break
+
             # Serial Number: only show lots already issued via a sale order.
             # sale_order_ids is non-stored so domain filters on it are ignored.
             # is_issued is a virtual field with a _search that queries move lines.
