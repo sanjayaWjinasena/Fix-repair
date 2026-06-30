@@ -42,10 +42,13 @@ class SaleOrder(models.Model):
     # button on the SO form.
     can_re_estimate = fields.Boolean(compute='_compute_can_re_estimate')
 
-    @api.depends('signed_on', 'signed_by', 'picking_ids.state',
+    @api.depends('state', 'signed_on', 'signed_by', 'picking_ids.state',
                  'picking_ids.picking_type_id.code')
     def _compute_can_re_estimate(self):
         for order in self:
+            if order.state == 'cancel':
+                order.can_re_estimate = False
+                continue
             if not (order.signed_on or order.signed_by):
                 order.can_re_estimate = False
                 continue
