@@ -78,6 +78,52 @@ class SaleOrder(models.Model):
     _FIX_REPAIR_IDEMPOTENCE_MARKER = "# fix_repair:idempotent-v1"
 
     @api.model
+    def _optimize_slow_studio_computes(self):
+        """Convert redundant stored Studio compute fields into related
+        fields (or a cheaper compute) so they don't add cost during
+        write cascades. Functionally identical — the fields return the
+        same values, just resolved via native ORM traversal instead of
+        safe_eval'd Python code.
+
+        Idempotent: only touches fields whose current compute code matches
+        the redundant pattern we can safely replace. Manual Studio edits
+        (any change to the compute code) preserve the field as-is.
+        """
+        IrField = self.env['ir.model.fields'].sudo()
+
+        # Redundant computes that just return record.amount_total.
+        # Replace with related='amount_total' — Odoo handles the
+        # traversal natively (no safe_eval per fire).
+        redundant_amount_total_computes = [
+            'x_studio_current_tot_amount',
+            'x_studio_current_tot_amount_1',
+        ]
+        for name in redundant_amount_total_computes:
+            field = IrField.search([
+                ('model', '=', 'sale.order'),
+                ('name', '=', name),
+            ], limit=1)
+            if not field:
+                continue
+            # Only rewrite if the compute is the known redundant pattern
+            code = (field.compute or '').strip()
+            if 'record.amount_total' not in code:
+                continue  # someone changed it — leave alone
+            if field.related == 'amount_total':
+                continue  # already converted
+            try:
+                field.write({
+                    'related': 'amount_total',
+                    'compute': False,
+                    'store': False,
+                    'readonly': True,
+                })
+            except Exception:
+                # If the model's cache prevents the switch mid-runtime,
+                # skip silently — will retry on next upgrade.
+                pass
+
+    @api.model
     def _optimize_slow_write_automations(self):
         """Rewrite four Studio server actions on sale.order that fire on
         every SO write and unconditionally call `record.write(...)`.

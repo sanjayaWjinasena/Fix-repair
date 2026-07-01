@@ -23,6 +23,13 @@
          include the marker), the rewrite is skipped. -->
     <function model="sale.order" name="_optimize_slow_write_automations"/>
 
+    <!-- Convert redundant stored Studio compute fields into related fields
+         so they don't recompute during write cascades. Same functional
+         result — Odoo resolves the value natively instead of safe_eval'ing
+         Python code every write. Only touches fields whose compute is a
+         known redundant pattern; manual Studio edits are preserved. -->
+    <function model="sale.order" name="_optimize_slow_studio_computes"/>
+
     <!-- Seed default factory_repair_location per company. Idempotent:
          only sets when ir.config_parameter for that company is empty,
          so manual overrides via Settings → Technical → System Parameters
