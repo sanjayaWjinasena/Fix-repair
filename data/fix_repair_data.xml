@@ -30,6 +30,19 @@
          known redundant pattern; manual Studio edits are preserved. -->
     <function model="sale.order" name="_optimize_slow_studio_computes"/>
 
+    <!-- Rewrite heavy Studio computes on sale.order to one-line
+         delegations that call native Python methods. safe_eval only
+         executes the delegating call; the actual work runs at native
+         CPython speed. Field names and returned values unchanged —
+         Studio UI still recognises the fields, and any view/filter that
+         reads them still gets the same result. -->
+    <function model="sale.order" name="_delegate_studio_computes_to_native"/>
+
+    <!-- Same delegation treatment for account.move.line studio computes
+         (x_studio_credit_limit_2). Reads partner.credit_limit natively
+         instead of via safe_eval on every AML write. -->
+    <function model="account.move.line" name="_delegate_studio_computes_to_native"/>
+
     <!-- Seed default factory_repair_location per company. Idempotent:
          only sets when ir.config_parameter for that company is empty,
          so manual overrides via Settings → Technical → System Parameters

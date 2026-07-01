@@ -77,6 +77,125 @@ class SaleOrder(models.Model):
     # so any manual edits the user made afterwards survive.
     _FIX_REPAIR_IDEMPOTENCE_MARKER = "# fix_repair:idempotent-v1"
 
+    # ── Native compute methods that back the Studio compute strings ──────
+    # Studio computed fields have their body stored as a text 'compute' on
+    # ir.model.fields, executed via safe_eval on every recompute. That
+    # parse+eval per compute is expensive.
+    # By rewriting each compute string to a single delegating call —
+    #   `self._fix_repair_compute_<name>()`
+    # — safe_eval sees just one method call, and the actual work runs in
+    # native Python at CPython speed. Same field name, same value returned.
+    # These methods are the native implementations; the rewriter function
+    # below installs the one-line delegations.
+
+    def _fix_repair_compute_over_commission(self):
+        for rec in self:
+            rec.x_studio_over_commission = any(
+                line.x_studio_over_commission for line in rec.order_line
+            )
+
+    def _fix_repair_compute_over_credit(self):
+        for rec in self:
+            result = False
+            if rec.partner_id.id and rec.x_studio_order_payment_method == 'Credit':
+                pi = rec.partner_invoice_id
+                amt = rec.amount_total
+                if rec.x_studio_quotation_type == 'Repair':
+                    amt = amt * 0.5
+                result = (pi.credit + amt) > pi.credit_limit
+            rec.x_studio_over_credit = result
+
+    def _fix_repair_compute_over_credit_amount(self):
+        for rec in self:
+            result = 0
+            if rec.partner_id.id and rec.x_studio_order_payment_method == 'Credit':
+                pi = rec.partner_invoice_id
+                result = (pi.credit + rec.amount_total) - pi.credit_limit
+            rec.x_studio_over_credit_amount = result
+
+    def _fix_repair_compute_over_bank_guarantee(self):
+        today = fields.Date.context_today(self)
+        for rec in self:
+            result = False
+            if rec.partner_id.id and rec.x_studio_order_payment_method == 'Credit' \
+                    and rec.x_studio_valid_bank_guarantee:
+                pi = rec.partner_invoice_id
+                expiry = pi.x_studio_expiry_date
+                if expiry and expiry < today:
+                    result = True
+                else:
+                    result = (pi.credit + rec.amount_total) > (pi.x_studio_bank_guarantee_amount or 0)
+            rec.x_studio_over_bank_guarantee = result
+
+    def _fix_repair_compute_over_bank_guarantee_amount(self):
+        for rec in self:
+            result = 0
+            if rec.partner_id.id and rec.x_studio_order_payment_method == 'Credit' \
+                    and rec.x_studio_valid_bank_guarantee:
+                pi = rec.partner_invoice_id
+                result = (pi.credit + rec.amount_total) - (pi.x_studio_bank_guarantee_amount or 0)
+            rec.x_studio_over_bank_guarantee_amount = result
+
+    def _fix_repair_compute_guarantee_status(self):
+        today = fields.Date.context_today(self)
+        for rec in self:
+            result = False
+            if rec.x_studio_order_payment_method == 'Credit' and rec.x_studio_valid_bank_guarantee:
+                expiry = rec.partner_id.x_studio_expiry_date
+                if expiry and expiry < today:
+                    result = 'Bank Guarantee has Expired'
+                else:
+                    result = 'Valid Bank Guarantee'
+            rec.x_studio_guarantee_status = result
+
+    def _fix_repair_compute_overdue(self):
+        for rec in self:
+            result = False
+            if rec.partner_id.id and rec.x_studio_order_payment_method == 'Credit':
+                # partner_invoice_id.total_overdue is Odoo core — cost is
+                # inherited but unavoidable for correct behaviour.
+                result = rec.partner_invoice_id.total_overdue > 0.00
+            rec.x_studio_overdue = result
+
+    @api.model
+    def _delegate_studio_computes_to_native(self):
+        """Rewrite each heavy Studio compute string on sale.order to a
+        one-line delegation call. safe_eval sees ~one line; the actual
+        computation runs in the native Python method above.
+
+        Same functional output — every field returns the same value it
+        did before. Only the execution path is faster.
+
+        Idempotent via the shared '# fix_repair:idempotent-v1' marker.
+        """
+        IrField = self.env['ir.model.fields'].sudo()
+        marker = self._FIX_REPAIR_IDEMPOTENCE_MARKER
+
+        # Map: (field_name, expected_substring_in_original, delegating_snippet)
+        delegations = [
+            ('x_studio_over_commission',    'x_studio_over_commission',      'self._fix_repair_compute_over_commission()'),
+            ('x_studio_over_credit',        'partner_invoice_id.credit',     'self._fix_repair_compute_over_credit()'),
+            ('x_studio_over_credit_amount', 'credit_limit',                  'self._fix_repair_compute_over_credit_amount()'),
+            ('x_studio_over_bank_guarantee','x_studio_bank_guarantee_amount','self._fix_repair_compute_over_bank_guarantee()'),
+            ('x_studio_over_bank_guarantee_amount','x_studio_bank_guarantee_amount','self._fix_repair_compute_over_bank_guarantee_amount()'),
+            ('x_studio_guarantee_status',   'Valid Bank Guarantee',          'self._fix_repair_compute_guarantee_status()'),
+            ('x_studio_overdue',            'total_overdue',                 'self._fix_repair_compute_overdue()'),
+        ]
+
+        for name, guard_substring, call in delegations:
+            field = IrField.search([
+                ('model', '=', 'sale.order'),
+                ('name', '=', name),
+            ], limit=1)
+            if not field:
+                continue
+            code = field.compute or ''
+            if marker in code:
+                continue  # already delegated
+            if guard_substring not in code:
+                continue  # someone changed it — leave alone
+            field.write({'compute': f"{marker}\n{call}\n"})
+
     @api.model
     def _optimize_slow_studio_computes(self):
         """Convert redundant stored Studio compute fields into related

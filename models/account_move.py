@@ -4,6 +4,44 @@ from odoo import api, fields, models
 from odoo.exceptions import UserError
 
 
+class AccountMoveLine(models.Model):
+    """Native compute methods that back Studio compute strings on
+    account.move.line. Rewriter installs one-line delegations into the
+    Studio compute code so safe_eval overhead per compute becomes
+    negligible; actual work runs at native Python speed.
+    """
+    _inherit = 'account.move.line'
+
+    def _fix_repair_compute_credit_limit_2(self):
+        for rec in self:
+            rec.x_studio_credit_limit_2 = rec.partner_id.credit_limit or 0
+
+    @api.model
+    def _delegate_studio_computes_to_native(self):
+        IrField = self.env['ir.model.fields'].sudo()
+        # Reuse the sale.order marker constant
+        marker = self.env['sale.order']._FIX_REPAIR_IDEMPOTENCE_MARKER
+
+        delegations = [
+            ('x_studio_credit_limit_2',
+             'credit_limit',
+             'self._fix_repair_compute_credit_limit_2()'),
+        ]
+        for name, guard_substring, call in delegations:
+            field = IrField.search([
+                ('model', '=', 'account.move.line'),
+                ('name', '=', name),
+            ], limit=1)
+            if not field:
+                continue
+            code = field.compute or ''
+            if marker in code:
+                continue
+            if guard_substring not in code:
+                continue
+            field.write({'compute': f"{marker}\n{call}\n"})
+
+
 class AccountMove(models.Model):
     _inherit = 'account.move'
 
