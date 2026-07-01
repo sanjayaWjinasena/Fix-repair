@@ -71,6 +71,115 @@ class SaleOrder(models.Model):
             if ticket:
                 ticket._move_to_stage('Diagnosis')
 
+    # Marker embedded in every Studio server action we've rewritten with
+    # idempotence guards. Presence of the marker in `code` means the
+    # action is already optimised — subsequent upgrades skip the patch,
+    # so any manual edits the user made afterwards survive.
+    _FIX_REPAIR_IDEMPOTENCE_MARKER = "# fix_repair:idempotent-v1"
+
+    @api.model
+    def _optimize_slow_write_automations(self):
+        """Rewrite four Studio server actions on sale.order that fire on
+        every SO write and unconditionally call `record.write(...)`.
+        The rewritten versions perform the same work but skip the write
+        (and therefore skip the downstream automation cascade) when the
+        target values already equal the current values.
+
+        Functional behaviour is unchanged — same fields are eventually
+        at the same values. Just no redundant write cycles.
+
+        Idempotent via an embedded marker string: if the action's code
+        already contains the marker, the patch is skipped so manual
+        Studio edits are preserved on subsequent upgrades.
+        """
+        Server = self.env['ir.actions.server'].sudo()
+        marker = self._FIX_REPAIR_IDEMPOTENCE_MARKER
+
+        patches = [
+            {
+                # RR - Track Lock Status  (fires on every sale.order write)
+                'search': [
+                    ('model_id.model', '=', 'sale.order'),
+                    ('code', 'like', "x_studio_re_estimate_count"),
+                    ('code', 'like', "x_studio_locked"),
+                    ('code', 'like', "state == 'done'"),
+                ],
+                'new_code': (
+                    marker + "\n"
+                    "if record.x_studio_quotation_type == 'Repair' and record.state == 'done':\n"
+                    "  re_line = env['sale.order.line'].sudo().search(\n"
+                    "    [('order_id', '=', record.id), ('x_studio_re_estimated', '=', True)],\n"
+                    "    limit=1, order='id desc')\n"
+                    "  target_count = re_line.x_studio_count_1 if re_line else 0\n"
+                    "  if (not record.x_studio_locked\n"
+                    "      or record.x_studio_unlocked\n"
+                    "      or record.x_studio_re_estimate_count != target_count):\n"
+                    "    record.write({\n"
+                    "      'x_studio_locked': True,\n"
+                    "      'x_studio_unlocked': False,\n"
+                    "      'x_studio_re_estimate_count': target_count,\n"
+                    "    })\n"
+                ),
+            },
+            {
+                # RR - Track Lock Status - 2  (fires on every sale.order write)
+                'search': [
+                    ('model_id.model', '=', 'sale.order'),
+                    ('code', 'like', "x_studio_locked == True"),
+                    ('code', 'like', "state == 'sale'"),
+                ],
+                'new_code': (
+                    marker + "\n"
+                    "if (record.x_studio_quotation_type == 'Repair'\n"
+                    "    and record.state == 'sale'\n"
+                    "    and record.x_studio_locked):\n"
+                    "  record.write({'x_studio_locked': False, 'x_studio_unlocked': True})\n"
+                ),
+            },
+            {
+                # Update Analytic Tag Parameters - Sales Order - User
+                'search': [
+                    ('model_id.model', '=', 'sale.order'),
+                    ('code', 'like', "account.analytic.distribution.model"),
+                    ('code', 'like', "x_studio_account_mandatory"),
+                    ('code', 'like', "create_uid"),
+                ],
+                'new_code': (
+                    marker + "\n"
+                    "if record.create_uid:\n"
+                    "  tag_rule = env['account.analytic.distribution.model'].sudo().search(\n"
+                    "    [('partner_id.user_id', '=', record.create_uid.id)], limit=1)\n"
+                    "  target = tag_rule.x_studio_user_mandatory if tag_rule else False\n"
+                    "  if record.x_studio_account_mandatory != target:\n"
+                    "    record.write({'x_studio_account_mandatory': target})\n"
+                ),
+            },
+            {
+                # Project Sales Order Seq.No - 3  (fires on every sale.order write)
+                'search': [
+                    ('model_id.model', '=', 'sale.order'),
+                    ('code', 'like', "replace('_PRJ'"),
+                    ('code', 'like', "x_studio_quotation_type"),
+                ],
+                'new_code': (
+                    marker + "\n"
+                    "if record.id:\n"
+                    "  original_name = (record.name or '').replace('_PRJ', '')\n"
+                    "  new_name = (original_name + '_PRJ'\n"
+                    "              if record.x_studio_quotation_type == 'Project'\n"
+                    "              else original_name)\n"
+                    "  if record.name != new_name:\n"
+                    "    record.write({'name': new_name})\n"
+                ),
+            },
+        ]
+
+        for p in patches:
+            for action in Server.search(p['search']):
+                if marker in (action.code or ''):
+                    continue
+                action.write({'code': p['new_code']})
+
     @api.model
     def _fix_advance_payment_project_field(self):
         """Fix Studio server action 'Create Advance Payment' that passes

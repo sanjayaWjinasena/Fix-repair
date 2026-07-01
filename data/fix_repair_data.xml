@@ -14,6 +14,15 @@
          causing a FK violation. Replaces it with record.x_studio_project_no.id. -->
     <function model="sale.order" name="_fix_advance_payment_project_field"/>
 
+    <!-- Rewrite four Studio server actions on sale.order that fire on every
+         write and unconditionally call record.write(...). Guarded versions
+         perform the same functional work but skip the write when values are
+         already at target — eliminating the write cascade that made Create
+         Draft Invoice take minutes. Idempotent via a marker string; if the
+         action's code has already been patched (or manually edited to
+         include the marker), the rewrite is skipped. -->
+    <function model="sale.order" name="_optimize_slow_write_automations"/>
+
     <!-- Seed default factory_repair_location per company. Idempotent:
          only sets when ir.config_parameter for that company is empty,
          so manual overrides via Settings → Technical → System Parameters
