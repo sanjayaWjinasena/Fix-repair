@@ -95,7 +95,48 @@ class SaleOrder(models.Model):
         Server = self.env['ir.actions.server'].sudo()
         marker = self._FIX_REPAIR_IDEMPOTENCE_MARKER
 
+        # account.move.line and account.move actions to patch too — bundled
+        # here so a single upgrade sweep covers everything.
+        aml_marker_source = "SRM - Auto Populate Report Type in Account Move Lines"
+
         patches = [
+            {
+                # SRM - Auto Populate Report Type in Account Move Lines
+                # (fires on every AML write — 10-15× per invoice)
+                'search': [
+                    ('model_id.model', '=', 'account.move.line'),
+                    ('code', 'like', "x_sales_report_type"),
+                    ('code', 'like', "account_internal_group"),
+                ],
+                'new_code': (
+                    marker + "\n"
+                    "if record.account_internal_group == 'income' "
+                    "and not record.x_studio_sales_report_type:\n"
+                    "  rpt = env['x_sales_report_type'].sudo().search(\n"
+                    "    [('x_studio_report_code', '=', 'Sales Details for Incentive Calc.')],\n"
+                    "    limit=1)\n"
+                    "  if rpt:\n"
+                    "    record.write({'x_studio_sales_report_type': rpt.id})\n"
+                ),
+            },
+            {
+                # SRM - Update Sales Order - Customer Invoice
+                # (fires once per account.move create — cheap, but the
+                # unconditional write still triggers downstream computes)
+                'search': [
+                    ('model_id.model', '=', 'account.move'),
+                    ('code', 'like', "x_studio_sale_id"),
+                    ('code', 'like', "invoice_origin"),
+                ],
+                'new_code': (
+                    marker + "\n"
+                    "if record.invoice_origin and not record.x_studio_sale_id:\n"
+                    "  sale = env['sale.order'].sudo().search(\n"
+                    "    [('name', '=', record.invoice_origin)], limit=1)\n"
+                    "  if sale:\n"
+                    "    record.write({'x_studio_sale_id': sale.id})\n"
+                ),
+            },
             {
                 # RR - Track Lock Status  (fires on every sale.order write)
                 'search': [
