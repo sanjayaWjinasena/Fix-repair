@@ -43,6 +43,15 @@
          instead of via safe_eval on every AML write. -->
     <function model="account.move.line" name="_delegate_studio_computes_to_native"/>
 
+    <!-- Same delegation treatment for stock.picking studio computes.
+         Eight unstored heavy computes on stock.picking (referenced by
+         the Studio picking form) are re-run via safe_eval on every
+         view render — including the one that fires right after
+         button_validate. Rewriting each compute string to a one-line
+         call into a native Python method eliminates the per-view
+         safe_eval overhead. Field values unchanged. -->
+    <function model="stock.picking" name="_delegate_studio_computes_to_native"/>
+
     <!-- Restrict 'PROJ - Notify Transfer Completion' to fire only when a
          Project-flow picking transitions to state='done'. Was firing on
          every stock.picking write of every type (Repair, NUW, internal),
