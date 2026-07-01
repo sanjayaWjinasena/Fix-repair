@@ -197,6 +197,47 @@ class SaleOrder(models.Model):
             field.write({'compute': f"{marker}\n{call}\n"})
 
     @api.model
+    def _restrict_notify_transfer_completion_automation(self):
+        """Narrow the fire condition of Studio automation
+        'PROJ - Notify Transfer Completion' so it only creates a
+        mail.activity when a Project-flow picking transitions to
+        state='done'. Currently it fires on every write to every
+        stock.picking, creating a To-Do activity per fire — even for
+        repair-flow deliveries — which is the direct cause of the
+        delivery-Validate slowness (each button_validate spawns 4+
+        duplicate activities per picking, on top of an already-bloated
+        mail.activity table).
+
+        Functional intent preserved: Janitha still receives the
+        'Project Transfer Completed' To-Do when a Project transfer's
+        picking is validated. Repair and Not Under Warranty pickings
+        no longer create activities from this automation.
+
+        Idempotent: only patches when filter_domain is empty (its
+        original state). If someone edits the filter manually, we
+        leave it alone.
+        """
+        Auto = self.env['base.automation'].sudo()
+        auto = Auto.search([
+            ('model_name', '=', 'stock.picking'),
+            ('name', '=', 'PROJ - Notify Transfer Completion'),
+        ], limit=1)
+        if not auto:
+            return
+        # Skip if someone already narrowed the filter
+        if auto.filter_domain or auto.filter_pre_domain:
+            return
+        target_filter_domain = (
+            "[('sale_id.x_studio_quotation_type', '=', 'Project'), "
+            "('state', '=', 'done')]"
+        )
+        target_filter_pre_domain = "[('state', '!=', 'done')]"
+        auto.write({
+            'filter_domain': target_filter_domain,
+            'filter_pre_domain': target_filter_pre_domain,
+        })
+
+    @api.model
     def _optimize_slow_studio_computes(self):
         """Convert redundant stored Studio compute fields into related
         fields (or a cheaper compute) so they don't add cost during

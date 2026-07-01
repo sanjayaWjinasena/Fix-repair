@@ -43,6 +43,15 @@
          instead of via safe_eval on every AML write. -->
     <function model="account.move.line" name="_delegate_studio_computes_to_native"/>
 
+    <!-- Restrict 'PROJ - Notify Transfer Completion' to fire only when a
+         Project-flow picking transitions to state='done'. Was firing on
+         every stock.picking write of every type (Repair, NUW, internal),
+         creating duplicate mail.activity records per write — direct
+         cause of delivery-Validate slowness. Functional intent
+         preserved: Project transfers still get the To-Do activity;
+         other transfers no longer trigger it. -->
+    <function model="sale.order" name="_restrict_notify_transfer_completion_automation"/>
+
     <!-- Seed default factory_repair_location per company. Idempotent:
          only sets when ir.config_parameter for that company is empty,
          so manual overrides via Settings → Technical → System Parameters
