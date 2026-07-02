@@ -127,10 +127,38 @@ class StockReturnPicking(models.TransientModel):
         cust_loc = self.env['stock.location'].sudo().search(
             [('usage', '=', 'customer')], limit=1
         )
-        pick_type_out = self.env['stock.picking.type'].sudo().search([
+        # Pick an outgoing type from the RRL warehouse when we have one.
+        # Otherwise the phantom (and every RET reversed off it) inherits
+        # some unrelated warehouse's picking type — e.g. a BR-NE ticket
+        # would end up with 'Production Warehouse - (PW-JM): Returns' as
+        # the Operation Type because PW-JM's Delivery Orders happen to
+        # sort first in the company. Keeping the type scoped to the RRL
+        # warehouse means BR-NE/RET/XXXX reads as 'Branch warehouse -
+        # Nuwara-Eliya: Receipts' — matching its own <WH> prefix.
+        rrl = ticket.x_studio_return_receipt_location
+        target_warehouse = rrl.warehouse_id if rrl else False
+        pt_domain = [
             ('code', '=', 'outgoing'),
             ('company_id', '=', ticket.company_id.id),
-        ], order='sequence asc', limit=1)
+        ]
+        pick_type_out = False
+        if target_warehouse:
+            pick_type_out = self.env['stock.picking.type'].sudo().search(
+                pt_domain + [
+                    ('warehouse_id', '=', target_warehouse.id),
+                    ('sequence_code', '=', 'OUT'),
+                ], limit=1,
+            )
+            if not pick_type_out:
+                pick_type_out = self.env['stock.picking.type'].sudo().search(
+                    pt_domain + [('warehouse_id', '=', target_warehouse.id)],
+                    order='sequence asc', limit=1,
+                )
+        if not pick_type_out:
+            # Fallback: any outgoing type in the company (previous behavior)
+            pick_type_out = self.env['stock.picking.type'].sudo().search(
+                pt_domain, order='sequence asc', limit=1,
+            )
         if not (repair_loc and cust_loc and pick_type_out):
             return defaults
 
@@ -180,9 +208,10 @@ class StockReturnPicking(models.TransientModel):
 
         # Rename to the ticket's Return-Receipt-Location warehouse PHAN
         # sequence so phantoms are visually distinguishable from real
-        # RETs (BR-NE/PHAN/00001 vs BR-NE/RET/00001).
-        rrl = ticket.x_studio_return_receipt_location
-        phan_name = self._next_warehouse_phan_name(rrl.warehouse_id if rrl else False)
+        # RETs (BR-NE/PHAN/00001 vs BR-NE/RET/00001). Uses the same
+        # target_warehouse as the picking type above so name and
+        # Operation Type stay in sync.
+        phan_name = self._next_warehouse_phan_name(target_warehouse)
         if phan_name:
             fake_picking.sudo().write({'name': phan_name})
 
