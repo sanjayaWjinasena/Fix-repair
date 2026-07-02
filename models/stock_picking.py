@@ -64,6 +64,62 @@ class StockPicking(models.Model):
             # picking form.
             for btn in arch.xpath("//button[@name='195']"):
                 btn.set('invisible', '1')
+
+            # Field-Validations from Sanjaya.docx: hide fields that duplicate
+            # or clash with the Studio arch when the picking is linked to a
+            # helpdesk ticket. Different rules for outgoing (delivery) vs
+            # incoming (return) — see the doc annotations.
+            #
+            # Universal (both directions), only when linked to a ticket:
+            #   sale_id  — redundant with the Studio x_studio_sales_order
+            #              which stays visible below.
+            hide_universal = ('sale_id',)
+            for fname in hide_universal:
+                for field in arch.xpath(f"//field[@name='{fname}']"):
+                    existing = field.get('invisible', '')
+                    extra = 'x_studio_helpdesk_ticket_id'
+                    field.set('invisible',
+                              f"({existing}) or {extra}" if existing else extra)
+
+            # Outgoing-only (delivery form, image 4):
+            #   origin  — Source Document. Redundant with Studio's Sales Order.
+            for fname in ('origin',):
+                for field in arch.xpath(f"//field[@name='{fname}']"):
+                    existing = field.get('invisible', '')
+                    extra = ("x_studio_helpdesk_ticket_id "
+                             "and picking_type_code == 'outgoing'")
+                    field.set('invisible',
+                              f"({existing}) or ({extra})" if existing else extra)
+
+            # Incoming-only (return form, image 6):
+            for fname in (
+                'picking_type_id',                 # Operation Type
+                'x_studio_helpdesk_ticket_id',     # Helpdesk Ticket Id
+                'x_studio_quotation_type',         # Quotation Type
+                'x_studio_type_of_operation',      # Type of Operation
+                'owner_id',                        # Assign Owner
+                'x_studio_validation',             # Validation
+            ):
+                for field in arch.xpath(f"//field[@name='{fname}']"):
+                    existing = field.get('invisible', '')
+                    extra = ("x_studio_helpdesk_ticket_id "
+                             "and picking_type_code == 'incoming'")
+                    field.set('invisible',
+                              f"({existing}) or ({extra})" if existing else extra)
+
+            # picking_type_code is a related field on stock.picking that
+            # backs the invisible expressions above. Inject as an invisible
+            # field so the browser fetches it and the expressions can read
+            # it. Same for x_studio_helpdesk_ticket_id (used as the
+            # linked-to-ticket discriminator).
+            for sheet in arch.xpath("//sheet"):
+                for fname in ('picking_type_code', 'x_studio_helpdesk_ticket_id'):
+                    if not arch.xpath(f"//field[@name='{fname}']"):
+                        fld = etree.Element('field')
+                        fld.set('name', fname)
+                        fld.set('invisible', '1')
+                        sheet.insert(0, fld)
+                break
         return arch, view
 
     # ── Native compute methods that back Studio compute strings ──────────

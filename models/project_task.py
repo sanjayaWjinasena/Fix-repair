@@ -104,6 +104,19 @@ class ProjectTask(models.Model):
                         field_el.set('invisible', '1')
                         targets[0].insert(0, field_el)
 
+            # Field-Validations from Sanjaya.docx: hide the marked fields
+            # on the project.task (FSM task) form.
+            for fname in (
+                'tag_ids',                       # Tags
+                'sale_line_id',                  # Sales Order Item
+                'planned_date_begin',            # Planned Date (start half)
+                'planned_date_end',              # Planned Date (end half)
+                'priority',                      # Priority
+                'x_studio_material_availability',# Material Availability
+            ):
+                for field in arch.xpath(f"//field[@name='{fname}']"):
+                    field.set('invisible', '1')
+
             # New Quotation: not used in the repair workflow — hide entirely.
             for btn in arch.xpath("//button[@name='action_fsm_create_quotation']"):
                 btn.set('invisible', '1')

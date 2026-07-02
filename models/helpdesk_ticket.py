@@ -318,6 +318,19 @@ class HelpdeskTicket(models.Model):
                         sheet.insert(0, fld)
                 break
 
+            # Field-Validations from Sanjaya.docx: hide the marked fields on
+            # the helpdesk ticket form. The Studio arch surfaces them via
+            # its inherit view; we override to invisible so end users don't
+            # see fields the business flow doesn't rely on.
+            for fname in (
+                'x_studio_rug_repair',           # "Repair Under Warranty"
+                'x_studio_tracking',             # "Tracking" (Studio version)
+                'x_studio_source_location',      # "Source Location"
+                'x_studio_items',                # "Items"
+            ):
+                for field in arch.xpath(f"//field[@name='{fname}']"):
+                    field.set('invisible', '1')
+
             # product_id: manually selectable (serial-tracked products only) for
             # the "Without Serial No" ticket type; readonly for all other types
             # where product is auto-populated from x_studio_serial_no.

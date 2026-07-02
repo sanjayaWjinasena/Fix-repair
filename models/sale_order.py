@@ -656,6 +656,17 @@ class SaleOrder(models.Model):
                 header.insert(0, re_est)
                 break
 
+            # Field-Validations from Sanjaya.docx: hide the marked fields
+            # on the sale.order (quotation) form.
+            for fname in (
+                'sale_order_template_id',         # Quotation Template
+                'x_studio_sales_order_validity',  # Sales Order Validity
+                'x_studio_service_item_available',# Service Item Available
+                'x_studio_main_project_no',       # Main Project No
+            ):
+                for field in arch.xpath(f"//field[@name='{fname}']"):
+                    field.set('invisible', '1')
+
             # Create Invoice buttons — three variants ship by default:
             #   • create_invoice (purple)             : invoice_status='to invoice'
             #   • create_invoice_sub (gray)           : subscription-only
