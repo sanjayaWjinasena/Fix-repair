@@ -60,62 +60,70 @@ class SaleOrder(models.Model):
             order.can_re_estimate = not any_outgoing_done
 
     # ── Stock availability at the repair source ──────────────────────────
-    # For a repair-flow SO we want to gate the forward-progress buttons
-    # (Send by Email / Request RUG / Confirm) until every storable line
-    # has enough stock at the repair source:
-    #   • Factory Repair  → per-company Factory Repair Location
-    #                       (ir.config_parameter fix_repair.factory_repair_location.<cid>)
-    #   • Centre Repair   → ticket.x_studio_repair_location (branch stock)
-    # Non-repair SOs and configs without a source resolve to "OK" so the
-    # gate never applies outside the repair workflow.
-    x_repair_stock_source_id = fields.Many2one(
-        'stock.location',
-        compute='_compute_x_repair_stock',
-    )
+    # Gate the forward-progress buttons (Send by Email / Request RUG /
+    # Confirm) until every storable line has enough stock in the parts
+    # pool that will actually be consumed for the repair:
+    #   • Factory Repair  → the Factory Repair Location's warehouse's
+    #                       resupply_wh_ids (their stock locations,
+    #                       summed). The factory itself typically doesn't
+    #                       hold parts stock — it pulls from central
+    #                       supply warehouses. Falls back to the factory
+    #                       location itself when no resupply is configured.
+    #   • Centre Repair   → ticket.x_studio_repair_location (the branch's
+    #                       own stock).
+    # Non-repair SOs and configs without a resolvable source default to
+    # "OK" so the gate never applies outside the repair workflow.
     x_repair_stock_ok = fields.Boolean(
-        compute='_compute_x_repair_stock',
-    )
-    x_repair_stock_shortage_text = fields.Char(
-        compute='_compute_x_repair_stock',
+        compute='_compute_x_repair_stock_ok',
     )
 
-    def _get_repair_stock_source(self):
-        """Return the stock.location where availability should be checked
-        for this SO. Empty recordset when non-repair, or when the source
-        can't be resolved (e.g. Factory Repair without a configured
-        location for the SO's company). Callers must treat empty as
-        'skip the gate'."""
+    def _get_repair_stock_source_locations(self):
+        """Return the stock.location recordset to check availability
+        against for this SO. May contain multiple locations (the resupply
+        pool feeding the factory). Empty recordset means 'skip the gate'
+        — non-repair or unresolvable config."""
         self.ensure_one()
         task = self.sudo().task_id or self.env['project.task'].sudo().search(
             [('sale_order_id', '=', self.id)], limit=1
         )
         ticket = task.helpdesk_ticket_id if task else False
+        Location = self.env['stock.location']
         if not ticket:
-            return self.env['stock.location']
+            return Location
         job = ticket.x_studio_job_location
         if job == 'Factory Repair':
             key = f'fix_repair.factory_repair_location.{self.company_id.id}'
             raw = self.env['ir.config_parameter'].sudo().get_param(key)
             if not raw:
-                return self.env['stock.location']
+                return Location
             try:
-                loc = self.env['stock.location'].sudo().browse(int(raw)).exists()
+                factory_loc = Location.sudo().browse(int(raw)).exists()
             except (TypeError, ValueError):
-                return self.env['stock.location']
-            return loc
+                return Location
+            if not factory_loc:
+                return Location
+            # Parts get consumed at the factory but stocked at the
+            # factory warehouse's resupply warehouses (e.g. RP-JM's
+            # resupply pool is JM-EK + BR-EK). Check availability there;
+            # fall back to the factory location itself when no resupply
+            # is configured so the check doesn't silently break if the
+            # warehouse setup changes.
+            factory_wh = factory_loc.warehouse_id
+            resupply = factory_wh.resupply_wh_ids
+            if resupply:
+                return resupply.mapped('lot_stock_id')
+            return factory_loc
         if job == 'Centre Repair':
-            return ticket.x_studio_repair_location or self.env['stock.location']
-        return self.env['stock.location']
+            return ticket.x_studio_repair_location or Location
+        return Location
 
     @api.depends('order_line', 'order_line.product_id',
                  'order_line.product_uom_qty', 'company_id', 'state')
-    def _compute_x_repair_stock(self):
+    def _compute_x_repair_stock_ok(self):
         for order in self:
-            source = order._get_repair_stock_source()
-            if not source:
-                order.x_repair_stock_source_id = False
+            locations = order._get_repair_stock_source_locations()
+            if not locations:
                 order.x_repair_stock_ok = True
-                order.x_repair_stock_shortage_text = ''
                 continue
             short = False
             for line in order.order_line.filtered(
@@ -124,44 +132,46 @@ class SaleOrder(models.Model):
                 need = line.product_uom_qty or 0
                 if need <= 0:
                     continue
-                on_hand = line.product_id.with_context(
-                    location=source.id
-                ).free_qty
-                if on_hand < need:
+                total = sum(
+                    line.product_id.with_context(location=loc.id).free_qty
+                    for loc in locations
+                )
+                if total < need:
                     short = True
                     break
-            order.x_repair_stock_source_id = source.id
             order.x_repair_stock_ok = not short
-            order.x_repair_stock_shortage_text = (
-                f"Not Enough Stock at {source.display_name}" if short else ''
-            )
 
     def action_show_stock_shortage(self):
         """Warning button callback: raise a UserError listing each
-        insufficient line and its shortfall. Invoked when the salesperson
-        clicks the red 'Not Enough Stock' button that appears in draft /
-        sent state when x_repair_stock_ok is False."""
+        insufficient line and its shortfall against the resupply pool.
+        Invoked when the salesperson clicks the red 'Not Enough Stock'
+        button that appears in draft / sent state when x_repair_stock_ok
+        is False."""
         self.ensure_one()
-        source = self._get_repair_stock_source()
-        if not source:
+        locations = self._get_repair_stock_source_locations()
+        if not locations:
             return
+        source_names = ', '.join(locations.mapped('display_name'))
         details = []
         for line in self.order_line.filtered(
                 lambda l: l.product_id.type == 'product' and not l.display_type):
             need = line.product_uom_qty or 0
             if need <= 0:
                 continue
-            on_hand = line.product_id.with_context(location=source.id).free_qty
-            if on_hand < need:
+            total = sum(
+                line.product_id.with_context(location=loc.id).free_qty
+                for loc in locations
+            )
+            if total < need:
                 details.append(
                     f"  • {line.product_id.display_name}: "
-                    f"need {need:g}, available {on_hand:g}, "
-                    f"short by {need - on_hand:g}"
+                    f"need {need:g}, available {total:g}, "
+                    f"short by {need - total:g}"
                 )
         if not details:
             return
         raise UserError(
-            f"Not enough stock at {source.display_name}:\n\n"
+            f"Not enough stock at {source_names}:\n\n"
             + "\n".join(details)
         )
 
