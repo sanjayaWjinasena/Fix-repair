@@ -6,6 +6,14 @@ from odoo.exceptions import UserError
 class StockReturnPicking(models.TransientModel):
     _inherit = 'stock.return.picking'
 
+    # Marker written to a phantom's `origin` field so we can find (and
+    # reuse) the phantom on a subsequent wizard open instead of building
+    # a fresh one every time. Uses `origin` rather than
+    # x_studio_helpdesk_ticket_id because that field surfaces on the
+    # ticket's Delivery smart button — we deliberately keep the phantom
+    # invisible to end users.
+    _FIX_REPAIR_PHANTOM_MARKER = 'fix_repair:return-phantom'
+
     @api.model
     def _next_warehouse_ret_name(self, warehouse):
         """Return next value from the <WH_CODE>/RET/ sequence for the
@@ -44,6 +52,34 @@ class StockReturnPicking(models.TransientModel):
         if not (serial and product):
             return defaults
 
+        # Reuse an existing unreversed phantom for this (ticket, serial)
+        # pair if one exists. Odoo's wizard framework calls default_get
+        # every time the wizard is instantiated — user closing the
+        # wizard without submitting and re-opening it created a fresh
+        # phantom on each open, leaving hundreds of dangling
+        # inventory→customer pickings in the DB (~217 orphans counted at
+        # the time of this fix). The reuse path returns the same
+        # phantom until it's actually reversed by _create_returns; only
+        # after that (or after the serial changes) does the next open
+        # build a new one.
+        marker = (
+            f'{self._FIX_REPAIR_PHANTOM_MARKER}:ticket:{ticket.id}'
+            f':lot:{serial.id}'
+        )
+        Picking = self.env['stock.picking'].sudo()
+        existing = Picking.search([
+            ('origin', '=', marker),
+            ('state', '=', 'done'),
+        ], limit=1)
+        if existing:
+            already_reversed = Picking.search_count([
+                ('return_id', '=', existing.id),
+                ('state', '!=', 'cancel'),
+            ])
+            if not already_reversed:
+                defaults['picking_id'] = existing.id
+                return defaults
+
         # ALWAYS synthesise the "Delivery to Return" — for every ticket
         # type. We deliberately do NOT look up the historical outgoing
         # delivery / its original sale order: the repair flow doesn't
@@ -71,11 +107,14 @@ class StockReturnPicking(models.TransientModel):
             return defaults
 
         now = fields.Datetime.now()
-        # Phantom outgoing left intentionally unstamped: it exists only so
-        # the wizard has a source to reverse. _bind_ticket_pickings_to_so
-        # searches by x_studio_helpdesk_ticket_id, so leaving the stamp off
-        # keeps the phantom out of the repair SO's Delivery smart button.
-        # The real return picking gets stamped in _create_returns below.
+        # Phantom outgoing left intentionally unstamped on
+        # x_studio_helpdesk_ticket_id: it exists only so the wizard has
+        # a source to reverse. _bind_ticket_pickings_to_so searches by
+        # x_studio_helpdesk_ticket_id, so leaving that stamp off keeps
+        # the phantom out of the repair SO's Delivery smart button. The
+        # `origin` marker lets us find the phantom for reuse without
+        # surfacing it anywhere the user can see it. The real return
+        # picking gets stamped in _create_returns below.
         fake_picking = self.env['stock.picking'].sudo().create({
             'partner_id': ticket.partner_id.id,
             'picking_type_id': pick_type_out.id,
@@ -83,6 +122,7 @@ class StockReturnPicking(models.TransientModel):
             'location_dest_id': cust_loc.id,
             'company_id': ticket.company_id.id,
             'date_done': now,
+            'origin': marker,
         })
         fake_move = self.env['stock.move'].sudo().create({
             'name': product.display_name,
