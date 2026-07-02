@@ -2,6 +2,7 @@
 from lxml import etree
 from markupsafe import Markup, escape
 from odoo import api, fields, models
+from odoo.exceptions import UserError
 from odoo.http import request
 
 
@@ -57,6 +58,112 @@ class SaleOrder(models.Model):
                 for p in order.picking_ids
             )
             order.can_re_estimate = not any_outgoing_done
+
+    # ── Stock availability at the repair source ──────────────────────────
+    # For a repair-flow SO we want to gate the forward-progress buttons
+    # (Send by Email / Request RUG / Confirm) until every storable line
+    # has enough stock at the repair source:
+    #   • Factory Repair  → per-company Factory Repair Location
+    #                       (ir.config_parameter fix_repair.factory_repair_location.<cid>)
+    #   • Centre Repair   → ticket.x_studio_repair_location (branch stock)
+    # Non-repair SOs and configs without a source resolve to "OK" so the
+    # gate never applies outside the repair workflow.
+    x_repair_stock_source_id = fields.Many2one(
+        'stock.location',
+        compute='_compute_x_repair_stock',
+    )
+    x_repair_stock_ok = fields.Boolean(
+        compute='_compute_x_repair_stock',
+    )
+    x_repair_stock_shortage_text = fields.Char(
+        compute='_compute_x_repair_stock',
+    )
+
+    def _get_repair_stock_source(self):
+        """Return the stock.location where availability should be checked
+        for this SO. Empty recordset when non-repair, or when the source
+        can't be resolved (e.g. Factory Repair without a configured
+        location for the SO's company). Callers must treat empty as
+        'skip the gate'."""
+        self.ensure_one()
+        task = self.sudo().task_id or self.env['project.task'].sudo().search(
+            [('sale_order_id', '=', self.id)], limit=1
+        )
+        ticket = task.helpdesk_ticket_id if task else False
+        if not ticket:
+            return self.env['stock.location']
+        job = ticket.x_studio_job_location
+        if job == 'Factory Repair':
+            key = f'fix_repair.factory_repair_location.{self.company_id.id}'
+            raw = self.env['ir.config_parameter'].sudo().get_param(key)
+            if not raw:
+                return self.env['stock.location']
+            try:
+                loc = self.env['stock.location'].sudo().browse(int(raw)).exists()
+            except (TypeError, ValueError):
+                return self.env['stock.location']
+            return loc
+        if job == 'Centre Repair':
+            return ticket.x_studio_repair_location or self.env['stock.location']
+        return self.env['stock.location']
+
+    @api.depends('order_line', 'order_line.product_id',
+                 'order_line.product_uom_qty', 'company_id', 'state')
+    def _compute_x_repair_stock(self):
+        for order in self:
+            source = order._get_repair_stock_source()
+            if not source:
+                order.x_repair_stock_source_id = False
+                order.x_repair_stock_ok = True
+                order.x_repair_stock_shortage_text = ''
+                continue
+            short = False
+            for line in order.order_line.filtered(
+                    lambda l: l.product_id.type == 'product'
+                              and not l.display_type):
+                need = line.product_uom_qty or 0
+                if need <= 0:
+                    continue
+                on_hand = line.product_id.with_context(
+                    location=source.id
+                ).free_qty
+                if on_hand < need:
+                    short = True
+                    break
+            order.x_repair_stock_source_id = source.id
+            order.x_repair_stock_ok = not short
+            order.x_repair_stock_shortage_text = (
+                f"Not Enough Stock at {source.display_name}" if short else ''
+            )
+
+    def action_show_stock_shortage(self):
+        """Warning button callback: raise a UserError listing each
+        insufficient line and its shortfall. Invoked when the salesperson
+        clicks the red 'Not Enough Stock' button that appears in draft /
+        sent state when x_repair_stock_ok is False."""
+        self.ensure_one()
+        source = self._get_repair_stock_source()
+        if not source:
+            return
+        details = []
+        for line in self.order_line.filtered(
+                lambda l: l.product_id.type == 'product' and not l.display_type):
+            need = line.product_uom_qty or 0
+            if need <= 0:
+                continue
+            on_hand = line.product_id.with_context(location=source.id).free_qty
+            if on_hand < need:
+                details.append(
+                    f"  • {line.product_id.display_name}: "
+                    f"need {need:g}, available {on_hand:g}, "
+                    f"short by {need - on_hand:g}"
+                )
+        if not details:
+            return
+        raise UserError(
+            f"Not enough stock at {source.display_name}:\n\n"
+            + "\n".join(details)
+        )
 
     def action_re_estimate(self):
         """Reset this SO for re-estimation and move the linked helpdesk
@@ -510,7 +617,7 @@ class SaleOrder(models.Model):
             # Studio's view post-processing — but our own fields do.
             for sheet in arch.xpath("//sheet"):
                 for fname in ('ticket_repair_stage_state', 'x_customer_signed',
-                              'can_re_estimate'):
+                              'can_re_estimate', 'x_repair_stock_ok'):
                     if not arch.xpath(f"//field[@name='{fname}']"):
                         fld = etree.Element('field')
                         fld.set('name', fname)
@@ -594,7 +701,8 @@ class SaleOrder(models.Model):
                 "(state not in ['draft', 'sent']) or "
                 "(x_studio_rug_request_sent == True) or "
                 "(x_studio_rug_rejected == True) or "
-                "(x_studio_rug_approved == True)"
+                "(x_studio_rug_approved == True) or "
+                "(not x_repair_stock_ok)"
             )
             for btn in arch.xpath("//button[@name='1980']"):
                 btn.set('invisible', rug_req_invisible)
@@ -647,7 +755,8 @@ class SaleOrder(models.Model):
                         "and not x_studio_rug_rejected) or "
                         "(x_studio_rug_rejected and not x_customer_signed) or "
                         "(x_studio_quotation_type == 'Not Under Warranty' "
-                        "and not x_customer_signed)"
+                        "and not x_customer_signed) or "
+                        "(not x_repair_stock_ok)"
                     )
                     for btn in confirm_btns[2:]:
                         btn.set('invisible', '1')
@@ -689,9 +798,31 @@ class SaleOrder(models.Model):
                 btn.set('invisible',
                     "(x_studio_quotation_type != 'Not Under Warranty' "
                     "and not x_studio_rug_rejected) "
-                    "or state != 'draft'"
+                    "or state != 'draft' "
+                    "or not x_repair_stock_ok"
                 )
                 header.insert(0, btn)
+
+            # Stock shortage warning: red button that appears in draft/sent
+            # when any storable line on the SO can't be covered by free_qty
+            # at the repair source (Factory Repair Location for Factory
+            # tickets, branch stock for Centre tickets). Clicking opens a
+            # UserError modal listing exactly what's short. The three
+            # forward-progress buttons (Send by Email, Request RUG,
+            # Confirm) are gated behind x_repair_stock_ok in this same
+            # method so the salesperson can't advance the quotation while
+            # this button is visible.
+            for header in arch.xpath("//header"):
+                warn = etree.Element('button')
+                warn.set('name', 'action_show_stock_shortage')
+                warn.set('string', 'Not Enough Stock')
+                warn.set('type', 'object')
+                warn.set('class', 'btn-danger')
+                warn.set('invisible',
+                    "x_repair_stock_ok or state not in ('draft', 'sent')"
+                )
+                header.insert(0, warn)
+                break
 
         return arch, view
 
