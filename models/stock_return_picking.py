@@ -40,6 +40,34 @@ class StockReturnPicking(models.TransientModel):
         return seq.next_by_id()
 
     @api.model
+    def _next_warehouse_phan_name(self, warehouse):
+        """Return next value from the <WH_CODE>/PHAN/ sequence for the
+        given warehouse. Auto-creates the sequence if it doesn't exist.
+        Distinct prefix from RET so the throwaway 'Delivery to Return'
+        pickings we spawn as a source for _create_returns are visually
+        separable from real returns in the stock.picking tree view."""
+        if not warehouse or not warehouse.code:
+            return False
+        phan_prefix = f"{warehouse.code}/PHAN/"
+        seq = self.env['ir.sequence'].sudo().search([
+            ('prefix', '=', phan_prefix),
+            '|',
+            ('company_id', '=', warehouse.company_id.id),
+            ('company_id', '=', False),
+        ], limit=1)
+        if not seq:
+            seq = self.env['ir.sequence'].sudo().create({
+                'name': f"{warehouse.name} Sequence phantom",
+                'prefix': phan_prefix,
+                'padding': 5,
+                'number_increment': 1,
+                'number_next': 1,
+                'implementation': 'standard',
+                'company_id': warehouse.company_id.id,
+            })
+        return seq.next_by_id()
+
+    @api.model
     def default_get(self, fields_list):
         defaults = super().default_get(fields_list)
         ticket_id = defaults.get('ticket_id') or self.env.context.get('default_ticket_id')
@@ -150,11 +178,13 @@ class StockReturnPicking(models.TransientModel):
         fake_move.sudo().write({'state': 'done'})
         fake_picking.sudo().write({'state': 'done'})
 
-        # Rename to the ticket's Return-Receipt-Location warehouse RET sequence
+        # Rename to the ticket's Return-Receipt-Location warehouse PHAN
+        # sequence so phantoms are visually distinguishable from real
+        # RETs (BR-NE/PHAN/00001 vs BR-NE/RET/00001).
         rrl = ticket.x_studio_return_receipt_location
-        ret_name = self._next_warehouse_ret_name(rrl.warehouse_id if rrl else False)
-        if ret_name:
-            fake_picking.sudo().write({'name': ret_name})
+        phan_name = self._next_warehouse_phan_name(rrl.warehouse_id if rrl else False)
+        if phan_name:
+            fake_picking.sudo().write({'name': phan_name})
 
         defaults['picking_id'] = fake_picking.id
         return defaults
