@@ -548,24 +548,38 @@ class SaleOrder(models.Model):
     def _seed_advance_payment_method_lines(self):
         """Ensure the 'Advance Payment' and 'Advance Payment - Repairs'
         journals each have at least one inbound Manual payment method
-        line — Odoo 17's account.payment validation requires
-        payment_method_line_id to be set, and the Studio 'Create
-        Advance Payment' server action creates payments on these two
-        journals.
+        line, AND that method line has a payment_account_id (the
+        Outstanding Receipts asset_current account for the company).
 
-        These journals are configured as type='general' in the staging
-        DB and don't get default method lines from Odoo. We create the
-        Manual line via ORM (the journal-type-constraint doesn't
-        actually block the create() call, even though the UI hides the
-        option for non-bank journals).
+        Odoo 17's account.payment validation requires BOTH:
+          1. payment_method_line_id set on the payment
+          2. an outstanding account resolvable from either
+             (a) the method line's payment_account_id, or
+             (b) res.company.account_journal_payment_debit_account_id,
+                 or
+             (c) res.company.account_journal_payment_credit_account_id
+        These journals were created without going through Odoo's Bank
+        Setup wizard, so none of those are set — the Studio 'Create
+        Advance Payment' action then raises 'You can't create a new
+        payment without an outstanding payments/receipts account set…'
 
-        Idempotent: skips any journal that already has at least one
-        inbound method line, so subsequent upgrades are no-ops.
+        Strategy: give each Manual line a `payment_account_id`
+        pointing to the company's 'Outstanding Receipts' account
+        (asset_current, per-company). Narrower than setting company
+        defaults — doesn't affect other journals.
+
+        Idempotent:
+          - Creates a Manual line only when the journal has none
+          - Backfills payment_account_id on existing Manual lines that
+            are missing one
+          - Skips silently when the Outstanding Receipts account
+            cannot be located for a company (logged in server logs)
         """
         Journal = self.env['account.journal'].sudo()
         MethodLine = self.env['account.payment.method.line'].sudo()
-        # Manual is the built-in fallback payment method that requires
-        # no external gateway — always usable for advance payments.
+        Account = self.env['account.account'].sudo()
+        # Manual is the built-in fallback payment method — always
+        # usable for advance payments.
         manual = self.env.ref('account.account_payment_method_manual_in',
                               raise_if_not_found=False)
         if not manual:
@@ -574,17 +588,43 @@ class SaleOrder(models.Model):
                 limit=1,
             )
         if not manual:
-            return  # No manual method registered — nothing safe to seed
+            return
+
+        # Per-company lookup of the Outstanding Receipts account.
+        # Matches on name (case-insensitive) + asset_current type +
+        # reconcile=True. Cache per company so we only query once.
+        outstanding_by_company = {}
+
+        def _outstanding_receipts(company):
+            if company.id in outstanding_by_company:
+                return outstanding_by_company[company.id]
+            acc = Account.search([
+                ('company_id', '=', company.id),
+                ('account_type', '=', 'asset_current'),
+                ('reconcile', '=', True),
+                ('name', '=ilike', 'Outstanding Receipts'),
+            ], limit=1)
+            outstanding_by_company[company.id] = acc
+            return acc
 
         for name in ('Advance Payment', 'Advance Payment - Repairs'):
             for journal in Journal.search([('name', '=', name)]):
-                if journal.inbound_payment_method_line_ids:
-                    continue  # already has a method line
-                MethodLine.create({
-                    'payment_method_id': manual.id,
-                    'journal_id': journal.id,
-                    'name': 'Manual',
-                })
+                outstanding = _outstanding_receipts(journal.company_id)
+                existing = journal.inbound_payment_method_line_ids
+                if not existing:
+                    MethodLine.create({
+                        'payment_method_id': manual.id,
+                        'journal_id': journal.id,
+                        'name': 'Manual',
+                        'payment_account_id': outstanding.id if outstanding else False,
+                    })
+                    continue
+                # Backfill existing method lines that lack an
+                # outstanding account
+                if outstanding:
+                    to_backfill = existing.filtered(lambda l: not l.payment_account_id)
+                    if to_backfill:
+                        to_backfill.write({'payment_account_id': outstanding.id})
 
     @api.model
     def _fix_advance_payment_project_field(self):
