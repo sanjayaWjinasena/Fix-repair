@@ -14,6 +14,14 @@
          causing a FK violation. Replaces it with record.x_studio_project_no.id. -->
     <function model="sale.order" name="_fix_advance_payment_project_field"/>
 
+    <!-- Ensure the two 'Advance Payment' journals have inbound Manual
+         payment method lines. Odoo 17's account.payment validation
+         requires payment_method_line_id to be set, and the Studio
+         'Create Advance Payment' action creates payments on those
+         journals. Idempotent: skips journals that already have a
+         method line. -->
+    <function model="sale.order" name="_seed_advance_payment_method_lines"/>
+
     <!-- Rewrite four Studio server actions on sale.order that fire on every
          write and unconditionally call record.write(...). Guarded versions
          perform the same functional work but skip the write when values are

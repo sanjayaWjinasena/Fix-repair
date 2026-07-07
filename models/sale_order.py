@@ -545,6 +545,48 @@ class SaleOrder(models.Model):
                 action.write({'code': p['new_code']})
 
     @api.model
+    def _seed_advance_payment_method_lines(self):
+        """Ensure the 'Advance Payment' and 'Advance Payment - Repairs'
+        journals each have at least one inbound Manual payment method
+        line — Odoo 17's account.payment validation requires
+        payment_method_line_id to be set, and the Studio 'Create
+        Advance Payment' server action creates payments on these two
+        journals.
+
+        These journals are configured as type='general' in the staging
+        DB and don't get default method lines from Odoo. We create the
+        Manual line via ORM (the journal-type-constraint doesn't
+        actually block the create() call, even though the UI hides the
+        option for non-bank journals).
+
+        Idempotent: skips any journal that already has at least one
+        inbound method line, so subsequent upgrades are no-ops.
+        """
+        Journal = self.env['account.journal'].sudo()
+        MethodLine = self.env['account.payment.method.line'].sudo()
+        # Manual is the built-in fallback payment method that requires
+        # no external gateway — always usable for advance payments.
+        manual = self.env.ref('account.account_payment_method_manual_in',
+                              raise_if_not_found=False)
+        if not manual:
+            manual = self.env['account.payment.method'].sudo().search(
+                [('code', '=', 'manual'), ('payment_type', '=', 'inbound')],
+                limit=1,
+            )
+        if not manual:
+            return  # No manual method registered — nothing safe to seed
+
+        for name in ('Advance Payment', 'Advance Payment - Repairs'):
+            for journal in Journal.search([('name', '=', name)]):
+                if journal.inbound_payment_method_line_ids:
+                    continue  # already has a method line
+                MethodLine.create({
+                    'payment_method_id': manual.id,
+                    'journal_id': journal.id,
+                    'name': 'Manual',
+                })
+
+    @api.model
     def _fix_advance_payment_project_field(self):
         """Fix Studio server action 'Create Advance Payment' that passes
         record.id (sale.order ID) to x_studio_project_no_1 which is a
