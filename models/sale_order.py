@@ -786,9 +786,19 @@ class SaleOrder(models.Model):
             for btn in arch.xpath("//button[@name='action_draft']"):
                 btn.set('invisible', '1')
 
-            # Create Advance Payment: not used — hide entirely.
+            # Create Advance Payment: visible only on Sales-type
+            # quotations AFTER Confirm has been clicked (state='sale'
+            # or 'done'). Not shown on draft / sent quotations because
+            # you can't take a payment on something the customer
+            # hasn't yet committed to. Repair / Not Under Warranty /
+            # Project flows use their own invoicing paths (Create
+            # Draft Invoice / RUG settlement) and never see this
+            # button.
             for btn in arch.xpath("//button[@name='2341']"):
-                btn.set('invisible', '1')
+                btn.set('invisible',
+                    "x_studio_quotation_type != 'Sales' "
+                    "or state not in ('sale', 'done')"
+                )
 
             # Send by Email: shown for Not Under Warranty (no RUG flow) AND for
             # Repair tickets where the RUG was rejected — once rejected the
