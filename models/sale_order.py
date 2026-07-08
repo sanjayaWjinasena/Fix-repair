@@ -720,6 +720,22 @@ class SaleOrder(models.Model):
                         sheet.insert(0, fld)
                 break
 
+            # Strip ghost Studio fields whose ir.model.fields row exists
+            # but whose model registration is broken. Studio created two
+            # `x_studio_current_tot_amount` rows (name + `_1` suffix) as
+            # related fields pointing at amount_total, but neither is
+            # loaded on sale.order._fields — a simple read() raises
+            # ValueError: Invalid field. Leaving the <field> elements in
+            # arch crashes the client (owl "field is undefined"). Until
+            # the ghost rows are cleaned up in Studio, drop them from
+            # arch here so the form renders.
+            for ghost in ('x_studio_current_tot_amount',
+                          'x_studio_current_tot_amount_1'):
+                for el in arch.xpath(f"//field[@name='{ghost}']"):
+                    parent = el.getparent()
+                    if parent is not None:
+                        parent.remove(el)
+
             # Re-estimate button in the SO header. Visible when the SO
             # is signed AND no outgoing delivery is validated. Confirm
             # dialog spells out the side effects (state -> draft, signed
