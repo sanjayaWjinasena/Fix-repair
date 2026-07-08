@@ -709,7 +709,10 @@ class SaleOrder(models.Model):
             # Studio's view post-processing — but our own fields do.
             for sheet in arch.xpath("//sheet"):
                 for fname in ('ticket_repair_stage_state', 'x_customer_signed',
-                              'can_re_estimate', 'x_repair_stock_ok'):
+                              'can_re_estimate', 'x_repair_stock_ok',
+                              'x_studio_order_payment_method',
+                              'x_studio_over_credit',
+                              'x_studio_credit_limit_approved'):
                     if not arch.xpath(f"//field[@name='{fname}']"):
                         fld = etree.Element('field')
                         fld.set('name', fname)
@@ -840,6 +843,11 @@ class SaleOrder(models.Model):
             if confirm_btns:
                 confirm_btns[0].set('invisible', '1')
                 if len(confirm_btns) >= 2:
+                    # Credit-limit gate is scoped to Order Payment Type ==
+                    # 'Credit' — cash customers are never blocked. Mirrors
+                    # the visibility of the studio "Request Credit Limit
+                    # Approval" button so the salesperson goes through
+                    # approval before the SO can be confirmed.
                     confirm_btns[1].set('invisible',
                         "(state not in ('draft', 'sent')) or "
                         "(x_studio_quotation_type == 'Repair' "
@@ -848,7 +856,10 @@ class SaleOrder(models.Model):
                         "(x_studio_rug_rejected and not x_customer_signed) or "
                         "(x_studio_quotation_type == 'Not Under Warranty' "
                         "and not x_customer_signed) or "
-                        "(not x_repair_stock_ok)"
+                        "(not x_repair_stock_ok) or "
+                        "(x_studio_order_payment_method == 'Credit' "
+                        "and x_studio_over_credit "
+                        "and not x_studio_credit_limit_approved)"
                     )
                     for btn in confirm_btns[2:]:
                         btn.set('invisible', '1')
