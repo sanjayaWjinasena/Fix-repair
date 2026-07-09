@@ -13,6 +13,24 @@ class SaleOrder(models.Model):
     # expressions (e.g. gating Create Invoice on Repair Completed for RUG SOs).
     ticket_repair_stage_state = fields.Char(compute='_compute_ticket_repair_stage_state')
 
+    # Backwards-compatible alias for tax_totals. The Studio-modified
+    # sale.report_saleorder_document arch on this instance was migrated
+    # from Odoo 16 and still calls
+    #     <t t-call="account.document_tax_totals"/>
+    # which expects `record.tax_totals_json`. Odoo 17 replaced that
+    # attribute with `tax_totals` (same content, different name), so
+    # PDF renders (portal_quote_accept → _render_qweb_pdf) fail with
+    #     AttributeError: 'sale.order' object has no attribute
+    #     'tax_totals_json'
+    # Rather than editing every Studio-modified template arch by hand,
+    # expose tax_totals under the old name too.
+    tax_totals_json = fields.Json(compute='_compute_tax_totals_json')
+
+    @api.depends('tax_totals')
+    def _compute_tax_totals_json(self):
+        for order in self:
+            order.tax_totals_json = order.tax_totals
+
     # True once the customer has signed the quotation on the portal preview.
     # Used as the gate for the backend Confirm button on NUW / Reject-RUG
     # quotations. Wraps signed_on/signature because directly referencing
