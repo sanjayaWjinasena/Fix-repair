@@ -780,7 +780,12 @@ class SaleOrder(models.Model):
                               'x_studio_margin_exceed',
                               'x_studio_margin_approved',
                               'x_studio_over_bank_guarantee',
-                              'x_studio_bank_guarantee_approved'):
+                              'x_studio_bank_guarantee_approved',
+                              'x_studio_proj_budget_status',
+                              'x_studio_budget_created',
+                              'x_studio_inventory_short',
+                              'x_studio_price_not_confirmed',
+                              'x_studio_new_item_from_project'):
                     if not arch.xpath(f"//field[@name='{fname}']"):
                         fld = etree.Element('field')
                         fld.set('name', fname)
@@ -980,6 +985,13 @@ class SaleOrder(models.Model):
                     #   - margin-exceed gate: SO margin below allowed
                     #     minimum on any line and manager hasn't approved
                     #
+                    # Project-only:
+                    #   - budget must be created AND status must be
+                    #     validated or done (not draft/cancel/confirm)
+                    #   - no inventory shortages / sub-contract lines
+                    #   - all line prices confirmed by manager
+                    #   - no un-approved new-item lines
+                    #
                     # Note the customer-pays and reject-RUG branches
                     # share the same customer-signature requirement,
                     # so we OR them into one predicate for readability.
@@ -1008,6 +1020,14 @@ class SaleOrder(models.Model):
                         "and not x_studio_over_commission_approved) "
                         "or (x_studio_margin_exceed "
                         "and not x_studio_margin_approved)"
+                        ")) or "
+                        "(x_studio_quotation_type == 'Project' and ("
+                        "(not x_studio_budget_created) "
+                        "or (x_studio_proj_budget_status "
+                        "not in ('validate', 'done')) "
+                        "or (x_studio_inventory_short) "
+                        "or (x_studio_price_not_confirmed) "
+                        "or (x_studio_new_item_from_project)"
                         "))"
                     )
                     for btn in confirm_btns[2:]:
