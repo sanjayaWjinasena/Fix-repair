@@ -778,7 +778,9 @@ class SaleOrder(models.Model):
                               'x_studio_over_commission',
                               'x_studio_over_commission_approved',
                               'x_studio_margin_exceed',
-                              'x_studio_margin_approved'):
+                              'x_studio_margin_approved',
+                              'x_studio_over_bank_guarantee',
+                              'x_studio_bank_guarantee_approved'):
                     if not arch.xpath(f"//field[@name='{fname}']"):
                         fld = etree.Element('field')
                         fld.set('name', fname)
@@ -945,6 +947,9 @@ class SaleOrder(models.Model):
                     # Universal:
                     #   - state check (must be draft/sent)
                     #   - credit-limit gate on Credit-payment SOs
+                    #   - bank-guarantee gate on Credit-payment SOs
+                    #     (parallels credit-limit — customer has a BG
+                    #     ceiling and it's been exceeded)
                     #   - overdue-debt gate: partner has overdue invoices
                     #     and the override approval has not been granted
                     #   - valid-order-lines gate: SO must have at least
@@ -983,6 +988,9 @@ class SaleOrder(models.Model):
                         "(x_studio_order_payment_method == 'Credit' "
                         "and x_studio_over_credit "
                         "and not x_studio_credit_limit_approved) or "
+                        "(x_studio_order_payment_method == 'Credit' "
+                        "and x_studio_over_bank_guarantee "
+                        "and not x_studio_bank_guarantee_approved) or "
                         "(x_studio_overdue "
                         "and not x_studio_overdue_approved) or "
                         "(not x_studio_valid_order_lines) or "
