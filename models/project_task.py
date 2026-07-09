@@ -39,34 +39,52 @@ class ProjectTask(models.Model):
         immediately so stock reservations can be made. We bypass that by
         recreating the create-only logic from industry_fsm_sale directly,
         leaving the SO in draft (Quotation) until the user confirms manually.
+
+        _sync_repair_flags() runs immediately after creation so the SO
+        carries the correct quotation_type + x_repair_customer_pays from
+        the moment it exists — no downstream code sees a partially-set
+        record.
         """
         if not self.sale_order_id:
             self._fsm_create_sale_order()
-        self._sync_quotation_type()
+        self._sync_repair_flags()
         return self.sale_order_id
 
-    def _sync_quotation_type(self):
-        """Set x_studio_quotation_type on the linked SO based on ticket type.
+    def _sync_repair_flags(self):
+        """Mirror the linked ticket's warranty state onto the SO.
 
-        Called both when a new SO is created (via _fsm_ensure_sale_order) and
-        when an existing SO is linked to the task (write). This ensures the
-        type is correct regardless of how the SO was created.
+        All repair SOs carry quotation_type='Repair' (there is no
+        'Not Under Warranty' selection value anymore). The
+        under-warranty vs customer-pays distinction lives in the
+        x_repair_customer_pays Boolean: True when the ticket's
+        x_studio_rug_confirmed is False (i.e. the item is not under
+        warranty and the customer will pay from the start).
+
+        Called from _fsm_ensure_sale_order (immediately after SO
+        creation) and from write() when sale_order_id is (re)linked.
+        Both fields are written in a single write() so downstream
+        subscribers see a consistent record.
         """
         for task in self:
             if not task.helpdesk_ticket_id or not task.sale_order_id:
                 continue
             ticket = task.helpdesk_ticket_id
-            qtype = 'Repair' if ticket.x_studio_rug_confirmed else 'Not Under Warranty'
-            if task.sale_order_id.x_studio_quotation_type == qtype:
-                continue
-            if qtype == 'Not Under Warranty':
-                self.env['sale.order']._ensure_not_under_warranty_selection()
-            task.sale_order_id.sudo().write({'x_studio_quotation_type': qtype})
+            so = task.sale_order_id
+            desired = {
+                'x_studio_quotation_type': 'Repair',
+                'x_repair_customer_pays': not ticket.x_studio_rug_confirmed,
+            }
+            changed = {
+                k: v for k, v in desired.items()
+                if getattr(so, k) != v
+            }
+            if changed:
+                so.sudo().write(changed)
 
     def write(self, vals):
         result = super().write(vals)
         if 'sale_order_id' in vals and vals.get('sale_order_id'):
-            self._sync_quotation_type()
+            self._sync_repair_flags()
         return result
 
     def _fsm_create_sale_order(self):

@@ -77,6 +77,29 @@ class SaleOrder(models.Model):
         compute='_compute_x_repair_stock_ok',
     )
 
+    # True when this repair is not covered by warranty (customer pays from
+    # the start). Replaces the deprecated `x_studio_quotation_type ==
+    # 'Not Under Warranty'` type-value pattern: quotation_type now stays
+    # as 'Repair' for every repair SO (warranty or not), and this Boolean
+    # captures the customer-pays semantic independently. Set by
+    # project_task._sync_repair_flags() from ticket.x_studio_rug_confirmed
+    # at SO creation. Existing NUW records are migrated by
+    # _migrate_nuw_to_customer_pays_flag on every install/upgrade.
+    #
+    # Note this is orthogonal to x_studio_rug_rejected: a warranty repair
+    # (customer_pays=False) can still end up as customer-pays via a RUG
+    # rejection. Downstream checks that care about the "customer pays"
+    # state universally read as
+    #    order.x_repair_customer_pays or order.x_studio_rug_rejected
+    x_repair_customer_pays = fields.Boolean(
+        string='Not Under Warranty',
+        default=False,
+        help="True when this repair is not covered by warranty and the "
+             "customer must pay from the start. Independent of the RUG "
+             "rejection flag (which fires when a warranty repair falls "
+             "through to customer-pays after the RUG cycle).",
+    )
+
     def _get_repair_stock_source_locations(self):
         """Return the stock.location recordset to check availability
         against for this SO. May contain multiple locations (the resupply
@@ -673,30 +696,64 @@ class SaleOrder(models.Model):
         action.write({'code': code})
 
     @api.model
-    def _ensure_not_under_warranty_selection(self):
-        """Add 'Not Under Warranty' to x_studio_quotation_type if absent.
+    def _migrate_nuw_to_customer_pays_flag(self):
+        """One-shot data migration: eliminate 'Not Under Warranty' as a
+        quotation_type value, replace with the x_repair_customer_pays
+        Boolean flag.
 
-        In Odoo 17 selection values live in ir.model.fields.selection,
-        not in a column on ir_model_fields itself.
-        Called from data/fix_repair_data.xml and inline before any write.
+        The previous design used the quotation_type selection value
+        'Not Under Warranty' as a proxy for the customer-pays semantic.
+        That coupled a display-type value to a business flag and forced
+        the salesperson to see 'Not Under Warranty' as a separate
+        quotation type in the dropdown. This method:
+
+          1. Rewrites every SO with quotation_type='Not Under Warranty'
+             to quotation_type='Repair' + x_repair_customer_pays=True.
+          2. Removes the 'Not Under Warranty' value from the selection
+             field so it no longer appears in the UI.
+
+        Idempotent: subsequent runs find no NUW records and no NUW
+        selection value, so the method is a no-op. Called from
+        data/fix_repair_data.xml on every install/upgrade.
+
+        Not migrated: Reject-RUG SOs (x_studio_rug_rejected=True with
+        quotation_type='Repair'). These already carry the RUG signal;
+        downstream checks read as
+        `x_repair_customer_pays or x_studio_rug_rejected` and preserve
+        the historical distinction between "started as NUW" (flag) and
+        "warranty rejected mid-flow" (RUG flag).
         """
+        # Step 1: rewrite every existing NUW SO. Uses sudo() to bypass
+        # the readonly gate on x_studio_quotation_type (readonly is a
+        # view-level directive; Python writes are unaffected). We set
+        # quotation_type='Repair' first, then flip the flag — the order
+        # doesn't matter for correctness since both values are stored,
+        # but doing them in one write() is atomic.
+        nuw_orders = self.sudo().search([
+            ('x_studio_quotation_type', '=', 'Not Under Warranty'),
+        ])
+        if nuw_orders:
+            nuw_orders.write({
+                'x_studio_quotation_type': 'Repair',
+                'x_repair_customer_pays': True,
+            })
+
+        # Step 2: drop the 'Not Under Warranty' selection value so the
+        # dropdown no longer offers it. We locate the field row on
+        # sale.order first (there's also x_studio_quotation_type on
+        # other models like project.task via Studio) and only delete
+        # its selection child.
         field = self.env['ir.model.fields'].sudo().search([
             ('model', '=', 'sale.order'),
             ('name', '=', 'x_studio_quotation_type'),
         ], limit=1)
-        if not field:
-            return
-        IrSel = self.env['ir.model.fields.selection'].sudo()
-        if not IrSel.search([
-            ('field_id', '=', field.id),
-            ('value', '=', 'Not Under Warranty'),
-        ], limit=1):
-            IrSel.create({
-                'field_id': field.id,
-                'value': 'Not Under Warranty',
-                'name': 'Not Under Warranty',
-                'sequence': 100,
-            })
+        if field:
+            nuw_selection = self.env['ir.model.fields.selection'].sudo().search([
+                ('field_id', '=', field.id),
+                ('value', '=', 'Not Under Warranty'),
+            ], limit=1)
+            if nuw_selection:
+                nuw_selection.unlink()
 
     @api.model
     def _get_view(self, view_id=None, view_type='form', **options):
@@ -710,6 +767,7 @@ class SaleOrder(models.Model):
             for sheet in arch.xpath("//sheet"):
                 for fname in ('ticket_repair_stage_state', 'x_customer_signed',
                               'can_re_estimate', 'x_repair_stock_ok',
+                              'x_repair_customer_pays',
                               'x_studio_order_payment_method',
                               'x_studio_over_credit',
                               'x_studio_credit_limit_approved'):
@@ -799,8 +857,10 @@ class SaleOrder(models.Model):
                 el.set('readonly', "state in ('cancel', 'done', 'sale')")
 
             # Quotation Type: editable in draft/sent until an FSM task is linked.
-            # Allows switching between Repair and Not Under Warranty; locks once
-            # Plan Intervention is clicked (task_id set) or the SO is confirmed.
+            # Repair SOs are auto-set to 'Repair' by project_task._sync_repair_flags
+            # when Plan Intervention creates the task; the type readonly lock kicks
+            # in from that moment. Non-repair SOs (Sales, Project) stay editable
+            # until confirm.
             for el in arch.xpath("//field[@name='x_studio_quotation_type']"):
                 el.set('readonly',
                        "(task_id != False) or "
@@ -844,13 +904,13 @@ class SaleOrder(models.Model):
 
             # Confirm button: visible in both draft AND sent states so the
             # salesperson can confirm either path:
-            #   • Repair + RUG approved          → standard repair-warranty flow
-            #   • Repair + RUG rejected          → only AFTER customer signs
-            #                                      the portal preview
-            #   • Not Under Warranty             → only AFTER customer signs
-            #                                      the portal preview
-            # Stays hidden on Repair quotations while RUG is still pending
-            # (neither approved nor rejected yet).
+            #   • Repair (warranty) + RUG approved  → standard warranty flow
+            #   • Repair (warranty) + RUG rejected  → only AFTER customer signs
+            #                                         (falls through to customer-pays)
+            #   • Repair (customer-pays)            → only AFTER customer signs
+            #                                         the portal preview
+            # Stays hidden on warranty Repair quotations while the RUG is still
+            # pending (neither approved nor rejected yet).
             # Studio's arch has two action_confirm buttons — we want the
             # SECOND one to be the visible one, so force-hide the first and
             # apply our visibility logic to the second (and force-hide any
@@ -868,28 +928,38 @@ class SaleOrder(models.Model):
                     #   - state check (must be draft/sent)
                     #   - credit-limit gate on Credit-payment SOs
                     #
-                    # Repair-only:
-                    #   - RUG cycle must be resolved (approved or
-                    #     rejected)
-                    #   - After Reject-RUG, customer must sign the
-                    #     "you pay" quote before confirm
-                    #   - Stock shortage (x_repair_stock_ok is only
-                    #     meaningful for Repair-type SOs)
+                    # Repair-only (three sub-cases inside one branch):
+                    #   - Warranty repair (customer_pays=False):
+                    #       needs RUG cycle resolved (approved OR
+                    #       rejected). If rejected mid-flow, falls
+                    #       through to the customer-pays path below.
+                    #   - Customer-pays repair (customer_pays=True):
+                    #       requires customer to have signed the
+                    #       quotation on the portal preview before
+                    #       Confirm.
+                    #   - Reject-RUG:
+                    #       warranty repair that fell through to
+                    #       customer-pays after RUG rejection. Same
+                    #       signature gate as customer-pays.
+                    #   - Stock shortage applies to every repair.
                     #
-                    # Sales / Project / Not Under Warranty pass through
-                    # only the universal gates. NUW's previous
-                    # customer-signature gate is intentionally NOT
-                    # ported here per the developer's decision to treat
-                    # only quotation_type=='Repair' as a "repair sales
-                    # order" for gating purposes.
+                    # Sales / Project quotations pass through only the
+                    # universal gates (no repair-workflow predicates).
+                    #
+                    # Note the customer-pays and reject-RUG branches
+                    # share the same customer-signature requirement,
+                    # so we OR them into one predicate for readability.
                     confirm_btns[1].set('invisible',
                         "(state not in ('draft', 'sent')) or "
                         "(x_studio_order_payment_method == 'Credit' "
                         "and x_studio_over_credit "
                         "and not x_studio_credit_limit_approved) or "
                         "(x_studio_quotation_type == 'Repair' and ("
-                        "(not x_studio_rug_approved and not x_studio_rug_rejected) "
-                        "or (x_studio_rug_rejected and not x_customer_signed) "
+                        "(not x_repair_customer_pays "
+                        "and not x_studio_rug_approved "
+                        "and not x_studio_rug_rejected) "
+                        "or ((x_repair_customer_pays or x_studio_rug_rejected) "
+                        "and not x_customer_signed) "
                         "or (not x_repair_stock_ok)"
                         "))"
                     )
@@ -941,7 +1011,7 @@ class SaleOrder(models.Model):
                 btn.set('type', 'object')
                 btn.set('class', 'btn-primary')
                 btn.set('invisible',
-                    "(x_studio_quotation_type != 'Not Under Warranty' "
+                    "(not x_repair_customer_pays "
                     "and not x_studio_rug_rejected) "
                     "or state != 'draft' "
                     "or not x_repair_stock_ok"
@@ -990,11 +1060,14 @@ class SaleOrder(models.Model):
 
     def action_quotation_send(self):
         action = super().action_quotation_send()
-        # Apply the custom body / stage-transition treatment for:
-        #   • Not Under Warranty quotations (customer-pays from the start), and
-        #   • Repair quotations whose RUG has been rejected (customer now pays).
-        # Both should produce the same email body as the Not Under Warranty flow.
-        if self.x_studio_quotation_type != 'Not Under Warranty' \
+        # Apply the custom body / stage-transition treatment for
+        # customer-pays repairs:
+        #   • x_repair_customer_pays: repair not under warranty from the start
+        #   • x_studio_rug_rejected: warranty repair whose RUG was rejected
+        # Both produce the same email body (portal quote link) and drive the
+        # same ticket-stage transition. Warranty repairs (customer_pays=False,
+        # not-rejected) and non-repair SOs return early — nothing custom.
+        if not self.x_repair_customer_pays \
                 and not self.x_studio_rug_rejected:
             return action
 
@@ -1051,7 +1124,7 @@ class SaleOrder(models.Model):
         )
         if portal_call:
             skip = self.filtered(
-                lambda o: o.x_studio_quotation_type == 'Not Under Warranty'
+                lambda o: o.x_repair_customer_pays
                           or o.x_studio_rug_rejected
             )
             rest = self - skip
@@ -1068,7 +1141,7 @@ class SaleOrder(models.Model):
             # this is a no-op when the rejection happened before Confirm —
             # but if the salesperson Confirms first and rejects later, this
             # explicit move keeps the stage consistent.
-            if (order.x_studio_quotation_type == 'Not Under Warranty'
+            if (order.x_repair_customer_pays
                     or order.x_studio_rug_rejected):
                 self._move_ticket_to_stage(order, 'Estimation Approval Received')
         return result

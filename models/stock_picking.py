@@ -12,14 +12,16 @@ class StockPicking(models.Model):
 
     @api.depends(
         'sale_id',
-        'sale_id.x_studio_quotation_type',
+        'sale_id.x_repair_customer_pays',
         'sale_id.x_studio_rug_rejected',
         'sale_id.invoice_ids',
     )
     def _compute_nuw_block_validate(self):
-        # The same delivery-validation gate that applies to Not Under
-        # Warranty SOs must also apply to Repair SOs whose RUG has been
-        # rejected — in both cases the customer pays before delivery.
+        # The delivery-validation gate applies to any customer-pays
+        # repair SO: those flagged x_repair_customer_pays (started as
+        # not-under-warranty) OR those whose RUG has been rejected mid-
+        # flow (warranty repair fell through to customer-pays). In both
+        # cases the customer must pay before we release the delivery.
         # Once at least one invoice exists on the SO (the customer-pays
         # cycle has started — typically the percentage advance invoice),
         # we unblock Validate so the salesperson can finalise the
@@ -27,7 +29,7 @@ class StockPicking(models.Model):
         for picking in self:
             so = picking.sale_id
             customer_pays = bool(so) and (
-                so.x_studio_quotation_type == 'Not Under Warranty'
+                so.x_repair_customer_pays
                 or so.x_studio_rug_rejected
             )
             if not customer_pays:
@@ -388,13 +390,13 @@ class StockPicking(models.Model):
                 if all_pickings and all(p.state in ('done', 'cancel') for p in all_pickings):
                     self.env['sale.order']._move_ticket_to_stage(so, 'Repair Completed')
 
-        # ── Path C: Customer-pays SO pickings (NUW + Reject-RUG) ─────────────
+        # ── Path C: Customer-pays SO pickings (started-NUW + Reject-RUG) ────
         # Same flow for both: customer must pay before pickings can advance
         # the ticket past Repair Started.
         nuw_so_ids = set()
         for picking in self.filtered(lambda p: p.state == 'done' and p.sale_id):
             so = picking.sale_id
-            if (so.x_studio_quotation_type == 'Not Under Warranty'
+            if (so.x_repair_customer_pays
                     or so.x_studio_rug_rejected):
                 nuw_so_ids.add(so.id)
 

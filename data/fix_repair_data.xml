@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Adds 'Not Under Warranty' to the Studio-managed x_studio_quotation_type
-         selection field. Runs on every install and upgrade. -->
-    <function model="sale.order" name="_ensure_not_under_warranty_selection"/>
+    <!-- Migrate every SO with quotation_type='Not Under Warranty' to
+         quotation_type='Repair' + x_repair_customer_pays=True, then
+         drop the 'Not Under Warranty' selection value from the Studio
+         field so it no longer appears in the dropdown. All downstream
+         customer-pays logic now reads the x_repair_customer_pays flag
+         directly. Idempotent — subsequent runs find no NUW records
+         and no NUW selection value. -->
+    <function model="sale.order" name="_migrate_nuw_to_customer_pays_flag"/>
 
     <!-- Deactivates the Studio automation "RR - Auto Select Product for RUG Repairs-33"
          which unconditionally clears product_id when x_studio_serial_no changes,
