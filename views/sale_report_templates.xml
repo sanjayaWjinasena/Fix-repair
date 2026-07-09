@@ -17,22 +17,26 @@
          Anchor choice notes:
            div[@id='informations']  — customer address block (top of
                                       report body, no t-if wrapping)
-           p[@name='order_note']    — payment terms paragraph, always
-                                      present and outside any t-if/t-else
-                                      chain. Safest bottom-of-report anchor.
+           div[hasclass('page')]    — the outer report page container.
+                                      Universal — every Odoo 17 sale
+                                      report uses `<div class="page">`
+                                      as its content wrapper. Safest
+                                      possible bottom-of-report anchor.
 
-         Why NOT div[@name='total']: on some Odoo 17 builds
-         (Studio-flattened arch), the totals div itself carries a t-if
-         with a sibling <div t-else name="signature">. Inserting our
-         conclusion div with position="after" between them breaks the
-         QWeb rule that t-else must be the IMMEDIATE next sibling of
-         its t-if, and the report PDF fails to render with:
-             SyntaxError: t-elif directive must be preceded by
-             t-if or t-elif directive
-         Anchoring to order_note sidesteps the totals/signature pair
-         entirely — the conclusion still renders below the numbers
-         (totals -> signature -> conclusion -> terms), which is close
-         enough to the requested "after totals" placement. -->
+         Rejected anchors:
+           div[@name='total'] — on some Odoo 17 builds (Studio-flattened
+             arch) the totals div itself carries a t-if with a sibling
+             <div t-else name="signature">. Inserting between them
+             breaks QWeb's t-else-must-follow-t-if rule.
+           p[@name='order_note'] — missing on Studio-modified builds
+             where the terms paragraph has been renamed / removed. Fails
+             view validation with "cannot be located in parent view".
+
+         Anchoring the conclusion inside the page div (position=inside
+         appends as the last child) puts it at the very bottom of the
+         report body — past totals, signature, and any terms/notes.
+         Slightly different visual position than "after totals" but
+         works reliably across every Odoo 17 arch variant. -->
     <template id="fix_repair_document_intro_conclusion"
               inherit_id="sale.report_saleorder_document">
 
@@ -46,10 +50,11 @@
             </div>
         </xpath>
 
-        <!-- CONCLUSION: placed immediately before the Payment Terms
-             paragraph so it sits after totals + signature, ahead of
-             the terms/notes block. -->
-        <xpath expr="//p[@name='order_note']" position="before">
+        <!-- CONCLUSION: appended at the end of the report page
+             container. Placement: after totals, signature, and
+             terms/notes (final content before any oe_structure
+             editable footer region). -->
+        <xpath expr="//div[hasclass('page')]" position="inside">
             <div t-if="doc.bugfix_sales_conclusion_text"
                  class="mt-4"
                  style="white-space: pre-wrap; font-size: 0.95em;">
