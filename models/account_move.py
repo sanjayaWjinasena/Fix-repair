@@ -57,12 +57,16 @@ class AccountMove(models.Model):
             so = self.env['sale.order'].sudo().search(
                 [('name', '=', move.invoice_origin)], limit=1
             )
-            # Once the RUG has been rejected the invoice falls back to the
-            # customer-pays flow — it should no longer be treated as a RUG
-            # invoice (no "Change to RUG Account" gate, Register Payment
-            # available, Confirm visible).
+            # RUG-invoice treatment only applies to WARRANTY repairs:
+            # quotation_type == 'Repair', NOT customer-pays (formerly the
+            # 'Not Under Warranty' quotation type), and NOT rug-rejected
+            # mid-flow. Anything else falls back to a normal customer-
+            # pays invoice: Register Payment stays available, the
+            # "Change to RUG Account" button stays hidden, and
+            # _rug_auto_settle is a no-op on action_post.
             move.is_rug_invoice = (
                 so.x_studio_quotation_type == 'Repair'
+                and not so.x_repair_customer_pays
                 and not so.x_studio_rug_rejected
             )
 
