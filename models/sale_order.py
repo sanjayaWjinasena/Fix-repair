@@ -776,7 +776,9 @@ class SaleOrder(models.Model):
                               'x_studio_valid_order_lines',
                               'x_studio_expired',
                               'x_studio_over_commission',
-                              'x_studio_over_commission_approved'):
+                              'x_studio_over_commission_approved',
+                              'x_studio_margin_exceed',
+                              'x_studio_margin_approved'):
                     if not arch.xpath(f"//field[@name='{fname}']"):
                         fld = etree.Element('field')
                         fld.set('name', fname)
@@ -970,6 +972,8 @@ class SaleOrder(models.Model):
                     # Non-Repair (Sales + Project):
                     #   - over-commission gate: salesperson commission
                     #     exceeds threshold and manager hasn't approved
+                    #   - margin-exceed gate: SO margin below allowed
+                    #     minimum on any line and manager hasn't approved
                     #
                     # Note the customer-pays and reject-RUG branches
                     # share the same customer-signature requirement,
@@ -993,7 +997,9 @@ class SaleOrder(models.Model):
                         ")) or "
                         "(x_studio_quotation_type in ('Sales', 'Project') and ("
                         "(x_studio_over_commission "
-                        "and not x_studio_over_commission_approved)"
+                        "and not x_studio_over_commission_approved) "
+                        "or (x_studio_margin_exceed "
+                        "and not x_studio_margin_approved)"
                         "))"
                     )
                     for btn in confirm_btns[2:]:
