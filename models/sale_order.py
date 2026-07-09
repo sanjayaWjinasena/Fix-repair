@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import json
+
 from lxml import etree
 from markupsafe import Markup, escape
 from odoo import api, fields, models
@@ -17,19 +19,21 @@ class SaleOrder(models.Model):
     # sale.report_saleorder_document arch on this instance was migrated
     # from Odoo 16 and still calls
     #     <t t-call="account.document_tax_totals"/>
-    # which expects `record.tax_totals_json`. Odoo 17 replaced that
-    # attribute with `tax_totals` (same content, different name), so
-    # PDF renders (portal_quote_accept → _render_qweb_pdf) fail with
-    #     AttributeError: 'sale.order' object has no attribute
-    #     'tax_totals_json'
-    # Rather than editing every Studio-modified template arch by hand,
-    # expose tax_totals under the old name too.
-    tax_totals_json = fields.Json(compute='_compute_tax_totals_json')
+    # which internally does `json.loads(record.tax_totals_json)`
+    # because in Odoo 16 tax_totals_json was a Char/Text field storing
+    # the JSON *string*. Odoo 17 replaced it with `tax_totals` — same
+    # content but as a native dict (fields.Json).
+    #
+    # To keep the legacy Studio template working without editing its
+    # arch in Studio, expose the JSON-serialized string form under the
+    # old name. json.dumps() returns a str; json.loads() in the
+    # template then round-trips it back to a dict.
+    tax_totals_json = fields.Char(compute='_compute_tax_totals_json')
 
     @api.depends('tax_totals')
     def _compute_tax_totals_json(self):
         for order in self:
-            order.tax_totals_json = order.tax_totals
+            order.tax_totals_json = json.dumps(order.tax_totals) if order.tax_totals else '{}'
 
     # True once the customer has signed the quotation on the portal preview.
     # Used as the gate for the backend Confirm button on NUW / Reject-RUG
