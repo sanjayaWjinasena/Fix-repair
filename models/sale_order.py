@@ -770,7 +770,9 @@ class SaleOrder(models.Model):
                               'x_repair_customer_pays',
                               'x_studio_order_payment_method',
                               'x_studio_over_credit',
-                              'x_studio_credit_limit_approved'):
+                              'x_studio_credit_limit_approved',
+                              'x_studio_overdue',
+                              'x_studio_overdue_approved'):
                     if not arch.xpath(f"//field[@name='{fname}']"):
                         fld = etree.Element('field')
                         fld.set('name', fname)
@@ -937,6 +939,8 @@ class SaleOrder(models.Model):
                     # Universal:
                     #   - state check (must be draft/sent)
                     #   - credit-limit gate on Credit-payment SOs
+                    #   - overdue-debt gate: partner has overdue invoices
+                    #     and the override approval has not been granted
                     #
                     # Repair-only (three sub-cases inside one branch):
                     #   - Warranty repair (customer_pays=False):
@@ -964,6 +968,8 @@ class SaleOrder(models.Model):
                         "(x_studio_order_payment_method == 'Credit' "
                         "and x_studio_over_credit "
                         "and not x_studio_credit_limit_approved) or "
+                        "(x_studio_overdue "
+                        "and not x_studio_overdue_approved) or "
                         "(x_studio_quotation_type == 'Repair' and ("
                         "(not x_repair_customer_pays "
                         "and not x_studio_rug_approved "
