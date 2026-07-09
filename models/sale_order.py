@@ -866,9 +866,15 @@ class SaleOrder(models.Model):
                        "(task_id != False) or "
                        "(state not in ['draft', 'sent'])")
 
-            # RUG Request button: only on Repair quotations, before request is sent
+            # RUG Request button: only on WARRANTY Repair quotations, before
+            # request is sent. Customer-pays repairs (formerly 'Not Under
+            # Warranty' quotation_type) don't go through the RUG cycle —
+            # they're customer-pays from the start, so the RUG buttons must
+            # stay hidden. Reject-RUG SOs also hide the request button
+            # because the RUG cycle already resolved.
             rug_req_invisible = (
                 "(x_studio_quotation_type != 'Repair') or "
+                "(x_repair_customer_pays) or "
                 "(state not in ['draft', 'sent']) or "
                 "(x_studio_rug_request_sent == True) or "
                 "(x_studio_rug_rejected == True) or "
@@ -878,9 +884,13 @@ class SaleOrder(models.Model):
             for btn in arch.xpath("//button[@name='1980']"):
                 btn.set('invisible', rug_req_invisible)
 
-            # Approve/Reject RUG buttons: only on Repair quotations, after request is sent
+            # Approve/Reject RUG buttons: only on WARRANTY Repair quotations,
+            # after request is sent. Same customer-pays guard as above — if a
+            # customer-pays repair somehow has rug_request_sent=True (legacy
+            # data), still hide the approve/reject buttons.
             rug_approve_invisible = (
                 "(x_studio_quotation_type != 'Repair') or "
+                "(x_repair_customer_pays) or "
                 "(state not in ['draft', 'sent']) or "
                 "(x_studio_rug_request_sent == False) or "
                 "(x_studio_rug_rejected == True) or "
