@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Extend the standard quotation/order QWeb template to inject the
+         BugFix-Sales Document Introduction above the order lines and
+         the Document Conclusion above the payment-terms paragraph.
+
+         Location note: this template inheritance lives in Fix-repair
+         even though the fields it renders (bugfix_sales_intro_text /
+         bugfix_sales_conclusion_text) are defined by the BugFix-Sales
+         module. Fix-repair owns all form / report customizations on
+         this instance, so keeping the report inheritance here — and
+         declaring BugFix-Sales as a dep in Fix-repair's manifest —
+         makes it easy to reason about which module changed what in
+         sale.report_saleorder_document.
+
+         Anchor choice notes:
+           div[@id='informations']  — customer address block (top of
+                                      report body, no t-if wrapping)
+           p[@name='order_note']    — payment terms paragraph, always
+                                      present and outside any t-if/t-else
+                                      chain. Safest bottom-of-report anchor.
+
+         Why NOT div[@name='total']: on some Odoo 17 builds
+         (Studio-flattened arch), the totals div itself carries a t-if
+         with a sibling <div t-else name="signature">. Inserting our
+         conclusion div with position="after" between them breaks the
+         QWeb rule that t-else must be the IMMEDIATE next sibling of
+         its t-if, and the report PDF fails to render with:
+             SyntaxError: t-elif directive must be preceded by
+             t-if or t-elif directive
+         Anchoring to order_note sidesteps the totals/signature pair
+         entirely — the conclusion still renders below the numbers
+         (totals -> signature -> conclusion -> terms), which is close
+         enough to the requested "after totals" placement. -->
+    <template id="fix_repair_document_intro_conclusion"
+              inherit_id="sale.report_saleorder_document">
+
+        <!-- INTRODUCTION: placed right after the customer address block
+             (before the order lines table renders). -->
+        <xpath expr="//div[@id='informations']" position="after">
+            <div t-if="doc.bugfix_sales_intro_text"
+                 class="mt-3 mb-3"
+                 style="white-space: pre-wrap; font-size: 0.95em;">
+                <t t-out="doc.bugfix_sales_intro_text"/>
+            </div>
+        </xpath>
+
+        <!-- CONCLUSION: placed immediately before the Payment Terms
+             paragraph so it sits after totals + signature, ahead of
+             the terms/notes block. -->
+        <xpath expr="//p[@name='order_note']" position="before">
+            <div t-if="doc.bugfix_sales_conclusion_text"
+                 class="mt-4"
+                 style="white-space: pre-wrap; font-size: 0.95em;">
+                <t t-out="doc.bugfix_sales_conclusion_text"/>
+            </div>
+        </xpath>
+
+    </template>
+
+</odoo>
