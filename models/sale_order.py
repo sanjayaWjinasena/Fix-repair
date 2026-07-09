@@ -859,23 +859,39 @@ class SaleOrder(models.Model):
             if confirm_btns:
                 confirm_btns[0].set('invisible', '1')
                 if len(confirm_btns) >= 2:
-                    # Credit-limit gate is scoped to Order Payment Type ==
-                    # 'Credit' — cash customers are never blocked. Mirrors
-                    # the visibility of the studio "Request Credit Limit
-                    # Approval" button so the salesperson goes through
-                    # approval before the SO can be confirmed.
+                    # Split gating into (a) universal predicates that
+                    # apply to EVERY sale.order regardless of quotation
+                    # type, and (b) repair-workflow predicates that only
+                    # fire for x_studio_quotation_type == 'Repair'.
+                    #
+                    # Universal:
+                    #   - state check (must be draft/sent)
+                    #   - credit-limit gate on Credit-payment SOs
+                    #
+                    # Repair-only:
+                    #   - RUG cycle must be resolved (approved or
+                    #     rejected)
+                    #   - After Reject-RUG, customer must sign the
+                    #     "you pay" quote before confirm
+                    #   - Stock shortage (x_repair_stock_ok is only
+                    #     meaningful for Repair-type SOs)
+                    #
+                    # Sales / Project / Not Under Warranty pass through
+                    # only the universal gates. NUW's previous
+                    # customer-signature gate is intentionally NOT
+                    # ported here per the developer's decision to treat
+                    # only quotation_type=='Repair' as a "repair sales
+                    # order" for gating purposes.
                     confirm_btns[1].set('invisible',
                         "(state not in ('draft', 'sent')) or "
-                        "(x_studio_quotation_type == 'Repair' "
-                        "and not x_studio_rug_approved "
-                        "and not x_studio_rug_rejected) or "
-                        "(x_studio_rug_rejected and not x_customer_signed) or "
-                        "(x_studio_quotation_type == 'Not Under Warranty' "
-                        "and not x_customer_signed) or "
-                        "(not x_repair_stock_ok) or "
                         "(x_studio_order_payment_method == 'Credit' "
                         "and x_studio_over_credit "
-                        "and not x_studio_credit_limit_approved)"
+                        "and not x_studio_credit_limit_approved) or "
+                        "(x_studio_quotation_type == 'Repair' and ("
+                        "(not x_studio_rug_approved and not x_studio_rug_rejected) "
+                        "or (x_studio_rug_rejected and not x_customer_signed) "
+                        "or (not x_repair_stock_ok)"
+                        "))"
                     )
                     for btn in confirm_btns[2:]:
                         btn.set('invisible', '1')
