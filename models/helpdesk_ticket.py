@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import datetime
+
 from lxml import etree
 from odoo import api, fields, models
 from odoo.exceptions import UserError
@@ -352,6 +354,321 @@ class HelpdeskTicket(models.Model):
         string='Repair Complete Stage Updated',
     )
 
+    # ─────────────────────────────────────────────────────────────────
+    # Cluster 5 — Stage-validation computes
+    # ─────────────────────────────────────────────────────────────────
+    # Verbatim ports of the Studio compute strings. Side effects
+    # preserved exactly: stage writes, audit-slot writes,
+    # datetime.datetime.now() usage, self._uid audit, and the
+    # x_studio_items / x_studio_qty / x_studio_sales_price copy-out
+    # pattern in the delivered/task-status flows. Behaviour identical
+    # to Studio; only ownership moves to Python.
+
+    x_studio_fsm_task_done = fields.Boolean(
+        string='FSM Task Done',
+        compute='_compute_x_studio_fsm_task_done',
+        store=False,
+        readonly=True,
+    )
+
+    @api.depends('fsm_task_ids')
+    def _compute_x_studio_fsm_task_done(self):
+        for rec in self:
+            task_status = False
+            for line in rec.fsm_task_ids:
+                if line.fsm_done == True:
+                    task_status = True
+                if line.x_studio_end_quick_repair == True:
+                    task_status = True
+            rec['x_studio_fsm_task_done'] = task_status
+
+    x_studio_fully_paid_so = fields.Boolean(
+        string='Fully Paid SO',
+        compute='_compute_x_studio_fully_paid_so',
+        store=False,
+        readonly=True,
+    )
+
+    @api.depends('fsm_task_ids')
+    def _compute_x_studio_fully_paid_so(self):
+        for rec in self:
+            valid = False
+            for invoices in rec.fsm_task_ids:
+                if invoices.x_studio_fully_invoiced_so == True:
+                    valid = True
+                if invoices.x_studio_end_quick_repair == True:
+                    valid = True
+            rec['x_studio_fully_paid_so'] = valid
+
+    x_studio_valid_confirm_return = fields.Boolean(
+        string='Valid Confirm Return',
+        compute='_compute_x_studio_valid_confirm_return',
+        store=False,
+        readonly=True,
+    )
+
+    @api.depends('picking_ids')
+    def _compute_x_studio_valid_confirm_return(self):
+        for rec in self:
+            valid = False
+            for line in rec.picking_ids:
+                if line.state == 'done':
+                    valid = True
+            rec['x_studio_valid_confirm_return'] = valid
+
+    x_studio_valid_return = fields.Boolean(
+        string='Valid Return',
+        compute='_compute_x_studio_valid_return',
+        store=False,
+        readonly=True,
+    )
+
+    @api.depends('picking_ids')
+    def _compute_x_studio_valid_return(self):
+        for rec in self:
+            valid = False
+            for line in rec.picking_ids:
+                if line.state != 'cancel':
+                    valid = True
+            rec['x_studio_valid_return'] = valid
+
+    x_studio_user_location_validation = fields.Boolean(
+        string='User Location Validation',
+        compute='_compute_x_studio_user_location_validation',
+        store=False,
+        readonly=True,
+    )
+
+    @api.depends('x_studio_return_receipt_location')
+    def _compute_x_studio_user_location_validation(self):
+        for rec in self:
+            valid = False
+            if rec.x_studio_return_receipt_location:
+                loc = self.env['stock.location'].search([
+                    ('id', '=', rec.x_studio_return_receipt_location.id),
+                    ('x_studio_users_stock_location', 'ilike', self._uid),
+                    ('active', '=', True),
+                ], limit=1)
+                if loc:
+                    valid = False
+                else:
+                    valid = True
+            rec['x_studio_user_location_validation'] = valid
+
+    x_studio_valid_confirmed_so = fields.Boolean(
+        string='Valid Confirmed SO',
+        compute='_compute_x_studio_valid_confirmed_so',
+        store=False,
+        readonly=True,
+    )
+
+    @api.depends('fsm_task_ids')
+    def _compute_x_studio_valid_confirmed_so(self):
+        for rec in self:
+            company_ids = rec.env.context.get('allowed_company_ids', [rec.env.user.company_id.id])
+            company = self.env['res.company'].browse(company_ids[0])
+            valid = False
+            for invoices in rec.fsm_task_ids:
+                if invoices.x_studio_valid_confirm_so == True:
+                    valid = True
+            if valid == True:
+                if rec.x_studio_estimation_sent_stage_updated == False:
+                    rec['x_studio_estimation_sent_stage_updated'] = True
+                    if company.id == 1:
+                        rec['stage_id'] = 10
+                    else:
+                        rec['stage_id'] = 29
+                    rec['x_studio_stage_date'] = datetime.datetime.now()
+                    rec['x_studio_created_by_4'] = self._uid
+                    rec['x_studio_created_on_4'] = datetime.datetime.now()
+            rec['x_studio_valid_confirmed_so'] = valid
+
+    x_studio_valid_confirmed2_so = fields.Boolean(
+        string='Valid Confirmed2 SO',
+        compute='_compute_x_studio_valid_confirmed2_so',
+        store=False,
+        readonly=True,
+    )
+
+    @api.depends('fsm_task_ids')
+    def _compute_x_studio_valid_confirmed2_so(self):
+        for rec in self:
+            company_ids = rec.env.context.get('allowed_company_ids', [rec.env.user.company_id.id])
+            company = self.env['res.company'].browse(company_ids[0])
+            valid = False
+            for invoices in rec.fsm_task_ids:
+                if invoices.x_studio_valid_confirm2_so == True:
+                    valid = True
+            if valid == True:
+                if rec.x_studio_estimation_approved_stage_updated == False:
+                    rec['x_studio_estimation_approved_stage_updated'] = True
+                    if company.id == 1:
+                        rec['stage_id'] = 12
+                    else:
+                        rec['stage_id'] = 31
+                    rec['x_studio_stage_date'] = datetime.datetime.now()
+                    rec['x_studio_created_by_5'] = self._uid
+                    rec['x_studio_created_on_5'] = datetime.datetime.now()
+            rec['x_studio_valid_confirmed2_so'] = valid
+
+    x_studio_valid_invoiced_so = fields.Boolean(
+        string='Valid Invoiced SO',
+        compute='_compute_x_studio_valid_invoiced_so',
+        store=False,
+        readonly=True,
+    )
+
+    @api.depends('fsm_task_ids')
+    def _compute_x_studio_valid_invoiced_so(self):
+        for rec in self:
+            company_ids = rec.env.context.get('allowed_company_ids', [rec.env.user.company_id.id])
+            company = self.env['res.company'].browse(company_ids[0])
+            valid = False
+            for invoices in rec.fsm_task_ids:
+                if invoices.sale_order_id.x_studio_order_payment_method == 'Credit':
+                    valid = False
+                else:
+                    if invoices.x_studio_valid_invoiced_so == True:
+                        valid = True
+            if valid == True:
+                if rec.x_studio_repair_complete_stage_updated == False:
+                    if rec.x_studio_invoice_stage_updated == False:
+                        if company.id == 1:
+                            rec['stage_id'] = 3
+                        else:
+                            rec['stage_id'] = 22
+                        rec['x_studio_stage_date'] = datetime.datetime.now()
+                        rec['x_studio_created_by_6'] = self._uid
+                        rec['x_studio_created_on_6'] = datetime.datetime.now()
+                        rec['x_studio_invoice_stage_updated'] = True
+            rec['x_studio_valid_invoiced_so'] = valid
+
+    x_studio_valid_delivered_so = fields.Boolean(
+        string='Valid Delivered SO',
+        compute='_compute_x_studio_valid_delivered_so',
+        store=False,
+        readonly=True,
+    )
+
+    @api.depends('fsm_task_ids')
+    def _compute_x_studio_valid_delivered_so(self):
+        for rec in self:
+            company_ids = rec.env.context.get('allowed_company_ids', [rec.env.user.company_id.id])
+            company = self.env['res.company'].browse(company_ids[0])
+            valid = False
+            valid2 = False
+            for invoices in rec.fsm_task_ids:
+                if invoices.x_studio_valid_delivered_so == True:
+                    valid = True
+                if invoices.x_studio_valid_delivered_so2 == True:
+                    valid2 = True
+            if valid2 == True:
+                if rec.x_studio_repair_complete_stage_updated == False:
+                    if company.id == 1:
+                        rec['stage_id'] = 9
+                    else:
+                        rec['stage_id'] = 28
+                    rec['x_studio_stage_date'] = datetime.datetime.now()
+                    rec['x_studio_created_by_8'] = self._uid
+                    rec['x_studio_created_on_8'] = datetime.datetime.now()
+                    rec['x_studio_repair_complete_stage_updated'] = True
+
+                    so_items = self.env['sale.order.line'].search([
+                        ('order_id', '=', rec.x_studio_sale_order.id),
+                    ])
+                    if so_items:
+                        tot_item_ids = []
+                        qty = []
+                        prices = []
+                        for items in so_items:
+                            if items.product_uom_qty > 0:
+                                tot_item_ids.append(items.product_id.id)
+                                qty.append(items.product_uom_qty)
+                                prices.append(items.price_unit)
+                        rec['x_studio_items'] = [(6, 0, tot_item_ids)]
+                        rec['x_studio_qty'] = qty
+                        rec['x_studio_sales_price'] = prices
+            else:
+                if valid == True:
+                    if rec.x_studio_repair_started_stage_updated == False:
+                        if company.id == 1:
+                            rec['stage_id'] = 11
+                        else:
+                            rec['stage_id'] = 30
+                        rec['x_studio_stage_date'] = datetime.datetime.now()
+                        rec['x_studio_created_by_7'] = self._uid
+                        rec['x_studio_created_on_7'] = datetime.datetime.now()
+                        rec['x_studio_repair_started_stage_updated'] = True
+            rec['x_studio_valid_delivered_so'] = valid
+
+    x_studio_task_status = fields.Boolean(
+        string='Task Status',
+        compute='_compute_x_studio_task_status',
+        store=False,
+        readonly=True,
+    )
+
+    @api.depends('fsm_task_ids')
+    def _compute_x_studio_task_status(self):
+        for rec in self:
+            company_ids = rec.env.context.get('allowed_company_ids', [rec.env.user.company_id.id])
+            company = self.env['res.company'].browse(company_ids[0])
+            task_status = False
+            for line in rec.fsm_task_ids:
+                if line.fsm_done == True:
+                    task_status = True
+                if line.x_studio_end_quick_repair == True:
+                    task_status = True
+
+            if task_status == False:
+                if rec.x_studio_sale_order == True:
+                    if rec.x_studio_sale_order.state == 'cancel':
+                        task_status = True
+                    else:
+                        delivery1 = self.env['stock.picking'].search([
+                            ('sale_id', '=', rec.x_studio_sale_order.id),
+                        ], limit=1)
+                        if delivery1:
+                            delivery = self.env['stock.picking'].search([
+                                ('sale_id', '=', rec.x_studio_sale_order.id),
+                                ('state', 'not in', ['done', 'cancel']),
+                            ], limit=1)
+                            if delivery:
+                                task_status = False
+                            else:
+                                task_status = True
+                        else:
+                            task_status = False
+
+            if task_status == True:
+                if rec.x_studio_repair_complete_stage_updated == False:
+                    if company.id == 1:
+                        rec['stage_id'] = 9
+                    else:
+                        rec['stage_id'] = 28
+                    rec['x_studio_stage_date'] = datetime.datetime.now()
+                    rec['x_studio_created_by_8'] = self._uid
+                    rec['x_studio_created_on_8'] = datetime.datetime.now()
+                    rec['x_studio_repair_complete_stage_updated'] = True
+
+                    so_items = self.env['sale.order.line'].search([
+                        ('order_id', '=', rec.x_studio_sale_order.id),
+                    ])
+                    if so_items:
+                        tot_item_ids = []
+                        qty = []
+                        prices = []
+                        for items in so_items:
+                            if items.product_uom_qty > 0:
+                                tot_item_ids.append(items.product_id.id)
+                                qty.append(items.product_uom_qty)
+                                prices.append(items.price_unit)
+                        rec['x_studio_items'] = [(6, 0, tot_item_ids)]
+                        rec['x_studio_qty'] = qty
+                        rec['x_studio_sales_price'] = prices
+
+            rec['x_studio_task_status'] = task_status
+
     @api.model
     def _migrate_studio_rug_cluster_to_base(self):
         """Complete the Cluster 1 (RUG) migration by transferring
@@ -471,6 +788,47 @@ class HelpdeskTicket(models.Model):
         rows = Field.search([
             ('model', '=', 'helpdesk.ticket'),
             ('name', 'in', cluster4),
+        ])
+        manual_rows = rows.filtered(lambda f: f.state == 'manual')
+        if manual_rows:
+            manual_rows.write({'state': 'base'})
+
+        ModelData = self.env['ir.model.data'].sudo()
+        studio_pins = ModelData.search([
+            ('model', '=', 'ir.model.fields'),
+            ('res_id', 'in', rows.ids),
+            ('module', '=', 'studio_customization'),
+        ])
+        if studio_pins:
+            studio_pins.unlink()
+
+    @api.model
+    def _migrate_studio_stage_validation_cluster_to_base(self):
+        """Cluster 5 (Stage-validation computes) migration. Ten
+        computed Boolean fields whose compute strings were ported
+        verbatim from Studio, including the side-effecting stage
+        writes and audit-slot writes.
+
+        Same idempotent pattern as previous clusters:
+          1. state 'manual' → 'base' on all ten cluster rows
+          2. drop studio_customization ir.model.data pins
+        """
+        cluster5 = [
+            'x_studio_fsm_task_done',
+            'x_studio_fully_paid_so',
+            'x_studio_valid_confirm_return',
+            'x_studio_valid_return',
+            'x_studio_user_location_validation',
+            'x_studio_valid_confirmed_so',
+            'x_studio_valid_confirmed2_so',
+            'x_studio_valid_invoiced_so',
+            'x_studio_valid_delivered_so',
+            'x_studio_task_status',
+        ]
+        Field = self.env['ir.model.fields'].sudo()
+        rows = Field.search([
+            ('model', '=', 'helpdesk.ticket'),
+            ('name', 'in', cluster5),
         ])
         manual_rows = rows.filtered(lambda f: f.state == 'manual')
         if manual_rows:

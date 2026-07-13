@@ -36,6 +36,17 @@
          cluster migration). Idempotent. -->
     <function model="helpdesk.ticket" name="_migrate_studio_stage_marker_cluster_to_base"/>
 
+    <!-- Complete Cluster 5 (Stage-validation computes) Studio-to-Python
+         migration: same treatment for the ten computed Boolean fields
+         whose compute strings were ported verbatim from Studio,
+         including the side-effecting stage writes and audit-slot
+         writes (x_studio_valid_confirmed_so, valid_confirmed2_so,
+         valid_invoiced_so, valid_delivered_so, task_status, plus the
+         simple valid_confirm_return / valid_return /
+         user_location_validation / fsm_task_done / fully_paid_so
+         computes). Idempotent. -->
+    <function model="helpdesk.ticket" name="_migrate_studio_stage_validation_cluster_to_base"/>
+
     <!-- Deactivates the Studio automation "RR - Auto Select Product for RUG Repairs-33"
          which unconditionally clears product_id when x_studio_serial_no changes,
          overwriting our Python onchange. Clearing logic is in _onchange_serial_no_product. -->
