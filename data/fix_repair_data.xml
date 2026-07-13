@@ -62,6 +62,16 @@
          items M2M, qty, sales_price). Idempotent. -->
     <function model="helpdesk.ticket" name="_migrate_studio_serial_product_cluster_to_base"/>
 
+    <!-- Complete Cluster 8 (Diagnostic / misc — final cluster)
+         Studio-to-Python migration: 20 remaining fields including
+         diagnostic fields (branch, city, driver_name, warranty_card),
+         Studio-related utility fields (stage_name, tracking, cccc/
+         cccc3), computed fields (sale_order, material_availability,
+         re_estimate_count/status), and the double-x-prefix
+         x_x_studio_created_from_help_ticket_stock_picking_count.
+         Idempotent. -->
+    <function model="helpdesk.ticket" name="_migrate_studio_misc_cluster_to_base"/>
+
     <!-- Deactivates the Studio automation "RR - Auto Select Product for RUG Repairs-33"
          which unconditionally clears product_id when x_studio_serial_no changes,
          overwriting our Python onchange. Clearing logic is in _onchange_serial_no_product. -->

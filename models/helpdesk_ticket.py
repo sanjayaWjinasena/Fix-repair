@@ -807,6 +807,222 @@ class HelpdeskTicket(models.Model):
         string='Sales Price',
     )
 
+    # ─────────────────────────────────────────────────────────────────
+    # Cluster 8 — Diagnostic / misc (final cluster)
+    # ─────────────────────────────────────────────────────────────────
+    # Final 20 remaining Studio fields on helpdesk.ticket. Includes
+    # useful diagnostic fields (branch, city, driver_name, warranty
+    # card, sale_order compute, re-estimate flags), Studio-related
+    # utility fields (stage_name, tracking, cccc/cccc3 auto-renames),
+    # and the double-x-prefix picking count field. All preserved
+    # 1:1 with Studio names, ttypes, selections, and compute logic.
+
+    x_studio_balance_due = fields.Float(
+        string='Balance Due',
+    )
+
+    x_studio_branch = fields.Selection(
+        selection=[
+            ('Colombo', 'Colombo'),
+            ('Gampah', 'Gampah'),
+        ],
+        string='Branch',
+    )
+
+    # CCCC — related from ticket_type_id.name. Studio auto-generated
+    # name suggests it was a test / rename artefact. Kept for schema
+    # compatibility.
+    x_studio_cccc = fields.Char(
+        string='CCCC',
+        related='ticket_type_id.name',
+        store=True,
+        readonly=True,
+    )
+
+    # CCCC3 — Studio auto-generated related to stage_id.
+    x_studio_cccc3 = fields.Many2one(
+        'helpdesk.stage',
+        string='CCCC3',
+        related='stage_id',
+        store=True,
+        readonly=True,
+    )
+
+    x_studio_city = fields.Selection(
+        selection=[
+            ('Gampaha', 'Gampaha'),
+            ('Colombo', 'Colombo'),
+            ('Yakkala', 'Yakkala'),
+        ],
+        string='City',
+    )
+
+    x_studio_driver_name = fields.Char(
+        string='Driver Name',
+    )
+
+    x_studio_job_location = fields.Selection(
+        selection=[
+            ('Centre Repair', 'Centre Repair'),
+            ('Factory Repair', 'Factory Repair'),
+        ],
+        string='Job Location',
+    )
+
+    x_studio_material_availability = fields.Selection(
+        selection=[
+            ('Material Not Ready', 'Material Not Ready'),
+            ('Material Ready', 'Material Ready'),
+        ],
+        string='Material Availability',
+        compute='_compute_x_studio_material_availability',
+        store=False,
+        readonly=True,
+    )
+
+    @api.depends('fsm_task_ids')
+    def _compute_x_studio_material_availability(self):
+        for rec in self:
+            val = 'Material Not Ready'
+            for invoices in rec.fsm_task_ids:
+                val = invoices.x_studio_material_availability
+            rec['x_studio_material_availability'] = val
+
+    # Tested OK — Studio-defined selection with 'Quick Repair' key
+    # mapped to 'Tested OK' display. Studio row has an empty compute
+    # string; effectively a stored readonly field with no auto-compute.
+    x_studio_quick_repair_status = fields.Selection(
+        selection=[
+            ('None', 'None'),
+            ('Quick Repair', 'Tested OK'),
+        ],
+        string='Tested OK',
+        store=True,
+        readonly=True,
+    )
+
+    x_studio_re_estimate_count = fields.Integer(
+        string='Re-estimate Count',
+        compute='_compute_x_studio_re_estimate_count',
+        store=False,
+        readonly=True,
+    )
+
+    @api.depends('fsm_task_ids')
+    def _compute_x_studio_re_estimate_count(self):
+        for rec in self:
+            val = 0
+            for invoices in rec.fsm_task_ids:
+                val = invoices.sale_order_id.x_studio_re_estimate_count
+            rec['x_studio_re_estimate_count'] = val
+
+    x_studio_re_estimate_status = fields.Selection(
+        selection=[
+            ('None', 'None'),
+            ('Re-estimated', 'Re-estimated'),
+        ],
+        string='Re-estimate Status',
+        compute='_compute_x_studio_re_estimate_status',
+        store=False,
+        readonly=True,
+    )
+
+    @api.depends('fsm_task_ids')
+    def _compute_x_studio_re_estimate_status(self):
+        for rec in self:
+            val = 'None'
+            for invoices in rec.fsm_task_ids:
+                if invoices.sale_order_id.x_studio_re_estimate_count > 0:
+                    val = 'Re-estimated'
+            rec['x_studio_re_estimate_status'] = val
+
+    # Studio-generated "New Related Field" one2many — related to
+    # project_id.task_ids. Auto-named by Studio (FNjnC / QuqN1
+    # suffixes are UUID fragments).
+    x_studio_related_field_FNjnC = fields.One2many(
+        'project.task',
+        string='New Related Field',
+        related='project_id.task_ids',
+        store=False,
+        readonly=True,
+    )
+
+    x_studio_related_field_QuqN1 = fields.Integer(
+        string='New Related Field',
+        related='project_id.task_ids.helpdesk_ticket_id.id',
+        store=True,
+        readonly=True,
+    )
+
+    x_studio_related_information = fields.Binary(
+        string='Related Information',
+    )
+
+    # Sales Order — first non-empty sale_order_id found across the
+    # linked fsm tasks (Studio's LAST-match semantics preserved:
+    # loop overwrites `so` each iteration, so the last task with an
+    # SO wins).
+    x_studio_sale_order = fields.Many2one(
+        'sale.order',
+        string='Sales Order',
+        compute='_compute_x_studio_sale_order',
+        store=False,
+        readonly=True,
+    )
+
+    @api.depends('fsm_task_ids')
+    def _compute_x_studio_sale_order(self):
+        for rec in self:
+            so = False
+            for invoices in rec.fsm_task_ids:
+                if invoices.sale_order_id != False:
+                    so = invoices.sale_order_id.id
+            rec['x_studio_sale_order'] = so
+
+    x_studio_stage_name = fields.Char(
+        string='Stage Name',
+        related='stage_id.name',
+        store=True,
+        readonly=True,
+    )
+
+    x_studio_tracking = fields.Selection(
+        selection=[
+            ('serial', 'By Unique Serial Number'),
+            ('lot', 'By Lots'),
+            ('none', 'No Tracking'),
+        ],
+        string='Tracking',
+        related='product_id.tracking',
+        store=False,
+        readonly=True,
+    )
+
+    x_studio_vehicle_details = fields.Char(
+        string='Vehicle Details',
+    )
+
+    x_studio_warranty_card = fields.Binary(
+        string='Warranty Card',
+    )
+
+    # Double-x-prefix Studio field (Odoo added an extra `x_` at some
+    # rename step; the field name is now literally `x_x_studio_...`).
+    # Counts stock.picking records that reference this ticket via
+    # x_studio_created_from_help_ticket. Compute preserved verbatim.
+    x_x_studio_created_from_help_ticket_stock_picking_count = fields.Integer(
+        string='Created from Help Ticket count',
+        compute='_compute_x_x_studio_created_from_help_ticket_stock_picking_count',
+        store=False,
+    )
+
+    def _compute_x_x_studio_created_from_help_ticket_stock_picking_count(self):
+        for record in self:
+            record['x_x_studio_created_from_help_ticket_stock_picking_count'] = \
+                self.env['stock.picking'].search_count([
+                    ('x_studio_created_from_help_ticket', '=', record.id),
+                ])
+
     @api.model
     def _migrate_studio_rug_cluster_to_base(self):
         """Complete the Cluster 1 (RUG) migration by transferring
@@ -1053,6 +1269,54 @@ class HelpdeskTicket(models.Model):
         rows = Field.search([
             ('model', '=', 'helpdesk.ticket'),
             ('name', 'in', cluster7),
+        ])
+        manual_rows = rows.filtered(lambda f: f.state == 'manual')
+        if manual_rows:
+            manual_rows.write({'state': 'base'})
+
+        ModelData = self.env['ir.model.data'].sudo()
+        studio_pins = ModelData.search([
+            ('model', '=', 'ir.model.fields'),
+            ('res_id', 'in', rows.ids),
+            ('module', '=', 'studio_customization'),
+        ])
+        if studio_pins:
+            studio_pins.unlink()
+
+    @api.model
+    def _migrate_studio_misc_cluster_to_base(self):
+        """Cluster 8 (Diagnostic / misc) — the final cluster. 20
+        remaining Studio fields on helpdesk.ticket including the
+        double-x-prefix picking count field.
+
+        Same idempotent pattern as previous clusters.
+        """
+        cluster8 = [
+            'x_studio_balance_due',
+            'x_studio_branch',
+            'x_studio_cccc',
+            'x_studio_cccc3',
+            'x_studio_city',
+            'x_studio_driver_name',
+            'x_studio_job_location',
+            'x_studio_material_availability',
+            'x_studio_quick_repair_status',
+            'x_studio_re_estimate_count',
+            'x_studio_re_estimate_status',
+            'x_studio_related_field_FNjnC',
+            'x_studio_related_field_QuqN1',
+            'x_studio_related_information',
+            'x_studio_sale_order',
+            'x_studio_stage_name',
+            'x_studio_tracking',
+            'x_studio_vehicle_details',
+            'x_studio_warranty_card',
+            'x_x_studio_created_from_help_ticket_stock_picking_count',
+        ]
+        Field = self.env['ir.model.fields'].sudo()
+        rows = Field.search([
+            ('model', '=', 'helpdesk.ticket'),
+            ('name', 'in', cluster8),
         ])
         manual_rows = rows.filtered(lambda f: f.state == 'manual')
         if manual_rows:
