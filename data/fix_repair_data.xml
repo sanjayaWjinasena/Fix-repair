@@ -135,6 +135,16 @@
     <function model="helpdesk.ticket"
               name="_deactivate_migrated_other_automations"/>
 
+    <!-- Repin every Studio-authored ir.ui.view on the repair scope
+         from module='studio_customization' to module='Fix-repair'.
+         Arch preserved verbatim; only the ownership marker changes.
+         Idempotent. Covers ~34 views: helpdesk.ticket form/kanban/
+         tree, helpdesk.stage overlays, project.task overlays,
+         res.users overlays, and the 21 primary/customization views
+         for the 5 x_repair_* catalogue models. -->
+    <function model="helpdesk.ticket"
+              name="_migrate_studio_views_to_native"/>
+
     <!-- Deactivates the Studio automation "RR - Auto Select Product for RUG Repairs-33"
          which unconditionally clears product_id when x_studio_serial_no changes,
          overwriting our Python onchange. Clearing logic is in _onchange_serial_no_product. -->

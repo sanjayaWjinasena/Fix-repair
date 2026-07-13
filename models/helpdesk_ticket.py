@@ -3053,6 +3053,78 @@ class HelpdeskTicket(models.Model):
         if active_autos:
             active_autos.write({'active': False})
 
+    @api.model
+    def _migrate_studio_views_to_native(self):
+        """Repin every Studio-authored ir.ui.view on the repair scope
+        from module='studio_customization' to module='Fix-repair'.
+        Arch stays verbatim on the DB row; only the ownership marker
+        moves.
+
+        Scope covers the 11 models we've already migrated the field
+        graph for. Views on models outside this scope are left alone
+        so unrelated Studio customizations remain untouched.
+
+        Idempotent: rows whose module is already 'Fix-repair' are
+        skipped. New xml_id is a stable deterministic slug so re-runs
+        find the same record.
+        """
+        scope_models = (
+            'helpdesk.ticket',
+            'helpdesk.ticket.type',
+            'helpdesk.stage',
+            'project.task',
+            'res.users',
+            'res.config.settings',
+            'x_repair_accounts',
+            'x_repair_reason',
+            'x_repair_reason_custom',
+            'x_repair_stages',
+            'x_repair_sub_reason',
+        )
+        Data = self.env['ir.model.data'].sudo()
+        View = self.env['ir.ui.view'].sudo()
+
+        studio_pins = Data.search([
+            ('model', '=', 'ir.ui.view'),
+            ('module', '=', 'studio_customization'),
+        ])
+        if not studio_pins:
+            return
+        views = View.browse(studio_pins.mapped('res_id')).exists()
+        in_scope_ids = set(
+            views.filtered(lambda v: v.model in scope_models).ids
+        )
+        pins_in_scope = studio_pins.filtered(
+            lambda p: p.res_id in in_scope_ids
+        )
+        if not pins_in_scope:
+            return
+
+        for pin in pins_in_scope:
+            view = View.browse(pin.res_id)
+            if not view.exists():
+                continue
+            slug = 'view_%s_%s_%s' % (
+                view.model.replace('.', '_'),
+                view.type,
+                view.id,
+            )
+            # Guard: if Fix-repair already owns a view with this slug,
+            # this pin has already been migrated on a prior run. Just
+            # drop the stale studio_customization row.
+            existing = Data.search([
+                ('module', '=', 'Fix-repair'),
+                ('name', '=', slug),
+            ], limit=1)
+            if existing:
+                pin.unlink()
+                continue
+            pin.write({
+                'module': 'Fix-repair',
+                'name': slug,
+                'noupdate': True,
+            })
+
     def _repair_studio_auto_create_repair_serial_nos(self):
         """Studio server action id 1994 native port.
 
