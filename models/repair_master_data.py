@@ -175,3 +175,43 @@ class _RepairMasterDataMigration(models.AbstractModel):
         ])
         if studio_field_pins:
             studio_field_pins.unlink()
+
+        # 4. Create Fix-repair ir.model.data pins for the models and
+        # their fields. Without an ownership pin, Odoo's registry
+        # can't associate the ir.model row with our Python classes
+        # at load time — the ir.model row exists with state='base'
+        # but the class never registers into pool.models, producing
+        # KeyError('x_repair_accounts') on any RPC call to it.
+        #
+        # Naming convention matches what Odoo auto-generates:
+        #   ir.model row       → 'model_' + model.replace('.', '_')
+        #   ir.model.fields    → 'field_' + model.replace('.', '_') + '__' + name
+        for model_row in model_rows:
+            xmlid = 'model_' + model_row.model.replace('.', '_')
+            existing = ModelData.search([
+                ('module', '=', 'Fix-repair'),
+                ('name', '=', xmlid),
+            ], limit=1)
+            if not existing:
+                ModelData.create({
+                    'module': 'Fix-repair',
+                    'name': xmlid,
+                    'model': 'ir.model',
+                    'res_id': model_row.id,
+                    'noupdate': True,
+                })
+
+        for field_row in field_rows:
+            xmlid = 'field_' + field_row.model.replace('.', '_') + '__' + field_row.name
+            existing = ModelData.search([
+                ('module', '=', 'Fix-repair'),
+                ('name', '=', xmlid),
+            ], limit=1)
+            if not existing:
+                ModelData.create({
+                    'module': 'Fix-repair',
+                    'name': xmlid,
+                    'model': 'ir.model.fields',
+                    'res_id': field_row.id,
+                    'noupdate': True,
+                })
