@@ -121,19 +121,32 @@ class _RepairMasterDataMigration(models.AbstractModel):
         Field = self.env['ir.model.fields'].sudo()
         ModelData = self.env['ir.model.data'].sudo()
 
-        # 1. Model rows: state='manual' → 'base'
+        # 1. Model rows: state='manual' → 'base'.
+        # ir.model.write() blocks 'state' via a hard UserError
+        # ("Field 'Type' cannot be modified on models."), so we go
+        # around the ORM with raw SQL. Safe here because we only
+        # touch the state column on rows we own, and the Python
+        # classes are already registered — the flip just aligns the
+        # metadata with the actual runtime state.
         model_rows = Model.search([('model', 'in', model_names)])
         manual_models = model_rows.filtered(lambda m: m.state == 'manual')
         if manual_models:
-            manual_models.write({'state': 'base'})
+            self.env.cr.execute(
+                "UPDATE ir_model SET state = 'base' WHERE id IN %s",
+                (tuple(manual_models.ids),),
+            )
+            manual_models.invalidate_recordset(['state'])
 
-        # 2. All fields on those models: state='manual' → 'base'
+        # 2. All fields on those models: state='manual' → 'base'.
+        # ir.model.fields.write({'state': ...}) IS permitted through
+        # the ORM (proved by every previous cluster migration), so
+        # standard write is fine here.
         field_rows = Field.search([('model', 'in', model_names)])
         manual_fields = field_rows.filtered(lambda f: f.state == 'manual')
         if manual_fields:
             manual_fields.write({'state': 'base'})
 
-        # 3. Drop studio_customization pins on both layers
+        # 3. Drop studio_customization pins on both layers.
         studio_model_pins = ModelData.search([
             ('model', '=', 'ir.model'),
             ('res_id', 'in', model_rows.ids),
