@@ -99,6 +99,16 @@
          through these. Idempotent. -->
     <function model="res.users" name="_migrate_studio_res_users_cluster_to_base"/>
 
+    <!-- Migrate the five custom Studio catalogue models
+         (x_repair_accounts, x_repair_reason, x_repair_reason_custom,
+         x_repair_stages, x_repair_sub_reason) from Studio-manual to
+         Python-owned. Flips state='manual'→'base' on both the
+         ir.model rows and their ir.model.fields rows, and unlinks
+         studio_customization pins on both layers. DB tables and
+         data untouched. Idempotent. -->
+    <function model="x_repair_master_data.migration"
+              name="_migrate_studio_repair_master_data_to_base"/>
+
     <!-- Deactivates the Studio automation "RR - Auto Select Product for RUG Repairs-33"
          which unconditionally clears product_id when x_studio_serial_no changes,
          overwriting our Python onchange. Clearing logic is in _onchange_serial_no_product. -->
