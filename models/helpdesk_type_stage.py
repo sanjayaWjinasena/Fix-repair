@@ -64,6 +64,26 @@ class HelpdeskStage(models.Model):
         string='Company',
     )
 
+    def _jin_set_company_id(self):
+        """Studio server action id 2760 native port. Sets
+        x_studio_company_id from the current company context.
+        Called from the migrated create() hook AND from the
+        (delegated) ir.actions.server code."""
+        for record in self:
+            company_id = self.env.context.get(
+                'allowed_company_ids', [self.env.user.company_id.id]
+            )[0]
+            record.x_studio_company_id = company_id
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Replaces automation 329 'JIN - Company Id in Helpdesk
+        Stage' (on_create_or_write, trigger_field=create_date —
+        fire-on-create-only pattern)."""
+        records = super().create(vals_list)
+        records._jin_set_company_id()
+        return records
+
     @api.model
     def _migrate_studio_stage_cluster_to_base(self):
         """Flip state='manual'→'base' and unlink studio_customization

@@ -3027,6 +3027,32 @@ class HelpdeskTicket(models.Model):
         if active_autos:
             active_autos.write({'active': False})
 
+    @api.model
+    def _deactivate_migrated_other_automations(self):
+        """Deactivate the remaining 8 base.automation records that
+        target models other than helpdesk.ticket. Each one now has a
+        corresponding native Python create/write hook on its target
+        model.
+
+        Automations deactivated:
+          329 'JIN Company Id in Helpdesk Stage'    → helpdesk.stage.create()
+          331 'JIN Company Id in Repair Accounts'   → x_repair_accounts.create()
+          302 'JIN Company Id in Repair Reason'     → x_repair_reason.create()
+          303 'JIN Company Id in Repair Reason - Customer'
+                                                    → x_repair_reason_custom.create()
+          306 'JIN Company Id in Repair Stages'     → x_repair_stages.create()
+          304 'JIN Company Id in Repair Sub Reason' → x_repair_sub_reason.create()
+          179 'RR Auto Update Helpdesk Pipeline Status - 1'
+                                                    → project.task.create()
+          250 'Super User Validate'                 → res.users.create()/write()
+        """
+        Automation = self.env['base.automation'].sudo()
+        ids_to_deactivate = [329, 331, 302, 303, 306, 304, 179, 250]
+        autos = Automation.browse(ids_to_deactivate).exists()
+        active_autos = autos.filtered(lambda a: a.active)
+        if active_autos:
+            active_autos.write({'active': False})
+
     def _repair_studio_auto_create_repair_serial_nos(self):
         """Studio server action id 1994 native port.
 
@@ -3219,6 +3245,28 @@ class HelpdeskTicket(models.Model):
             # of newly-created object_write actions.
             (1998, 'Available variables:',
              "record._repair_studio_update_rug_approval_in_pipeline()"),
+            # Tier 6 — actions on non-ticket models
+            #  6 "JIN Company Id" on the 5 catalogue models +
+            #  helpdesk.stage (all identical: set x_studio_company_id
+            #  from current company context).
+            (2666, 'x_studio_company_id',
+             "record._jin_set_company_id()"),
+            (2667, 'x_studio_company_id',
+             "record._jin_set_company_id()"),
+            (2668, 'x_studio_company_id',
+             "record._jin_set_company_id()"),
+            (2670, 'x_studio_company_id',
+             "record._jin_set_company_id()"),
+            (2760, 'x_studio_company_id',
+             "record._jin_set_company_id()"),
+            (2790, 'x_studio_company_id',
+             "record._jin_set_company_id()"),
+            # project.task pipeline promotion on task-create
+            (2003, 'fsm_task_count',
+             "record._repair_auto_update_helpdesk_pipeline_status_1()"),
+            # res.users super-user permission validation
+            (2544, 'x_studio_super_user_melt_items',
+             "record._super_user_validate()"),
         ]
         for action_id, guard, call in delegations:
             action = Server.browse(action_id).exists()

@@ -128,6 +128,13 @@
     <function model="helpdesk.ticket"
               name="_deactivate_migrated_ticket_automations"/>
 
+    <!-- Deactivate the remaining 8 base.automations on the ancillary
+         models (helpdesk.stage, x_repair_* catalogues, project.task,
+         res.users). Each is replaced by a native create() / write()
+         hook on its target model. Idempotent. -->
+    <function model="helpdesk.ticket"
+              name="_deactivate_migrated_other_automations"/>
+
     <!-- Deactivates the Studio automation "RR - Auto Select Product for RUG Repairs-33"
          which unconditionally clears product_id when x_studio_serial_no changes,
          overwriting our Python onchange. Clearing logic is in _onchange_serial_no_product. -->

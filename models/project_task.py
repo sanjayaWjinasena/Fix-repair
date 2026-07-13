@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import datetime
+
 from lxml import etree
 from odoo import api, fields, models
 from odoo.addons.industry_fsm_sale.models.project_task import Task as FsmSaleTask
@@ -343,6 +345,53 @@ class ProjectTask(models.Model):
         if 'sale_order_id' in vals and vals.get('sale_order_id'):
             self._sync_repair_flags()
         return result
+
+    def _repair_auto_update_helpdesk_pipeline_status_1(self):
+        """Studio server action id 2003 native port. When a task is
+        created for a helpdesk ticket that's still in an early stage
+        (New / Received at Factory) AND already has an FSM task,
+        promote the ticket to 'Diagnosis' and record audit slot 3.
+        """
+        for record in self:
+            if not record.helpdesk_ticket_id:
+                continue
+            company_id = self.env.context.get(
+                'allowed_company_ids', [self.env.user.company_id.id]
+            )[0]
+            company = self.env['res.company'].browse(company_id)
+            ticket = self.env['helpdesk.ticket'].search([
+                ('id', '=', record.helpdesk_ticket_id.id),
+            ], limit=1)
+            if not ticket:
+                continue
+            now = datetime.datetime.now()
+            if company.id == 1:
+                if ticket.stage_id.id == 1 or ticket.stage_id.id == 6:
+                    if ticket.fsm_task_count > 0:
+                        ticket.write({
+                            'stage_id': 2,
+                            'x_studio_stage_date': now,
+                            'x_studio_created_by_3': self.env.uid,
+                            'x_studio_created_on_3': now,
+                        })
+            else:
+                if ticket.stage_id.id == 20 or ticket.stage_id.id == 25:
+                    if ticket.fsm_task_count > 0:
+                        ticket.write({
+                            'stage_id': 21,
+                            'x_studio_stage_date': now,
+                            'x_studio_created_by_3': self.env.uid,
+                            'x_studio_created_on_3': now,
+                        })
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Replaces automation 179 'RR - Auto Update Helpdesk Pipeline
+        Status - 1' (on_create_or_write, trigger_field=create_date —
+        fire-on-create-only pattern)."""
+        records = super().create(vals_list)
+        records._repair_auto_update_helpdesk_pipeline_status_1()
+        return records
 
     def _fsm_create_sale_order(self):
         """Delegate to industry_fsm_sale's implementation, skipping industry_fsm_stock."""

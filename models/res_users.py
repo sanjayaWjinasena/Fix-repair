@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models
+from odoo.exceptions import UserError
 
 
 class ResUsers(models.Model):
@@ -35,6 +36,29 @@ class ResUsers(models.Model):
         'stock.location',
         string='Virtual Location',
     )
+
+    def _super_user_validate(self):
+        """Studio server action id 2544 native port. Guards that a
+        single user cannot hold BOTH x_studio_super_user_melt_items
+        and x_studio_super_user permissions simultaneously."""
+        for record in self:
+            if record.x_studio_super_user_melt_items and record.x_studio_super_user:
+                raise UserError(
+                    'Both the super user permissions can not be assigned to a single user.'
+                )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Replaces automation 250 'Super User Validate' — create branch."""
+        records = super().create(vals_list)
+        records._super_user_validate()
+        return records
+
+    def write(self, vals):
+        """Replaces automation 250 'Super User Validate' — write branch."""
+        result = super().write(vals)
+        self._super_user_validate()
+        return result
 
     @api.model
     def _migrate_studio_res_users_cluster_to_base(self):

@@ -20,6 +20,21 @@ class XRepairAccounts(models.Model):
     x_studio_rug_account = fields.Many2one('account.account', string='RUG Account')
     x_studio_sequence = fields.Integer(string='Sequence')
 
+    def _jin_set_company_id(self):
+        """Studio server action id 2790 native port."""
+        for record in self:
+            company_id = self.env.context.get(
+                'allowed_company_ids', [self.env.user.company_id.id]
+            )[0]
+            record.x_studio_company_id = company_id
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Replaces automation 331 'JIN - Company Id in Repair Accounts'."""
+        records = super().create(vals_list)
+        records._jin_set_company_id()
+        return records
+
 
 class XRepairReason(models.Model):
     """Master catalogue of repair reasons. Referenced by
@@ -37,6 +52,21 @@ class XRepairReason(models.Model):
     x_name = fields.Char(string='Repair Reason')
     x_studio_company_id = fields.Many2one('res.company', string='Company')
     x_studio_sequence = fields.Integer(string='Sequence')
+
+    def _jin_set_company_id(self):
+        """Studio server action id 2666 native port."""
+        for record in self:
+            company_id = self.env.context.get(
+                'allowed_company_ids', [self.env.user.company_id.id]
+            )[0]
+            record.x_studio_company_id = company_id
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Replaces automation 302 'JIN - Company Id in Repair Reason'."""
+        records = super().create(vals_list)
+        records._jin_set_company_id()
+        return records
 
 
 class XRepairReasonCustom(models.Model):
@@ -56,6 +86,21 @@ class XRepairReasonCustom(models.Model):
     x_studio_company_id = fields.Many2one('res.company', string='Company')
     x_studio_sequence = fields.Integer(string='Sequence')
 
+    def _jin_set_company_id(self):
+        """Studio server action id 2667 native port."""
+        for record in self:
+            company_id = self.env.context.get(
+                'allowed_company_ids', [self.env.user.company_id.id]
+            )[0]
+            record.x_studio_company_id = company_id
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Replaces automation 303 'JIN - Company Id in Repair Reason - Customer'."""
+        records = super().create(vals_list)
+        records._jin_set_company_id()
+        return records
+
 
 class XRepairStages(models.Model):
     """Alternative repair-stages catalogue (distinct from Odoo's
@@ -73,6 +118,21 @@ class XRepairStages(models.Model):
     x_studio_company_id = fields.Many2one('res.company', string='Company')
     x_studio_description = fields.Char(string='Description')
     x_studio_sequence = fields.Integer(string='Sequence')
+
+    def _jin_set_company_id(self):
+        """Studio server action id 2670 native port."""
+        for record in self:
+            company_id = self.env.context.get(
+                'allowed_company_ids', [self.env.user.company_id.id]
+            )[0]
+            record.x_studio_company_id = company_id
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Replaces automation 306 'JIN - Company Id in Repair Stages'."""
+        records = super().create(vals_list)
+        records._jin_set_company_id()
+        return records
 
 
 class XRepairSubReason(models.Model):
@@ -93,6 +153,21 @@ class XRepairSubReason(models.Model):
         string='Reason Code',
     )
     x_studio_sequence = fields.Integer(string='Sequence')
+
+    def _jin_set_company_id(self):
+        """Studio server action id 2668 native port."""
+        for record in self:
+            company_id = self.env.context.get(
+                'allowed_company_ids', [self.env.user.company_id.id]
+            )[0]
+            record.x_studio_company_id = company_id
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Replaces automation 304 'JIN - Company Id in Repair Sub Reason'."""
+        records = super().create(vals_list)
+        records._jin_set_company_id()
+        return records
 
 
 class _RepairMasterDataMigration(models.AbstractModel):
