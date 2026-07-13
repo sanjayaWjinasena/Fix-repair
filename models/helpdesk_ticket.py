@@ -2701,6 +2701,59 @@ class HelpdeskTicket(models.Model):
             record.x_studio_picking_id = prod_move.id
             record.x_studio_pick_id = prod_move.id
 
+    # ─────────────────────────────────────────────────────────────────
+    # Studio server actions — Python delegations (Tier 4: emails)
+    # ─────────────────────────────────────────────────────────────────
+    # Five email actions (Customer Letter + 4 Final Notice variants).
+    # All share the same pattern: guard on stage_id == 13
+    # (Handed Over to Customer), search the mail.template by id,
+    # send with recipient = partner, log message. Only the template
+    # id varies (56, 66, 67, 69, 70).
+    #
+    # The 'Repair Customer Letter has been sent to customer:'
+    # message body is the same string across all five actions in
+    # Studio — semantically inaccurate for the Final Notice variants
+    # but preserved verbatim per the migration rule.
+
+    def _repair_send_stage13_email(self, template_id):
+        """Shared helper for the five 'send letter at stage=13' actions."""
+        for record in self:
+            if record.stage_id.id != 13:
+                raise UserError(
+                    'The repaired item should be handed over to customer to send the report.'
+                )
+            template = self.env['mail.template'].search([
+                ('id', '=', template_id),
+            ], limit=1)
+            if template:
+                template.send_mail(record.id, force_send=True, email_values={
+                    'recipient_ids': [record.partner_id.id],
+                })
+                record.message_post(
+                    body='Repair Customer Letter has been sent to customer: '
+                         + str(record.partner_id.name)
+                )
+
+    def _repair_send_customer_letter(self):
+        """Studio server action id 2269 native port (template 56)."""
+        self._repair_send_stage13_email(56)
+
+    def _repair_send_final_notice(self):
+        """Studio server action id 2308 native port (template 66)."""
+        self._repair_send_stage13_email(66)
+
+    def _repair_send_final_notice_estimated(self):
+        """Studio server action id 2309 native port (template 67)."""
+        self._repair_send_stage13_email(67)
+
+    def _repair_send_final_notice_scrappage(self):
+        """Studio server action id 2310 native port (template 69)."""
+        self._repair_send_stage13_email(69)
+
+    def _repair_send_reminding_letter(self):
+        """Studio server action id 2311 native port (template 70)."""
+        self._repair_send_stage13_email(70)
+
     def _repair_studio_auto_create_repair_serial_nos(self):
         """Studio server action id 1994 native port.
 
@@ -2858,6 +2911,19 @@ class HelpdeskTicket(models.Model):
              "record._repair_studio_auto_create_repair_route()"),
             (1994, "next_by_code('repair.serial.seq')",
              "record._repair_studio_auto_create_repair_serial_nos()"),
+            # Tier 4 — email actions (Customer Letter + Final Notice
+            # variants). Guards use the template id literal since
+            # that's the only text that differs between the 5.
+            (2269, "'id', '=', 56",
+             "record._repair_send_customer_letter()"),
+            (2308, "'id', '=', 66",
+             "record._repair_send_final_notice()"),
+            (2309, "'id', '=', 67",
+             "record._repair_send_final_notice_estimated()"),
+            (2310, "'id', '=', 69",
+             "record._repair_send_final_notice_scrappage()"),
+            (2311, "'id', '=', 70",
+             "record._repair_send_reminding_letter()"),
         ]
         for action_id, guard, call in delegations:
             action = Server.browse(action_id).exists()
