@@ -669,6 +669,51 @@ class HelpdeskTicket(models.Model):
 
             rec['x_studio_task_status'] = task_status
 
+    # ─────────────────────────────────────────────────────────────────
+    # Cluster 6 — Audit slots
+    # ─────────────────────────────────────────────────────────────────
+    # Ten numbered created_by / created_on pairs (one per stage
+    # transition), plus stage_date and the factory/sales-centre
+    # shipment audit fields. All simple writable stored fields —
+    # populated by the Cluster 5 compute side-effects and by Studio
+    # automations elsewhere. Kept as-is (numbered slots are ugly but
+    # Studio's automations reference them by name).
+
+    x_studio_stage_date = fields.Datetime(string='Stage Date')
+
+    x_studio_created_by_1 = fields.Many2one('res.users', string='Created By 1')
+    x_studio_created_on_1 = fields.Datetime(string='Created On 1')
+    x_studio_created_by_2 = fields.Many2one('res.users', string='Created By 2')
+    x_studio_created_on_2 = fields.Datetime(string='Created On 2')
+    x_studio_created_by_3 = fields.Many2one('res.users', string='Created By 3')
+    x_studio_created_on_3 = fields.Datetime(string='Created On 3')
+    x_studio_created_by_4 = fields.Many2one('res.users', string='Created By 4')
+    x_studio_created_on_4 = fields.Datetime(string='Created On 4')
+    x_studio_created_by_5 = fields.Many2one('res.users', string='Created By 5')
+    x_studio_created_on_5 = fields.Datetime(string='Created On 5')
+    x_studio_created_by_6 = fields.Many2one('res.users', string='Created By 6')
+    x_studio_created_on_6 = fields.Datetime(string='Created On 6')
+    x_studio_created_by_7 = fields.Many2one('res.users', string='Created By 7')
+    x_studio_created_on_7 = fields.Datetime(string='Created On 7')
+    x_studio_created_by_8 = fields.Many2one('res.users', string='Created By 8')
+    x_studio_created_on_8 = fields.Datetime(string='Created On 8')
+    x_studio_created_by_9 = fields.Many2one('res.users', string='Created By 9')
+    x_studio_created_on_9 = fields.Datetime(string='Created On 9')
+    x_studio_created_by_10 = fields.Many2one('res.users', string='Created By 10')
+    x_studio_created_on_10 = fields.Datetime(string='Created On 10')
+
+    # Factory shipment audit (sent to factory / received at factory)
+    x_studio_f_shipped_by = fields.Many2one('res.users', string='Shipped By')
+    x_studio_f_shipped_date = fields.Datetime(string='Shipped Date')
+    x_studio_f_received_by = fields.Many2one('res.users', string='Received By')
+    x_studio_f_received_date = fields.Datetime(string='Received Date')
+
+    # Sales-centre shipment audit (sent from factory / received at centre)
+    x_studio_s_shipped_by = fields.Many2one('res.users', string='Shipped By')
+    x_studio_s_shipped_date = fields.Datetime(string='Shipped Date')
+    x_studio_s_received_by = fields.Many2one('res.users', string='Received By')
+    x_studio_s_received_date = fields.Datetime(string='Received Date')
+
     @api.model
     def _migrate_studio_rug_cluster_to_base(self):
         """Complete the Cluster 1 (RUG) migration by transferring
@@ -829,6 +874,52 @@ class HelpdeskTicket(models.Model):
         rows = Field.search([
             ('model', '=', 'helpdesk.ticket'),
             ('name', 'in', cluster5),
+        ])
+        manual_rows = rows.filtered(lambda f: f.state == 'manual')
+        if manual_rows:
+            manual_rows.write({'state': 'base'})
+
+        ModelData = self.env['ir.model.data'].sudo()
+        studio_pins = ModelData.search([
+            ('model', '=', 'ir.model.fields'),
+            ('res_id', 'in', rows.ids),
+            ('module', '=', 'studio_customization'),
+        ])
+        if studio_pins:
+            studio_pins.unlink()
+
+    @api.model
+    def _migrate_studio_audit_cluster_to_base(self):
+        """Cluster 6 (Audit slots) migration. 29 simple writable
+        stored fields: 10 numbered created_by pairs + 10 created_on
+        pairs, x_studio_stage_date, and the four factory + four
+        sales-centre shipment audit fields.
+
+        Same idempotent pattern as previous clusters:
+          1. state 'manual' → 'base' on all 29 cluster rows
+          2. drop studio_customization ir.model.data pins
+        """
+        cluster6 = [
+            'x_studio_stage_date',
+            'x_studio_created_by_1', 'x_studio_created_on_1',
+            'x_studio_created_by_2', 'x_studio_created_on_2',
+            'x_studio_created_by_3', 'x_studio_created_on_3',
+            'x_studio_created_by_4', 'x_studio_created_on_4',
+            'x_studio_created_by_5', 'x_studio_created_on_5',
+            'x_studio_created_by_6', 'x_studio_created_on_6',
+            'x_studio_created_by_7', 'x_studio_created_on_7',
+            'x_studio_created_by_8', 'x_studio_created_on_8',
+            'x_studio_created_by_9', 'x_studio_created_on_9',
+            'x_studio_created_by_10', 'x_studio_created_on_10',
+            'x_studio_f_shipped_by', 'x_studio_f_shipped_date',
+            'x_studio_f_received_by', 'x_studio_f_received_date',
+            'x_studio_s_shipped_by', 'x_studio_s_shipped_date',
+            'x_studio_s_received_by', 'x_studio_s_received_date',
+        ]
+        Field = self.env['ir.model.fields'].sudo()
+        rows = Field.search([
+            ('model', '=', 'helpdesk.ticket'),
+            ('name', 'in', cluster6),
         ])
         manual_rows = rows.filtered(lambda f: f.state == 'manual')
         if manual_rows:
