@@ -72,6 +72,19 @@
          Idempotent. -->
     <function model="helpdesk.ticket" name="_migrate_studio_misc_cluster_to_base"/>
 
+    <!-- Migrate the four x_studio_* Booleans on helpdesk.ticket.type
+         (RUG, RUG Confirmed, With/Without Serial No) from Studio to
+         Python-owned. helpdesk.ticket's related chains walk here, so
+         completing this migration means the helpdesk-repair related
+         field graph is fully Python-owned. Idempotent. -->
+    <function model="helpdesk.ticket.type" name="_migrate_studio_ticket_type_cluster_to_base"/>
+
+    <!-- Migrate x_studio_company_id on helpdesk.stage from Studio to
+         Python-owned. Master data used by the Cluster 5 stage-
+         validation computes to pick the right stage id per company.
+         Idempotent. -->
+    <function model="helpdesk.stage" name="_migrate_studio_stage_cluster_to_base"/>
+
     <!-- Deactivates the Studio automation "RR - Auto Select Product for RUG Repairs-33"
          which unconditionally clears product_id when x_studio_serial_no changes,
          overwriting our Python onchange. Clearing logic is in _onchange_serial_no_product. -->
