@@ -157,6 +157,17 @@
     <function model="helpdesk.ticket"
               name="_migrate_studio_reports_to_native"/>
 
+    <!-- v154 hotfix companion. website.ir_ui_view._get_view_id
+         resolves QWeb templates via view.key rather than
+         ir.model.data — so the v153 report_name rename alone left
+         the templates unfindable and every report 500'd. This
+         function rewrites view.key from 'studio_customization.<tail>'
+         to 'Fix-repair.<tail>' for the migrated templates, creates
+         any missing ir.model.data pins, and updates chained t-call
+         references inside arch_db. Idempotent. -->
+    <function model="helpdesk.ticket"
+              name="_fix_studio_report_template_keys"/>
+
     <!-- Deactivates the Studio automation "RR - Auto Select Product for RUG Repairs-33"
          which unconditionally clears product_id when x_studio_serial_no changes,
          overwriting our Python onchange. Clearing logic is in _onchange_serial_no_product. -->

@@ -3054,6 +3054,115 @@ class HelpdeskTicket(models.Model):
             active_autos.write({'active': False})
 
     @api.model
+    def _fix_studio_report_template_keys(self):
+        """v154 hotfix for the v153 report ownership migration.
+
+        v153 rewrote ir.actions.report.report_name from
+        'studio_customization.<tail>' to 'Fix-repair.<tail>' but left
+        the underlying QWeb template's `key` field unchanged.
+
+        Odoo's website.ir_ui_view._get_view_id() (used at report
+        render time whenever a website_id is in context) resolves
+        templates by matching the `key` field against the incoming
+        xml_id string verbatim — it does not fall back to
+        ir.model.data. Result: after v153 all 17 helpdesk-repair
+        reports 500'd with 'View %r in website 1 not found'.
+
+        This method walks every Fix-repair-owned ir.actions.report on
+        the repair scope, resolves its template via the still-Studio
+        `key` field, and rewrites the key to the Fix-repair prefix.
+        Also ensures an ir.model.data pin exists so env.ref() also
+        finds the record, and rewrites any t-call="<studio prefix>"
+        occurrences inside arch_db of the migrated templates so
+        chained inheritance keeps resolving.
+
+        Idempotent — rows whose key already begins with 'Fix-repair.'
+        are skipped.
+        """
+        scope_models = (
+            'helpdesk.ticket',
+            'helpdesk.ticket.type',
+            'helpdesk.stage',
+            'project.task',
+            'res.users',
+            'x_repair_accounts',
+            'x_repair_reason',
+            'x_repair_reason_custom',
+            'x_repair_stages',
+            'x_repair_sub_reason',
+        )
+        Data = self.env['ir.model.data'].sudo()
+        Report = self.env['ir.actions.report'].sudo()
+        View = self.env['ir.ui.view'].sudo()
+
+        reports = Report.search([('model', 'in', scope_models)])
+        if not reports:
+            return
+
+        # Pass 1 — collect (tail, template_view) for every Fix-repair-
+        # owned report. Look up the template by its current key
+        # (which may still be under studio_customization, or already
+        # under Fix-repair from a prior run).
+        migrated = []
+        migrated_tails = set()
+        for report in reports:
+            pin = Data.search([
+                ('model', '=', 'ir.actions.report'),
+                ('res_id', '=', report.id),
+            ], limit=1)
+            if not pin or pin.module != 'Fix-repair':
+                continue
+            rname = report.report_name or ''
+            if not rname.startswith('Fix-repair.'):
+                continue
+            tail = rname.split('.', 1)[1]
+
+            studio_key = 'studio_customization.' + tail
+            fix_key = 'Fix-repair.' + tail
+            template = View.search([('key', '=', studio_key)], limit=1)
+            if not template:
+                template = View.search([('key', '=', fix_key)], limit=1)
+            if not template:
+                # Template genuinely missing — skip. Nothing to migrate.
+                continue
+            migrated.append((tail, template, studio_key, fix_key))
+            migrated_tails.add(tail)
+
+        # Pass 2 — rewrite key + ensure pin.
+        for tail, template, studio_key, fix_key in migrated:
+            if template.key == studio_key:
+                template.write({'key': fix_key})
+            existing_pin = Data.search([
+                ('module', '=', 'Fix-repair'),
+                ('name', '=', tail),
+                ('model', '=', 'ir.ui.view'),
+            ], limit=1)
+            if not existing_pin:
+                Data.create({
+                    'module': 'Fix-repair',
+                    'name': tail,
+                    'model': 'ir.ui.view',
+                    'res_id': template.id,
+                    'noupdate': True,
+                })
+
+        # Pass 3 — rewrite t-call / t-inherit references inside
+        # arch_db so chained templates resolve. Only rewrite
+        # occurrences whose tail is in our migrated set (so we don't
+        # accidentally break references to Studio templates outside
+        # the repair scope).
+        for tail, template, _sk, _fk in migrated:
+            arch = template.arch_db or ''
+            new_arch = arch
+            for other_tail in migrated_tails:
+                new_arch = new_arch.replace(
+                    'studio_customization.' + other_tail,
+                    'Fix-repair.' + other_tail,
+                )
+            if new_arch != arch:
+                template.write({'arch_db': new_arch})
+
+    @api.model
     def _migrate_studio_reports_to_native(self):
         """Repin every Studio-authored ir.actions.report on the repair
         scope + its underlying QWeb template ir.ui.view rows from
