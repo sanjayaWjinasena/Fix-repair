@@ -3267,6 +3267,17 @@ class HelpdeskTicket(models.Model):
             # res.users super-user permission validation
             (2544, 'x_studio_super_user_melt_items',
              "record._super_user_validate()"),
+            # Tier 7 — remaining Studio project.task repair actions
+            # (End Quick Repair button + diagnosis/image/diagnosis-line
+            # validation guards).
+            (2316, 'x_studio_end_quick_repair',
+             "record._repair_studio_end_quick_repair()"),
+            (2224, 'one repair diagnosis line must be specified',
+             "record._repair_studio_diagnosis_validation()"),
+            (2242, 'one repair image should be uploaded',
+             "record._repair_studio_image_validation()"),
+            (2219, 'x_studio_valid_diagnosis',
+             "record._repair_studio_validate_diagnosis_lines()"),
         ]
         for action_id, guard, call in delegations:
             action = Server.browse(action_id).exists()

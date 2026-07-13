@@ -3,6 +3,7 @@ import datetime
 
 from lxml import etree
 from odoo import api, fields, models
+from odoo.exceptions import UserError
 from odoo.addons.industry_fsm_sale.models.project_task import Task as FsmSaleTask
 
 
@@ -392,6 +393,69 @@ class ProjectTask(models.Model):
         records = super().create(vals_list)
         records._repair_auto_update_helpdesk_pipeline_status_1()
         return records
+
+    def _repair_studio_end_quick_repair(self):
+        """Studio server action id 2316 native port. Marks the task's
+        quick-repair flags and advances the linked ticket to the
+        Repair Completed stage (id 9 on company 1, id 28 on company 2)
+        with audit slot 8. Verbatim behavior — same field writes, same
+        stage-id resolution."""
+        for record in self:
+            if not record.id:
+                continue
+            company_id = self.env.context.get(
+                'allowed_company_ids', [self.env.user.company_id.id]
+            )[0]
+            company = self.env['res.company'].browse(company_id)
+            stage = 9 if company.id == 1 else 28
+            record.x_studio_end_quick_repair = True
+            record.x_studio_quick_repair_status_1 = 'Quick Repair'
+            ticket = self.env['helpdesk.ticket'].search([
+                ('id', '=', record.helpdesk_ticket_id.id),
+            ], limit=1)
+            if ticket:
+                now = datetime.datetime.now()
+                ticket.write({
+                    'x_studio_repair_complete_stage_updated': True,
+                    'stage_id': stage,
+                    'x_studio_stage_date': now,
+                    'x_studio_created_by_8': self.env.uid,
+                    'x_studio_created_on_8': now,
+                    'x_studio_quick_repair_status': 'Quick Repair',
+                })
+
+    def _repair_studio_diagnosis_validation(self):
+        """Studio server action id 2224 native port. Unconditional
+        guard raise — the pre-condition is enforced at the button /
+        automation trigger level, not here."""
+        for record in self:
+            if not record.id:
+                continue
+            raise UserError(
+                'Atleast one repair diagnosis line must be specified '
+                'for the selected task.'
+            )
+
+    def _repair_studio_image_validation(self):
+        """Studio server action id 2242 native port. Same unconditional
+        guard-raise pattern as _repair_studio_diagnosis_validation."""
+        for record in self:
+            if not record.id:
+                continue
+            raise UserError(
+                'Atleast one repair image should be uploaded for the '
+                'selected task.'
+            )
+
+    def _repair_studio_validate_diagnosis_lines(self):
+        """Studio server action id 2219 native port. Fires from an
+        automation on write; raises if the task is linked to a
+        helpdesk ticket but its diagnosis is not yet valid."""
+        for record in self:
+            if not record.helpdesk_ticket_id:
+                continue
+            if not record.x_studio_valid_diagnosis:
+                raise UserError('Repair diagnosis must be specified.')
 
     def _fsm_create_sale_order(self):
         """Delegate to industry_fsm_sale's implementation, skipping industry_fsm_stock."""
