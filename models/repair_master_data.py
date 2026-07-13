@@ -138,13 +138,26 @@ class _RepairMasterDataMigration(models.AbstractModel):
             manual_models.invalidate_recordset(['state'])
 
         # 2. All fields on those models: state='manual' → 'base'.
-        # ir.model.fields.write({'state': ...}) IS permitted through
-        # the ORM (proved by every previous cluster migration), so
-        # standard write is fine here.
+        # Previous cluster migrations used ir.model.fields.write for
+        # this — that works when the fields' owning model is already
+        # in registry.pool.models (proved on helpdesk.ticket,
+        # project.task, res.users). But here the owning models are
+        # our freshly-added Python-defined x_repair_* classes, which
+        # are NOT yet in pool.models at data-XML-load time. The
+        # ORM write internally calls pool.descendants(patched_models,
+        # '_inherits'), which tries pool.models[name] and KeyError's
+        # with:
+        #   KeyError: 'x_repair_reason_custom'
+        # Same raw-SQL workaround as for ir.model — direct UPDATE
+        # bypasses the descendants traversal and the registry lookup.
         field_rows = Field.search([('model', 'in', model_names)])
         manual_fields = field_rows.filtered(lambda f: f.state == 'manual')
         if manual_fields:
-            manual_fields.write({'state': 'base'})
+            self.env.cr.execute(
+                "UPDATE ir_model_fields SET state = 'base' WHERE id IN %s",
+                (tuple(manual_fields.ids),),
+            )
+            manual_fields.invalidate_recordset(['state'])
 
         # 3. Drop studio_customization pins on both layers.
         studio_model_pins = ModelData.search([
