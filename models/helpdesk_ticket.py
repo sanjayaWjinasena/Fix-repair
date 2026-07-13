@@ -118,6 +118,56 @@ class HelpdeskTicket(models.Model):
                         val = 'RUG Rejected'
             ticket.x_studio_rug_approval_status = val
 
+    @api.model
+    def _migrate_studio_rug_cluster_to_base(self):
+        """Complete the Cluster 1 (RUG) migration by transferring
+        ir.model.fields ownership from Studio to this module.
+
+        After the Python class defines these fields (v129+), Python
+        already owns runtime behaviour — but the ir.model.fields rows
+        still show state='manual' and modules contain
+        'studio_customization', so Studio's UI treats them as
+        Studio-managed. This one-shot migration:
+
+          1. Flips state='manual' → state='base' on the seven RUG
+             cluster fields so Studio recognises them as base fields.
+          2. Removes the Studio ir.model.data records that link these
+             field rows to the studio_customization module, so
+             uninstalling studio_customization can't drop them.
+
+        Does NOT delete any ir.model.fields row and does NOT drop any
+        DB column. Existing field values are fully preserved.
+        Idempotent: subsequent runs find nothing to update.
+        """
+        cluster1 = [
+            'x_studio_rug_repair',
+            'x_studio_rug_confirmed',
+            'x_studio_rug_approved',
+            'x_studio_rug_request_sent',
+            'x_studio_normal_repair_with_serial_no',
+            'x_studio_normal_repair_without_serial_no',
+            'x_studio_rug_approval_status',
+        ]
+        Field = self.env['ir.model.fields'].sudo()
+        rows = Field.search([
+            ('model', '=', 'helpdesk.ticket'),
+            ('name', 'in', cluster1),
+        ])
+        manual_rows = rows.filtered(lambda f: f.state == 'manual')
+        if manual_rows:
+            manual_rows.write({'state': 'base'})
+
+        # Drop the Studio ir.model.data pins so studio_customization
+        # doesn't claim ownership of these rows anymore.
+        ModelData = self.env['ir.model.data'].sudo()
+        studio_pins = ModelData.search([
+            ('model', '=', 'ir.model.fields'),
+            ('res_id', 'in', rows.ids),
+            ('module', '=', 'studio_customization'),
+        ])
+        if studio_pins:
+            studio_pins.unlink()
+
     # True once the technician clicks Mark as Done on the linked FSM task.
     # Used to gate the Send to Sales Centre button.
     task_done = fields.Boolean(compute='_compute_task_done')

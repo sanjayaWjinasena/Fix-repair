@@ -9,6 +9,12 @@
          and no NUW selection value. -->
     <function model="sale.order" name="_migrate_nuw_to_customer_pays_flag"/>
 
+    <!-- Complete Cluster 1 (RUG) Studio-to-Python migration: flip
+         ir.model.fields.state from 'manual' to 'base' on the seven
+         RUG cycle fields, so Studio's UI no longer treats them as
+         Studio-managed. Idempotent. Data / DB columns untouched. -->
+    <function model="helpdesk.ticket" name="_migrate_studio_rug_cluster_to_base"/>
+
     <!-- Deactivates the Studio automation "RR - Auto Select Product for RUG Repairs-33"
          which unconditionally clears product_id when x_studio_serial_no changes,
          overwriting our Python onchange. Clearing logic is in _onchange_serial_no_product. -->
