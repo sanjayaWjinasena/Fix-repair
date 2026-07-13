@@ -2945,6 +2945,88 @@ class HelpdeskTicket(models.Model):
         """
         return
 
+    # ─────────────────────────────────────────────────────────────────
+    # Studio automations — Python model hooks
+    # ─────────────────────────────────────────────────────────────────
+    # Convert the four helpdesk.ticket base.automations to native
+    # Python create/write/unlink/onchange overrides on the model.
+    # Each hook calls the same _repair_* method the base.automation
+    # already delegates to via its server action, so behaviour is
+    # preserved 1:1. The automations themselves get deactivated by
+    # _deactivate_migrated_ticket_automations so they don't fire in
+    # parallel with the Python hooks.
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Replaces automation 171 'JIN-Helpdesk(Repair) Seq.No'
+        (on_create_or_write, trigger_field_ids=[create_date]).
+
+        `on_create_or_write` with a trigger_field of create_date is
+        effectively a fire-on-create-only pattern — create_date
+        never changes after creation. Native equivalent: run the
+        seq assignment on create only.
+        """
+        records = super().create(vals_list)
+        records._repair_seq_no_on_create_or_write()
+        return records
+
+    def unlink(self):
+        """Replaces automation 201 'RR - Validate Cancelled Tickets'
+        (on_unlink, filter_domain=[('x_studio_cancelled','=',True)]).
+
+        The _repair_validate_cancelled_on_unlink method already
+        checks x_studio_cancelled per-record, so the filter domain
+        guard is implicit — non-cancelled tickets pass through.
+        """
+        self._repair_validate_cancelled_on_unlink()
+        return super().unlink()
+
+    @api.onchange('ticket_type_id', 'x_studio_serial_number')
+    def _onchange_repair_auto_select_product_for_rug(self):
+        """Replaces automation 172 'RR - Auto Select Product for RUG
+        Repairs' (on_change, on_change_field_ids=[ticket_type_id,
+        x_studio_serial_number]).
+
+        Note: the automation triggers on x_studio_serial_number
+        (the duplicate slot), but the underlying logic reads
+        x_studio_serial_no (the primary field). Both are preserved
+        verbatim from Studio.
+        """
+        self._repair_auto_select_product_for_rug()
+
+    @api.onchange('x_studio_return_receipt_location')
+    def _onchange_repair_populate_repair_location(self):
+        """Replaces automation 178 'RR - Auto Populate Repair
+        Location' (on_change, on_change_field_ids=[
+        x_studio_return_receipt_location]).
+        """
+        self._repair_populate_repair_location()
+
+    @api.model
+    def _deactivate_migrated_ticket_automations(self):
+        """Deactivate the four base.automation records whose
+        behaviour has moved into native Python create/write/unlink/
+        onchange overrides on helpdesk.ticket. Idempotent — skips
+        automations that are already inactive.
+
+        The base.automation records + their ir.actions.server records
+        are NOT deleted — kept for reference so anyone tracing the
+        old trigger flow can see the linkage. Only `active` gets
+        flipped to False.
+
+        Automations deactivated:
+          171 'JIN-Helpdesk(Repair) Seq.No'         → create() hook
+          172 'RR - Auto Select Product for RUG'    → onchange hook
+          178 'RR - Auto Populate Repair Location'  → onchange hook
+          201 'RR - Validate Cancelled Tickets'     → unlink() hook
+        """
+        Automation = self.env['base.automation'].sudo()
+        ids_to_deactivate = [171, 172, 178, 201]
+        autos = Automation.browse(ids_to_deactivate).exists()
+        active_autos = autos.filtered(lambda a: a.active)
+        if active_autos:
+            active_autos.write({'active': False})
+
     def _repair_studio_auto_create_repair_serial_nos(self):
         """Studio server action id 1994 native port.
 

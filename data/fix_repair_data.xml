@@ -119,6 +119,15 @@
     <function model="helpdesk.ticket"
               name="_delegate_studio_server_actions_to_native"/>
 
+    <!-- Deactivate the four helpdesk.ticket base.automations that
+         are now driven by native Python create/write/unlink/onchange
+         overrides. The automation + server-action records stay in
+         the DB (for reference / auditing), only `active` flips to
+         False so they no longer fire alongside the Python hooks
+         and cause double-execution. Idempotent. -->
+    <function model="helpdesk.ticket"
+              name="_deactivate_migrated_ticket_automations"/>
+
     <!-- Deactivates the Studio automation "RR - Auto Select Product for RUG Repairs-33"
          which unconditionally clears product_id when x_studio_serial_no changes,
          overwriting our Python onchange. Clearing logic is in _onchange_serial_no_product. -->
