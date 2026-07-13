@@ -28,6 +28,96 @@ class HelpdeskTicket(models.Model):
         store=False,
     )
 
+    # ─────────────────────────────────────────────────────────────────
+    # Cluster 1 — RUG (warranty) cycle
+    # ─────────────────────────────────────────────────────────────────
+    # Migrated from Studio to Python. Field names and behaviour are
+    # preserved exactly — downstream code, views, and automations that
+    # reference these fields by name continue to work unchanged.
+    # Ownership moves from Studio's ir.model.fields state='manual' rows
+    # to native class-defined fields; Python takes precedence at
+    # runtime, and Studio UI can no longer edit their definitions.
+    # DB columns and existing data are preserved throughout.
+
+    # Repair Under Warranty — read from the ticket type's warranty flag.
+    # True when the ticket type is configured as an under-warranty repair.
+    x_studio_rug_repair = fields.Boolean(
+        string='Repair Under Warranty',
+        related='ticket_type_id.x_studio_rug',
+        store=True,
+        readonly=True,
+    )
+
+    # RUG Confirmed — read from the ticket type's rug_confirmed flag.
+    # True once the ticket type's RUG has been confirmed at setup time.
+    x_studio_rug_confirmed = fields.Boolean(
+        string='RUG Confirmed',
+        related='ticket_type_id.x_studio_rug_confirmed',
+        store=True,
+        readonly=True,
+    )
+
+    # RUG Approved — set to True by the "Approve RUG" flow on the linked
+    # sale.order (action_approve_rug_direct on Fix-repair sale.order).
+    x_studio_rug_approved = fields.Boolean(
+        string='RUG Approved',
+    )
+
+    # RUG Request Sent — set to True when the salesperson clicks "Request
+    # RUG Approval" on the linked sale.order.
+    x_studio_rug_request_sent = fields.Boolean(
+        string='RUG Request Sent',
+    )
+
+    # Normal Repair (With Serial No) — related from the ticket type.
+    x_studio_normal_repair_with_serial_no = fields.Boolean(
+        string='Normal Repair (With Serial No)',
+        related='ticket_type_id.x_studio_with_serial_no',
+        store=True,
+        readonly=True,
+    )
+
+    # Normal Repair (Without Serial No) — related from the ticket type.
+    x_studio_normal_repair_without_serial_no = fields.Boolean(
+        string='Normal Repair (Without Serial No)',
+        related='ticket_type_id.x_studio_without_serial_no',
+        store=True,
+        readonly=True,
+    )
+
+    # RUG Approval Status — computed from the linked sale order's rug
+    # flags. Selection values kept as literal strings (not (key,label)
+    # tuples with distinct keys) because Studio's compute wrote the
+    # human-readable strings directly, and downstream references
+    # (search filters, view invisible expressions) match by string.
+    x_studio_rug_approval_status = fields.Selection(
+        selection=[
+            ('Pending RUG Approval', 'Pending RUG Approval'),
+            ('RUG Approved', 'RUG Approved'),
+            ('RUG Rejected', 'RUG Rejected'),
+        ],
+        string='RUG Approval Status',
+        compute='_compute_x_studio_rug_approval_status',
+    )
+
+    @api.depends('fsm_task_ids.sale_order_id.x_studio_rug_approved',
+                 'fsm_task_ids.sale_order_id.x_studio_rug_rejected')
+    def _compute_x_studio_rug_approval_status(self):
+        # Preserves Studio's original iteration behaviour: iterates all
+        # linked fsm tasks and updates val for each task that has an SO.
+        # No `break`, so if multiple tasks exist the LAST one determines
+        # the outcome. Kept exact so migration is behaviour-preserving.
+        for ticket in self:
+            val = 'Pending RUG Approval'
+            for task in ticket.fsm_task_ids:
+                so = task.sale_order_id
+                if so:
+                    if so.x_studio_rug_approved:
+                        val = 'RUG Approved'
+                    elif so.x_studio_rug_rejected:
+                        val = 'RUG Rejected'
+            ticket.x_studio_rug_approval_status = val
+
     # True once the technician clicks Mark as Done on the linked FSM task.
     # Used to gate the Send to Sales Centre button.
     task_done = fields.Boolean(compute='_compute_task_done')
