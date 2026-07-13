@@ -118,6 +118,95 @@ class HelpdeskTicket(models.Model):
                         val = 'RUG Rejected'
             ticket.x_studio_rug_approval_status = val
 
+    # ─────────────────────────────────────────────────────────────────
+    # Cluster 2 — Repair location / stock
+    # ─────────────────────────────────────────────────────────────────
+    # Migrated from Studio to Python. Same names, same behaviour.
+    # Related chains against user_id.x_studio_* remain Studio-owned on
+    # res.users for now — those get migrated in a later pass. The
+    # related= chain resolves regardless.
+
+    # Repair Location — where the repair physically happens. Set by
+    # RR-Auto Populate Repair Location automation (or user-editable).
+    # For centre repairs it's the branch's stock location.
+    x_studio_repair_location = fields.Many2one(
+        'stock.location',
+        string='Repair Location',
+    )
+
+    # Return Receipt Location — where returned items are received back
+    # after a repair round-trip (used by the Return picking flow).
+    x_studio_return_receipt_location = fields.Many2one(
+        'stock.location',
+        string='Return Receipt Location',
+    )
+
+    # Source Location — mirrored from the assigned user's home stock
+    # location (per-user default source for repair pickings).
+    x_studio_source_location = fields.Many2one(
+        'stock.location',
+        string='Source Location',
+        related='user_id.x_studio_source_location',
+        store=True,
+        readonly=True,
+    )
+
+    # Source Location (duplicate slot — appears to be a Studio-created
+    # copy from an earlier iteration). Kept for schema compatibility;
+    # currently reads from user_id.x_studio_source_location_1 which is
+    # itself a Studio-owned res.users field.
+    x_studio_source_location_1 = fields.Many2one(
+        'stock.location',
+        string='Source Location',
+        related='user_id.x_studio_source_location_1',
+        store=True,
+        readonly=True,
+    )
+
+    # Virtual Location — mirrored from the assigned user. Used as the
+    # in-transit / staging location for repair pickings on the user's
+    # branch.
+    x_studio_virtual_location = fields.Many2one(
+        'stock.location',
+        string='Virtual Location',
+        related='user_id.x_studio_virtual_location',
+        store=True,
+        readonly=True,
+    )
+
+    # Virtual Location (duplicate slot — Studio copy).
+    x_studio_virtual_location_1 = fields.Many2one(
+        'stock.location',
+        string='Virtual Location',
+        related='user_id.x_studio_virtual_location_1',
+        store=True,
+        readonly=True,
+    )
+
+    # Virtual Location Id — integer form of the virtual location's id,
+    # used by legacy Studio automations that expect an integer rather
+    # than a Many2one recordset.
+    x_studio_virtual_location_id = fields.Integer(
+        string='Virtual Location Id',
+        related='user_id.x_studio_virtual_location.id',
+        store=True,
+        readonly=True,
+    )
+
+    # Pick Id — integer FK to a stock.picking. Historically kept as
+    # integer (not a Many2one) by Studio for reasons lost to time.
+    # The Many2one variant lives in x_studio_picking_id below.
+    x_studio_pick_id = fields.Integer(
+        string='Pick Id',
+    )
+
+    # Picking Id — proper Many2one to the linked stock.picking. Written
+    # by the Fix-repair picking-creation flow.
+    x_studio_picking_id = fields.Many2one(
+        'stock.picking',
+        string='Picking Id',
+    )
+
     @api.model
     def _migrate_studio_rug_cluster_to_base(self):
         """Complete the Cluster 1 (RUG) migration by transferring
@@ -159,6 +248,47 @@ class HelpdeskTicket(models.Model):
 
         # Drop the Studio ir.model.data pins so studio_customization
         # doesn't claim ownership of these rows anymore.
+        ModelData = self.env['ir.model.data'].sudo()
+        studio_pins = ModelData.search([
+            ('model', '=', 'ir.model.fields'),
+            ('res_id', 'in', rows.ids),
+            ('module', '=', 'studio_customization'),
+        ])
+        if studio_pins:
+            studio_pins.unlink()
+
+    @api.model
+    def _migrate_studio_location_cluster_to_base(self):
+        """Cluster 2 (Repair location / stock) counterpart of the RUG
+        migration: transfer ir.model.fields ownership of the nine
+        location/stock helpdesk.ticket fields from Studio to Python.
+
+        Same idempotent pattern:
+          1. state 'manual' → 'base' on all nine cluster rows
+          2. drop studio_customization ir.model.data pins
+
+        Data / DB columns preserved.
+        """
+        cluster2 = [
+            'x_studio_repair_location',
+            'x_studio_return_receipt_location',
+            'x_studio_source_location',
+            'x_studio_source_location_1',
+            'x_studio_virtual_location',
+            'x_studio_virtual_location_1',
+            'x_studio_virtual_location_id',
+            'x_studio_pick_id',
+            'x_studio_picking_id',
+        ]
+        Field = self.env['ir.model.fields'].sudo()
+        rows = Field.search([
+            ('model', '=', 'helpdesk.ticket'),
+            ('name', 'in', cluster2),
+        ])
+        manual_rows = rows.filtered(lambda f: f.state == 'manual')
+        if manual_rows:
+            manual_rows.write({'state': 'base'})
+
         ModelData = self.env['ir.model.data'].sudo()
         studio_pins = ModelData.search([
             ('model', '=', 'ir.model.fields'),

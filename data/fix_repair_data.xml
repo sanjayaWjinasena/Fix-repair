@@ -15,6 +15,13 @@
          Studio-managed. Idempotent. Data / DB columns untouched. -->
     <function model="helpdesk.ticket" name="_migrate_studio_rug_cluster_to_base"/>
 
+    <!-- Complete Cluster 2 (Repair location / stock) Studio-to-Python
+         migration: same treatment for the nine location/stock fields
+         on helpdesk.ticket (x_studio_repair_location,
+         x_studio_return_receipt_location, source / virtual location
+         variants, and pick/picking id fields). Idempotent. -->
+    <function model="helpdesk.ticket" name="_migrate_studio_location_cluster_to_base"/>
+
     <!-- Deactivates the Studio automation "RR - Auto Select Product for RUG Repairs-33"
          which unconditionally clears product_id when x_studio_serial_no changes,
          overwriting our Python onchange. Clearing logic is in _onchange_serial_no_product. -->
