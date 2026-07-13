@@ -2595,6 +2595,223 @@ class HelpdeskTicket(models.Model):
                 'x_studio_reopen_status': 'Reopened',
             })
 
+    # ─────────────────────────────────────────────────────────────────
+    # Studio server actions — Python delegations (Tier 3: heavy)
+    # ─────────────────────────────────────────────────────────────────
+    # The two biggest Studio server actions: Auto Create Repair Route
+    # (id 1993, ~3.1 KB) and Auto Create Repair Serial Nos (id 1994,
+    # ~3.3 KB). Both create a done "return to customer" stock.picking
+    # with a linked stock.move + stock.move.line. The Serial Nos
+    # variant additionally allocates a new stock.lot via the
+    # 'repair.serial.seq' sequence.
+    #
+    # Both actions raise UserError early if the user's virtual /
+    # source location isn't configured (company-specific fields:
+    # _virtual_location / _source_location for company 1;
+    # _virtual_location_1 / _source_location_1 for others).
+
+    def _repair_studio_auto_create_repair_route(self):
+        """Studio server action id 1993 native port."""
+        for record in self:
+            if not record.id:
+                continue
+            company_id = self.env.context.get(
+                'allowed_company_ids', [self.env.user.company_id.id]
+            )[0]
+            company = self.env['res.company'].browse(company_id)
+
+            if company.id == 1:
+                if not record.x_studio_virtual_location:
+                    raise UserError(
+                        'Virtual Location must be setup for Current Logged in User.'
+                    )
+                if not record.x_studio_source_location:
+                    raise UserError(
+                        'Source Location must be setup for Current Logged in User.'
+                    )
+                virtual_loc = record.x_studio_virtual_location.id
+                source_loc = record.x_studio_source_location.id
+            else:
+                if not record.x_studio_virtual_location_1:
+                    raise UserError(
+                        'Virtual Location must be setup for Current Logged in User.'
+                    )
+                if not record.x_studio_source_location_1:
+                    raise UserError(
+                        'Source Location must be setup for Current Logged in User.'
+                    )
+                virtual_loc = record.x_studio_virtual_location_1.id
+                source_loc = record.x_studio_source_location_1.id
+
+            record.x_studio_repair_serial_created = True
+            dest_loc = self.env['stock.location'].search([
+                ('usage', '=', 'customer'),
+            ], limit=1)
+            if not dest_loc:
+                continue
+
+            opt_type = self.env['stock.picking.type'].search([
+                ('default_location_src_id', '=',
+                    record.x_studio_return_receipt_location.id),
+                ('code', '=', 'outgoing'),
+                ('company_id', '=', company.id),
+            ], limit=1)
+            if not opt_type:
+                raise UserError('The selected return receipt location is not correct.')
+
+            prod_move = self.env['stock.picking'].create({
+                'x_studio_created_from_help_ticket': record.id,
+                'x_studio_helpdesk_ticket_id': record.id,
+                'picking_type_id': opt_type.id,
+                'location_id': source_loc,
+                'location_dest_id': dest_loc.id,
+                'company_id': company.id,
+            })
+            update_prod_move = self.env['stock.picking'].search([
+                ('id', '=', prod_move.id),
+                ('company_id', '=', company.id),
+            ], limit=1)
+            if update_prod_move:
+                stock_move = self.env['stock.move'].create({
+                    'picking_id': update_prod_move.id,
+                    'name': 'New Move:' + record.product_id.name,
+                    'reference': update_prod_move.name,
+                    'picking_type_id': update_prod_move.picking_type_id.id,
+                    'product_id': record.product_id.id,
+                    'location_id': update_prod_move.location_id.id,
+                    'location_dest_id': update_prod_move.location_dest_id.id,
+                    'product_uom_qty': 1.00,
+                    'product_uom': record.product_id.uom_id.id,
+                    'state': 'done',
+                    'company_id': company.id,
+                })
+                self.env['stock.move.line'].create({
+                    'move_id': stock_move.id,
+                    'picking_id': update_prod_move.id,
+                    'picking_type_id': update_prod_move.picking_type_id.id,
+                    'product_id': record.product_id.id,
+                    'product_uom_id': record.product_id.uom_id.id,
+                    'location_id': update_prod_move.location_id.id,
+                    'location_dest_id': update_prod_move.location_dest_id.id,
+                    'qty_done': 1.00,
+                    'company_id': company.id,
+                })
+                update_prod_move.write({'state': 'done'})
+
+            record.x_studio_picking_id = prod_move.id
+            record.x_studio_pick_id = prod_move.id
+
+    def _repair_studio_auto_create_repair_serial_nos(self):
+        """Studio server action id 1994 native port.
+
+        Same shape as _repair_studio_auto_create_repair_route above,
+        but additionally creates a new stock.lot from the
+        'repair.serial.seq' sequence and attaches it as
+        x_studio_serial_no / lot_id on the ticket + as lot_id on
+        the created stock.move.line.
+        """
+        for record in self:
+            if not record.id:
+                continue
+            company_id = self.env.context.get(
+                'allowed_company_ids', [self.env.user.company_id.id]
+            )[0]
+            company = self.env['res.company'].browse(company_id)
+
+            if company.id == 1:
+                if not record.x_studio_virtual_location:
+                    raise UserError(
+                        'Virtual Location must be setup for Current Logged in User.'
+                    )
+                if not record.x_studio_source_location:
+                    raise UserError(
+                        'Source Location must be setup for Current Logged in User.'
+                    )
+                virtual_loc = record.x_studio_virtual_location.id
+                source_loc = record.x_studio_source_location.id
+            else:
+                if not record.x_studio_virtual_location_1:
+                    raise UserError(
+                        'Virtual Location must be setup for Current Logged in User.'
+                    )
+                if not record.x_studio_source_location_1:
+                    raise UserError(
+                        'Source Location must be setup for Current Logged in User.'
+                    )
+                virtual_loc = record.x_studio_virtual_location_1.id
+                source_loc = record.x_studio_source_location_1.id
+
+            seq = self.env['ir.sequence'].with_context(
+                company_id=company.id
+            ).next_by_code('repair.serial.seq')
+
+            rep_serial = self.env['stock.lot'].create({
+                'name': seq,
+                'product_id': record.product_id.id,
+                'company_id': company.id,
+            })
+            record.x_studio_serial_no = rep_serial.id
+            record.lot_id = rep_serial.id
+            record.x_studio_repair_serial_created = True
+
+            dest_loc = self.env['stock.location'].search([
+                ('usage', '=', 'customer'),
+            ], limit=1)
+            if not dest_loc:
+                continue
+
+            opt_type = self.env['stock.picking.type'].search([
+                ('default_location_src_id', '=',
+                    record.x_studio_return_receipt_location.id),
+                ('code', '=', 'outgoing'),
+                ('company_id', '=', company.id),
+            ], limit=1)
+            if not opt_type:
+                raise UserError('The selected return receipt location is not correct.')
+
+            prod_move = self.env['stock.picking'].create({
+                'x_studio_created_from_help_ticket': record.id,
+                'x_studio_helpdesk_ticket_id': record.id,
+                'picking_type_id': opt_type.id,
+                'location_id': source_loc,
+                'location_dest_id': dest_loc.id,
+                'company_id': company.id,
+            })
+            update_prod_move = self.env['stock.picking'].search([
+                ('id', '=', prod_move.id),
+                ('company_id', '=', company.id),
+            ], limit=1)
+            if update_prod_move:
+                stock_move = self.env['stock.move'].create({
+                    'picking_id': update_prod_move.id,
+                    'name': 'New Move:' + record.product_id.name,
+                    'reference': update_prod_move.name,
+                    'picking_type_id': update_prod_move.picking_type_id.id,
+                    'product_id': record.product_id.id,
+                    'location_id': update_prod_move.location_id.id,
+                    'location_dest_id': update_prod_move.location_dest_id.id,
+                    'product_uom_qty': 1.00,
+                    'product_uom': record.product_id.uom_id.id,
+                    'state': 'done',
+                    'company_id': company.id,
+                })
+                self.env['stock.move.line'].create({
+                    'move_id': stock_move.id,
+                    'picking_id': update_prod_move.id,
+                    'picking_type_id': update_prod_move.picking_type_id.id,
+                    'product_id': record.product_id.id,
+                    'product_uom_id': record.product_id.uom_id.id,
+                    'location_id': update_prod_move.location_id.id,
+                    'location_dest_id': update_prod_move.location_dest_id.id,
+                    'lot_id': record.x_studio_serial_no.id,
+                    'qty_done': 1.00,
+                    'company_id': company.id,
+                })
+                update_prod_move.write({'state': 'done'})
+
+            record.x_studio_picking_id = prod_move.id
+            record.x_studio_pick_id = prod_move.id
+
     @api.model
     def _delegate_studio_server_actions_to_native(self):
         """Rewrite Studio ir.actions.server.code strings to one-line
@@ -2636,6 +2853,11 @@ class HelpdeskTicket(models.Model):
              "record._repair_studio_cancel_repair()"),
             (2221, 'x_studio_reopen_status',
              "record._repair_studio_reopen_repair()"),
+            # Tier 3 — heavy compute (route + serial creation)
+            (1993, 'prod_lines.append',
+             "record._repair_studio_auto_create_repair_route()"),
+            (1994, "next_by_code('repair.serial.seq')",
+             "record._repair_studio_auto_create_repair_serial_nos()"),
         ]
         for action_id, guard, call in delegations:
             action = Server.browse(action_id).exists()
