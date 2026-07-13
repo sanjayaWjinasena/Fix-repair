@@ -3054,6 +3054,117 @@ class HelpdeskTicket(models.Model):
             active_autos.write({'active': False})
 
     @api.model
+    def _migrate_studio_reports_to_native(self):
+        """Repin every Studio-authored ir.actions.report on the repair
+        scope + its underlying QWeb template ir.ui.view rows from
+        module='studio_customization' to module='Fix-repair'.
+
+        Two-step ownership transfer per report:
+
+          1. Rewrite ir.actions.report.report_name from
+             'studio_customization.<slug>' to 'Fix-repair.<slug>' —
+             this is the string env.ref() uses to resolve the QWeb
+             template at render time.
+          2. Repin the ir.model.data row that owns the QWeb template
+             ir.ui.view record (module column only — xml_id kept
+             verbatim so no cross-reference breaks).
+          3. Repin the ir.model.data row that owns the report action
+             record itself.
+
+        Arch of every report / template stays byte-identical; only
+        the ownership marker moves. Studio's UI stops treating these
+        as its own so future edits go into the module.
+
+        Idempotent — reruns find no studio_customization pins in
+        scope and no-op.
+        """
+        scope_models = (
+            'helpdesk.ticket',
+            'helpdesk.ticket.type',
+            'helpdesk.stage',
+            'project.task',
+            'res.users',
+            'x_repair_accounts',
+            'x_repair_reason',
+            'x_repair_reason_custom',
+            'x_repair_stages',
+            'x_repair_sub_reason',
+        )
+        Data = self.env['ir.model.data'].sudo()
+        Report = self.env['ir.actions.report'].sudo()
+
+        reports = Report.search([('model', 'in', scope_models)])
+        if not reports:
+            return
+
+        report_pins = Data.search([
+            ('model', '=', 'ir.actions.report'),
+            ('module', '=', 'studio_customization'),
+            ('res_id', 'in', reports.ids),
+        ])
+        if not report_pins:
+            return
+
+        # Pass 1 — collect template xml_ids that the Studio reports
+        # reference via report_name, so we can migrate their pins too.
+        template_xmlids = set()
+        report_name_updates = []
+        for pin in report_pins:
+            report = Report.browse(pin.res_id)
+            if not report.exists():
+                continue
+            rname = report.report_name or ''
+            if rname.startswith('studio_customization.'):
+                _module, tail = rname.split('.', 1)
+                template_xmlids.add(tail)
+                report_name_updates.append((report, tail))
+
+        # Pass 2 — move the template pins (module only, keep name).
+        if template_xmlids:
+            template_pins = Data.search([
+                ('model', '=', 'ir.ui.view'),
+                ('module', '=', 'studio_customization'),
+                ('name', 'in', list(template_xmlids)),
+            ])
+            already_fixrepair = set(Data.search([
+                ('module', '=', 'Fix-repair'),
+                ('name', 'in', list(template_xmlids)),
+            ]).mapped('name'))
+            for tp in template_pins:
+                if tp.name in already_fixrepair:
+                    # Prior run already migrated this pin — drop the
+                    # dangling studio row.
+                    tp.unlink()
+                    continue
+                tp.write({
+                    'module': 'Fix-repair',
+                    'noupdate': True,
+                })
+
+        # Pass 3 — rewrite report_name references so env.ref() lands
+        # on the new Fix-repair.<tail> address.
+        for report, tail in report_name_updates:
+            new_ref = 'Fix-repair.%s' % tail
+            if report.report_name != new_ref:
+                report.write({'report_name': new_ref})
+
+        # Pass 4 — move the report action pins (module only, keep
+        # name for the same "no cross-reference breaks" reason).
+        report_action_names = report_pins.mapped('name')
+        already_fixrepair_actions = set(Data.search([
+            ('module', '=', 'Fix-repair'),
+            ('name', 'in', report_action_names),
+        ]).mapped('name'))
+        for pin in report_pins:
+            if pin.name in already_fixrepair_actions:
+                pin.unlink()
+                continue
+            pin.write({
+                'module': 'Fix-repair',
+                'noupdate': True,
+            })
+
+    @api.model
     def _migrate_studio_views_to_native(self):
         """Repin every Studio-authored ir.ui.view on the repair scope
         from module='studio_customization' to module='Fix-repair'.

@@ -145,6 +145,18 @@
     <function model="helpdesk.ticket"
               name="_migrate_studio_views_to_native"/>
 
+    <!-- Repin every Studio-authored ir.actions.report on the repair
+         scope + its associated QWeb template ir.ui.view rows from
+         module='studio_customization' to module='Fix-repair'. The
+         report_name string on each ir.actions.report row is rewritten
+         from 'studio_customization.<tail>' to 'Fix-repair.<tail>' in
+         sync so env.ref() lookups keep resolving. Covers ~17 reports:
+         Repair Receipt, Customer Letter, Helpdesk Ticket Report,
+         Repair Status, Repair Final Notice (+ Scrappage variant),
+         and the C09–C19 helpdesk-repair series. Idempotent. -->
+    <function model="helpdesk.ticket"
+              name="_migrate_studio_reports_to_native"/>
+
     <!-- Deactivates the Studio automation "RR - Auto Select Product for RUG Repairs-33"
          which unconditionally clears product_id when x_studio_serial_no changes,
          overwriting our Python onchange. Clearing logic is in _onchange_serial_no_product. -->
