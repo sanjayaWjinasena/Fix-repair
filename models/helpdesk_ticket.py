@@ -2454,22 +2454,167 @@ class HelpdeskTicket(models.Model):
                     record.product_id = False
                     record.lot_id = False
 
+    # ─────────────────────────────────────────────────────────────────
+    # Studio server actions — Python delegations (Tier 2: buttons)
+    # ─────────────────────────────────────────────────────────────────
+    # Six button-triggered Studio server actions for the core repair
+    # workflow (Send/Receive Factory/Centre + Cancel/Reopen). These
+    # buttons live on Studio's helpdesk.ticket form arch and are
+    # attached to `ir_actions_server` records via type="action"
+    # name="<action_id>".
+    #
+    # Note: Fix-repair already has native action_* methods for
+    # send/receive factory/centre that ALSO create stock pickings.
+    # Those are called from Fix-repair's own buttons (added via
+    # view inheritance). The Studio buttons DON'T create pickings;
+    # they only flip flags + stage + audit timestamps. Keeping the
+    # two paths distinct (Studio button = audit only; Fix-repair
+    # button = full workflow) preserves the original behaviour.
+
+    def _repair_studio_send_to_factory(self):
+        """Studio server action id 2001 native port."""
+        for record in self:
+            if not record.id:
+                continue
+            company_id = self.env.context.get(
+                'allowed_company_ids', [self.env.user.company_id.id]
+            )[0]
+            company = self.env['res.company'].browse(company_id)
+            factory_location = self.env['stock.location'].search([
+                ('x_studio_repair_factory_location', '=', True),
+            ], limit=1)
+            if not factory_location:
+                raise UserError(
+                    "Setup Repair Factory Location in stock locations to proceed."
+                )
+            now = datetime.datetime.now()
+            record.write({
+                'x_studio_repair_location': factory_location.id,
+                'x_studio_send_to_factory': True,
+                'x_studio_s_shipped_date': now,
+                'x_studio_s_shipped_by': self.env.uid,
+                'x_studio_stage_date': now,
+                'x_studio_created_by_1': self.env.uid,
+                'x_studio_created_on_1': now,
+                'stage_id': 5 if company.id == 1 else 24,
+            })
+
+    def _repair_studio_receive_at_factory(self):
+        """Studio server action id 2002 native port."""
+        for record in self:
+            if not record.id:
+                continue
+            company_id = self.env.context.get(
+                'allowed_company_ids', [self.env.user.company_id.id]
+            )[0]
+            company = self.env['res.company'].browse(company_id)
+            now = datetime.datetime.now()
+            record.write({
+                'x_studio_receive_at_factory': True,
+                'x_studio_f_received_date': now,
+                'x_studio_f_received_by': self.env.uid,
+                'x_studio_stage_date': now,
+                'x_studio_created_by_2': self.env.uid,
+                'x_studio_created_on_2': now,
+                'stage_id': 6 if company.id == 1 else 25,
+            })
+
+    def _repair_studio_send_to_sales_centre(self):
+        """Studio server action id 2007 native port."""
+        for record in self:
+            if not record.id:
+                continue
+            company_id = self.env.context.get(
+                'allowed_company_ids', [self.env.user.company_id.id]
+            )[0]
+            company = self.env['res.company'].browse(company_id)
+            now = datetime.datetime.now()
+            record.write({
+                'x_studio_send_to_centre': True,
+                'x_studio_f_shipped_date': now,
+                'x_studio_f_shipped_by': self.env.uid,
+                'x_studio_stage_date': now,
+                'x_studio_created_by_9': self.env.uid,
+                'x_studio_created_on_9': now,
+                'stage_id': 7 if company.id == 1 else 26,
+            })
+
+    def _repair_studio_receive_at_sales_centre(self):
+        """Studio server action id 2006 native port."""
+        for record in self:
+            if not record.id:
+                continue
+            company_id = self.env.context.get(
+                'allowed_company_ids', [self.env.user.company_id.id]
+            )[0]
+            company = self.env['res.company'].browse(company_id)
+            now = datetime.datetime.now()
+            record.write({
+                'x_studio_receive_at_centre': True,
+                'x_studio_s_received_date': now,
+                'x_studio_s_received_by': self.env.uid,
+                'x_studio_stage_date': now,
+                'x_studio_created_by_10': self.env.uid,
+                'x_studio_created_on_10': now,
+                'stage_id': 8 if company.id == 1 else 27,
+            })
+
+    def _repair_studio_cancel_repair(self):
+        """Studio server action id 2220 native port."""
+        for record in self:
+            if not record.id:
+                continue
+            company_id = self.env.context.get(
+                'allowed_company_ids', [self.env.user.company_id.id]
+            )[0]
+            company = self.env['res.company'].browse(company_id)
+            if not record.x_studio_cancel_reason:
+                raise UserError('Cancel reason must be specified.')
+            record.write({
+                'x_studio_cancelled_stage_id': record.stage_id.id,
+                'stage_id': 4 if company.id == 1 else 23,
+                'x_studio_cancelled': True,
+                'x_studio_reopened': False,
+                'x_studio_cancelled_by': self.env.uid,
+                'x_studio_cancelled_date': datetime.datetime.now(),
+                'x_studio_cancel_status': 'Cancelled',
+            })
+
+    def _repair_studio_reopen_repair(self):
+        """Studio server action id 2221 native port."""
+        for record in self:
+            if not record.id:
+                continue
+            record.write({
+                'stage_id': record.x_studio_cancelled_stage_id.id,
+                'x_studio_cancelled': False,
+                'x_studio_reopened': True,
+                'x_studio_cancelled_stage_id': False,
+                'x_studio_reopened_by': self.env.uid,
+                'x_studio_reopened_date': datetime.datetime.now(),
+                'x_studio_reopen_status': 'Reopened',
+            })
+
     @api.model
     def _delegate_studio_server_actions_to_native(self):
-        """Rewrite the four base-automation ir.actions.server.code
-        strings to one-line delegations into the native Python
-        methods above. Same idempotent-marker pattern Fix-repair
-        uses for compute delegations (see
+        """Rewrite Studio ir.actions.server.code strings to one-line
+        delegations into native Python methods. Same idempotent-
+        marker pattern Fix-repair uses for compute delegations (see
         sale_order._delegate_studio_computes_to_native).
 
-        Only touches server actions that don't already carry the
-        marker, so it's safe to run on every install/upgrade.
+        Covers:
+          Tier 1 — 4 automation-triggered actions (v144)
+          Tier 2 — 6 button-triggered repair-workflow actions (v145)
+
+        Only touches actions that don't already carry the marker,
+        so it's safe to run on every install/upgrade.
         """
         marker = self.env['sale.order']._FIX_REPAIR_IDEMPOTENCE_MARKER
         Server = self.env['ir.actions.server'].sudo()
 
         delegations = [
             # (server_action_id, guard_substring, delegation_code)
+            # Tier 1 — automations
             (1976, "next_by_code('repair.seq')",
              "record._repair_seq_no_on_create_or_write()"),
             (2000, 'x_studio_return_receipt_location',
@@ -2478,6 +2623,19 @@ class HelpdeskTicket(models.Model):
              "record._repair_validate_cancelled_on_unlink()"),
             (1989, "trans_line = env['stock.move.line'].search",
              "record._repair_auto_select_product_for_rug()"),
+            # Tier 2 — repair-workflow buttons
+            (2001, 'x_studio_repair_factory_location',
+             "record._repair_studio_send_to_factory()"),
+            (2002, 'x_studio_created_by_2',
+             "record._repair_studio_receive_at_factory()"),
+            (2007, 'x_studio_created_by_9',
+             "record._repair_studio_send_to_sales_centre()"),
+            (2006, 'x_studio_created_by_10',
+             "record._repair_studio_receive_at_sales_centre()"),
+            (2220, 'Cancel reason must be specified',
+             "record._repair_studio_cancel_repair()"),
+            (2221, 'x_studio_reopen_status',
+             "record._repair_studio_reopen_repair()"),
         ]
         for action_id, guard, call in delegations:
             action = Server.browse(action_id).exists()
