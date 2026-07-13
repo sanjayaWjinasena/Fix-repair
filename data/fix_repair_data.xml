@@ -54,6 +54,14 @@
          audit fields. Idempotent. -->
     <function model="helpdesk.ticket" name="_migrate_studio_audit_cluster_to_base"/>
 
+    <!-- Complete Cluster 7 (Serial number / product) Studio-to-Python
+         migration: same treatment for the eleven serial-lot /
+         repair-reason / product-snapshot fields (serial_no,
+         serial_number, sn_updated, repair_serial_created,
+         repair_reason M2M, materials_used, quantity, unit_price,
+         items M2M, qty, sales_price). Idempotent. -->
+    <function model="helpdesk.ticket" name="_migrate_studio_serial_product_cluster_to_base"/>
+
     <!-- Deactivates the Studio automation "RR - Auto Select Product for RUG Repairs-33"
          which unconditionally clears product_id when x_studio_serial_no changes,
          overwriting our Python onchange. Clearing logic is in _onchange_serial_no_product. -->

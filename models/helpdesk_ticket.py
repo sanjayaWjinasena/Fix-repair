@@ -714,6 +714,99 @@ class HelpdeskTicket(models.Model):
     x_studio_s_received_by = fields.Many2one('res.users', string='Received By')
     x_studio_s_received_date = fields.Datetime(string='Received Date')
 
+    # ─────────────────────────────────────────────────────────────────
+    # Cluster 7 — Serial number / product
+    # ─────────────────────────────────────────────────────────────────
+    # Serial-lot references, repair reasons, and the product/qty/
+    # price snapshot fields that Cluster 5's task_status compute
+    # writes to. Duplicate slots preserved for schema compatibility.
+    # Related chains walk through x_studio_sale_order (Studio-owned
+    # until Cluster 8) — Odoo resolves the chain at runtime by field
+    # name, so the migration order is irrelevant.
+
+    # Serial Number — primary lot/serial for the item under repair.
+    x_studio_serial_no = fields.Many2one(
+        'stock.lot',
+        string='Serial Number',
+    )
+
+    # Serial Number-11 — duplicate slot from an earlier Studio
+    # iteration. Kept for schema compatibility.
+    x_studio_serial_number = fields.Many2one(
+        'stock.lot',
+        string='Serial Number-11',
+    )
+
+    # SN Updated — flag set to True once the serial number has been
+    # confirmed / edited by the repair user.
+    x_studio_sn_updated = fields.Boolean(
+        string='SN Updated',
+    )
+
+    # Repair Serial Created — flag set when a new stock.lot has been
+    # created as part of the repair flow.
+    x_studio_repair_serial_created = fields.Boolean(
+        string='Repair Serial Created',
+    )
+
+    # Repair Reason — many-to-many onto the Studio-managed
+    # x_repair_reason_custom catalogue.
+    x_studio_repair_reason = fields.Many2many(
+        'x_repair_reason_custom',
+        string='Repair Reason',
+    )
+
+    # Materials Used — first product from the linked SO's first
+    # order line. Related chain walks Many2one -> One2many -> M2o;
+    # Odoo returns the first match (Studio's semantics).
+    x_studio_materials_used = fields.Many2one(
+        'product.product',
+        string='Materials Used ',
+        related='x_studio_sale_order.order_line.product_id',
+        store=True,
+        readonly=True,
+    )
+
+    # Quantity — first order line's product_uom_qty (same chain).
+    x_studio_quantity = fields.Float(
+        string='Quantity',
+        related='x_studio_sale_order.order_line.product_uom_qty',
+        store=True,
+        readonly=True,
+    )
+
+    # Unit Price — Studio related to pricelist's item prices (also
+    # traverses O2M via first record). Stored as Char in Studio's
+    # schema despite the source being Float; kept as Char here for
+    # 1:1 compatibility.
+    x_studio_unit_price = fields.Char(
+        string='Unit Price',
+        related='x_studio_sale_order.pricelist_id.item_ids.price',
+        store=False,
+        readonly=True,
+    )
+
+    # Items — Many2many snapshot of all products on the linked SO.
+    # Written by the Cluster 5 task_status / valid_delivered_so
+    # compute side effects.
+    x_studio_items = fields.Many2many(
+        'product.product',
+        string='Items',
+    )
+
+    # Qty — Char snapshot of the SO lines' quantities. Written by
+    # Cluster 5 as the string representation of a Python list of
+    # floats (e.g. "[1.0, 2.0]") — Studio behaviour preserved.
+    x_studio_qty = fields.Char(
+        string='Qty',
+    )
+
+    # Sales Price — Char snapshot of the SO lines' unit prices.
+    # Same Python-list-as-string pattern as x_studio_qty.
+    x_studio_sales_price = fields.Char(
+        string='Sales Price',
+    )
+
     @api.model
     def _migrate_studio_rug_cluster_to_base(self):
         """Complete the Cluster 1 (RUG) migration by transferring
@@ -920,6 +1013,46 @@ class HelpdeskTicket(models.Model):
         rows = Field.search([
             ('model', '=', 'helpdesk.ticket'),
             ('name', 'in', cluster6),
+        ])
+        manual_rows = rows.filtered(lambda f: f.state == 'manual')
+        if manual_rows:
+            manual_rows.write({'state': 'base'})
+
+        ModelData = self.env['ir.model.data'].sudo()
+        studio_pins = ModelData.search([
+            ('model', '=', 'ir.model.fields'),
+            ('res_id', 'in', rows.ids),
+            ('module', '=', 'studio_customization'),
+        ])
+        if studio_pins:
+            studio_pins.unlink()
+
+    @api.model
+    def _migrate_studio_serial_product_cluster_to_base(self):
+        """Cluster 7 (Serial number / product) migration. Eleven
+        fields: serial-lot refs (primary + duplicate + sn_updated +
+        serial_created), repair reason M2M, and the four
+        product/qty/price snapshot fields Cluster 5 writes to.
+
+        Same idempotent pattern.
+        """
+        cluster7 = [
+            'x_studio_serial_no',
+            'x_studio_serial_number',
+            'x_studio_sn_updated',
+            'x_studio_repair_serial_created',
+            'x_studio_repair_reason',
+            'x_studio_materials_used',
+            'x_studio_quantity',
+            'x_studio_unit_price',
+            'x_studio_items',
+            'x_studio_qty',
+            'x_studio_sales_price',
+        ]
+        Field = self.env['ir.model.fields'].sudo()
+        rows = Field.search([
+            ('model', '=', 'helpdesk.ticket'),
+            ('name', 'in', cluster7),
         ])
         manual_rows = rows.filtered(lambda f: f.state == 'manual')
         if manual_rows:
