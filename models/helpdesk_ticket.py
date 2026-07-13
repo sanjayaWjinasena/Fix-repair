@@ -2347,3 +2347,147 @@ class HelpdeskTicket(models.Model):
                 'x_studio_s_received_by': self.env.uid,
                 'x_studio_pick_id': pick.id if pick else 0,
             })
+
+    # ─────────────────────────────────────────────────────────────────
+    # Studio server actions — Python delegations (Tier 1: automations)
+    # ─────────────────────────────────────────────────────────────────
+    # Native Python ports of the four base-automation-triggered
+    # Studio server actions on helpdesk.ticket. The
+    # `_delegate_studio_server_actions_to_native` migration rewrites
+    # each ir.actions.server.code string to a one-line delegation
+    # into these methods, so:
+    #   1. base.automation → ir.actions.server relationship
+    #      preserved (no changes to automation records)
+    #   2. safe_eval is called only on the one-line delegation,
+    #      not on the full logic — biggest perf win for hot-path
+    #      automations (on_create_or_write, on_change, on_unlink)
+    #   3. The logic runs at native Python speed, is testable,
+    #      and lives in version control.
+    #
+    # Behaviour ported verbatim from Studio's code strings; only
+    # `env` → `self.env`, `record` → `self`, and `record['x'] =`
+    # → `self.x =` style adaptations.
+
+    def _repair_seq_no_on_create_or_write(self):
+        """Replaces server action id 1976 (automation 171
+        'JIN-Helpdesk(Repair) Seq.No'). Assigns a sequence number
+        to newly-created tickets whose name is still 'New'.
+        """
+        for record in self:
+            if record.name == 'New':
+                seq = self.env['ir.sequence'].next_by_code('repair.seq')
+                if seq:
+                    record.write({'name': seq})
+
+    def _repair_populate_repair_location(self):
+        """Replaces server action id 2000 (automation 178
+        'RR - Auto Populate Repair Location'). Mirrors
+        x_studio_return_receipt_location onto x_studio_repair_location.
+        """
+        for record in self:
+            if record.x_studio_return_receipt_location:
+                record.x_studio_repair_location = record.x_studio_return_receipt_location
+            else:
+                record.x_studio_repair_location = False
+
+    def _repair_validate_cancelled_on_unlink(self):
+        """Replaces server action id 2222 (automation 201
+        'RR - Validate Cancelled Tickets'). Blocks unlink on
+        tickets flagged as cancelled.
+        """
+        for record in self:
+            if record.x_studio_cancelled:
+                raise UserError('Cancelled tickets can not be deleted.')
+
+    def _repair_auto_select_product_for_rug(self):
+        """Replaces server action id 1989 (automation 172
+        'RR - Auto Select Product for RUG Repairs').
+
+        When a serial number is set on the ticket, look up the
+        outgoing move-line that shipped that serial to a customer,
+        pull the source Sales Order + picking, and populate the
+        ticket's sale_order_id / picking refs / product / lot.
+        Behaviour ported verbatim from Studio.
+        """
+        for record in self:
+            if record.x_studio_serial_no:
+                company_id = self.env.context.get(
+                    'allowed_company_ids', [self.env.user.company_id.id]
+                )[0]
+                company = self.env['res.company'].browse(company_id)
+
+                cust_location = self.env['stock.location'].search([
+                    ('usage', '=', 'customer'),
+                ], limit=1)
+                trans_line = self.env['stock.move.line'].search([
+                    ('product_id', '=', record.x_studio_serial_no.product_id.id),
+                    ('lot_id', '=', record.x_studio_serial_no.id),
+                    ('picking_code', '=', 'outgoing'),
+                    ('location_dest_id', '=', cust_location.id),
+                    ('company_id', '=', company.id),
+                ], limit=1)
+                if trans_line:
+                    so = self.env['sale.order'].search([
+                        ('name', '=', trans_line.origin),
+                        ('company_id', '=', company.id),
+                    ], limit=1)
+                    if so:
+                        record.sale_order_id = so.id
+                        record.x_studio_picking_id = trans_line.picking_id.id
+                        record.x_studio_pick_id = trans_line.picking_id.id
+
+                record.product_id = record.x_studio_serial_no.product_id.id
+                record.lot_id = record.x_studio_serial_no.id
+
+                if record.x_studio_normal_repair_without_serial_no:
+                    record.sale_order_id = False
+            else:
+                if record.x_studio_normal_repair_without_serial_no:
+                    record.sale_order_id = False
+                    record.x_studio_picking_id = False
+                    record.x_studio_pick_id = False
+                    record.lot_id = False
+                else:
+                    record.sale_order_id = False
+                    record.x_studio_picking_id = False
+                    record.x_studio_pick_id = False
+                    record.product_id = False
+                    record.lot_id = False
+
+    @api.model
+    def _delegate_studio_server_actions_to_native(self):
+        """Rewrite the four base-automation ir.actions.server.code
+        strings to one-line delegations into the native Python
+        methods above. Same idempotent-marker pattern Fix-repair
+        uses for compute delegations (see
+        sale_order._delegate_studio_computes_to_native).
+
+        Only touches server actions that don't already carry the
+        marker, so it's safe to run on every install/upgrade.
+        """
+        marker = self.env['sale.order']._FIX_REPAIR_IDEMPOTENCE_MARKER
+        Server = self.env['ir.actions.server'].sudo()
+
+        delegations = [
+            # (server_action_id, guard_substring, delegation_code)
+            (1976, "next_by_code('repair.seq')",
+             "record._repair_seq_no_on_create_or_write()"),
+            (2000, 'x_studio_return_receipt_location',
+             "record._repair_populate_repair_location()"),
+            (2222, 'Cancelled tickets can not be deleted',
+             "record._repair_validate_cancelled_on_unlink()"),
+            (1989, "trans_line = env['stock.move.line'].search",
+             "record._repair_auto_select_product_for_rug()"),
+        ]
+        for action_id, guard, call in delegations:
+            action = Server.browse(action_id).exists()
+            if not action:
+                continue
+            code = action.code or ''
+            if marker in code:
+                continue
+            if guard not in code:
+                # Someone already edited the code manually — don't
+                # overwrite their changes.
+                continue
+            action.write({'code': f"{marker}\n{call}\n"})

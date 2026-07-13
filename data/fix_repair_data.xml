@@ -109,6 +109,16 @@
     <function model="x_repair_master_data.migration"
               name="_migrate_studio_repair_master_data_to_base"/>
 
+    <!-- Rewrite the four Studio server actions that back the
+         helpdesk.ticket base.automations (Repair Seq.No, Auto
+         Populate Repair Location, Auto Select Product for RUG,
+         Validate Cancelled Tickets) to one-line delegations into
+         native Python methods on helpdesk.ticket. safe_eval only
+         runs on the one-line delegation; the actual logic runs at
+         native CPython speed. Idempotent via marker string. -->
+    <function model="helpdesk.ticket"
+              name="_delegate_studio_server_actions_to_native"/>
+
     <!-- Deactivates the Studio automation "RR - Auto Select Product for RUG Repairs-33"
          which unconditionally clears product_id when x_studio_serial_no changes,
          overwriting our Python onchange. Clearing logic is in _onchange_serial_no_product. -->
