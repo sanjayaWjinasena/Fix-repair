@@ -287,6 +287,71 @@ class HelpdeskTicket(models.Model):
         string='Reopened Date',
     )
 
+    # ─────────────────────────────────────────────────────────────────
+    # Cluster 4 — Stage-transition markers
+    # ─────────────────────────────────────────────────────────────────
+    # Boolean flags that flip to True once the ticket has passed the
+    # corresponding stage transition. Read by Fix-repair's stage
+    # advancement guards (stock_picking._action_done, project_task
+    # auto-sync) to avoid re-firing a transition that already ran.
+    # x_studio_handed_over is not here — it's already Python-defined
+    # earlier in this class (compute, store=False) and gets folded
+    # into the migration function below for state-flip safety.
+
+    # Send to Factory — set when the ticket is dispatched to the
+    # factory for repair (transition from Diagnosis onwards).
+    x_studio_send_to_factory = fields.Boolean(
+        string='Send to Factory',
+    )
+
+    # Receive at Factory — set when the factory acknowledges receipt.
+    x_studio_receive_at_factory = fields.Boolean(
+        string='Receive at Factory',
+    )
+
+    # Send to Centre — set when the repaired item is dispatched back
+    # from the factory to the sales centre.
+    x_studio_send_to_centre = fields.Boolean(
+        string='Send to Centre',
+    )
+
+    # Receive at Centre — set when the sales centre acknowledges
+    # receiving the item back from the factory.
+    x_studio_receive_at_centre = fields.Boolean(
+        string='Receive at Centre',
+    )
+
+    # Estimation Sent Stage Updated — set once the ticket has moved
+    # to 'Estimation Sent to Customer' stage. Prevents the transition
+    # firing twice for the same SO.
+    x_studio_estimation_sent_stage_updated = fields.Boolean(
+        string='Estimation Sent Stage Updated',
+    )
+
+    # Estimation Approved Stage Updated — set once the ticket has
+    # moved to 'Estimation Approval Received' stage.
+    x_studio_estimation_approved_stage_updated = fields.Boolean(
+        string='Estimation Approved Stage Updated',
+    )
+
+    # Invoice Stage Updated — set once the invoice-related stage
+    # transition has fired.
+    x_studio_invoice_stage_updated = fields.Boolean(
+        string='Invoice Stage Updated',
+    )
+
+    # Repair Started Stage Updated — set once the ticket has moved
+    # to 'Repair Started' stage.
+    x_studio_repair_started_stage_updated = fields.Boolean(
+        string='Repair Started Stage Updated',
+    )
+
+    # Repair Complete Stage Updated — set once the ticket has moved
+    # to 'Repair Completed' stage.
+    x_studio_repair_complete_stage_updated = fields.Boolean(
+        string='Repair Complete Stage Updated',
+    )
+
     @api.model
     def _migrate_studio_rug_cluster_to_base(self):
         """Complete the Cluster 1 (RUG) migration by transferring
@@ -364,6 +429,48 @@ class HelpdeskTicket(models.Model):
         rows = Field.search([
             ('model', '=', 'helpdesk.ticket'),
             ('name', 'in', cluster2),
+        ])
+        manual_rows = rows.filtered(lambda f: f.state == 'manual')
+        if manual_rows:
+            manual_rows.write({'state': 'base'})
+
+        ModelData = self.env['ir.model.data'].sudo()
+        studio_pins = ModelData.search([
+            ('model', '=', 'ir.model.fields'),
+            ('res_id', 'in', rows.ids),
+            ('module', '=', 'studio_customization'),
+        ])
+        if studio_pins:
+            studio_pins.unlink()
+
+    @api.model
+    def _migrate_studio_stage_marker_cluster_to_base(self):
+        """Cluster 4 (Stage-transition markers) migration. Ten
+        Boolean flags including x_studio_handed_over (which was
+        already Python-defined earlier for its compute override —
+        listed here so its ir.model.fields row also flips to
+        state='base').
+
+        Same idempotent pattern as previous clusters:
+          1. state 'manual' → 'base' on all ten rows
+          2. drop studio_customization ir.model.data pins
+        """
+        cluster4 = [
+            'x_studio_send_to_factory',
+            'x_studio_receive_at_factory',
+            'x_studio_send_to_centre',
+            'x_studio_receive_at_centre',
+            'x_studio_estimation_sent_stage_updated',
+            'x_studio_estimation_approved_stage_updated',
+            'x_studio_invoice_stage_updated',
+            'x_studio_repair_started_stage_updated',
+            'x_studio_repair_complete_stage_updated',
+            'x_studio_handed_over',
+        ]
+        Field = self.env['ir.model.fields'].sudo()
+        rows = Field.search([
+            ('model', '=', 'helpdesk.ticket'),
+            ('name', 'in', cluster4),
         ])
         manual_rows = rows.filtered(lambda f: f.state == 'manual')
         if manual_rows:
