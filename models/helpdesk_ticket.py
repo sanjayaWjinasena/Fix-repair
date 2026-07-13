@@ -3054,6 +3054,64 @@ class HelpdeskTicket(models.Model):
             active_autos.write({'active': False})
 
     @api.model
+    def _sanitize_broken_studio_task_form_xpath(self):
+        """v155 hotfix. The Studio-authored project.task.form
+        customization view (id 3019, now Fix-repair-owned per v152)
+        contains an xpath expr targeting
+        //button[@name='action_fsm_create_quotation'].
+
+        That button is defined in industry_fsm_sale.view_task_form2_inherit
+        which extends view.task.form2.inherit — a different inheritance
+        chain from project.task.form. So the button is never reachable
+        in the combined arch that view 3019 is trying to modify, and
+        the xpath validator raises 'Element cannot be located in
+        parent view'. When Studio owned the view web_studio's
+        _get_view override silently swallowed the failure; under
+        Fix-repair ownership the raise propagates and every task
+        form 500s at load time.
+
+        The Python _get_view override in models/project_task.py
+        already sets invisible='1' unconditionally on the same
+        button, so the Studio xpath adds nothing behaviourally.
+        Strip that single xpath block from arch_db and every task
+        form opens again.
+
+        Idempotent — the strip is skipped if the xpath is no longer
+        present, and the search itself no-ops if view 3019 no
+        longer exists.
+        """
+        View = self.env['ir.ui.view'].sudo()
+        view = View.browse(3019).exists()
+        if not view:
+            return
+        arch = view.arch_db or ''
+        # Strip the exact xpath block. Newline handling kept loose
+        # so subsequent Studio saves that renormalise whitespace
+        # still match.
+        broken_start = arch.find(
+            "<xpath expr=\"//button[@name='action_fsm_create_quotation']\""
+        )
+        if broken_start == -1:
+            return
+        broken_end = arch.find('</xpath>', broken_start)
+        if broken_end == -1:
+            return
+        broken_end += len('</xpath>')
+        # Also swallow a trailing newline + leading spaces of the
+        # next line for clean formatting.
+        tail = arch[broken_end:]
+        stripped_tail = tail.lstrip()
+        new_arch = arch[:broken_start] + stripped_tail
+        # Re-indent: prepend the original indent width.
+        indent = ''
+        i = broken_start - 1
+        while i >= 0 and arch[i] == ' ':
+            indent += ' '
+            i -= 1
+        new_arch = arch[:broken_start - len(indent)] + indent + stripped_tail
+        view.write({'arch_db': new_arch})
+
+    @api.model
     def _fix_studio_report_template_keys(self):
         """v154 hotfix for the v153 report ownership migration.
 

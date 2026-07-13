@@ -168,6 +168,19 @@
     <function model="helpdesk.ticket"
               name="_fix_studio_report_template_keys"/>
 
+    <!-- v155 hotfix. The Studio-owned project.task.form customization
+         view (id 3019, now Fix-repair-owned per v152) carries an
+         xpath expr on //button[@name='action_fsm_create_quotation']
+         whose target lives in a sibling inheritance chain
+         (industry_fsm_sale) unreachable from the combined arch. Under
+         studio_customization ownership the failure was silently
+         swallowed; under Fix-repair ownership it raises and every
+         task form 500s at load time. project_task.py _get_view
+         already hides that button unconditionally, so the Studio
+         xpath is redundant — strip it. -->
+    <function model="helpdesk.ticket"
+              name="_sanitize_broken_studio_task_form_xpath"/>
+
     <!-- Deactivates the Studio automation "RR - Auto Select Product for RUG Repairs-33"
          which unconditionally clears product_id when x_studio_serial_no changes,
          overwriting our Python onchange. Clearing logic is in _onchange_serial_no_product. -->
