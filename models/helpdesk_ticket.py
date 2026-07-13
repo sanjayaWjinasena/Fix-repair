@@ -2754,6 +2754,197 @@ class HelpdeskTicket(models.Model):
         """Studio server action id 2311 native port (template 70)."""
         self._repair_send_stage13_email(70)
 
+    # ─────────────────────────────────────────────────────────────────
+    # Studio server actions — Python delegations (Tier 5: variants)
+    # ─────────────────────────────────────────────────────────────────
+    # Remaining actions: RUG "Auto Select" duplicates (1989 variants),
+    # Cancel Repair-2 variant of 2220, Change Repair Type to RUG,
+    # User Location Validation, and the object_write action 1998.
+
+    def _repair_auto_select_product_for_rug_no_company(self, sn_updated=False):
+        """Shared helper for Studio server actions 1990 and 2450.
+        Both are variants of 1989 that drop the ('company_id', ...)
+        filter from the outgoing stock.move.line search domain.
+        2450 additionally flips x_studio_sn_updated=True at the end.
+        """
+        for record in self:
+            if record.x_studio_serial_no:
+                company_id = self.env.context.get(
+                    'allowed_company_ids', [self.env.user.company_id.id]
+                )[0]
+                company = self.env['res.company'].browse(company_id)
+
+                cust_location = self.env['stock.location'].search([
+                    ('usage', '=', 'customer'),
+                ], limit=1)
+                trans_line = self.env['stock.move.line'].search([
+                    ('product_id', '=', record.x_studio_serial_no.product_id.id),
+                    ('lot_id', '=', record.x_studio_serial_no.id),
+                    ('picking_code', '=', 'outgoing'),
+                    ('location_dest_id', '=', cust_location.id),
+                ], limit=1)
+                if trans_line:
+                    so = self.env['sale.order'].search([
+                        ('name', '=', trans_line.origin),
+                        ('company_id', '=', company.id),
+                    ], limit=1)
+                    if so:
+                        record.sale_order_id = so.id
+                        record.x_studio_picking_id = trans_line.picking_id.id
+                        record.x_studio_pick_id = trans_line.picking_id.id
+
+                record.product_id = record.x_studio_serial_no.product_id.id
+                record.lot_id = record.x_studio_serial_no.id
+
+                if record.x_studio_normal_repair_without_serial_no:
+                    record.sale_order_id = False
+            else:
+                if record.x_studio_normal_repair_without_serial_no:
+                    record.sale_order_id = False
+                    record.x_studio_picking_id = False
+                    record.x_studio_pick_id = False
+                    record.lot_id = False
+                else:
+                    record.sale_order_id = False
+                    record.x_studio_picking_id = False
+                    record.x_studio_pick_id = False
+                    record.product_id = False
+                    record.lot_id = False
+
+            if sn_updated:
+                record.x_studio_sn_updated = True
+
+    def _repair_auto_select_product_for_rug_2(self):
+        """Studio server action id 1990 native port."""
+        self._repair_auto_select_product_for_rug_no_company(sn_updated=False)
+
+    def _repair_auto_select_product_for_rug_22(self):
+        """Studio server action id 2450 native port."""
+        self._repair_auto_select_product_for_rug_no_company(sn_updated=True)
+
+    def _repair_auto_select_product_for_rug_33(self):
+        """Studio server action id 2451 native port. Unconditionally
+        clears sale_order_id + picking refs + product + lot +
+        sn_updated flag."""
+        for record in self:
+            record.write({
+                'sale_order_id': False,
+                'x_studio_picking_id': False,
+                'x_studio_pick_id': False,
+                'product_id': False,
+                'lot_id': False,
+                'x_studio_sn_updated': False,
+            })
+
+    def _repair_auto_select_product_for_rug_4(self):
+        """Studio server action id 1992 native port. Clears
+        sale_order_id + picking refs + product + lot + serial_no
+        when ticket_type_id is set."""
+        for record in self:
+            if record.ticket_type_id:
+                record.write({
+                    'sale_order_id': False,
+                    'x_studio_picking_id': False,
+                    'x_studio_pick_id': False,
+                    'product_id': False,
+                    'lot_id': False,
+                    'x_studio_serial_no': False,
+                })
+
+    def _repair_studio_cancel_repair_2(self):
+        """Studio server action id 2343 native port. Variant of
+        Cancel Repair (2220) that flips repair_complete_stage_updated
+        and moves to stage 9/28 (Repair Completed per company) using
+        audit slot 8 — semantically a 'cancel + close as completed'."""
+        for record in self:
+            if not record.id:
+                continue
+            company_id = self.env.context.get(
+                'allowed_company_ids', [self.env.user.company_id.id]
+            )[0]
+            company = self.env['res.company'].browse(company_id)
+            if not record.x_studio_cancel_reason:
+                raise UserError('Cancel reason must be specified.')
+            now = datetime.datetime.now()
+            record.write({
+                'x_studio_repair_complete_stage_updated': True,
+                'stage_id': 9 if company.id == 1 else 28,
+                'x_studio_stage_date': now,
+                'x_studio_created_by_8': self.env.uid,
+                'x_studio_created_on_8': now,
+                'x_studio_cancelled_2': True,
+                'x_studio_cancel_status': 'Cancelled',
+            })
+
+    def _repair_studio_change_repair_type_to_rug(self):
+        """Studio server action id 2159 native port. Requires the
+        warranty card to be uploaded, rewrites each linked SO line's
+        price_unit to the product's standard_price (saving the
+        original in x_studio_price_unit_original), and flips
+        ticket_type_id to 1 (the RUG type)."""
+        for record in self:
+            if not record.x_studio_warranty_card:
+                raise UserError('Warranty Card Document must be Uploaded!')
+            for sos in record.fsm_task_ids:
+                so = self.env['sale.order'].search([
+                    ('id', '=', sos.sale_order_id.id),
+                ], limit=1)
+                if so:
+                    for so_line in so.order_line:
+                        original_price = so_line.price_unit
+                        so_line.write({
+                            'price_unit': so_line.product_template_id.standard_price,
+                            'x_studio_price_unit_original': original_price,
+                        })
+            record.write({'ticket_type_id': 1})
+
+    def _repair_studio_user_location_validation(self):
+        """Studio server action id 2558 native port. Guards that the
+        current user has access to the ticket's return-receipt
+        location. Raises UserError with details of allowed warehouses
+        (or a distinct message when none are permitted) if access is
+        denied. Admin (uid=1) is exempted."""
+        for record in self:
+            if self.env.uid == 1:
+                continue
+            if record.x_studio_user_location_validation:
+                warehouse = str(record.x_studio_return_receipt_location.complete_name)
+                loc = self.env['stock.location'].search([
+                    ('x_studio_users_stock_location', 'ilike', self.env.uid),
+                    ('active', '=', True),
+                ])
+                if loc:
+                    locations = ''
+                    for locs in loc:
+                        locations += str(locs.complete_name + '\n')
+                    raise UserError(
+                        'The current logged-in user does not have access to below listed warehouse.'
+                        + '\n\n' + 'Repair Location:' + '\n' + warehouse
+                        + '\n\n' + 'Only the below listed stock warehouses are permitted for the current logged-in user for repair module.'
+                        + '\n\n' + locations
+                    )
+                else:
+                    raise UserError(
+                        'The current logged-in user does not have access to below listed warehouse.'
+                        + '\n\n' + 'Repair Location:' + '\n' + warehouse
+                        + '\n\n' + 'There are no permitted stock warehouses set up for the current logged-in user for repair module.'
+                    )
+
+    def _repair_studio_update_rug_approval_in_pipeline(self):
+        """Studio server action id 1998 native port. Originally
+        state='object_write' with an empty code body — the action's
+        actual behaviour is defined by the ir.actions.server's
+        update_field_id / update_related_model_id / value columns
+        (native ORM write, no safe_eval). Providing a Python
+        placeholder here so any code that may reference this
+        method by name resolves, and in case the object_write config
+        needs a code-equivalent in the future.
+
+        No-op by default. If/when the object_write config's target
+        + value are known, replicate them here as a record.write().
+        """
+        return
+
     def _repair_studio_auto_create_repair_serial_nos(self):
         """Studio server action id 1994 native port.
 
@@ -2924,6 +3115,28 @@ class HelpdeskTicket(models.Model):
              "record._repair_send_final_notice_scrappage()"),
             (2311, "'id', '=', 70",
              "record._repair_send_reminding_letter()"),
+            # Tier 5 — variants + object_write conversion
+            (1990, "picking_code', '=', 'outgoing'",
+             "record._repair_auto_select_product_for_rug_2()"),
+            (2450, "x_studio_sn_updated'] = True",
+             "record._repair_auto_select_product_for_rug_22()"),
+            (2451, "x_studio_sn_updated'] = False",
+             "record._repair_auto_select_product_for_rug_33()"),
+            (1992, "record.ticket_type_id:",
+             "record._repair_auto_select_product_for_rug_4()"),
+            (2343, 'x_studio_cancelled_2',
+             "record._repair_studio_cancel_repair_2()"),
+            (2159, 'Warranty Card Document must be Uploaded',
+             "record._repair_studio_change_repair_type_to_rug()"),
+            (2558, 'does not have access to below listed warehouse',
+             "record._repair_studio_user_location_validation()"),
+            # 1998 is state='object_write' with an empty update_field_id
+            # + value — effectively dead. Convert to state='code' with a
+            # no-op delegation so any reference resolves safely. Guard
+            # matches the standard boilerplate present in the code field
+            # of newly-created object_write actions.
+            (1998, 'Available variables:',
+             "record._repair_studio_update_rug_approval_in_pipeline()"),
         ]
         for action_id, guard, call in delegations:
             action = Server.browse(action_id).exists()
@@ -2936,4 +3149,11 @@ class HelpdeskTicket(models.Model):
                 # Someone already edited the code manually — don't
                 # overwrite their changes.
                 continue
-            action.write({'code': f"{marker}\n{call}\n"})
+            vals = {'code': f"{marker}\n{call}\n"}
+            if action.state != 'code':
+                # Non-code actions (e.g. state='object_write' for
+                # id 1998) need the state flip too, otherwise the
+                # code column is set but the action still runs its
+                # original (possibly broken) native mechanism.
+                vals['state'] = 'code'
+            action.write(vals)
