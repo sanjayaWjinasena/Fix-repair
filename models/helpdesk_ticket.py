@@ -207,6 +207,86 @@ class HelpdeskTicket(models.Model):
         string='Picking Id',
     )
 
+    # ─────────────────────────────────────────────────────────────────
+    # Cluster 3 — Cancel / Reopen lifecycle
+    # ─────────────────────────────────────────────────────────────────
+    # Migrated from Studio to Python. Same names, same behaviour.
+    # Selection values preserved as string identifiers ('None' /
+    # 'Cancelled' / 'Reopened') so downstream references match.
+
+    # Cancelled flag — set to True by Studio's cancel automation when
+    # a ticket is moved to a cancelled stage.
+    x_studio_cancelled = fields.Boolean(
+        string='Cancelled',
+    )
+
+    # Cancelled (duplicate slot — Studio-created copy). Kept for
+    # schema compatibility.
+    x_studio_cancelled_2 = fields.Boolean(
+        string='Cancelled-2',
+    )
+
+    # Cancel Reason — free-text explanation entered by the user
+    # closing the ticket.
+    x_studio_cancel_reason = fields.Text(
+        string='Cancel Reason',
+    )
+
+    # Cancel Status — selection flag surfaced on the ticket list view.
+    # Two values: 'None' (default) and 'Cancelled'.
+    x_studio_cancel_status = fields.Selection(
+        selection=[
+            ('None', 'None'),
+            ('Cancelled', 'Cancelled'),
+        ],
+        string='Cancel Status',
+    )
+
+    # Cancelled By — user who initiated the cancellation.
+    x_studio_cancelled_by = fields.Many2one(
+        'res.users',
+        string='Cancelled By',
+    )
+
+    # Cancelled Date — timestamp of the cancellation action.
+    x_studio_cancelled_date = fields.Datetime(
+        string='Cancelled Date',
+    )
+
+    # Cancelled Stage Id — the helpdesk stage the ticket was in when
+    # it got cancelled (so reopen can restore it).
+    x_studio_cancelled_stage_id = fields.Many2one(
+        'helpdesk.stage',
+        string='Cancelled Stage Id',
+    )
+
+    # Reopened flag — set to True when a cancelled ticket is
+    # reactivated.
+    x_studio_reopened = fields.Boolean(
+        string='Reopened',
+    )
+
+    # Reopen Status — selection flag surfaced on list view.
+    # Two values: 'None' (default) and 'Reopened'.
+    x_studio_reopen_status = fields.Selection(
+        selection=[
+            ('None', 'None'),
+            ('Reopened', 'Reopened'),
+        ],
+        string='Reopen Status',
+    )
+
+    # Reopened By — user who reopened the ticket.
+    x_studio_reopened_by = fields.Many2one(
+        'res.users',
+        string='Reopened By',
+    )
+
+    # Reopened Date — timestamp of the reopen action.
+    x_studio_reopened_date = fields.Datetime(
+        string='Reopened Date',
+    )
+
     @api.model
     def _migrate_studio_rug_cluster_to_base(self):
         """Complete the Cluster 1 (RUG) migration by transferring
@@ -284,6 +364,50 @@ class HelpdeskTicket(models.Model):
         rows = Field.search([
             ('model', '=', 'helpdesk.ticket'),
             ('name', 'in', cluster2),
+        ])
+        manual_rows = rows.filtered(lambda f: f.state == 'manual')
+        if manual_rows:
+            manual_rows.write({'state': 'base'})
+
+        ModelData = self.env['ir.model.data'].sudo()
+        studio_pins = ModelData.search([
+            ('model', '=', 'ir.model.fields'),
+            ('res_id', 'in', rows.ids),
+            ('module', '=', 'studio_customization'),
+        ])
+        if studio_pins:
+            studio_pins.unlink()
+
+    @api.model
+    def _migrate_studio_cancel_cluster_to_base(self):
+        """Cluster 3 (Cancel / Reopen lifecycle) counterpart of the
+        earlier cluster migrations: transfer ir.model.fields ownership
+        of the eleven cancel/reopen helpdesk.ticket fields from Studio
+        to Python.
+
+        Same idempotent pattern:
+          1. state 'manual' → 'base' on all eleven cluster rows
+          2. drop studio_customization ir.model.data pins
+
+        Data / DB columns preserved.
+        """
+        cluster3 = [
+            'x_studio_cancelled',
+            'x_studio_cancelled_2',
+            'x_studio_cancel_reason',
+            'x_studio_cancel_status',
+            'x_studio_cancelled_by',
+            'x_studio_cancelled_date',
+            'x_studio_cancelled_stage_id',
+            'x_studio_reopened',
+            'x_studio_reopen_status',
+            'x_studio_reopened_by',
+            'x_studio_reopened_date',
+        ]
+        Field = self.env['ir.model.fields'].sudo()
+        rows = Field.search([
+            ('model', '=', 'helpdesk.ticket'),
+            ('name', 'in', cluster3),
         ])
         manual_rows = rows.filtered(lambda f: f.state == 'manual')
         if manual_rows:

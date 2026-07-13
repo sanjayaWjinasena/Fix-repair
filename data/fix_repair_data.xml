@@ -22,6 +22,12 @@
          variants, and pick/picking id fields). Idempotent. -->
     <function model="helpdesk.ticket" name="_migrate_studio_location_cluster_to_base"/>
 
+    <!-- Complete Cluster 3 (Cancel / Reopen lifecycle) Studio-to-Python
+         migration: same treatment for the eleven cancel/reopen fields
+         on helpdesk.ticket (cancelled flags, cancel reason/status/by/
+         date/stage, reopen flag/status/by/date). Idempotent. -->
+    <function model="helpdesk.ticket" name="_migrate_studio_cancel_cluster_to_base"/>
+
     <!-- Deactivates the Studio automation "RR - Auto Select Product for RUG Repairs-33"
          which unconditionally clears product_id when x_studio_serial_no changes,
          overwriting our Python onchange. Clearing logic is in _onchange_serial_no_product. -->
