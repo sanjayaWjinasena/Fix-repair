@@ -85,6 +85,20 @@
          Idempotent. -->
     <function model="helpdesk.stage" name="_migrate_studio_stage_cluster_to_base"/>
 
+    <!-- Migrate the 13 repair-related x_studio_* fields on
+         project.task (end_quick_repair, fully_invoiced_so, material
+         availability, quick_repair_status_1, repair_completed_stage
+         (related), repair_image_01/02, repair_reason M2M, and the
+         five valid_* computes that helpdesk.ticket Cluster 5 reads).
+         Compute strings ported verbatim from Studio. Idempotent. -->
+    <function model="project.task" name="_migrate_studio_project_task_repair_cluster_to_base"/>
+
+    <!-- Migrate the four x_studio_* location fields on res.users
+         (source_location, source_location_1, virtual_location,
+         virtual_location_1). helpdesk.ticket's related chains walk
+         through these. Idempotent. -->
+    <function model="res.users" name="_migrate_studio_res_users_cluster_to_base"/>
+
     <!-- Deactivates the Studio automation "RR - Auto Select Product for RUG Repairs-33"
          which unconditionally clears product_id when x_studio_serial_no changes,
          overwriting our Python onchange. Clearing logic is in _onchange_serial_no_product. -->
