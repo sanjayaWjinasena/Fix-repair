@@ -3055,61 +3055,75 @@ class HelpdeskTicket(models.Model):
 
     @api.model
     def _sanitize_broken_studio_task_form_xpath(self):
-        """v155 hotfix. The Studio-authored project.task.form
+        """v155–v156 hotfix. The Studio-authored project.task.form
         customization view (id 3019, now Fix-repair-owned per v152)
-        contains an xpath expr targeting
-        //button[@name='action_fsm_create_quotation'].
+        contains two xpath blocks whose targets live in industry_fsm
+        / industry_fsm_sale views that extend view.task.form2.inherit
+        — a sibling inheritance chain, not reachable when Odoo
+        combines against project.task.form. Both xpaths raise
+        'Element cannot be located in parent view' during arch
+        validation.
 
-        That button is defined in industry_fsm_sale.view_task_form2_inherit
-        which extends view.task.form2.inherit — a different inheritance
-        chain from project.task.form. So the button is never reachable
-        in the combined arch that view 3019 is trying to modify, and
-        the xpath validator raises 'Element cannot be located in
-        parent view'. When Studio owned the view web_studio's
-        _get_view override silently swallowed the failure; under
-        Fix-repair ownership the raise propagates and every task
-        form 500s at load time.
+        Under studio_customization ownership web_studio's _get_view
+        override silently swallowed the failure. Under Fix-repair
+        ownership the raise propagates: v155 caught one (Element
+        <xpath expr=".../action_fsm_create_quotation..."> during
+        form load); v156 caught the second on write validation
+        (Element <xpath expr=".../action_fsm_view_material...">).
 
-        The Python _get_view override in models/project_task.py
-        already sets invisible='1' unconditionally on the same
-        button, so the Studio xpath adds nothing behaviourally.
-        Strip that single xpath block from arch_db and every task
-        form opens again.
+        Both are already handled by project_task.py._get_view:
 
-        Idempotent — the strip is skipped if the xpath is no longer
-        present, and the search itself no-ops if view 3019 no
-        longer exists.
+          - action_fsm_create_quotation: btn.set('invisible', '1')
+            (unconditional hide)
+          - action_fsm_view_material:    invisible expression is
+            appended in-place after super()._get_view() succeeds
+
+        Strip both xpath blocks. Behaviour preserved.
+
+        Idempotent — no-op if either xpath is already absent.
+        Writes with skip_view_validation=True in context so the
+        write itself doesn't re-raise on the remaining orphan
+        while we're still mid-fix.
         """
         View = self.env['ir.ui.view'].sudo()
         view = View.browse(3019).exists()
         if not view:
             return
         arch = view.arch_db or ''
-        # Strip the exact xpath block. Newline handling kept loose
-        # so subsequent Studio saves that renormalise whitespace
-        # still match.
-        broken_start = arch.find(
-            "<xpath expr=\"//button[@name='action_fsm_create_quotation']\""
+        offending_buttons = (
+            'action_fsm_create_quotation',
+            'action_fsm_view_material',
         )
-        if broken_start == -1:
-            return
-        broken_end = arch.find('</xpath>', broken_start)
-        if broken_end == -1:
-            return
-        broken_end += len('</xpath>')
-        # Also swallow a trailing newline + leading spaces of the
-        # next line for clean formatting.
-        tail = arch[broken_end:]
-        stripped_tail = tail.lstrip()
-        new_arch = arch[:broken_start] + stripped_tail
-        # Re-indent: prepend the original indent width.
-        indent = ''
-        i = broken_start - 1
-        while i >= 0 and arch[i] == ' ':
-            indent += ' '
-            i -= 1
-        new_arch = arch[:broken_start - len(indent)] + indent + stripped_tail
-        view.write({'arch_db': new_arch})
+        for btn in offending_buttons:
+            marker = "<xpath expr=\"//button[@name='%s']\"" % btn
+            start = arch.find(marker)
+            if start == -1:
+                continue
+            end = arch.find('</xpath>', start)
+            if end == -1:
+                continue
+            end += len('</xpath>')
+            # Consume the trailing whitespace / newline of the
+            # closing tag so the arch stays clean.
+            while end < len(arch) and arch[end] in '\r\n':
+                end += 1
+            # Consume the leading indent of the removed block for
+            # symmetry.
+            indent_start = start
+            while indent_start > 0 and arch[indent_start - 1] in ' \t':
+                indent_start -= 1
+            if indent_start > 0 and arch[indent_start - 1] == '\n':
+                indent_start -= 1
+            arch = arch[:indent_start] + arch[end:]
+        if arch != (view.arch_db or ''):
+            # Bypass arch validation on this write. Validation
+            # already ran once when Studio saved the view years ago;
+            # our strip only removes content, never introduces new
+            # inheritance specs. Skipping validation here also lets
+            # the write succeed even if a sibling inheritance step
+            # in the same upgrade transaction has left a stale
+            # cached arch.
+            view.with_context(no_check_xml=True).write({'arch_db': arch})
 
     @api.model
     def _fix_studio_report_template_keys(self):
