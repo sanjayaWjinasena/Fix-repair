@@ -3104,7 +3104,19 @@ class HelpdeskTicket(models.Model):
             ])
             manual_rows = rows.filtered(lambda f: f.state == 'manual')
             if manual_rows:
-                manual_rows.write({'state': 'base'})
+                # Raw SQL: ir.model.fields.write({'state': ...}) is
+                # blocked by an @api.constrains on some field types
+                # (One2many with a still-manual comodel, computed
+                # fields, etc.) that silently rolls the write back
+                # for the whole recordset. The v141 catalogue-model
+                # migration hit the same wall on ir_model.state and
+                # solved it the same way. Data columns untouched.
+                self.env.cr.execute(
+                    "UPDATE ir_model_fields SET state = 'base' "
+                    "WHERE id IN %s",
+                    (tuple(manual_rows.ids),),
+                )
+                manual_rows.invalidate_recordset(['state'])
             studio_pins = Data.search([
                 ('model', '=', 'ir.model.fields'),
                 ('res_id', 'in', rows.ids),
