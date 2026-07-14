@@ -181,6 +181,29 @@
     <function model="helpdesk.ticket"
               name="_sanitize_broken_studio_task_form_xpath"/>
 
+    <!-- v159 — close the last two Studio pockets on the helpdesk-
+         repair scope.
+
+         Cluster 1–8 covered 107 helpdesk.ticket fields plus their
+         type/stage/project.task/res.users satellites, but 11
+         repair-workflow fields on project.task and res.users
+         weren't in the original field lists and stayed
+         state='manual'. Every one of them is referenced by view
+         3019's arch or by Fix-repair Python. Flip them to
+         state='base' + drop their studio_customization pins. -->
+    <function model="helpdesk.ticket"
+              name="_migrate_studio_leftover_repair_fields"/>
+
+    <!-- Companion for the 9 server actions whose code we already
+         delegated to native Python via
+         _delegate_studio_server_actions_to_native, but whose
+         ir.model.data pin was left under module='studio_customization'.
+         Studio's UI kept treating them as its own even though every
+         line of code lives in Fix-repair Python. Repin their pins
+         to Fix-repair with stable slugs. -->
+    <function model="helpdesk.ticket"
+              name="_repin_delegated_server_actions_to_native"/>
+
     <!-- Deactivates the Studio automation "RR - Auto Select Product for RUG Repairs-33"
          which unconditionally clears product_id when x_studio_serial_no changes,
          overwriting our Python onchange. Clearing logic is in _onchange_serial_no_product. -->

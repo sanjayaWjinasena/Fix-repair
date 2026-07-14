@@ -3055,6 +3055,120 @@ class HelpdeskTicket(models.Model):
             active_autos.write({'active': False})
 
     @api.model
+    def _migrate_studio_leftover_repair_fields(self):
+        """v159. Cover the 11 helpdesk-repair fields that were left
+        behind by the Cluster 1–8 migrations (they weren't in any
+        of the original cluster lists but every one of them is
+        referenced by view 3019's arch or by Python code in
+        Fix-repair).
+
+        Same shape as the earlier cluster migrations:
+          - Flip ir.model.fields.state from 'manual' to 'base'.
+          - Unlink the studio_customization pin on the field row.
+          - Data columns untouched.
+
+        Deliberately excluded (not repair-related): sale.order
+        Studio fields outside our scope; and 3 project.task fields
+        (x_studio_payment_type — partner payment method related;
+        x_studio_starting_date — bare datetime with no repair
+        references; x_task_id_sale_order_count — generic sales
+        count). And 7 res.users Studio fields whose intent is
+        recruitment / stock / attendance, unrelated to helpdesk
+        repair.
+
+        Idempotent — rows already state='base' are skipped.
+        """
+        clusters = {
+            'res.users': (
+                'x_studio_super_user',
+                'x_studio_super_user_melt_items',
+            ),
+            'project.task': (
+                'x_studio_cancelled',
+                'x_studio_created_date',
+                'x_studio_diagnosis_ids',
+                'x_studio_incomplete_delivery_available',
+                'x_studio_priority',
+                'x_studio_quotation_type',
+                'x_studio_related_information',
+                'x_studio_valid_diagnosis',
+                'x_studio_warranty_card',
+            ),
+        }
+        Field = self.env['ir.model.fields'].sudo()
+        Data = self.env['ir.model.data'].sudo()
+        for model, names in clusters.items():
+            rows = Field.search([
+                ('model', '=', model),
+                ('name', 'in', list(names)),
+            ])
+            manual_rows = rows.filtered(lambda f: f.state == 'manual')
+            if manual_rows:
+                manual_rows.write({'state': 'base'})
+            studio_pins = Data.search([
+                ('model', '=', 'ir.model.fields'),
+                ('res_id', 'in', rows.ids),
+                ('module', '=', 'studio_customization'),
+            ])
+            if studio_pins:
+                studio_pins.unlink()
+
+    @api.model
+    def _repin_delegated_server_actions_to_native(self):
+        """v159 — companion to _delegate_studio_server_actions_to_native.
+
+        The delegation table rewrote each action's `code` to a one-
+        line native Python call, but left the record's ir.model.data
+        pin under module='studio_customization'. Studio's UI still
+        shows these actions as its own even though every line of
+        their code lives in Fix-repair Python.
+
+        Repin the 9 delegated action records that are still Studio-
+        pinned (Repair Seq No, Super User Validate, User Location
+        Validation, and the 6 'JIN Company Id' catalogue actions).
+        Same shape as the view / report repins: keep the record id,
+        change the pin's module to 'Fix-repair', give it a stable
+        deterministic slug so the migration is idempotent.
+
+        Idempotent — pins already under 'Fix-repair' are skipped.
+        """
+        delegated_action_ids = (
+            1976,  # RR Repair Seq No
+            2544,  # Super User Validate
+            2558,  # User Location Validation
+            2666,  # JIN Company Id in Repair Reason
+            2667,  # JIN Company Id in Repair Reason - Customer
+            2668,  # JIN Company Id in Repair Sub Reason
+            2670,  # JIN Company Id in Repair Stages
+            2760,  # JIN Company Id in Helpdesk Stage
+            2790,  # JIN Company Id in Repair Accounts
+        )
+        Data = self.env['ir.model.data'].sudo()
+        pins = Data.search([
+            ('model', '=', 'ir.actions.server'),
+            ('module', '=', 'studio_customization'),
+            ('res_id', 'in', list(delegated_action_ids)),
+        ])
+        if not pins:
+            return
+        for pin in pins:
+            slug = 'action_%s' % pin.res_id
+            # Guard: already migrated on a prior run.
+            existing = Data.search([
+                ('module', '=', 'Fix-repair'),
+                ('name', '=', slug),
+                ('model', '=', 'ir.actions.server'),
+            ], limit=1)
+            if existing:
+                pin.unlink()
+                continue
+            pin.write({
+                'module': 'Fix-repair',
+                'name': slug,
+                'noupdate': True,
+            })
+
+    @api.model
     def _sanitize_broken_studio_task_form_xpath(self):
         """v155–v157 hotfix, iterated. Studio's arch on view 3019
         (Odoo Studio: project.task.form customization, Fix-repair-
