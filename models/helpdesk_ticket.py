@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import datetime
+import json
 
 from lxml import etree
 from odoo import api, fields, models
@@ -3184,9 +3185,27 @@ class HelpdeskTicket(models.Model):
         # Raw SQL bypasses ir.ui.view.write()'s _check_xml validator
         # (which combines the live arch during the upgrade
         # transaction and can raise on unrelated in-flight state).
+        #
+        # arch_db is a jsonb column in Odoo 17 with per-language keys;
+        # a bare XML string errors with "invalid input syntax for
+        # type json". Merge the clean arch into the existing lang
+        # dict so any non-default translation survives.
         self.env.cr.execute(
-            "UPDATE ir_ui_view SET arch_db = %s WHERE id = %s",
-            (clean_arch, view.id),
+            "SELECT arch_db FROM ir_ui_view WHERE id = %s", (view.id,)
+        )
+        row = self.env.cr.fetchone()
+        existing = row[0] if row else None
+        if isinstance(existing, str):
+            try:
+                existing = json.loads(existing)
+            except ValueError:
+                existing = None
+        if not isinstance(existing, dict) or not existing:
+            existing = {'en_US': ''}
+        payload = {lang: clean_arch for lang in existing.keys()}
+        self.env.cr.execute(
+            "UPDATE ir_ui_view SET arch_db = %s::jsonb WHERE id = %s",
+            (json.dumps(payload), view.id),
         )
         view.invalidate_recordset(['arch_db'])
 
