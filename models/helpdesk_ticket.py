@@ -3056,27 +3056,38 @@ class HelpdeskTicket(models.Model):
 
     @api.model
     def _migrate_studio_leftover_repair_fields(self):
-        """v159. Cover the 11 helpdesk-repair fields that were left
-        behind by the Cluster 1–8 migrations (they weren't in any
-        of the original cluster lists but every one of them is
-        referenced by view 3019's arch or by Python code in
-        Fix-repair).
+        """v159→v161. Rollback intent.
 
-        Same shape as the earlier cluster migrations:
-          - Flip ir.model.fields.state from 'manual' to 'base'.
-          - Unlink the studio_customization pin on the field row.
-          - Data columns untouched.
+        v159/v160 tried to flip 11 leftover repair-workflow fields
+        from state='manual' to state='base' via SQL, matching the
+        pattern used by Cluster 1–8. But those clusters worked
+        because Fix-repair's helpdesk_ticket.py already declared
+        each field in Python; the registry loader could resolve
+        state='base' fields against Python definitions.
 
-        Deliberately excluded (not repair-related): sale.order
-        Studio fields outside our scope; and 3 project.task fields
-        (x_studio_payment_type — partner payment method related;
-        x_studio_starting_date — bare datetime with no repair
-        references; x_task_id_sale_order_count — generic sales
-        count). And 7 res.users Studio fields whose intent is
-        recruitment / stock / attendance, unrelated to helpdesk
-        repair.
+        v159/v160 skipped the Python-declaration step. Post-flip,
+        Odoo's registry looks for state='base' definitions of
+        x_studio_super_user_melt_items / x_studio_valid_diagnosis /
+        etc. in Python and finds nothing — so the fields vanish
+        from the model at load time and every view that references
+        them (res.users form, project.task form, etc.) fails
+        validation:
 
-        Idempotent — rows already state='base' are skipped.
+          Field "x_studio_super_user_melt_items" does not exist
+          in model "res.users"
+
+        This method now rolls state='base' back to 'manual' for
+        those 11 fields, restoring Studio-runtime handling and
+        unblocking the upgrade. v162 will do the migration the
+        right way: add Python fields.X(...) declarations first,
+        then flip state.
+
+        Studio pins on these fields were already dropped by the
+        v159 unlink — that part is harmless (fields still work
+        because their state='manual' rows still exist), so no
+        action needed on ir.model.data here.
+
+        Idempotent — rows already state='manual' are skipped.
         """
         clusters = {
             'res.users': (
@@ -3096,34 +3107,23 @@ class HelpdeskTicket(models.Model):
             ),
         }
         Field = self.env['ir.model.fields'].sudo()
-        Data = self.env['ir.model.data'].sudo()
         for model, names in clusters.items():
             rows = Field.search([
                 ('model', '=', model),
                 ('name', 'in', list(names)),
             ])
-            manual_rows = rows.filtered(lambda f: f.state == 'manual')
-            if manual_rows:
-                # Raw SQL: ir.model.fields.write({'state': ...}) is
-                # blocked by an @api.constrains on some field types
-                # (One2many with a still-manual comodel, computed
-                # fields, etc.) that silently rolls the write back
-                # for the whole recordset. The v141 catalogue-model
-                # migration hit the same wall on ir_model.state and
-                # solved it the same way. Data columns untouched.
-                self.env.cr.execute(
-                    "UPDATE ir_model_fields SET state = 'base' "
-                    "WHERE id IN %s",
-                    (tuple(manual_rows.ids),),
-                )
-                manual_rows.invalidate_recordset(['state'])
-            studio_pins = Data.search([
-                ('model', '=', 'ir.model.fields'),
-                ('res_id', 'in', rows.ids),
-                ('module', '=', 'studio_customization'),
-            ])
-            if studio_pins:
-                studio_pins.unlink()
+            base_rows = rows.filtered(lambda f: f.state == 'base')
+            if not base_rows:
+                continue
+            # Raw SQL to reverse v159/v160's flip. Same rationale
+            # as the forward direction: ORM write is blocked for
+            # some configurations.
+            self.env.cr.execute(
+                "UPDATE ir_model_fields SET state = 'manual' "
+                "WHERE id IN %s",
+                (tuple(base_rows.ids),),
+            )
+            base_rows.invalidate_recordset(['state'])
 
     @api.model
     def _repin_delegated_server_actions_to_native(self):
