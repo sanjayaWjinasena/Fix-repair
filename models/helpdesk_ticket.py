@@ -3055,75 +3055,140 @@ class HelpdeskTicket(models.Model):
 
     @api.model
     def _sanitize_broken_studio_task_form_xpath(self):
-        """v155–v156 hotfix. The Studio-authored project.task.form
-        customization view (id 3019, now Fix-repair-owned per v152)
-        contains two xpath blocks whose targets live in industry_fsm
-        / industry_fsm_sale views that extend view.task.form2.inherit
-        — a sibling inheritance chain, not reachable when Odoo
-        combines against project.task.form. Both xpaths raise
-        'Element cannot be located in parent view' during arch
-        validation.
+        """v155–v157 hotfix, iterated. Studio's arch on view 3019
+        (Odoo Studio: project.task.form customization, Fix-repair-
+        owned since v152) uses fragile positional xpaths and two
+        sibling-chain button targets. web_studio's _get_view
+        override silently swallowed the failures; under Fix-repair
+        ownership every raise propagates and blocks task-form
+        loads *and* module upgrades.
 
-        Under studio_customization ownership web_studio's _get_view
-        override silently swallowed the failure. Under Fix-repair
-        ownership the raise propagates: v155 caught one (Element
-        <xpath expr=".../action_fsm_create_quotation..."> during
-        form load); v156 caught the second on write validation
-        (Element <xpath expr=".../action_fsm_view_material...">).
+        Iterating one broken xpath at a time turned into a losing
+        game (v155 caught action_fsm_create_quotation, v156 caught
+        action_fsm_view_material, upgrade then surfaced the
+        positional sale_order_id xpath, and there are more
+        positional ones queued behind it). Rewrite the whole
+        arch_db in one pass with robust name-based xpaths, dropping
+        the two sibling-chain button changes that project_task.py
+        _get_view already replicates.
 
-        Both are already handled by project_task.py._get_view:
+        Uses raw SQL to bypass ir.ui.view.write()'s _check_xml
+        validator — the validator combines the *live* combined
+        arch during the upgrade transaction, which can transiently
+        reference not-yet-migrated views and raise on unrelated
+        state. Once the SQL update lands and we invalidate the
+        cached arch, the next combine sees only clean name-based
+        xpaths and every task-form load succeeds.
 
-          - action_fsm_create_quotation: btn.set('invisible', '1')
-            (unconditional hide)
-          - action_fsm_view_material:    invisible expression is
-            appended in-place after super()._get_view() succeeds
+        Semantics preserved:
+          - The 3 repair-workflow buttons (View Repair Diagnosis
+            Validation, View Repair Image Validation, Tested OK)
+            still get injected after //field[@name=
+            'personal_stage_type_id'].
+          - user_ids → 'Assignees' rename and helpdesk_ticket_id /
+            x_studio_created_date / x_studio_repair_reason fields
+            still land after //field[@name='user_ids'].
+          - sale_order_id visibility flip + 'Sales Orderr' label +
+            the x_studio_priority / x_studio_quotation_type /
+            x_studio_material_availability trio still land after
+            //field[@name='sale_order_id'].
+          - The 3 Studio notebook pages (Repair Image, Warranty
+            Card, Repair Diagnosis) still land inside //notebook.
 
-        Strip both xpath blocks. Behaviour preserved.
+        Dropped:
+          - //button[@name='action_fsm_create_quotation']
+            attribute change  →  already unconditionally hidden by
+            project_task.py._get_view.
+          - //button[@name='action_fsm_view_material']
+            attribute change  →  already amended in place by
+            project_task.py._get_view.
 
-        Idempotent — no-op if either xpath is already absent.
-        Writes with skip_view_validation=True in context so the
-        write itself doesn't re-raise on the remaining orphan
-        while we're still mid-fix.
+        Idempotent — a marker on the second line of arch_db lets
+        subsequent runs skip the rewrite.
         """
-        View = self.env['ir.ui.view'].sudo()
-        view = View.browse(3019).exists()
+        view = self.env['ir.ui.view'].sudo().browse(3019).exists()
         if not view:
             return
-        arch = view.arch_db or ''
-        offending_buttons = (
-            'action_fsm_create_quotation',
-            'action_fsm_view_material',
+        current = view.arch_db or ''
+        marker = '<!-- fix_repair:sanitized-v157 -->'
+        if marker in current:
+            return
+
+        clean_arch = '''<data>
+  <!-- fix_repair:sanitized-v157 -->
+  <xpath expr="//field[@name='personal_stage_type_id']" position="after">
+    <button type="action" name="2224" string="View Repair Diagnosis Validation" class="btn-primary" invisible="x_studio_end_quick_repair == True or x_studio_cancelled == True or not helpdesk_ticket_id or ( helpdesk_ticket_id and x_studio_valid_diagnosis == True )"/>
+    <button type="action" name="2242" string="View Repair Image Validation" class="btn-primary" invisible="x_studio_end_quick_repair == True or x_studio_cancelled == True or not helpdesk_ticket_id or ( helpdesk_ticket_id and x_studio_repair_image_01 )"/>
+    <button type="action" name="2316" string="Tested OK" class="btn-primary" invisible="material_line_product_count &gt; 0 or x_studio_cancelled == True or not helpdesk_ticket_id or x_studio_end_quick_repair == True"/>
+  </xpath>
+  <xpath expr="//field[@name='user_ids']" position="attributes">
+    <attribute name="string">Assignees</attribute>
+  </xpath>
+  <xpath expr="//field[@name='user_ids']" position="after">
+    <field name="helpdesk_ticket_id" string="Help Desk Ticket"/>
+    <field name="x_studio_created_date"/>
+    <field name="x_studio_repair_reason" invisible="True"/>
+  </xpath>
+  <xpath expr="//field[@name='sale_order_id']" position="attributes">
+    <attribute name="invisible">False</attribute>
+    <attribute name="string">Sales Orderr</attribute>
+  </xpath>
+  <xpath expr="//field[@name='sale_order_id']" position="after">
+    <field name="x_studio_priority"/>
+    <field name="x_studio_quotation_type"/>
+    <field name="x_studio_material_availability"/>
+  </xpath>
+  <xpath expr="//notebook" position="inside">
+    <page string="Repair Image" name="studio_page_8ci_1ik1qk8tm">
+      <group name="studio_group_8ci">
+        <group name="studio_group_8ci_left">
+          <field name="x_studio_repair_image_01" widget="tablet_image"/>
+        </group>
+        <group name="studio_group_8ci_right">
+          <field name="x_studio_repair_image_02" widget="tablet_image"/>
+        </group>
+      </group>
+    </page>
+    <page string="Warranty Card" name="studio_page_8db_1ik1r0ore">
+      <group name="studio_group_8db">
+        <group name="studio_group_8db_left">
+          <field name="x_studio_warranty_card" widget="image"/>
+        </group>
+        <group name="studio_group_8db_right">
+          <field name="x_studio_related_information" widget="image"/>
+        </group>
+      </group>
+    </page>
+    <page string="Repair Diagnosis" name="studio_page_M5qFQ" invisible="helpdesk_ticket_id == False">
+      <field name="x_studio_diagnosis_ids" force_save="True" required="helpdesk_ticket_id != False">
+        <tree editable="bottom">
+          <field name="x_studio_sequence" widget="handle"/>
+          <field name="x_name" column_invisible="True"/>
+          <field name="x_studio_condition" optional="show" column_invisible="True"/>
+          <field name="x_studio_symptom_area" optional="show" column_invisible="True"/>
+          <field name="x_studio_symptom_code" optional="show" column_invisible="True"/>
+          <field name="x_studio_description" optional="show"/>
+          <field name="x_studio_diagnosis_area" optional="show" required="1"/>
+          <field name="x_studio_diagnosis_code" optional="show" required="1" domain="[[&quot;x_studio_diagnosis_area_1&quot;,&quot;=&quot;,x_studio_diagnosis_area]]"/>
+          <field name="x_studio_reason" optional="show" required="1"/>
+          <field name="x_studio_sub_reason" optional="show" required="1" domain="[[&quot;x_studio_reason_code&quot;,&quot;=&quot;,x_studio_reason]]"/>
+          <field name="x_studio_resolution" optional="show" required="1"/>
+          <field name="x_studio_repair_stage" optional="show" required="1"/>
+          <field optional="show" name="x_studio_task_id" string="Task Id" invisible="1" column_invisible="True"/>
+        </tree>
+      </field>
+    </page>
+  </xpath>
+</data>
+'''
+        # Raw SQL bypasses ir.ui.view.write()'s _check_xml validator
+        # (which combines the live arch during the upgrade
+        # transaction and can raise on unrelated in-flight state).
+        self.env.cr.execute(
+            "UPDATE ir_ui_view SET arch_db = %s WHERE id = %s",
+            (clean_arch, view.id),
         )
-        for btn in offending_buttons:
-            marker = "<xpath expr=\"//button[@name='%s']\"" % btn
-            start = arch.find(marker)
-            if start == -1:
-                continue
-            end = arch.find('</xpath>', start)
-            if end == -1:
-                continue
-            end += len('</xpath>')
-            # Consume the trailing whitespace / newline of the
-            # closing tag so the arch stays clean.
-            while end < len(arch) and arch[end] in '\r\n':
-                end += 1
-            # Consume the leading indent of the removed block for
-            # symmetry.
-            indent_start = start
-            while indent_start > 0 and arch[indent_start - 1] in ' \t':
-                indent_start -= 1
-            if indent_start > 0 and arch[indent_start - 1] == '\n':
-                indent_start -= 1
-            arch = arch[:indent_start] + arch[end:]
-        if arch != (view.arch_db or ''):
-            # Bypass arch validation on this write. Validation
-            # already ran once when Studio saved the view years ago;
-            # our strip only removes content, never introduces new
-            # inheritance specs. Skipping validation here also lets
-            # the write succeed even if a sibling inheritance step
-            # in the same upgrade transaction has left a stale
-            # cached arch.
-            view.with_context(no_check_xml=True).write({'arch_db': arch})
+        view.invalidate_recordset(['arch_db'])
 
     @api.model
     def _fix_studio_report_template_keys(self):
