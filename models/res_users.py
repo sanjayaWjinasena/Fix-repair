@@ -37,6 +37,19 @@ class ResUsers(models.Model):
         string='Virtual Location',
     )
 
+    # Two mutually-exclusive super-user permissions read by
+    # _super_user_validate below (Studio server action id 2544 native
+    # port). Kept as-is from Studio: plain stored booleans, no compute
+    # or default, copy=True.
+    x_studio_super_user = fields.Boolean(
+        string='Super User (All Items)',
+        copy=True,
+    )
+    x_studio_super_user_melt_items = fields.Boolean(
+        string='Super User (Melt Items)',
+        copy=True,
+    )
+
     def _super_user_validate(self):
         """Studio server action id 2544 native port. Guards that a
         single user cannot hold BOTH x_studio_super_user_melt_items

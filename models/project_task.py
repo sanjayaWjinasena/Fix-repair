@@ -254,6 +254,130 @@ class ProjectTask(models.Model):
                             valid = False
             rec['x_studio_valid_invoiced_so'] = valid
 
+    # ─────────────────────────────────────────────────────────────────
+    # Leftover Studio repair-workflow fields (v162)
+    # ─────────────────────────────────────────────────────────────────
+    # These 9 x_studio_* fields on project.task weren't in the 13-item
+    # Cluster 5 list but every one is referenced by view 3019's Studio
+    # arch or by Fix-repair Python. Ported verbatim from their Studio
+    # runtime definitions (ttype, related chain, selection choices,
+    # store flag, compute string) so the state='manual' → 'base' flip
+    # in _migrate_studio_leftover_repair_fields below resolves against
+    # these declarations instead of dropping the fields from the
+    # registry.
+
+    # Related to the linked helpdesk ticket's Cluster 3 cancel flag.
+    # Store=True per Studio so it's searchable / indexable on task
+    # lists.
+    x_studio_cancelled = fields.Boolean(
+        string='Cancelled',
+        related='helpdesk_ticket_id.x_studio_cancelled',
+        store=True,
+        readonly=True,
+    )
+
+    # Plain stored datetime — no compute, editable, marked copied=True
+    # in Studio.
+    x_studio_created_date = fields.Datetime(
+        string='Created Date',
+        copy=True,
+    )
+
+    # One2many onto the Studio-manual x_task_diagnosis catalogue via
+    # its x_studio_task_id many2one back-reference. Both sides remain
+    # DB-level Studio artefacts; the field itself is now Python-owned.
+    x_studio_diagnosis_ids = fields.One2many(
+        'x_task_diagnosis',
+        'x_studio_task_id',
+        string='Diagnosis Ids',
+    )
+
+    # Non-stored computed. Studio's original compute added a no-op
+    # branch that set valid=False when it was already False — dropped
+    # from the port; observable behaviour is unchanged.
+    x_studio_incomplete_delivery_available = fields.Boolean(
+        string='Incomplete Delivery Available',
+        compute='_compute_x_studio_incomplete_delivery_available',
+        store=False,
+        readonly=True,
+    )
+
+    @api.depends('sale_order_id', 'sale_order_id.state')
+    def _compute_x_studio_incomplete_delivery_available(self):
+        Picking = self.env['stock.picking']
+        for rec in self:
+            valid = False
+            so = rec.sale_order_id
+            if so and so.state != 'cancel':
+                open_delivery = Picking.search(
+                    [('sale_id', '=', so.id), ('state', '!=', 'done')],
+                    limit=1,
+                )
+                if open_delivery:
+                    valid = open_delivery.state != 'cancel'
+                else:
+                    any_delivery = Picking.search(
+                        [('sale_id', '=', so.id)], limit=1,
+                    )
+                    valid = not any_delivery
+            rec['x_studio_incomplete_delivery_available'] = valid
+
+    x_studio_priority = fields.Selection(
+        selection=[
+            ('Highest', 'Highest'),
+            ('High', 'High'),
+            ('Normal', 'Normal'),
+            ('Low', 'Low'),
+            ('Lowest', 'Lowest'),
+        ],
+        string='Priority',
+        copy=True,
+    )
+
+    # Related to sale.order.x_studio_quotation_type (still Studio-
+    # manual on sale.order — outside this migration's scope, but
+    # related fields work fine across state='manual'/'base' boundaries).
+    x_studio_quotation_type = fields.Selection(
+        selection=[
+            ('Sales', 'Sales'),
+            ('Project', 'Project'),
+            ('Repair', 'Repair'),
+        ],
+        string='Quotation Type',
+        related='sale_order_id.x_studio_quotation_type',
+        store=True,
+        readonly=True,
+    )
+
+    x_studio_related_information = fields.Binary(
+        string='Related Information',
+        related='helpdesk_ticket_id.x_studio_related_information',
+        store=True,
+        readonly=True,
+    )
+
+    # Non-stored computed. Studio's compute was equivalent to a
+    # bool() of the one2many; the loop pattern is preserved verbatim
+    # in commentary but the port uses the shorter expression.
+    x_studio_valid_diagnosis = fields.Boolean(
+        string='Valid Diagnosis',
+        compute='_compute_x_studio_valid_diagnosis',
+        store=False,
+        readonly=True,
+    )
+
+    @api.depends('x_studio_diagnosis_ids')
+    def _compute_x_studio_valid_diagnosis(self):
+        for rec in self:
+            rec.x_studio_valid_diagnosis = bool(rec.x_studio_diagnosis_ids)
+
+    x_studio_warranty_card = fields.Binary(
+        string='Warranty Card',
+        related='helpdesk_ticket_id.x_studio_warranty_card',
+        store=True,
+        readonly=True,
+    )
+
     @api.model
     def _migrate_studio_project_task_repair_cluster_to_base(self):
         """Flip state='manual'→'base' + unlink studio_customization
