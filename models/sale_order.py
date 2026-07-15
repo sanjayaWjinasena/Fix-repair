@@ -888,8 +888,19 @@ class SaleOrder(models.Model):
                 btn.set('invisible',
                     # Universal gates
                     "is_subscription or state != 'sale' "
-                    # SO already fully invoiced
-                    "or invoice_status == 'invoiced' "
+                    # Hide once at least one non-cancelled invoice
+                    # exists on the SO. Odoo's invoice_count is
+                    # computed after filtering out state='cancel'
+                    # moves, so this reappears automatically when
+                    # every invoice on the SO gets cancelled.
+                    #
+                    # Note we use invoice_count rather than
+                    # invoice_status == 'invoiced' because down-
+                    # payment-only SOs from the legacy two-invoice
+                    # flow can have invoice_status = 'no' (product
+                    # lines still at qty_invoiced = 0) while still
+                    # carrying an active down-payment invoice.
+                    "or invoice_count > 0 "
                     # RUG in progress: waiting for Repair Completed
                     "or (x_studio_rug_confirmed and not x_studio_rug_rejected "
                     "    and ticket_repair_stage_state != 'repair_completed') "
