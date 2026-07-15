@@ -857,36 +857,55 @@ class SaleOrder(models.Model):
             #   • create_invoice_sub (gray)           : subscription-only
             #   • create_invoice_percentage (gray)    : percentage advance
             #
-            # Behaviour we want:
+            # v163 behaviour:
             #   • RUG-confirmed (warranty path):
-            #       - Purple available once the ticket hits Repair Completed
-            #       - Percentage variant follows its default visibility
-            #   • Reject-RUG (customer-pays path):
-            #       - Hide the Purple variant entirely
-            #       - Always offer the Percentage advance variant while the
-            #         SO is in 'sale' state (regardless of invoice_status),
-            #         so the salesperson collects a percentage advance from
-            #         the customer to unblock delivery.
+            #       - Purple available once the ticket hits Repair Completed;
+            #         click routes to action_repair_create_invoice which
+            #         falls through to standard Odoo _create_invoices()
+            #         (delivered-qty invoice, no down-payment wizard).
+            #   • Non-RUG (customer-pays or Reject-RUG):
+            #       - Purple visible immediately after confirm — even
+            #         before delivery. Click routes to
+            #         _create_repair_full_invoice() which builds ONE
+            #         invoice for the entire SO ignoring the
+            #         invoice_policy='delivery' gate. Supports quick
+            #         repairs where the customer pays 100% upfront.
+            #   • Repair SOs universally lose the Percentage advance
+            #     variant (no more down-payment split).
+            #   • Non-Repair SOs (Sales / Project) keep the standard
+            #     Odoo behaviour on both buttons — untouched here.
             for btn in arch.xpath("//button[@id='create_invoice']"):
-                # Hide the purple Create Invoice button only while RUG is
-                # confirmed-and-pending (waiting for Repair Completed).
-                # Reject-RUG falls through to the NUW behaviour: purple
-                # button visible per standard Odoo gating.
-                existing = btn.get('invisible', '')
-                extra = (
-                    "x_studio_rug_confirmed "
-                    "and not x_studio_rug_rejected "
-                    "and ticket_repair_stage_state != 'repair_completed'"
+                # Repoint the button at our router method. This
+                # replaces the default action= wizard call
+                # (action_view_sale_advance_payment_inv) with a plain
+                # object-method call, so no down-payment prompt.
+                btn.set('name', 'action_repair_create_invoice')
+                btn.set('type', 'object')
+                # The default context passes
+                #   default_advance_payment_method='delivered'
+                # into the wizard — no longer relevant.
+                btn.attrib.pop('context', None)
+                btn.set('invisible',
+                    # Universal gates
+                    "is_subscription or state != 'sale' "
+                    # SO already fully invoiced
+                    "or invoice_status == 'invoiced' "
+                    # RUG in progress: waiting for Repair Completed
+                    "or (x_studio_rug_confirmed and not x_studio_rug_rejected "
+                    "    and ticket_repair_stage_state != 'repair_completed') "
+                    # RUG-approved / non-Repair: keep standard Odoo
+                    # gate — only visible when something is invoiceable
+                    "or (not (x_repair_customer_pays or x_studio_rug_rejected) "
+                    "    and invoice_status not in ('to invoice', 'upselling'))"
                 )
-                btn.set('invisible', f"({existing}) or ({extra})" if existing else extra)
 
             for btn in arch.xpath("//button[@id='create_invoice_percentage']"):
-                # Standard Odoo expression: is_subscription or invoice_status != 'no'
-                # or state != 'sale'. Both NUW and Reject-RUG follow the same
-                # standard gate now — percentage advance visible while SO is
-                # confirmed and no invoice has been created yet.
+                # Hide the percentage down-payment variant on every
+                # Repair SO. Non-Repair SOs keep the standard gate.
                 btn.set('invisible',
-                    "is_subscription or state != 'sale' or invoice_status != 'no'"
+                    "is_subscription or state != 'sale' "
+                    "or invoice_status != 'no' "
+                    "or x_studio_quotation_type == 'Repair'"
                 )
 
             # Order Payment Type: editable in draft/sent for all customers
@@ -1234,6 +1253,121 @@ class SaleOrder(models.Model):
                     or order.x_studio_rug_rejected):
                 self._move_ticket_to_stage(order, 'Estimation Approval Received')
         return result
+
+    def action_repair_create_invoice(self):
+        """Fix-repair replacement for the purple 'Create Invoice' button.
+
+        Routes:
+          - Non-RUG (x_repair_customer_pays or x_studio_rug_rejected):
+            call _create_repair_full_invoice() which builds ONE
+            invoice for the whole SO ignoring invoice_policy=
+            'delivery' gating. No down-payment mechanism used.
+          - RUG-approved (warranty): fall through to standard Odoo
+            _create_invoices(). Button visibility already gates
+            this branch on ticket_repair_stage_state == 'repair_completed'
+            in _get_view, so we hit here after delivery is done —
+            _create_invoices() then produces a normal delivered-qty
+            invoice.
+
+        Return an ir.actions.act_window opening the created invoice
+        in form view. The RUG path returns the same shape so the
+        button behaves consistently.
+        """
+        self.ensure_one()
+        if self.x_repair_customer_pays or self.x_studio_rug_rejected:
+            return self._create_repair_full_invoice()
+        # RUG-approved / non-repair: standard Odoo behaviour
+        invoices = self._create_invoices()
+        if not invoices:
+            raise UserError(
+                "Nothing to invoice on this sale order."
+            )
+        return {
+            'name': 'Customer Invoice',
+            'view_mode': 'form',
+            'res_model': 'account.move',
+            'view_id': self.env.ref('account.view_move_form').id,
+            'type': 'ir.actions.act_window',
+            'res_id': invoices[0].id,
+            'target': 'current',
+        }
+
+    def _create_repair_full_invoice(self):
+        """Create ONE customer invoice for the entire SO amount for
+        non-RUG (customer-pays or Reject-RUG) repair sale orders.
+
+        Uses each order line's product_uom_qty (ordered qty) instead
+        of qty_to_invoice, so the standard invoice_policy='delivery'
+        gate that stalls invoicing until pickings are validated is
+        bypassed. Quick repairs paid fully upfront no longer need
+        the down-payment wizard.
+
+        Refuses to run when:
+          - SO isn't confirmed (state != 'sale'), or
+          - An invoice already exists (any non-cancelled state).
+
+        Skips over lines that are is_downpayment=True (from any
+        legacy wizard interaction) and lines with product_uom_qty
+        <= 0. Section / note lines are preserved.
+
+        Returns an ir.actions.act_window opening the new invoice
+        in form view.
+        """
+        self.ensure_one()
+        if not (self.x_repair_customer_pays or self.x_studio_rug_rejected):
+            raise UserError(
+                "Full-amount invoicing is only available on non-RUG "
+                "(customer-pays or Reject-RUG) repair sale orders."
+            )
+        if self.state != 'sale':
+            raise UserError("The sale order must be confirmed first.")
+        existing = self.invoice_ids.filtered(lambda i: i.state != 'cancel')
+        if existing:
+            raise UserError(
+                "An invoice already exists for this sale order (%s). "
+                "Cancel it first or use the existing invoice."
+                % existing[0].name
+            )
+
+        invoice_vals = self._prepare_invoice()
+        invoice_line_cmds = []
+        for line in self.order_line:
+            if line.display_type in ('line_section', 'line_note'):
+                invoice_line_cmds.append((0, 0, {
+                    'display_type': line.display_type,
+                    'name': line.name,
+                    'sequence': line.sequence,
+                }))
+                continue
+            if line.is_downpayment:
+                continue
+            if line.product_uom_qty <= 0:
+                continue
+            # Force qty to the ordered qty. _prepare_invoice_line
+            # already returns 'quantity': self.qty_to_invoice — the
+            # override kwarg is applied AFTER via res.update(...).
+            invoice_line_cmds.append((0, 0,
+                line._prepare_invoice_line(quantity=line.product_uom_qty)
+            ))
+
+        if not invoice_line_cmds:
+            raise UserError(
+                "Nothing to invoice on this sale order — no non-"
+                "downpayment lines with a positive ordered quantity."
+            )
+
+        invoice_vals['invoice_line_ids'] = invoice_line_cmds
+        invoice = self.env['account.move'].create(invoice_vals)
+
+        return {
+            'name': 'Customer Invoice',
+            'view_mode': 'form',
+            'res_model': 'account.move',
+            'view_id': self.env.ref('account.view_move_form').id,
+            'type': 'ir.actions.act_window',
+            'res_id': invoice.id,
+            'target': 'current',
+        }
 
     def action_approve_rug_direct(self):
         self.write({'x_studio_rug_approved': True})
