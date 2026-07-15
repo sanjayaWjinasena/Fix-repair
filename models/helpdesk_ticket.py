@@ -1463,19 +1463,53 @@ class HelpdeskTicket(models.Model):
         }
 
     @api.depends(
-        'fsm_task_ids.sale_order_id.invoice_status',
-        'fsm_task_ids.sale_order_id.amount_unpaid',
+        'fsm_task_ids.sale_order_id.invoice_ids.state',
+        'fsm_task_ids.sale_order_id.invoice_ids.payment_state',
     )
     def _compute_so_fully_paid(self):
+        """True when every linked repair-task SO carries at least one
+        non-cancelled invoice AND every non-cancelled invoice on those
+        SOs is state='posted' with payment_state in ('in_payment',
+        'paid'). Used to gate the Dispatch button — don't hand the
+        item back until the customer has settled the repair bill.
+
+        We accept 'in_payment' alongside 'paid' because the customer
+        has already handed over the money at that point; bank
+        reconciliation is a downstream accounting step that shouldn't
+        block operations.
+
+        Prior implementation checked invoice_status == 'invoiced' AND
+        amount_unpaid == 0. That combo produced false positives after
+        the v163 single-full-invoice flow landed: creating the invoice
+        sets qty_invoiced = product_uom_qty on every line so
+        invoice_status flips to 'invoiced' immediately, and
+        amount_unpaid's compute only sums residuals on POSTED invoices
+        — a fresh draft is excluded entirely. So the moment the draft
+        invoice existed, so_fully_paid = True and Dispatch appeared
+        before the customer had paid anything.
+
+        Checking payment_state directly ties the gate to an event
+        that actually reflects money changing hands.
+        """
         for ticket in self:
             task_sos = ticket.fsm_task_ids.mapped('sale_order_id')
             if not task_sos:
                 ticket.so_fully_paid = False
                 continue
-            ticket.so_fully_paid = all(
-                so.invoice_status == 'invoiced' and so.amount_unpaid == 0
-                for so in task_sos
-            )
+            all_paid = True
+            for so in task_sos:
+                invoices = so.invoice_ids.filtered(lambda i: i.state != 'cancel')
+                if not invoices:
+                    all_paid = False
+                    break
+                if not all(
+                    inv.state == 'posted'
+                    and inv.payment_state in ('in_payment', 'paid')
+                    for inv in invoices
+                ):
+                    all_paid = False
+                    break
+            ticket.so_fully_paid = all_paid
 
     @api.depends(
         'fsm_task_ids.x_studio_quick_repair_status_1',
