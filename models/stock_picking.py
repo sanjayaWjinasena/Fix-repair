@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from lxml import etree
 from odoo import api, fields, models
+from odoo.exceptions import UserError
 
 
 class StockPicking(models.Model):
@@ -10,22 +11,45 @@ class StockPicking(models.Model):
         compute='_compute_nuw_block_validate',
     )
 
+    # Payment-states that count as "customer has paid enough to
+    # release the delivery". 'partial' is included because a partial
+    # payment still means real money has been recorded against the
+    # invoice; the operator wants to release the goods at that point.
+    _NUW_PAID_STATES = ('partial', 'in_payment', 'paid')
+
     @api.depends(
         'sale_id',
         'sale_id.x_repair_customer_pays',
         'sale_id.x_studio_rug_rejected',
-        'sale_id.invoice_ids',
+        'sale_id.invoice_ids.state',
+        'sale_id.invoice_ids.payment_state',
     )
     def _compute_nuw_block_validate(self):
-        # The delivery-validation gate applies to any customer-pays
-        # repair SO: those flagged x_repair_customer_pays (started as
-        # not-under-warranty) OR those whose RUG has been rejected mid-
-        # flow (warranty repair fell through to customer-pays). In both
-        # cases the customer must pay before we release the delivery.
-        # Once at least one invoice exists on the SO (the customer-pays
-        # cycle has started — typically the percentage advance invoice),
-        # we unblock Validate so the salesperson can finalise the
-        # delivery.
+        """Block delivery Validate on customer-pays repair SO pickings
+        until an actual payment has landed on at least one non-
+        cancelled invoice for the linked sale order.
+
+        Applies to any SO with x_repair_customer_pays=True (started as
+        not-under-warranty) OR x_studio_rug_rejected=True (warranty
+        repair fell through to customer-pays after the RUG cycle).
+        Warranty-approved and non-Repair SOs pass through — this field
+        stays False for them.
+
+        Unblock rule: at least one invoice on the SO must be
+        non-cancelled AND its payment_state must be in
+        ('partial', 'in_payment', 'paid'). A draft or posted-but-
+        not_paid invoice is not enough — the previous implementation
+        unblocked as soon as any invoice_ids row existed, which let
+        deliveries validate before the customer paid anything.
+
+        Reasoning behind the states we accept:
+          - 'partial'    → at least some money is in
+          - 'in_payment' → payment registered, awaiting bank recon
+          - 'paid'       → fully reconciled
+        Everything else ('not_paid', 'reversed', 'invoicing_legacy')
+        means no money has actually changed hands from the operator's
+        perspective, so we keep the block.
+        """
         for picking in self:
             so = picking.sale_id
             customer_pays = bool(so) and (
@@ -35,18 +59,32 @@ class StockPicking(models.Model):
             if not customer_pays:
                 picking.nuw_block_validate = False
                 continue
-            if so.invoice_ids:
-                picking.nuw_block_validate = False
-                continue
-            task = so.sudo().task_id or self.env['project.task'].sudo().search(
-                [('sale_order_id', '=', so.id)], limit=1
+            invoices = so.invoice_ids.filtered(lambda m: m.state != 'cancel')
+            picking.nuw_block_validate = not any(
+                inv.payment_state in self._NUW_PAID_STATES
+                for inv in invoices
             )
-            ticket = task.sudo().helpdesk_ticket_id if task else None
-            if not ticket:
-                picking.nuw_block_validate = False
-                continue
-            stage_name = (ticket.sudo().stage_id.name or '').strip()
-            picking.nuw_block_validate = stage_name not in ('Advance Received', 'Repair Started')
+
+    def button_validate(self):
+        """Server-side safety net for the delivery Validate gate.
+
+        _compute_nuw_block_validate + the _get_view button-hide
+        expression together suppress the Validate button in the UI
+        when the customer-pays repair invoice has no payment against
+        it yet. Re-check server-side so the gate can't be bypassed
+        via a URL / API call directly hitting button_validate.
+        """
+        blocked = self.filtered(lambda p: p.nuw_block_validate)
+        if blocked:
+            raise UserError(
+                "Cannot validate delivery: the customer-pays repair "
+                "invoice on the linked sale order has no payment yet. "
+                "Register at least a partial payment on the invoice "
+                "before validating the delivery.\n\n"
+                "Affected pickings:\n"
+                + "\n".join("  • %s" % p.name for p in blocked)
+            )
+        return super().button_validate()
 
     def _get_view(self, view_id=None, view_type='form', **options):
         arch, view = super()._get_view(view_id, view_type, **options)
