@@ -69,4 +69,47 @@
         </field>
     </record>
 
+    <!--
+        Hide a set of ticket-form fields that no longer belong in the
+        current UX. All of these keep their DB columns, computes, and
+        constraints — they're just no longer rendered on the form.
+
+        Priority 99 to force Odoo to apply this view AFTER Studio's
+        own inherits — otherwise the xpath expressions could resolve
+        before Studio has finished inserting these fields into the
+        merged arch, and the position="attributes" op would be a no-op.
+    -->
+    <record id="helpdesk_ticket_form_hide_fields" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.form.hide.fields</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='team_id']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='x_studio_rug_repair']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='x_studio_rug_confirmed']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='x_studio_quick_repair_status']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='x_studio_cancel_reason']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='x_studio_items']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='x_studio_source_location_1']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='x_studio_tracking']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
 </odoo>
