@@ -33,9 +33,11 @@
                  shows only the ticket's standard picking_ids subset, while
                  our Movements button above captures every transfer
                  stamped with x_studio_helpdesk_ticket_id (returns,
-                 dispatches, factory transit, etc). -->
+                 dispatches, factory transit, etc). Kept unconditional
+                 because our Movements button replaces it on every ticket
+                 that renders this form. -->
             <xpath expr="//button[@name='action_view_pickings']" position="attributes">
-                <attribute name="invisible">use_product_repairs</attribute>
+                <attribute name="invisible">1</attribute>
             </xpath>
 
             <xpath expr="//header" position="inside">
