@@ -616,6 +616,24 @@ class ProjectTask(models.Model):
                         field_el.set('invisible', '1')
                         targets[0].insert(0, field_el)
 
+            # UI-only field hides. Kept in Python so we can operate
+            # on the fully-merged arch — some of these fields are
+            # inserted by other modules' inherits (sale_project,
+            # project_enterprise, studio_customization) and can't
+            # be reliably targeted from an XML inherit that points
+            # at project.view_task_form2 (the base). Hiding here
+            # gracefully skips any field not present in this
+            # install. All fields keep their DB columns, computes,
+            # and constraints — only the render is suppressed.
+            for fname in (
+                'tag_ids',                          # Tags
+                'sale_line_id',                     # Sales Order Item
+                'planned_date_begin',               # Planned Date / Start date
+                'x_studio_material_availability',   # Material Availability
+            ):
+                for field_el in arch.xpath(f"//field[@name='{fname}']"):
+                    field_el.set('invisible', '1')
+
             # New Quotation: not used in the repair workflow — hide entirely.
             for btn in arch.xpath("//button[@name='action_fsm_create_quotation']"):
                 btn.set('invisible', '1')
