@@ -14,7 +14,7 @@ stamp user_ids = current user. project.task.create_date is already
 auto-set by the ORM at record-creation time, so no explicit
 handling is needed for the "Created Date" side of the request.
 """
-from odoo import models
+from odoo import fields, models
 
 
 class HelpdeskCreateFsmTask(models.TransientModel):
@@ -32,9 +32,18 @@ class HelpdeskCreateFsmTask(models.TransientModel):
 
     def _stamp_assignees_on_created_task(self, result):
         """When the caller's action returns an act_window pointing at
-        a project.task record, add the current user to the task's
-        user_ids. Uses (4, uid) so any assignees the wizard may have
-        set stay in place — we only ADD, never replace.
+        a project.task record:
+
+          * Add the current user to the task's user_ids (uses
+            (4, uid) so any assignees the wizard may have set stay
+            in place — we only ADD, never replace).
+          * Stamp x_studio_created_date with the current moment.
+            create_date on project.task is auto-set by the ORM and
+            can't be changed post-facto; the Studio field
+            x_studio_created_date is a separate datetime the form
+            shows as "Created Date" and requires explicit writing.
+            hasattr-guarded so a Fix-repair install without that
+            Studio field silently skips the write.
         """
         if not isinstance(result, dict):
             return
@@ -46,4 +55,7 @@ class HelpdeskCreateFsmTask(models.TransientModel):
         task = self.env['project.task'].browse(task_id).exists()
         if not task:
             return
-        task.write({'user_ids': [(4, self.env.uid)]})
+        vals = {'user_ids': [(4, self.env.uid)]}
+        if 'x_studio_created_date' in task._fields:
+            vals['x_studio_created_date'] = fields.Datetime.now()
+        task.write(vals)
