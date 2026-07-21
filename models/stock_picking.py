@@ -104,6 +104,18 @@ class StockPicking(models.Model):
             # picking form.
             for btn in arch.xpath("//button[@name='195']"):
                 btn.set('invisible', '1')
+
+            # Hide UI-only fields on the delivery / picking form. Same
+            # pattern as sale.order v174 — data + linkage preserved, just
+            # not surfaced on screen. Only affects the form view; list /
+            # kanban views are untouched by this branch.
+            for fname in (
+                'x_studio_sales_order',      # Sales Order (Studio duplicate of sale_id)
+                'origin',                    # Source Document
+                'x_studio_quotation_type',   # Quotation Type
+            ):
+                for field_el in arch.xpath(f"//field[@name='{fname}']"):
+                    field_el.set('invisible', '1')
         return arch, view
 
     # ── Native compute methods that back Studio compute strings ──────────
