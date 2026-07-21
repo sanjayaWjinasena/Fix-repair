@@ -815,6 +815,28 @@ class SaleOrder(models.Model):
                         sheet.insert(0, fld)
                 break
 
+            # Hide UI-only fields from the Sale Order form. The fields stay
+            # on the model (data still writable via ORM, values used by
+            # computes and Confirm-button gating below) — we just mark the
+            # rendered <field> elements invisible so users don't see them
+            # on the form. arch.xpath returns [] when Studio hasn't placed
+            # the field into any view slot, so absent fields are silently
+            # skipped and no install-time xpath validation fires (this
+            # runs on the fully-merged arch, not the direct-parent view).
+            for fname in (
+                'sale_order_template_id',               # Quotation Template
+                'x_studio_sales_order_validity',        # Sales Order Validity
+                'x_studio_service_item_available',      # Service Item Available
+                'x_studio_main_project_no',             # Main Project No
+                'x_studio_re_estimate_request_count',   # Re-estimate Request Count (bool)
+                'x_studio_re_estimate_request_count_1', # Re-estimate Request Count (int)
+                'x_studio_re_estimate_count',           # Re-estimate Count
+                'plan_id',                              # Recurring Plan
+                'x_studio_expired',                     # Expired
+            ):
+                for field_el in arch.xpath(f"//field[@name='{fname}']"):
+                    field_el.set('invisible', '1')
+
             # Strip ghost Studio fields whose ir.model.fields row exists
             # but whose model registration is broken. Studio created two
             # `x_studio_current_tot_amount` rows (name + `_1` suffix) as
