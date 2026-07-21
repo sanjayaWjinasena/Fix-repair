@@ -109,6 +109,12 @@
             <xpath expr="//field[@name='x_studio_tracking']" position="attributes">
                 <attribute name="invisible">1</attribute>
             </xpath>
+            <xpath expr="//field[@name='x_studio_normal_repair_with_serial_no']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='x_studio_normal_repair_without_serial_no']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
         </field>
     </record>
 
