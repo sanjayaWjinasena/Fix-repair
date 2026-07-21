@@ -815,14 +815,15 @@ class SaleOrder(models.Model):
                         sheet.insert(0, fld)
                 break
 
-            # Hide UI-only fields from the Sale Order form. The fields stay
-            # on the model (data still writable via ORM, values used by
-            # computes and Confirm-button gating below) — we just mark the
-            # rendered <field> elements invisible so users don't see them
-            # on the form. arch.xpath returns [] when Studio hasn't placed
-            # the field into any view slot, so absent fields are silently
-            # skipped and no install-time xpath validation fires (this
-            # runs on the fully-merged arch, not the direct-parent view).
+            # Hide UI-only fields from the Sale Order form — but ONLY on
+            # Repair SOs. Sales / Project quotations continue to show
+            # Quotation Template, Sales Order Validity, Recurring Plan
+            # etc. as before, because those flows genuinely use them.
+            # Fields stay on the model on every SO (data + computes +
+            # Confirm-button gating below still work) — we just suppress
+            # rendering when x_studio_quotation_type == 'Repair'.
+            # arch.xpath returns [] when Studio hasn't placed the field
+            # into any view slot, so absent fields are silently skipped.
             for fname in (
                 'sale_order_template_id',               # Quotation Template
                 'x_studio_sales_order_validity',        # Sales Order Validity
@@ -835,7 +836,7 @@ class SaleOrder(models.Model):
                 'x_studio_expired',                     # Expired
             ):
                 for field_el in arch.xpath(f"//field[@name='{fname}']"):
-                    field_el.set('invisible', '1')
+                    field_el.set('invisible', "x_studio_quotation_type == 'Repair'")
 
             # Document Introduction / Conclusion (from BugFix-Sales): hide
             # ONLY on Repair sale orders. Sales / Project quotations still

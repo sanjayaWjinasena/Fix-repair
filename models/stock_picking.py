@@ -105,17 +105,32 @@ class StockPicking(models.Model):
             for btn in arch.xpath("//button[@name='195']"):
                 btn.set('invisible', '1')
 
-            # Hide UI-only fields on the delivery / picking form. Same
-            # pattern as sale.order v174 — data + linkage preserved, just
-            # not surfaced on screen. Only affects the form view; list /
-            # kanban views are untouched by this branch.
+            # Hide UI-only fields on the delivery / picking form — but ONLY
+            # on repair-flow pickings (linked to a Repair SO). Deliveries
+            # / returns / internal transfers unrelated to the repair
+            # workflow continue to show these fields normally. Gated by
+            # the picking's own x_studio_quotation_type (mirrored from
+            # the SO via Studio automation at picking creation time).
+            #
+            # Includes both the v176 fields and the v177 "movements"
+            # fields (Operation Type, Type of Operation, Assign Owner,
+            # Validation) requested by the user, all under the same
+            # gate. Field stays on the model — computes that reference
+            # x_studio_quotation_type / x_studio_sales_order (e.g.
+            # x_studio_repair_payment_made) continue to fire because
+            # invisible only affects rendering.
             for fname in (
-                'x_studio_sales_order',      # Sales Order (Studio duplicate of sale_id)
-                'origin',                    # Source Document
-                'x_studio_quotation_type',   # Quotation Type
+                'origin',                       # Source Document
+                'x_studio_sales_order',         # Sales Order (Studio duplicate of sale_id)
+                'picking_type_id',              # Operation Type
+                'picking_type_code',            # Type of Operation (standard selection)
+                'x_studio_type_of_operation',   # Type of Operation (Studio duplicate)
+                'x_studio_quotation_type',      # Quotation Type
+                'owner_id',                     # Assign Owner
+                'x_studio_validation',          # Validation
             ):
                 for field_el in arch.xpath(f"//field[@name='{fname}']"):
-                    field_el.set('invisible', '1')
+                    field_el.set('invisible', "x_studio_quotation_type == 'Repair'")
         return arch, view
 
     # ── Native compute methods that back Studio compute strings ──────────

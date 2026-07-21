@@ -625,6 +625,12 @@ class ProjectTask(models.Model):
             # gracefully skips any field not present in this
             # install. All fields keep their DB columns, computes,
             # and constraints — only the render is suppressed.
+            # Gate all four hides on helpdesk_ticket_id: only tasks
+            # created from a helpdesk ticket (i.e. via Plan Intervention
+            # on a repair ticket) get these fields hidden. Plain
+            # project.task records outside the repair flow continue to
+            # show Tags / Sales Order Item / Planned Date / Material
+            # Availability normally.
             for fname in (
                 'tag_ids',                          # Tags
                 'sale_line_id',                     # Sales Order Item
@@ -632,7 +638,7 @@ class ProjectTask(models.Model):
                 'x_studio_material_availability',   # Material Availability
             ):
                 for field_el in arch.xpath(f"//field[@name='{fname}']"):
-                    field_el.set('invisible', '1')
+                    field_el.set('invisible', 'helpdesk_ticket_id')
 
             # New Quotation: not used in the repair workflow — hide entirely.
             for btn in arch.xpath("//button[@name='action_fsm_create_quotation']"):
