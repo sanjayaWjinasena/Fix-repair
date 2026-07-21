@@ -837,6 +837,16 @@ class SaleOrder(models.Model):
                 for field_el in arch.xpath(f"//field[@name='{fname}']"):
                     field_el.set('invisible', '1')
 
+            # Document Introduction / Conclusion (from BugFix-Sales): hide
+            # ONLY on Repair sale orders. Sales / Project quotations still
+            # show them because the intro/conclusion selectors are useful
+            # for those flows. Conditional invisible instead of "1" so the
+            # visibility flips automatically when x_studio_quotation_type
+            # changes.
+            for fname in ('bugfix_sales_intro_id', 'bugfix_sales_conclusion_id'):
+                for field_el in arch.xpath(f"//field[@name='{fname}']"):
+                    field_el.set('invisible', "x_studio_quotation_type == 'Repair'")
+
             # Strip ghost Studio fields whose ir.model.fields row exists
             # but whose model registration is broken. Studio created two
             # `x_studio_current_tot_amount` rows (name + `_1` suffix) as
