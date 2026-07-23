@@ -60,13 +60,13 @@ patch(FormController.prototype, {
         this._fixRepairSyncNotification(
             "diagnosis",
             !data.x_studio_valid_diagnosis,
-            "Missing Data",
+            "Add Data",
             "Repair Diagnosis Validation is not set for this task. Please add the diagnosis.",
         );
         this._fixRepairSyncNotification(
             "image",
             !data.x_studio_repair_image_01,
-            "Missing Data",
+            "Add Data",
             "Repair Image is not set for this task. Please upload the repair image.",
         );
     },
