@@ -1744,10 +1744,15 @@ class HelpdeskTicket(models.Model):
             # user_id above) keep firing before the ticket-level
             # freeze kicks in.
             #
-            # xpath scope: fields inside <sheet> only — chatter /
-            # button_box internal fields shouldn't be affected
-            # (they're behind buttons anyway).
-            for field_el in arch.xpath("//sheet//field"):
+            # xpath scope: direct fields inside <sheet> only, NOT
+            # fields nested in another field's embedded view (one2many
+            # sub-lists for messages, followers, fsm_task_ids etc.).
+            # Subrecords are on other models that don't have
+            # x_ticket_locked — stamping the expression on them would
+            # raise "Name not defined" when Odoo's ListRenderer
+            # evaluates it per-cell (owl lifecycle crash).
+            for field_el in arch.xpath(
+                    "//sheet//field[not(ancestor::field)]"):
                 # Skip fields we've injected purely as markers
                 # (invisible=1 with no display) — no user
                 # interaction on them, no point stamping readonly.

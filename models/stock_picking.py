@@ -179,12 +179,21 @@ class StockPicking(models.Model):
             # Buttons (Validate, Cancel, Return, our injected
             # workflow buttons) aren't <field> elements, so the
             # loop leaves them clickable.
+            #
+            # not(ancestor::field): skip fields inside embedded
+            # views (move_ids_without_package, move_line_ids etc.).
+            # Those sub-rows are stock.move / stock.move.line — they
+            # don't have x_studio_quotation_type or
+            # x_studio_helpdesk_ticket_id, so stamping the picking-
+            # level lock expression on them would raise a
+            # "Name not defined" during list-cell readonly eval.
             lock_gate = (
                 "(x_studio_quotation_type == 'Repair' "
                 "or x_studio_helpdesk_ticket_id) "
                 "and state == 'done'"
             )
-            for field_el in arch.xpath("//sheet//field"):
+            for field_el in arch.xpath(
+                    "//sheet//field[not(ancestor::field)]"):
                 if field_el.get('invisible') == '1':
                     continue
                 existing = field_el.get('readonly', '')

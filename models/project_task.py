@@ -658,7 +658,16 @@ class ProjectTask(models.Model):
             # Buttons (Mark as Done, Products smart button, etc.)
             # aren't <field> elements so the loop leaves them alone
             # — same rationale as helpdesk.ticket.x_ticket_locked.
-            for field_el in arch.xpath("//sheet//field"):
+            #
+            # not(ancestor::field): skip fields nested inside another
+            # field's embedded view (one2many sub-lists like subtasks,
+            # timesheets, stock.moves). Those subrecords are on
+            # different models and don't have helpdesk_ticket_id /
+            # sale_order_id — stamping the expression on them raises
+            # "Name not defined" when Odoo's ListRenderer evaluates
+            # the readonly per-cell.
+            for field_el in arch.xpath(
+                    "//sheet//field[not(ancestor::field)]"):
                 if field_el.get('invisible') == '1':
                     continue
                 existing = field_el.get('readonly', '')
