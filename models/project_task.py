@@ -640,6 +640,34 @@ class ProjectTask(models.Model):
                 for field_el in arch.xpath(f"//field[@name='{fname}']"):
                     field_el.set('invisible', 'helpdesk_ticket_id')
 
+            # Freeze the task form (including its notebook pages) once
+            # a linked sale.order exists. On the repair workflow, a
+            # task's sale_order_id is set as soon as Plan Intervention
+            # confirms the SO — any subsequent edit to task fields
+            # (Diagnosis, Repair Image, Warranty Card, etc.) would
+            # drift away from what the SO / invoice / picking cycle
+            # has already booked against. Gate applies only to repair
+            # tasks (helpdesk_ticket_id set) so plain project.task
+            # records outside the repair flow retain full editability.
+            #
+            # ORed into each field's existing readonly expression via
+            # "(existing) or (helpdesk_ticket_id and sale_order_id)"
+            # so per-field readonly gates from Studio / core Odoo
+            # keep firing before this ticket-level freeze.
+            #
+            # Buttons (Mark as Done, Products smart button, etc.)
+            # aren't <field> elements so the loop leaves them alone
+            # — same rationale as helpdesk.ticket.x_ticket_locked.
+            for field_el in arch.xpath("//sheet//field"):
+                if field_el.get('invisible') == '1':
+                    continue
+                existing = field_el.get('readonly', '')
+                extra = 'helpdesk_ticket_id and sale_order_id'
+                field_el.set(
+                    'readonly',
+                    f"({existing}) or ({extra})" if existing else extra,
+                )
+
             # New Quotation: not used in the repair workflow — hide entirely.
             for btn in arch.xpath("//button[@name='action_fsm_create_quotation']"):
                 btn.set('invisible', '1')
