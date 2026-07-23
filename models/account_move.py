@@ -118,6 +118,24 @@ class AccountMove(models.Model):
                 existing = btn.get('invisible', '')
                 extra = "(x_studio_rug_confirmed and not x_studio_rug_rejected)"
                 btn.set('invisible', f"({existing}) or {extra}" if existing else extra)
+
+            # Post (Confirm) button on RUG invoices: hide until the
+            # lines have been reassigned to the RUG account. The
+            # workflow requires the salesperson to click
+            # "Change to RUG Account" first, then Post — the
+            # _rug_auto_settle side effect on action_post depends on
+            # invoice lines already sitting on the RUG account.
+            # Posting a RUG invoice before that reassignment leaves
+            # the auto-settle a no-op and the balance sits stuck on
+            # the standard Debtors account without the offsetting
+            # RUG-account entry.
+            #
+            # is_rug_invoice AND not is_rug_account_set → hide Post.
+            # Non-RUG invoices are unaffected.
+            for btn in arch.xpath("//button[@name='action_post']"):
+                existing = btn.get('invisible', '')
+                extra = "(is_rug_invoice and not is_rug_account_set)"
+                btn.set('invisible', f"({existing}) or {extra}" if existing else extra)
         return arch, view
 
     def action_change_to_rug_account(self):
