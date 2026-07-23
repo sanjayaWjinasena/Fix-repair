@@ -155,6 +155,44 @@ class StockPicking(models.Model):
             ):
                 for field_el in arch.xpath(f"//field[@name='{fname}']"):
                     field_el.set('invisible', hide_gate)
+
+            # Lock repair-flow picking fields once the transfer is
+            # validated (state == 'done'). Odoo core already sets
+            # many stock.picking fields readonly on state=done, but
+            # Studio-added x_studio_* fields and some sub-tab widgets
+            # don't consistently respect it. Layer an explicit
+            # readonly on every <field> inside <sheet> to close the
+            # gap.
+            #
+            # Gate combines the repair-flow marker (v182) with
+            # state=done so:
+            #   * Non-repair pickings — untouched by this rule (Odoo
+            #     core defaults apply).
+            #   * Repair pickings still in draft/waiting/assigned —
+            #     editable as usual.
+            #   * Repair pickings that have been validated — every
+            #     data field freezes.
+            #
+            # ORed into each field's existing readonly so per-field
+            # rules stay live before the picking-lock kicks in.
+            #
+            # Buttons (Validate, Cancel, Return, our injected
+            # workflow buttons) aren't <field> elements, so the
+            # loop leaves them clickable.
+            lock_gate = (
+                "(x_studio_quotation_type == 'Repair' "
+                "or x_studio_helpdesk_ticket_id) "
+                "and state == 'done'"
+            )
+            for field_el in arch.xpath("//sheet//field"):
+                if field_el.get('invisible') == '1':
+                    continue
+                existing = field_el.get('readonly', '')
+                field_el.set(
+                    'readonly',
+                    f"({existing}) or ({lock_gate})"
+                    if existing else lock_gate,
+                )
         return arch, view
 
     # ── Native compute methods that back Studio compute strings ──────────
