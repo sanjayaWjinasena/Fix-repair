@@ -1976,7 +1976,14 @@ class HelpdeskTicket(models.Model):
                 dispatch.set('name', '195')
                 dispatch.set('string', 'Dispatch')
                 dispatch.set('type', 'action')
-                dispatch.set('class', btn.get('class', 'btn-secondary'))
+                # Match the Return / Assign to Me / Plan Intervention
+                # header buttons — all primary purple accent — instead of
+                # inheriting whatever class the Return button happens to
+                # carry at this point. Fixes a subtle fragility: if a
+                # future edit removes v200's Return recolour above,
+                # Dispatch would silently regress to whatever class
+                # Studio left on the base Return.
+                dispatch.set('class', 'btn-primary')
                 # Dispatch visibility — three checks, all must pass:
                 #  1. has_return_picking (the item came in)
                 #  2. Payment-or-bypass: so_fully_paid OR is_tested_ok OR
