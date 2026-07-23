@@ -64,9 +64,29 @@
                 <button name="action_assign_to_me"
                         type="object"
                         string="Assign to Me"
-                        class="btn-secondary"
+                        class="btn-primary"
                         invisible="user_id == uid"/>
 
+            </xpath>
+
+            <!--
+                Recolour Return (action 195) and Plan Intervention
+                (action_generate_fsm_task) to the primary purple
+                accent. Both are core-workflow entry points on the
+                repair ticket header — matching Assign to Me above
+                keeps the header's primary actions visually
+                consistent.
+
+                xpath elements must be top-level within the arch,
+                not nested inside another xpath — so these live
+                alongside the //header inside block, not inside it.
+            -->
+            <xpath expr="//button[@name='195']" position="attributes">
+                <attribute name="class">btn-primary</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_generate_fsm_task']"
+                   position="attributes">
+                <attribute name="class">btn-primary</attribute>
             </xpath>
         </field>
     </record>
