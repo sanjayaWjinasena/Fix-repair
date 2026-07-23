@@ -713,6 +713,18 @@ class ProjectTask(models.Model):
                 btn.set('invisible',
                     f"not display_mark_as_done_secondary or ({repair_guard})")
 
+            # Recolour every Mark as Done variant to primary purple.
+            # Odoo's stock arch declares two action_fsm_validate
+            # buttons — one btn-primary, one btn-secondary — each
+            # gated for different states (timesheet-timer-running,
+            # allow_billable, etc). Whichever surfaces should render
+            # in the primary accent so the salesperson sees the same
+            # visual cue regardless of state. Runs AFTER the existing
+            # invisibility loops so the xpath [@class='btn-secondary']
+            # lookup above still matches the arch's original class.
+            for btn in arch.xpath("//button[@name='action_fsm_validate']"):
+                btn.set('class', 'btn-primary')
+
             # Stage statusbar: make it read-only (no clicking between stages).
             # Stage transitions on repair tasks are driven by Mark as Done /
             # automations — the salesperson shouldn't be able to skip stages
