@@ -1143,6 +1143,13 @@ class SaleOrder(models.Model):
                     )
                     for btn in confirm_btns[2:]:
                         btn.set('invisible', '1')
+                    # Recolour the visible Confirm (confirm_btns[1])
+                    # to primary purple. Odoo core often sets it as
+                    # oe_highlight / btn-primary already, but Studio's
+                    # arch here has cleared the class on the second
+                    # duplicate — force it back to match the rest of
+                    # the header's primary actions.
+                    confirm_btns[1].set('class', 'btn-primary')
 
             # Send PRO-FORMA Invoice: not used — hide both instances.
             for btn in arch.xpath("//button[contains(@id, 'send_proforma')]"):
