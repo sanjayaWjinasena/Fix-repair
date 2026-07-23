@@ -94,6 +94,16 @@ class StockPicking(models.Model):
                 fld.set('name', 'nuw_block_validate')
                 fld.set('invisible', '1')
                 sheet.insert(0, fld)
+                # Load x_studio_helpdesk_ticket_id as an invisible field
+                # so the broadened hide expression below can reference
+                # it. Movement transfers (internal factory / dispatch /
+                # return pickings) carry this linkage but often have no
+                # x_studio_quotation_type value, so the gate needs both
+                # sides.
+                ticket_fld = etree.Element('field')
+                ticket_fld.set('name', 'x_studio_helpdesk_ticket_id')
+                ticket_fld.set('invisible', '1')
+                sheet.insert(0, ticket_fld)
                 break
             for btn in arch.xpath("//button[@name='button_validate']"):
                 existing = btn.get('invisible', '')
@@ -105,20 +115,34 @@ class StockPicking(models.Model):
             for btn in arch.xpath("//button[@name='195']"):
                 btn.set('invisible', '1')
 
-            # Hide UI-only fields on the delivery / picking form — but ONLY
-            # on repair-flow pickings (linked to a Repair SO). Deliveries
-            # / returns / internal transfers unrelated to the repair
-            # workflow continue to show these fields normally. Gated by
-            # the picking's own x_studio_quotation_type (mirrored from
-            # the SO via Studio automation at picking creation time).
+            # Hide UI-only fields on repair-flow pickings — every
+            # variant. The workflow generates two picking-family types
+            # off a repair ticket:
             #
-            # Includes both the v176 fields and the v177 "movements"
-            # fields (Operation Type, Type of Operation, Assign Owner,
-            # Validation) requested by the user, all under the same
-            # gate. Field stays on the model — computes that reference
+            #   * DELIVERY pickings — created from a repair sale.order
+            #     via Odoo's stock rules. These carry
+            #     x_studio_quotation_type='Repair' (mirrored from the SO
+            #     via Studio automation at picking creation time).
+            #   * MOVEMENT pickings — internal factory transfers,
+            #     dispatches to sales centre, returns, etc. These are
+            #     stamped with x_studio_helpdesk_ticket_id linking back
+            #     to the ticket but often have no x_studio_quotation_type
+            #     (they're not SO-driven).
+            #
+            # Original v177 gate covered only the first case; v182
+            # broadens to (quotation_type == 'Repair') OR
+            # (helpdesk_ticket_id is set) so both families get the same
+            # hides. Non-repair deliveries and non-repair internal
+            # transfers are untouched.
+            #
+            # Fields stay on the model — computes that reference
             # x_studio_quotation_type / x_studio_sales_order (e.g.
             # x_studio_repair_payment_made) continue to fire because
             # invisible only affects rendering.
+            hide_gate = (
+                "x_studio_quotation_type == 'Repair' "
+                "or x_studio_helpdesk_ticket_id"
+            )
             for fname in (
                 'origin',                       # Source Document
                 'x_studio_sales_order',         # Sales Order (Studio duplicate of sale_id)
@@ -130,7 +154,7 @@ class StockPicking(models.Model):
                 'x_studio_validation',          # Validation
             ):
                 for field_el in arch.xpath(f"//field[@name='{fname}']"):
-                    field_el.set('invisible', "x_studio_quotation_type == 'Repair'")
+                    field_el.set('invisible', hide_gate)
         return arch, view
 
     # ── Native compute methods that back Studio compute strings ──────────
