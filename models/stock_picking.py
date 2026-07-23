@@ -115,6 +115,16 @@ class StockPicking(models.Model):
             for btn in arch.xpath("//button[@name='195']"):
                 btn.set('invisible', '1')
 
+            # Hide "Retun Reject Reason" button (typo in original
+            # Studio-set string; backed by action 1999 → server
+            # action "RR - Transfer Rejection"). The rejection flow
+            # is deprecated in the repair workflow — no operator
+            # should be reaching for it from the picking form.
+            # Kept the underlying action on record so historical
+            # references stay resolvable; only the button hide.
+            for btn in arch.xpath("//button[@name='1999']"):
+                btn.set('invisible', '1')
+
             # Hide UI-only fields on repair-flow pickings — every
             # variant. The workflow generates two picking-family types
             # off a repair ticket:
