@@ -1,55 +1,37 @@
 # -*- coding: utf-8 -*-
-from odoo import api, fields, models
+from odoo import models
 from odoo.exceptions import UserError
 
 
 class AccountPaymentRegister(models.TransientModel):
     _inherit = 'account.payment.register'
 
-    # True once the salesperson has typed a value into the Amount
-    # field on the register-payment wizard. Odoo's default
-    # _compute_amount depends on currency_id / journal_id and other
-    # signals — changing the Journal after the user has entered a
-    # partial-payment amount would re-derive amount from the
-    # invoice's full residual, silently overpaying. Trap the user's
-    # edit via onchange and skip the recompute for that wizard row.
-    #
-    # Non-stored: transient wizard, one shot per open, no need to
-    # persist. Default False so a fresh wizard doesn't preserve a
-    # ghost value.
-    x_amount_user_touched = fields.Boolean(store=False, default=False)
-
-    @api.onchange('amount')
-    def _bugfix_repair_mark_amount_touched(self):
-        """Onchange fires only on client-side user edits (not on
-        server-side compute writes), so this reliably distinguishes
-        'user typed a value' from 'Odoo recomputed the default'.
-
-        We deliberately do NOT reset the flag when the value goes
-        back to the full residual — that would mean a user who
-        typed the full amount by hand then changed Journal would
-        still get the reset. Once touched, it stays touched for
-        this wizard instance.
-        """
-        for wizard in self:
-            wizard.x_amount_user_touched = True
-
     def _compute_amount(self):
-        """Preserve a user-set Amount across Journal / currency
-        recomputes.
+        """Preserve the wizard's current Amount across every
+        recompute EXCEPT the very first one.
 
-        Save the wizard rows the salesperson has already touched
-        BEFORE calling super() (which unconditionally rewrites
-        amount from source_amount + currency conversion). Restore
-        those values AFTER super so the write cascade sees the
-        right final value. Rows that weren't touched fall through
-        to Odoo's default behaviour — a wizard just opened will
-        still auto-fill with the invoice's residual amount.
+        Odoo's default _compute_amount depends on currency_id and a
+        handful of other signals. Every Journal has its own
+        currency, so picking a different Journal triggers this
+        compute and rewrites Amount from the invoice's residual —
+        silently blowing over whatever the salesperson had typed
+        (or the initial residual they intended to keep).
+
+        v188 semantic: as soon as Amount has a non-zero value, treat
+        it as authoritative. Wizard first-open computes Amount to
+        the invoice residual via super() (amount starts at 0);
+        anything else (user edit OR Journal-driven recompute) hits
+        this preservation branch and keeps whatever's already
+        there.
+
+        Downside: a user setting Amount to exactly 0 and then
+        changing Journal would see it snap back to the residual.
+        Not a real workflow — a Rs. 0 payment is meaningless.
         """
         preserved = {
             wizard.id: wizard.amount
             for wizard in self
-            if wizard.x_amount_user_touched
+            if wizard.amount
         }
         super()._compute_amount()
         if not preserved:
