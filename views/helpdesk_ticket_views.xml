@@ -81,6 +81,35 @@
         before Studio has finished inserting these fields into the
         merged arch, and the position="attributes" op would be a no-op.
     -->
+    <!--
+        Disable stage_id statusbar click navigation. Users should
+        move through the repair stages only via the workflow buttons
+        (Send to Factory / Received at Factory / etc. injected above)
+        — clicking a stage on the statusbar directly skips the state
+        machine's guards and lets an operator drop the ticket into
+        any stage regardless of the workflow's prerequisites (e.g.
+        jumping straight to "Received at Sales Centre" without ever
+        completing repair).
+
+        `options={'clickable': '0'}` keeps the statusbar visible so
+        the salesperson can still see progress, but the individual
+        stage pills no longer respond to click. Priority 99 to land
+        after Studio's inherits so the option isn't overridden by
+        a lower-priority customization stamping clickable back on.
+    -->
+    <record id="helpdesk_ticket_form_statusbar_readonly" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.form.statusbar.readonly</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='stage_id'][@widget='statusbar']"
+                   position="attributes">
+                <attribute name="options">{'clickable': '0'}</attribute>
+            </xpath>
+        </field>
+    </record>
+
     <record id="helpdesk_ticket_form_hide_fields" model="ir.ui.view">
         <field name="name">helpdesk.ticket.form.hide.fields</field>
         <field name="model">helpdesk.ticket</field>
