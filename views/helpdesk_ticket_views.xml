@@ -70,24 +70,24 @@
             </xpath>
 
             <!--
-                Recolour Return (action 195) and Plan Intervention
-                (action_generate_fsm_task) to the primary purple
-                accent. Both are core-workflow entry points on the
-                repair ticket header — matching Assign to Me above
-                keeps the header's primary actions visually
-                consistent.
+                Return (action 195) and Plan Intervention
+                (action_generate_fsm_task) recolours are done in
+                helpdesk_ticket.py._get_view. Odoo validates XML
+                view inherits against the DIRECT PARENT view at
+                install time, and this file's parent
+                (helpdesk.helpdesk_ticket_view_form, id 3972) does
+                NOT declare either button — both are injected by
+                downstream inherits (helpdesk_stock adds 195;
+                helpdesk_fsm adds action_generate_fsm_task). An
+                XML xpath here fails with "cannot be located in
+                parent view".
 
-                xpath elements must be top-level within the arch,
-                not nested inside another xpath — so these live
-                alongside the //header inside block, not inside it.
+                Python _get_view runs against the fully-merged arch
+                (super()'s output), so the buttons are visible when
+                the class attribute is set. Same pattern used for
+                every other cross-module button we need to touch.
             -->
-            <xpath expr="//button[@name='195']" position="attributes">
-                <attribute name="class">btn-primary</attribute>
-            </xpath>
-            <xpath expr="//button[@name='action_generate_fsm_task']"
-                   position="attributes">
-                <attribute name="class">btn-primary</attribute>
-            </xpath>
+
         </field>
     </record>
 

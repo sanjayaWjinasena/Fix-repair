@@ -1731,6 +1731,20 @@ class HelpdeskTicket(models.Model):
                         sheet.insert(0, fld)
                 break
 
+            # Recolour Return (action 195) and Plan Intervention
+            # (action_generate_fsm_task) buttons to primary purple.
+            # Done here in Python instead of in the XML inherit
+            # because both buttons live in downstream inherits
+            # (helpdesk_stock adds 195, helpdesk_fsm adds
+            # action_generate_fsm_task) — not the direct parent view
+            # helpdesk_ticket_views.xml points at. XML xpath fails
+            # install-time validation for buttons not in the direct
+            # parent; the _get_view Python path operates on the
+            # fully-merged arch so the buttons are always resolvable.
+            for btn_name in ('195', 'action_generate_fsm_task'):
+                for btn_el in arch.xpath(f"//button[@name='{btn_name}']"):
+                    btn_el.set('class', 'btn-primary')
+
             # Freeze all form fields once the first repair movement
             # is done. The workflow buttons in the header (Send to
             # Factory / Received at Factory / etc.), smart buttons
