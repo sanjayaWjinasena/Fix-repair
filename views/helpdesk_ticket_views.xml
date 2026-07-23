@@ -103,7 +103,17 @@
         <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
         <field name="priority">99</field>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='stage_id'][@widget='statusbar']"
+            <!--
+                Xpath only requires the field name — Odoo validates
+                inheritance against the direct parent view at install
+                time and the base helpdesk view declares stage_id
+                without the widget attribute (widget=statusbar is
+                added by a downstream inherit like helpdesk_stage).
+                The clickable option still lands on the field at
+                render time because it merges into the fully-resolved
+                arch alongside the widget declaration.
+            -->
+            <xpath expr="//field[@name='stage_id']"
                    position="attributes">
                 <attribute name="options">{'clickable': '0'}</attribute>
             </xpath>
