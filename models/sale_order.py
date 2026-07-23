@@ -865,9 +865,18 @@ class SaleOrder(models.Model):
                         parent.remove(el)
 
             # Re-estimate button in the SO header. Visible when the SO
-            # is signed AND no outgoing delivery is validated. Confirm
-            # dialog spells out the side effects (state -> draft, signed
-            # cleared, RUG cycle restarted) so the salesperson knows.
+            # is signed AND no outgoing delivery is validated AND no
+            # invoice exists yet. Confirm dialog spells out the side
+            # effects (state -> draft, signed cleared, RUG cycle
+            # restarted) so the salesperson knows.
+            #
+            # invoice_count guard (v189): once an invoice exists we
+            # can't cleanly re-estimate — the invoice would need to
+            # be cancelled / reversed first, and the salesperson
+            # should do that consciously via the invoice form
+            # rather than through a Re-estimate that silently
+            # invalidates it. Hiding the button while any invoice
+            # is present forces the correct order of operations.
             for header in arch.xpath("//header"):
                 if arch.xpath("//button[@name='action_re_estimate']"):
                     break
@@ -881,9 +890,26 @@ class SaleOrder(models.Model):
                     "the customer's signature cleared, and the RUG approval "
                     "cycle restarted. The linked helpdesk ticket will move "
                     "back to Diagnosis.")
-                re_est.set('invisible', "not can_re_estimate")
+                re_est.set('invisible',
+                    "not can_re_estimate or invoice_count > 0")
                 header.insert(0, re_est)
                 break
+
+            # Hide the Unlock button (Odoo core, appears when
+            # state='done' / SO is locked) once an invoice exists on
+            # this SO. Same rationale as the Re-estimate guard —
+            # unlocking a locked SO with a live invoice would create
+            # a ledger / lifecycle mismatch. Salesperson should
+            # cancel or reverse the invoice first, then the natural
+            # SO state can revert. Non-invoiced Sales SOs still see
+            # Unlock in the header when they're 'done'.
+            for btn in arch.xpath("//button[@name='action_unlock']"):
+                existing = btn.get('invisible', '')
+                extra = 'invoice_count > 0'
+                btn.set(
+                    'invisible',
+                    f"({existing}) or ({extra})" if existing else extra,
+                )
 
             # Create Invoice buttons — three variants ship by default:
             #   • create_invoice (purple)             : invoice_status='to invoice'
