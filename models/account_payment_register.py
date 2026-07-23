@@ -6,6 +6,29 @@ from odoo.exceptions import UserError
 class AccountPaymentRegister(models.TransientModel):
     _inherit = 'account.payment.register'
 
+    # Ticket stages that come BEFORE Advance Received in the repair
+    # workflow. When the first (or any subsequent) invoice payment
+    # posts on a non-RUG-approved repair SO and the linked ticket is
+    # sitting at one of these stages, we advance it. Stages AT or
+    # AFTER Advance Received are no-ops — never regress a ticket that
+    # is already past this milestone.
+    _PRE_ADVANCE_STAGES = frozenset({
+        'New',
+        'Sent to Factory',
+        'Received at Factory',
+        'Diagnosis',
+        'Estimation Sent to Customer',
+        'Estimation Approval Received',
+    })
+
+    # Payment states we treat as "real money has landed against the
+    # invoice". Includes 'partial' — the FIRST payment on a repair
+    # invoice is nearly always an advance (e.g. 50% of the SO total),
+    # so payment_state stays at 'partial' after posting. Prior
+    # implementations skipped 'partial' and missed the stage move
+    # for the very case the workflow was designed around.
+    _MONEY_IN_STATES = ('partial', 'in_payment', 'paid')
+
     def action_create_payments(self):
         # Enforce the advance-payment threshold before any payment
         # record is created. Raises if the cumulative amount that
@@ -19,18 +42,37 @@ class AccountPaymentRegister(models.TransientModel):
         result = super().action_create_payments()
         for invoice in invoices:
             invoice.invalidate_recordset(['payment_state'])
-            if invoice.payment_state not in ('in_payment', 'paid'):
+            if invoice.payment_state not in self._MONEY_IN_STATES:
                 continue
             orders = invoice.invoice_line_ids.sale_line_ids.order_id
+            # Advance the ticket for every non-RUG-approved repair SO
+            # linked to this invoice. "Non-RUG-approved" covers three
+            # cases the workflow treats as customer-pays for the
+            # advance step:
+            #   * customer_pays=True   — started as not-under-warranty
+            #   * rug_rejected=True    — warranty repair fell through
+            #                            to customer-pays after RUG
+            #                            rejection
+            #   * rug_approved=False   — warranty cycle not yet
+            #                            resolved (defensive; invoices
+            #                            usually don't exist yet here,
+            #                            but if operations creates one
+            #                            manually we still want to
+            #                            advance the ticket on payment)
             for order in orders.filtered(
-                lambda o: o.x_repair_customer_pays
-                          or o.x_studio_rug_rejected
+                lambda o: (
+                    o.x_studio_quotation_type == 'Repair'
+                    and not o.x_studio_rug_approved
+                )
             ):
                 task = order.sudo().task_id or self.env['project.task'].sudo().search(
                     [('sale_order_id', '=', order.id)], limit=1
                 )
                 ticket = task.sudo().helpdesk_ticket_id if task else None
-                if ticket and (ticket.sudo().stage_id.name or '').strip() == 'Estimation Approval Received':
+                if not ticket:
+                    continue
+                current_stage = (ticket.sudo().stage_id.name or '').strip()
+                if current_stage in self._PRE_ADVANCE_STAGES:
                     order._move_ticket_to_stage(order, 'Advance Received')
         return result
 
