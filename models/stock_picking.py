@@ -105,26 +105,6 @@ class StockPicking(models.Model):
             for btn in arch.xpath("//button[@name='195']"):
                 btn.set('invisible', '1')
 
-            # Hide four smart buttons in the button_box on repair-flow
-            # pickings only — the ticket-driven workflow doesn't want
-            # users navigating to Returns / Traceability / Detailed
-            # Operations / Valuation from inside the movement wizard.
-            # Non-repair pickings keep the standard smart-button set.
-            # Same gate as the field hides below.
-            for btn_name in (
-                'action_see_returns',              # Returns smart button
-                '168',                             # Traceability Report (action id)
-                'action_detailed_operations',      # Detailed Operations smart button
-                'action_view_stock_valuation_layers',  # Valuation smart button
-            ):
-                for btn_el in arch.xpath(f"//button[@name='{btn_name}']"):
-                    existing = btn_el.get('invisible', '')
-                    extra = "x_studio_quotation_type == 'Repair'"
-                    btn_el.set(
-                        'invisible',
-                        f"({existing}) or ({extra})" if existing else extra,
-                    )
-
             # Hide UI-only fields on the delivery / picking form — but ONLY
             # on repair-flow pickings (linked to a Repair SO). Deliveries
             # / returns / internal transfers unrelated to the repair
