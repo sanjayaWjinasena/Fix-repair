@@ -109,13 +109,27 @@
                 time and the base helpdesk view declares stage_id
                 without the widget attribute (widget=statusbar is
                 added by a downstream inherit like helpdesk_stage).
-                The clickable option still lands on the field at
-                render time because it merges into the fully-resolved
+                The attributes below still land on the field at
+                render time because they merge into the fully-resolved
                 arch alongside the widget declaration.
+
+                readonly="1" is the reliable disable path — the
+                statusbar widget respects the field's readonly state
+                and suppresses click handlers. The `options={'clickable': '0'}`
+                approach used in v183/v184 doesn't work because
+                Odoo's exprToBoolean treats the string '0' as truthy
+                (any non-empty string is truthy in Python), so the
+                option resolved to True and pills stayed clickable.
+
+                Workflow buttons (Send to Factory, etc.) don't rely
+                on the field being editable in the view — they call
+                _move_to_stage() which uses sudo write() bypassing
+                view-level readonly. Their advancement path stays
+                intact.
             -->
             <xpath expr="//field[@name='stage_id']"
                    position="attributes">
-                <attribute name="options">{'clickable': '0'}</attribute>
+                <attribute name="readonly">1</attribute>
             </xpath>
         </field>
     </record>
