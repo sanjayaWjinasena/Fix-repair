@@ -3273,15 +3273,13 @@ class HelpdeskTicket(models.Model):
         if not view:
             return
         current = view.arch_db or ''
-        marker = '<!-- fix_repair:sanitized-v157 -->'
+        marker = '<!-- fix_repair:sanitized-v190 -->'
         if marker in current:
             return
 
         clean_arch = '''<data>
-  <!-- fix_repair:sanitized-v157 -->
+  <!-- fix_repair:sanitized-v190 -->
   <xpath expr="//field[@name='personal_stage_type_id']" position="after">
-    <button type="action" name="2224" string="View Repair Diagnosis Validation" class="btn-primary" invisible="x_studio_end_quick_repair == True or x_studio_cancelled == True or not helpdesk_ticket_id or ( helpdesk_ticket_id and x_studio_valid_diagnosis == True )"/>
-    <button type="action" name="2242" string="View Repair Image Validation" class="btn-primary" invisible="x_studio_end_quick_repair == True or x_studio_cancelled == True or not helpdesk_ticket_id or ( helpdesk_ticket_id and x_studio_repair_image_01 )"/>
     <button type="action" name="2316" string="Tested OK" class="btn-primary" invisible="material_line_product_count &gt; 0 or x_studio_cancelled == True or not helpdesk_ticket_id or x_studio_end_quick_repair == True"/>
   </xpath>
   <xpath expr="//field[@name='user_ids']" position="attributes">
