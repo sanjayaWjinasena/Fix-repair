@@ -1451,6 +1451,29 @@ class HelpdeskTicket(models.Model):
         for ticket in self:
             ticket.repair_picking_count = len(ticket.repair_picking_ids)
 
+    # True as soon as any picking linked to this ticket transitions
+    # to state='done' — i.e. the first movement (send-to-factory,
+    # receive-at-factory, dispatch, etc.) has been validated.
+    # Downstream _get_view uses this to mark every field on the
+    # ticket form readonly. Data captured before the first movement
+    # (Customer, Product, Priority, Job Location, Warranty details,
+    # etc.) becomes locked so a completed physical movement can't
+    # be paired with silently rewritten intake data.
+    x_ticket_locked = fields.Boolean(
+        compute='_compute_x_ticket_locked',
+        help='True once at least one linked movement transfer has been '
+             'validated. Freezes the ticket form so the intake data '
+             'stays a truthful record of the state at first movement.',
+    )
+
+    @api.depends('repair_picking_ids.state')
+    def _compute_x_ticket_locked(self):
+        for ticket in self:
+            ticket.x_ticket_locked = any(
+                p.state == 'done'
+                for p in ticket.repair_picking_ids
+            )
+
     def action_view_repair_pickings(self):
         self.ensure_one()
         return {
@@ -1692,6 +1715,14 @@ class HelpdeskTicket(models.Model):
                     'is_so_cancelled',
                     'task_done',
                     'has_ready_dispatch_picking',
+                    # v1 on Fields-disable branch: x_ticket_locked
+                    # flips True once any repair-flow picking on this
+                    # ticket has been validated (state='done'). Used
+                    # by the readonly loop below to freeze every
+                    # editable field on the form so the intake data
+                    # captured before first movement stays a truthful
+                    # record.
+                    'x_ticket_locked',
                 ):
                     if not arch.xpath(f"//field[@name='{fname}']"):
                         fld = etree.Element('field')
@@ -1699,6 +1730,35 @@ class HelpdeskTicket(models.Model):
                         fld.set('invisible', '1')
                         sheet.insert(0, fld)
                 break
+
+            # Freeze all form fields once the first repair movement
+            # is done. The workflow buttons in the header (Send to
+            # Factory / Received at Factory / etc.), smart buttons
+            # (Tasks / Movements), Print gear, and Back / × close
+            # actions all stay live because they're not <field>
+            # elements. Only data fields get the readonly gate.
+            #
+            # Preserves any existing readonly expression per field
+            # via "(existing) or x_ticket_locked" so field-specific
+            # readonly gates (Studio's own, or product_id /
+            # user_id above) keep firing before the ticket-level
+            # freeze kicks in.
+            #
+            # xpath scope: fields inside <sheet> only — chatter /
+            # button_box internal fields shouldn't be affected
+            # (they're behind buttons anyway).
+            for field_el in arch.xpath("//sheet//field"):
+                # Skip fields we've injected purely as markers
+                # (invisible=1 with no display) — no user
+                # interaction on them, no point stamping readonly.
+                if field_el.get('invisible') == '1':
+                    continue
+                existing = field_el.get('readonly', '')
+                extra = 'x_ticket_locked'
+                field_el.set(
+                    'readonly',
+                    f"({existing}) or {extra}" if existing else extra,
+                )
 
             # product_id: manually selectable (serial-tracked products only) for
             # the "Without Serial No" ticket type; readonly for all other types
