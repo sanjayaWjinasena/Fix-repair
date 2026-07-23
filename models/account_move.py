@@ -136,6 +136,34 @@ class AccountMove(models.Model):
                 existing = btn.get('invisible', '')
                 extra = "(is_rug_invoice and not is_rug_account_set)"
                 btn.set('invisible', f"({existing}) or {extra}" if existing else extra)
+
+            # Fields-disable branch: freeze the invoice form once it
+            # is Confirmed (state='posted'). Odoo core respects
+            # state=posted for most account.move fields, but Studio-
+            # added x_studio_* fields and any other view-arch
+            # additions don't consistently honour it — leaving room
+            # for post-post edits to drift the invoice header data
+            # away from the accounting entries it's now anchored to.
+            #
+            # OR the readonly on every top-level <field> under the
+            # sheet with "state == 'posted'". Non-posted moves
+            # (draft, cancelled) keep their editable state.
+            #
+            # not(ancestor::field): skip fields inside embedded
+            # views (invoice_line_ids grid, tax_totals sub-widgets,
+            # line_ids one2many, chatter, etc.). Those subrecords
+            # are on account.move.line / other models; Odoo's own
+            # line readonly rules apply to them.
+            for field_el in arch.xpath(
+                    "//sheet//field[not(ancestor::field)]"):
+                if field_el.get('invisible') == '1':
+                    continue
+                existing = field_el.get('readonly', '')
+                extra = "state == 'posted'"
+                field_el.set(
+                    'readonly',
+                    f"({existing}) or ({extra})" if existing else extra,
+                )
         return arch, view
 
     def action_change_to_rug_account(self):

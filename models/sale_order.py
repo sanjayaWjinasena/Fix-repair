@@ -1217,6 +1217,38 @@ class SaleOrder(models.Model):
                 header.insert(0, warn)
                 break
 
+            # Fields-disable branch: freeze the SO form once an
+            # invoice exists. Editing SO data after the accounting
+            # cycle has started (invoice posted or draft-invoiced)
+            # would drift the source document away from the ledger.
+            # Salesperson should cancel/reverse the invoice first
+            # (which drops invoice_count back to 0) before editing.
+            #
+            # Scope: repair SOs only. Non-repair Sales / Project
+            # flows keep Odoo's core readonly rules (state=sale
+            # already locks many fields natively; anything Studio
+            # added on top stays editable per its own gates).
+            #
+            # not(ancestor::field): skip embedded views —
+            # order_line's own <tree>, invoice_ids one2many,
+            # tax_totals sub-widgets, etc. — same reasoning as
+            # v195 fix. Those subrecords are on other models and
+            # don't have invoice_count / x_studio_quotation_type.
+            so_lock_gate = (
+                "x_studio_quotation_type == 'Repair' "
+                "and invoice_count > 0"
+            )
+            for field_el in arch.xpath(
+                    "//sheet//field[not(ancestor::field)]"):
+                if field_el.get('invisible') == '1':
+                    continue
+                existing = field_el.get('readonly', '')
+                field_el.set(
+                    'readonly',
+                    f"({existing}) or ({so_lock_gate})"
+                    if existing else so_lock_gate,
+                )
+
         return arch, view
 
     @api.onchange('partner_id')
