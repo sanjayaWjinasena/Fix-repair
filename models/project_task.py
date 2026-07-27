@@ -640,36 +640,47 @@ class ProjectTask(models.Model):
                 #
                 # Idempotent — bail if banners already there
                 # (subsequent _get_view calls on the same arch).
-                if not arch.xpath("//div[@name='fix_repair_missing_diagnosis']"):
+                # v208 — inject reactivity-trigger divs. The arch
+                # invisible expression is the reliable mechanism
+                # (v207 confirmed it dismisses on field change with
+                # zero delay). But the user wants toast notifications
+                # rather than inline banners. Solution: keep the
+                # arch divs so Odoo's built-in reactivity governs
+                # when they appear/disappear from the DOM, but style
+                # them display:none via CSS and have a JS asset watch
+                # for their DOM presence to fire / dismiss toasts.
+                #
+                # The two <div> elements below therefore serve as
+                # reactivity anchors. Never visually rendered. The
+                # fix_repair_task_toast_trigger class + variant class
+                # are the JS observer's hook.
+                if not arch.xpath("//div[contains(@class,'fix_repair_task_toast_trigger--diagnosis')]"):
                     diag = etree.Element('div')
-                    diag.set('name', 'fix_repair_missing_diagnosis')
-                    diag.set('class', 'alert alert-warning')
-                    diag.set('role', 'alert')
+                    diag.set(
+                        'class',
+                        'fix_repair_task_toast_trigger '
+                        'fix_repair_task_toast_trigger--diagnosis',
+                    )
                     diag.set('invisible',
                         "not helpdesk_ticket_id or "
                         "x_studio_end_quick_repair or "
                         "x_studio_cancelled or "
                         "x_studio_valid_diagnosis"
                     )
-                    diag.text = (
-                        "Add Data: Repair Diagnosis Validation is not set "
-                        "for this task."
-                    )
                     targets[0].insert(0, diag)
 
-                if not arch.xpath("//div[@name='fix_repair_missing_image']"):
+                if not arch.xpath("//div[contains(@class,'fix_repair_task_toast_trigger--image')]"):
                     img = etree.Element('div')
-                    img.set('name', 'fix_repair_missing_image')
-                    img.set('class', 'alert alert-warning')
-                    img.set('role', 'alert')
+                    img.set(
+                        'class',
+                        'fix_repair_task_toast_trigger '
+                        'fix_repair_task_toast_trigger--image',
+                    )
                     img.set('invisible',
                         "not helpdesk_ticket_id or "
                         "x_studio_end_quick_repair or "
                         "x_studio_cancelled or "
                         "x_studio_repair_image_01"
-                    )
-                    img.text = (
-                        "Add Data: Repair Image is not set for this task."
                     )
                     targets[0].insert(0, img)
 

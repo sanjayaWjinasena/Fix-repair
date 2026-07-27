@@ -1,0 +1,12 @@
+/*
+ * Fix-repair — hide the reactivity-trigger divs that drive the
+ * task-form Add Data toasts. See project_task._get_view v208.
+ *
+ * The divs live in the arch so Odoo's built-in view reactivity
+ * governs their presence in the DOM (invisible="..."). JS watches
+ * their appearance/disappearance to dispatch/dismiss toast
+ * notifications. Users should never see the divs themselves.
+ */
+.fix_repair_task_toast_trigger {
+    display: none !important;
+}
