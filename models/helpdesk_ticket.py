@@ -1485,6 +1485,77 @@ class HelpdeskTicket(models.Model):
             'context': {'default_x_studio_helpdesk_ticket_id': self.id},
         }
 
+    def fix_repair_action_direct_return(self):
+        """One-click Return: skip the stock.return.picking wizard popup.
+
+        Everything the wizard needed the user to click through is already
+        deterministic for a repair ticket — default_get on
+        stock.return.picking (our override in stock_return_picking.py)
+        synthesises the phantom source picking, product_return_moves is
+        auto-computed from that source, and quantity is capped at 1
+        because a repair ticket is always a single-item flow. There is
+        no decision left for the user to make on the wizard, so opening
+        it and asking them to click Return again is pure friction.
+
+        This method builds the wizard record in-memory with the same
+        defaults the header button's context previously passed, then
+        calls the wizard's public create_returns() — which invokes our
+        _create_returns() override (renames to <WH>/RET/xxxxx, stamps
+        the ticket, forces to_refund=False, pre-populates the serial)
+        and returns the ir.actions.act_window opening the new return
+        picking. The end user experiences: click Return → land on the
+        new RET picking.
+        """
+        self.ensure_one()
+        # Rebuild the context the header button used to pass. Preserve
+        # any values already in env.context so future callers (test
+        # fixtures, an alternate button, etc.) can override.
+        ctx = dict(self.env.context)
+        ctx.setdefault(
+            'default_ticket_id',
+            (self.repair_stage_state == 'new' and self.id) or False,
+        )
+        ctx.setdefault(
+            'default_picking_id',
+            self.x_studio_pick_id.id if self.x_studio_pick_id else False,
+        )
+        ctx.setdefault('default_partner_id', self.partner_id.id)
+        ctx.setdefault('default_company_id', self.company_id.id)
+        # default_location_id was set by the header button's context
+        # only for hand-back-to-customer stages (Received at Sales
+        # Centre, or Centre Repair at Repair Completed). Mirror that
+        # gate here — otherwise Odoo defaults location_id to whatever
+        # the picking's source location is, which is correct for the
+        # collection Return flow.
+        ship_back = (
+            self.repair_stage_state == 'received_at_sales_centre'
+            or (
+                self.x_studio_job_location == 'Centre Repair'
+                and self.repair_stage_state == 'repair_completed'
+            )
+        )
+        if ship_back and 'default_location_id' not in ctx:
+            cust_loc = self.env.ref(
+                'stock.stock_location_customers', raise_if_not_found=False
+            )
+            if cust_loc:
+                ctx['default_location_id'] = cust_loc.id
+
+        # Instantiate the wizard. default_get runs during create() with
+        # this env.context in scope, so the phantom-picking build path in
+        # stock_return_picking.py fires and populates picking_id +
+        # product_return_moves before create returns.
+        wizard = (
+            self.env['stock.return.picking']
+                .with_context(**ctx)
+                .create({})
+        )
+        # create_returns() is the standard public button handler. It
+        # calls _create_returns() (our override rewrites the picking's
+        # name and stamps the ticket) and returns the act_window
+        # navigating to the new RET picking.
+        return wizard.create_returns()
+
     @api.depends(
         'fsm_task_ids.sale_order_id.invoice_ids.state',
         'fsm_task_ids.sale_order_id.invoice_ids.payment_state',
@@ -1971,6 +2042,19 @@ class HelpdeskTicket(models.Model):
                     "(x_studio_rug_confirmed and not x_studio_warranty_card)"
                 )
                 btn.set('context', btn_context)
+                # Retarget the Return button from action 195 (which opens
+                # the stock.return.picking wizard modal) to our own
+                # helpdesk.ticket method that runs the wizard flow
+                # server-side and returns the act_window landing on the
+                # freshly-created RET picking. One click, no popup.
+                #
+                # Only the Return button is retargeted here — the
+                # Dispatch sibling created below still points at action
+                # 195 (kept as a fallback for that flow; the wizard
+                # opens with a real source picking already selected,
+                # which is a slightly different UX shape).
+                btn.set('type', 'object')
+                btn.set('name', 'fix_repair_action_direct_return')
                 # Add Dispatch sibling — same action, shown once a return picking exists
                 dispatch = etree.Element('button')
                 dispatch.set('name', '195')
