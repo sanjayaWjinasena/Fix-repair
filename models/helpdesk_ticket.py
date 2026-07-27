@@ -1521,25 +1521,36 @@ class HelpdeskTicket(models.Model):
         )
         ctx.setdefault('default_partner_id', self.partner_id.id)
         ctx.setdefault('default_company_id', self.company_id.id)
-        # default_location_id was set by the header button's context
-        # only for hand-back-to-customer stages (Received at Sales
-        # Centre, or Centre Repair at Repair Completed). Mirror that
-        # gate here — otherwise Odoo defaults location_id to whatever
-        # the picking's source location is, which is correct for the
-        # collection Return flow.
-        ship_back = (
-            self.repair_stage_state == 'received_at_sales_centre'
-            or (
-                self.x_studio_job_location == 'Centre Repair'
-                and self.repair_stage_state == 'repair_completed'
-            )
-        )
-        if ship_back and 'default_location_id' not in ctx:
-            cust_loc = self.env.ref(
-                'stock.stock_location_customers', raise_if_not_found=False
-            )
-            if cust_loc:
-                ctx['default_location_id'] = cust_loc.id
+
+        # Pre-align location_id with the Suggested Return Location the
+        # database validation expects. Studio automation 174 →
+        # server action 1991 fires on create_or_write of
+        # stock.return.picking and raises "Return Location should be
+        # equal to Suggested Return Location" when they differ. The
+        # interactive wizard flow gets away with this because the user
+        # sees _compute_moves_locations align location_id to suggested
+        # before they click Return; our direct create() runs the
+        # automation in the same transaction as the compute and the
+        # ordering isn't guaranteed. Pass default_location_id
+        # explicitly so create writes the correct value first — then
+        # the automation validates against the value we just set.
+        #
+        # Company-aware, mirroring the automation's own branch:
+        #   Company 1              → ticket.x_studio_virtual_location
+        #   Every other company    → ticket.x_studio_virtual_location_1
+        # These are both related to user_id, so both require the
+        # ticket's assigned user to have the location set on their
+        # user profile — same precondition the wizard flow already had.
+        active_company_id = (
+            self.env.context.get('allowed_company_ids',
+                                 [self.env.company.id]) or [self.env.company.id]
+        )[0]
+        if active_company_id == 1:
+            suggested_loc = self.x_studio_virtual_location
+        else:
+            suggested_loc = self.x_studio_virtual_location_1
+        if suggested_loc and 'default_location_id' not in ctx:
+            ctx['default_location_id'] = suggested_loc.id
 
         # Instantiate the wizard. default_get runs during create() with
         # this env.context in scope, so the phantom-picking build path in
