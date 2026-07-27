@@ -21,7 +21,7 @@
 import { patch } from "@web/core/utils/patch";
 import { FormController } from "@web/views/form/form_controller";
 import { useService } from "@web/core/utils/hooks";
-import { onMounted, onWillUnmount } from "@odoo/owl";
+import { onMounted, onPatched, onWillUnmount } from "@odoo/owl";
 
 patch(FormController.prototype, {
     setup() {
@@ -35,6 +35,18 @@ patch(FormController.prototype, {
         this._fixRepairMissingDismissers = {};
 
         onMounted(() => this._fixRepairCheckMissingData());
+        // v205 — also re-run after every render. OWL patches
+        // the DOM in response to record.data changes, so
+        // onPatched fires as soon as the salesperson populates
+        // diagnosis / uploads an image. Each toast is dismissed
+        // programmatically the moment its corresponding field
+        // flips to a set value — no save needed.
+        //
+        // Idempotent via the per-controller dismisser map:
+        // subsequent renders where the state hasn't changed
+        // reach _fixRepairSyncNotification with shouldShow ===
+        // (dismisser is set) and no-op.
+        onPatched(() => this._fixRepairCheckMissingData());
         onWillUnmount(() => this._fixRepairClearMissingNotifications());
     },
 
