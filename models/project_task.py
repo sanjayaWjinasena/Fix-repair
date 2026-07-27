@@ -616,6 +616,63 @@ class ProjectTask(models.Model):
                         field_el.set('invisible', '1')
                         targets[0].insert(0, field_el)
 
+                # v207 — inline warning banners for missing repair
+                # data. Replaces the v205/v206 JS notification
+                # approach (useEffect on record.data slots — didn't
+                # reliably dismiss on image upload because the
+                # binary widget's mutation didn't propagate to the
+                # reactive proxy the effect was watching).
+                #
+                # Use the SAME invisible-expression pattern the
+                # original Studio buttons used (action 2224 / 2242
+                # — removed in v190). Odoo's built-in view-attr
+                # reactivity re-evaluates these expressions on
+                # every field change, so the banners hide the
+                # instant the field is populated — no save needed.
+                #
+                # Visibility mirrors the buttons' old invisible
+                # exactly (minus the arch-caching quirks that were
+                # avoided by rebuilding the arch in v190's sanitize):
+                #   * helpdesk_ticket_id must be set (repair task).
+                #   * x_studio_cancelled must NOT be True.
+                #   * x_studio_end_quick_repair must NOT be True.
+                #   * The specific data field must be missing.
+                #
+                # Idempotent — bail if banners already there
+                # (subsequent _get_view calls on the same arch).
+                if not arch.xpath("//div[@name='fix_repair_missing_diagnosis']"):
+                    diag = etree.Element('div')
+                    diag.set('name', 'fix_repair_missing_diagnosis')
+                    diag.set('class', 'alert alert-warning')
+                    diag.set('role', 'alert')
+                    diag.set('invisible',
+                        "not helpdesk_ticket_id or "
+                        "x_studio_end_quick_repair or "
+                        "x_studio_cancelled or "
+                        "x_studio_valid_diagnosis"
+                    )
+                    diag.text = (
+                        "Add Data: Repair Diagnosis Validation is not set "
+                        "for this task."
+                    )
+                    targets[0].insert(0, diag)
+
+                if not arch.xpath("//div[@name='fix_repair_missing_image']"):
+                    img = etree.Element('div')
+                    img.set('name', 'fix_repair_missing_image')
+                    img.set('class', 'alert alert-warning')
+                    img.set('role', 'alert')
+                    img.set('invisible',
+                        "not helpdesk_ticket_id or "
+                        "x_studio_end_quick_repair or "
+                        "x_studio_cancelled or "
+                        "x_studio_repair_image_01"
+                    )
+                    img.text = (
+                        "Add Data: Repair Image is not set for this task."
+                    )
+                    targets[0].insert(0, img)
+
             # UI-only field hides. Kept in Python so we can operate
             # on the fully-merged arch — some of these fields are
             # inserted by other modules' inherits (sale_project,
