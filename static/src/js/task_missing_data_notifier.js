@@ -20,8 +20,8 @@
  */
 import { patch } from "@web/core/utils/patch";
 import { FormController } from "@web/views/form/form_controller";
-import { useService } from "@web/core/utils/hooks";
-import { onMounted, onPatched, onWillUnmount } from "@odoo/owl";
+import { useService, useEffect } from "@web/core/utils/hooks";
+import { onMounted, onWillUnmount } from "@odoo/owl";
 
 patch(FormController.prototype, {
     setup() {
@@ -35,18 +35,34 @@ patch(FormController.prototype, {
         this._fixRepairMissingDismissers = {};
 
         onMounted(() => this._fixRepairCheckMissingData());
-        // v205 — also re-run after every render. OWL patches
-        // the DOM in response to record.data changes, so
-        // onPatched fires as soon as the salesperson populates
-        // diagnosis / uploads an image. Each toast is dismissed
-        // programmatically the moment its corresponding field
-        // flips to a set value — no save needed.
+        // v206 — subscribe to the two watched field values
+        // directly via useEffect. Odoo's useEffect (from
+        // @web/core/utils/hooks) runs the effect whenever any
+        // value in the dependencies array changes, comparing
+        // shallowly. The deps callback reads
+        // record.data.x_studio_valid_diagnosis and
+        // record.data.x_studio_repair_image_01 through OWL's
+        // reactive proxy — so the moment the widget writes a
+        // new value into the record (which happens on field
+        // blur / input debounce, well BEFORE any save), the
+        // effect fires and re-runs the check.
         //
-        // Idempotent via the per-controller dismisser map:
-        // subsequent renders where the state hasn't changed
-        // reach _fixRepairSyncNotification with shouldShow ===
-        // (dismisser is set) and no-op.
-        onPatched(() => this._fixRepairCheckMissingData());
+        // v205's onPatched approach failed because image
+        // fields don't always cause a render on write —
+        // they update the record silently until Odoo re-fetches
+        // on save. Reading record.data through the reactive
+        // proxy inside useEffect deps ties the check directly
+        // to record mutation, bypassing the render path.
+        useEffect(
+            () => {
+                this._fixRepairCheckMissingData();
+            },
+            () => [
+                this.model?.root?.data?.helpdesk_ticket_id,
+                this.model?.root?.data?.x_studio_valid_diagnosis,
+                this.model?.root?.data?.x_studio_repair_image_01,
+            ],
+        );
         onWillUnmount(() => this._fixRepairClearMissingNotifications());
     },
 
