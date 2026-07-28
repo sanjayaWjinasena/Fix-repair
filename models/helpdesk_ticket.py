@@ -1980,7 +1980,12 @@ class HelpdeskTicket(models.Model):
                 btn.set('name', 'action_create_repair_serial')
                 btn.set('string', 'Create Serial No')
                 btn.set('type', 'object')
-                btn.set('class', 'btn-secondary')
+                # Primary purple to match the rest of the repair header
+                # buttons (Assign to Me, Return, Dispatch, Plan
+                # Intervention, Mark as Done). btn-primary keeps this
+                # button visually in the same tier — it's part of the
+                # stage-progression flow, not a secondary utility.
+                btn.set('class', 'btn-primary')
                 # Visible only on Without-Serial-No tickets that have a
                 # product set AND no serial linked yet. Hides as soon as
                 # x_studio_serial_no is populated (after a click).
