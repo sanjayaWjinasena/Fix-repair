@@ -1522,35 +1522,18 @@ class HelpdeskTicket(models.Model):
         ctx.setdefault('default_partner_id', self.partner_id.id)
         ctx.setdefault('default_company_id', self.company_id.id)
 
-        # Pre-align location_id with the Suggested Return Location the
-        # database validation expects. Studio automation 174 →
-        # server action 1991 fires on create_or_write of
-        # stock.return.picking and raises "Return Location should be
-        # equal to Suggested Return Location" when they differ. The
-        # interactive wizard flow gets away with this because the user
-        # sees _compute_moves_locations align location_id to suggested
-        # before they click Return; our direct create() runs the
-        # automation in the same transaction as the compute and the
-        # ordering isn't guaranteed. Pass default_location_id
-        # explicitly so create writes the correct value first — then
-        # the automation validates against the value we just set.
-        #
-        # Company-aware, mirroring the automation's own branch:
-        #   Company 1              → ticket.x_studio_virtual_location
-        #   Every other company    → ticket.x_studio_virtual_location_1
-        # These are both related to user_id, so both require the
-        # ticket's assigned user to have the location set on their
-        # user profile — same precondition the wizard flow already had.
-        active_company_id = (
-            self.env.context.get('allowed_company_ids',
-                                 [self.env.company.id]) or [self.env.company.id]
-        )[0]
-        if active_company_id == 1:
-            suggested_loc = self.x_studio_virtual_location
-        else:
-            suggested_loc = self.x_studio_virtual_location_1
-        if suggested_loc and 'default_location_id' not in ctx:
-            ctx['default_location_id'] = suggested_loc.id
+        # Deliberately do NOT set default_location_id here — Odoo's
+        # ORM interprets a value in vals for a stored @api.depends
+        # compute field as "already provided" and SKIPS the whole
+        # compute method. That's fine for location_id itself, but
+        # _compute_moves_locations is a multi-field compute that also
+        # populates product_return_moves (the o2m of return lines).
+        # Skipping it leaves product_return_moves empty and downstream
+        # create_returns raises "Please specify at least one non-zero
+        # quantity". Let the compute run in full — its override in
+        # stock_return_picking.py sets location_id to the
+        # company-appropriate suggested location, matching what
+        # automation 174 → server action 1991 validates against.
 
         # Instantiate the wizard. default_get runs during create() with
         # this env.context in scope, so the phantom-picking build path in

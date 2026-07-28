@@ -283,13 +283,34 @@ class StockReturnPicking(models.TransientModel):
     @api.depends('picking_id', 'ticket_id')
     def _compute_moves_locations(self):
         super()._compute_moves_locations()
+        # Studio automation 174 → server action 1991 validates
+        # location_id == x_studio_suggested_location_id (company 1) or
+        # x_studio_suggested_location_id_1 (every other company). Match
+        # that branch strictly here so the compute's output survives the
+        # validation regardless of which sister-field the ticket's
+        # assigned user has populated on their profile. Previous logic
+        # picked "_1 or _id" unconditionally — that worked for the common
+        # case of a company-2 user with _1 set, but silently mis-selected
+        # for a company-1 user whose profile happens to also carry _1
+        # (the two locations are per-company variants) and left the
+        # automation to raise "Return Location should be equal to
+        # Suggested Return Location".
+        active_company_id = (
+            self.env.context.get('allowed_company_ids',
+                                 [self.env.company.id])
+            or [self.env.company.id]
+        )[0]
         for wizard in self:
-            # Override location_id to the Studio-defined suggested repair location.
-            suggested = (
-                wizard.x_studio_suggested_location_id_1
-                or wizard.x_studio_suggested_location_id
-                or wizard.original_location_id
-            )
+            if active_company_id == 1:
+                suggested = (
+                    wizard.x_studio_suggested_location_id
+                    or wizard.original_location_id
+                )
+            else:
+                suggested = (
+                    wizard.x_studio_suggested_location_id_1
+                    or wizard.original_location_id
+                )
             if suggested:
                 wizard.location_id = suggested
 
