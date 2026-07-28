@@ -1560,13 +1560,18 @@ class HelpdeskTicket(models.Model):
         # company-appropriate suggested location, matching what
         # automation 174 → server action 1991 validates against.
 
-        # Instantiate the wizard. default_get runs during create() with
-        # this env.context in scope, so the phantom-picking build path in
-        # stock_return_picking.py fires and populates picking_id +
-        # product_return_moves before create returns.
+        # Instantiate the wizard.
+        # IMPORTANT: use with_context(ctx) POSITIONALLY — this REPLACES
+        # env.context entirely with our sanitised dict. The kwargs form
+        # `.with_context(**ctx)` MERGES ctx over env.context, which
+        # means the `default_location_id: False` we just popped from
+        # ctx gets reintroduced from env.context during the merge. That
+        # was the actual v213 bug: my pop was a no-op through the merge
+        # because env.context still carried the button-supplied False.
+        # Positional replacement is the fix.
         wizard = (
             self.env['stock.return.picking']
-                .with_context(**ctx)
+                .with_context(ctx)
                 .create({})
         )
         # create_returns() is the standard public button handler. It
