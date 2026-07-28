@@ -1515,9 +1515,13 @@ class HelpdeskTicket(models.Model):
             'default_ticket_id',
             (self.repair_stage_state == 'new' and self.id) or False,
         )
+        # x_studio_pick_id is an integer on helpdesk.ticket (Studio),
+        # NOT a many2one — carries the raw picking id (0 when unset).
+        # The v199 header-button context passed it as `x_studio_pick_id
+        # or False`, treating the integer 0 as falsy. Mirror that here.
         ctx.setdefault(
             'default_picking_id',
-            self.x_studio_pick_id.id if self.x_studio_pick_id else False,
+            self.x_studio_pick_id or False,
         )
         ctx.setdefault('default_partner_id', self.partner_id.id)
         ctx.setdefault('default_company_id', self.company_id.id)
