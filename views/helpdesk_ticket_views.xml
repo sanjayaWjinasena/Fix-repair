@@ -257,4 +257,30 @@
         </field>
     </record>
 
+    <!--
+        Remove the 3-dots dropdown from helpdesk team dashboard cards.
+        The base helpdesk_team_view_kanban's kanban-menu template
+        offers Configuration / SLA Policies / Stages / Types / KPI
+        Settings + a Report section — all of which are admin-tier
+        management actions. Casual users clicking through a team card
+        to view its tickets shouldn't see this menu. Same "empty the
+        kanban-menu template" pattern as v218 on ticket cards: with
+        no menu items rendered, the 3-dots trigger button hides.
+
+        Priority 99 (no conflict expected — Studio typically doesn't
+        touch the team kanban).
+    -->
+    <record id="helpdesk_team_kanban_no_menu" model="ir.ui.view">
+        <field name="name">helpdesk.team.kanban.no.menu</field>
+        <field name="model">helpdesk.team</field>
+        <field name="inherit_id"
+               ref="helpdesk.helpdesk_team_view_kanban"/>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <xpath expr="//templates/t[@t-name='kanban-menu']" position="replace">
+                <t t-name="kanban-menu"/>
+            </xpath>
+        </field>
+    </record>
+
 </odoo>
