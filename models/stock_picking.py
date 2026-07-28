@@ -166,29 +166,32 @@ class StockPicking(models.Model):
                 for field_el in arch.xpath(f"//field[@name='{fname}']"):
                     field_el.set('invisible', hide_gate)
 
-            # Lock repair-flow picking fields once the transfer is
-            # validated (state == 'done'). Odoo core already sets
-            # many stock.picking fields readonly on state=done, but
-            # Studio-added x_studio_* fields and some sub-tab widgets
-            # don't consistently respect it. Layer an explicit
-            # readonly on every <field> inside <sheet> to close the
-            # gap.
+            # Lock repair-flow picking fields. Two branches:
             #
-            # Gate combines the repair-flow marker (v182) with
-            # state=done so:
-            #   * Non-repair pickings — untouched by this rule (Odoo
-            #     core defaults apply).
-            #   * Repair pickings still in draft/waiting/assigned —
-            #     editable as usual.
-            #   * Repair pickings that have been validated — every
-            #     data field freezes.
+            #   1. Repair-SO DELIVERY pickings (quotation_type='Repair',
+            #      no helpdesk_ticket_id stamp) — freeze only after
+            #      Validate (state='done'). Stock managers still need
+            #      to touch qty_done / lot etc. before validation.
+            #
+            #   2. Repair MOVEMENT pickings (helpdesk_ticket_id stamped
+            #      by _create_returns and the Send-to-Factory /
+            #      Received-at-Factory / Send-to-Sales-Centre /
+            #      Dispatch server actions) — freeze ALWAYS, from
+            #      creation onward. These are one-click transfers with
+            #      every field (partner, dates, source doc, moves,
+            #      serials) pre-populated by our code; the operator
+            #      only needs to click Validate. Editing anything else
+            #      is a data-quality risk (accidentally rewriting
+            #      partner_id / origin / picking_type_id on the return
+            #      would desync the ticket's smart buttons and
+            #      subsequent stage transitions).
             #
             # ORed into each field's existing readonly so per-field
             # rules stay live before the picking-lock kicks in.
             #
-            # Buttons (Validate, Cancel, Return, our injected
-            # workflow buttons) aren't <field> elements, so the
-            # loop leaves them clickable.
+            # Buttons (Validate, Cancel, our injected workflow
+            # buttons) aren't <field> elements, so the loop leaves
+            # them clickable.
             #
             # not(ancestor::field): skip fields inside embedded
             # views (move_ids_without_package, move_line_ids etc.).
@@ -199,8 +202,8 @@ class StockPicking(models.Model):
             # "Name not defined" during list-cell readonly eval.
             lock_gate = (
                 "(x_studio_quotation_type == 'Repair' "
-                "or x_studio_helpdesk_ticket_id) "
-                "and state == 'done'"
+                "and state == 'done') "
+                "or x_studio_helpdesk_ticket_id"
             )
             for field_el in arch.xpath(
                     "//sheet//field[not(ancestor::field)]"):
