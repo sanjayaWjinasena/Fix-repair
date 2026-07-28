@@ -1938,6 +1938,19 @@ class HelpdeskTicket(models.Model):
             for field in arch.xpath("//field[@name='user_id']"):
                 field.set('readonly', '1')
 
+            # Ticket ID (`name` — displays as REPAIR/YYYY/NNNNN): always
+            # readonly. The sequence-based name is assigned by
+            # _repair_seq_no_on_create_or_write when the record hits
+            # create(), so there's no legitimate reason for the operator
+            # to type anything in the title field. Leaving it editable
+            # meant a stray keystroke on the New ticket form would
+            # override the sequence hook (which only fires when the
+            # value is 'New' or empty) and freeze the ticket with an
+            # arbitrary human-typed name. Readonly on the arch is
+            # simpler and safer than adding create/write guards.
+            for field in arch.xpath("//field[@name='name']"):
+                field.set('readonly', '1')
+
             # Assign to Me: hide as soon as ANY user is assigned (previously
             # only hidden when assigned to the current user — meaning logged-in
             # users could re-grab a ticket from someone else with one click).
@@ -2658,11 +2671,20 @@ class HelpdeskTicket(models.Model):
 
     def _repair_seq_no_on_create_or_write(self):
         """Replaces server action id 1976 (automation 171
-        'JIN-Helpdesk(Repair) Seq.No'). Assigns a sequence number
-        to newly-created tickets whose name is still 'New'.
+        'JIN-Helpdesk(Repair) Seq.No'). Assigns a sequence number to
+        newly-created tickets whose name is still the sentinel 'New'
+        OR empty (missing).
+
+        v220 broadened the trigger from just == 'New' to also catch
+        empty names. The paired _get_view change makes the name field
+        readonly on the form, so the user can no longer type a value
+        into it — which means new tickets arrive at create() with
+        whatever the default provides (empty, in the absence of a
+        Studio default). Without this broadening, those would slip
+        past the sequence assignment and land with a blank name.
         """
         for record in self:
-            if record.name == 'New':
+            if not record.name or record.name == 'New':
                 seq = self.env['ir.sequence'].next_by_code('repair.seq')
                 if seq:
                     record.write({'name': seq})
