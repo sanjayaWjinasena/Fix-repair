@@ -283,24 +283,36 @@ class StockReturnPicking(models.TransientModel):
     @api.depends('picking_id', 'ticket_id')
     def _compute_moves_locations(self):
         super()._compute_moves_locations()
-        # Studio automation 174 → server action 1991 validates
-        # location_id == x_studio_suggested_location_id (company 1) or
-        # x_studio_suggested_location_id_1 (every other company). Match
-        # that branch strictly here so the compute's output survives the
-        # validation regardless of which sister-field the ticket's
-        # assigned user has populated on their profile. Previous logic
-        # picked "_1 or _id" unconditionally — that worked for the common
-        # case of a company-2 user with _1 set, but silently mis-selected
-        # for a company-1 user whose profile happens to also carry _1
-        # (the two locations are per-company variants) and left the
-        # automation to raise "Return Location should be equal to
-        # Suggested Return Location".
+        # Gate the whole override on wizard.ticket_id being set. That
+        # narrows this codepath to the collection-Return flow (where
+        # fix_repair_action_direct_return sets default_ticket_id from
+        # self.id) and leaves Odoo's standard compute untouched for
+        # both the Dispatch flow (fix_repair_action_direct_dispatch
+        # deliberately leaves ticket_id unset — see there for why) and
+        # any standalone use of the return wizard from another module.
+        # For Dispatch, super's compute correctly sets location_id to
+        # picking_id.location_id (Customers) — overriding to the
+        # ticket's suggested repair location here would break that.
+        #
+        # Studio automation 174 → server action 1991 also only fires
+        # when ticket_id is set (its own `if record.ticket_id:` guard),
+        # so aligning our override to the same gate keeps behaviour
+        # symmetric: we only massage location_id when the automation
+        # would also be watching.
         active_company_id = (
             self.env.context.get('allowed_company_ids',
                                  [self.env.company.id])
             or [self.env.company.id]
         )[0]
         for wizard in self:
+            if not wizard.ticket_id:
+                continue
+            # Match automation 174's own company branch strictly, so
+            # location_id and the field the automation validates against
+            # resolve from the same source and pass every time. Previous
+            # "_1 or _id" fallback silently mis-selected the wrong
+            # sister-field for a user profile that carried the other
+            # company's per-company variant.
             if active_company_id == 1:
                 suggested = (
                     wizard.x_studio_suggested_location_id
@@ -315,10 +327,9 @@ class StockReturnPicking(models.TransientModel):
                 wizard.location_id = suggested
 
             # Repair tickets are always single-item — cap return qty to 1.
-            if wizard.ticket_id:
-                for line in wizard.product_return_moves:
-                    if line.quantity != 1:
-                        line.quantity = 1
+            for line in wizard.product_return_moves:
+                if line.quantity != 1:
+                    line.quantity = 1
 
     def _create_returns(self):
         # Look up the related helpdesk ticket. For Return clicks (stage='new')

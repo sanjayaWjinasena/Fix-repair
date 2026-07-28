@@ -1580,6 +1580,54 @@ class HelpdeskTicket(models.Model):
         # navigating to the new RET picking.
         return wizard.create_returns()
 
+    def fix_repair_action_direct_dispatch(self):
+        """One-click Dispatch: skip the stock.return.picking wizard.
+
+        Symmetric to fix_repair_action_direct_return but for the
+        item-back-to-customer step. In the interactive Dispatch flow
+        the header button deliberately drops default_ticket_id from the
+        wizard's context — this makes Studio automation 174's guard
+        (`if record.ticket_id`) fail, silently skipping the
+        "Return Location should be equal to Suggested Return Location"
+        check. We mirror that here: ticket_id is left unset on the
+        wizard, and our _create_returns override finds the ticket via
+        its picking_id → x_studio_pick_id fallback so the resulting
+        picking still gets renamed to <WH>/RET/xxxxx and stamped.
+
+        Precondition: the ticket must already have a stored return
+        picking (x_studio_pick_id set to the earlier RET). Without one,
+        there's nothing to reverse.
+        """
+        self.ensure_one()
+        if not self.x_studio_pick_id:
+            raise UserError(_(
+                "Dispatch requires the item to have been collected "
+                "first. No return picking is stored on this ticket."
+            ))
+
+        ctx = dict(self.env.context)
+        # Strip both leaked-from-button keys; we control these explicitly
+        # below. default_location_id: False from the button also breaks
+        # the compute (same skip-the-compute trap as the Return path).
+        ctx.pop('default_location_id', None)
+        # Deliberately DO NOT set default_ticket_id — leaving it out
+        # keeps automation 174's guard from firing. This mirrors the
+        # interactive Dispatch button's context, which also passed
+        # default_ticket_id: False for stage != 'new'.
+        ctx.pop('default_ticket_id', None)
+        ctx.setdefault('default_picking_id', self.x_studio_pick_id)
+        ctx.setdefault('default_partner_id', self.partner_id.id)
+        ctx.setdefault('default_company_id', self.company_id.id)
+
+        # Use positional with_context to REPLACE env.context (the
+        # kwargs form would re-introduce the popped keys via merge).
+        wizard = (
+            self.env['stock.return.picking']
+                .with_context(ctx)
+                .create({})
+        )
+        return wizard.create_returns()
+
     @api.depends(
         'fsm_task_ids.sale_order_id.invoice_ids.state',
         'fsm_task_ids.sale_order_id.invoice_ids.payment_state',
@@ -2079,11 +2127,17 @@ class HelpdeskTicket(models.Model):
                 # which is a slightly different UX shape).
                 btn.set('type', 'object')
                 btn.set('name', 'fix_repair_action_direct_return')
-                # Add Dispatch sibling — same action, shown once a return picking exists
+                # Add Dispatch sibling — bound to our own direct-Dispatch
+                # method so the wizard popup is skipped for that step too.
+                # v215 change: was action 195 (opens the standard wizard);
+                # now points at fix_repair_action_direct_dispatch which
+                # reproduces the interactive Dispatch context (ticket_id
+                # unset, picking_id = x_studio_pick_id, location_id
+                # deferred to super's compute = Customers) programmatically.
                 dispatch = etree.Element('button')
-                dispatch.set('name', '195')
+                dispatch.set('name', 'fix_repair_action_direct_dispatch')
                 dispatch.set('string', 'Dispatch')
-                dispatch.set('type', 'action')
+                dispatch.set('type', 'object')
                 # Match the Return / Assign to Me / Plan Intervention
                 # header buttons — all primary purple accent — instead of
                 # inheriting whatever class the Return button happens to
