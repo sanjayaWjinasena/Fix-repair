@@ -118,31 +118,66 @@
         a lower-priority customization stamping clickable back on.
     -->
     <!--
-        Disable drag-and-drop between kanban columns on the repair
-        ticket kanban. Dragging a card to a different column would
-        change stage_id — bypassing the workflow buttons (Send to
-        Factory / Received at Factory / etc.) that also do side-
-        effect work (pickings, ticket-linkage updates, etc.). Cards
-        can still be reordered WITHIN a column; only cross-column
-        moves are blocked.
+        Lock down the repair-ticket kanban. Rationale:
 
-        records_draggable="0" is the Odoo 17 kanban attribute that
-        turns off record dragging entirely. Priority 99 so it lands
-        after Studio's kanban customization inherit (id 4735).
+          * Record drag between columns would change stage_id, bypassing
+            the workflow buttons (Send to Factory / Received at Factory /
+            etc.) that also do side-effect work (pickings, ticket-linkage
+            updates, ...). records_draggable="0" turns this off.
+          * Column drag (groups_draggable="0") — reordering the stage
+            columns is a global config change that shouldn't happen
+            through casual kanban interaction.
+          * group_create / group_delete / group_edit off — no + Add
+            Column button, no delete in the column gear, no rename via
+            the gear. Stages are managed centrally in Helpdesk config.
+          * quick_create="0" — hides the + button at the top of each
+            column that lets users quickly create tickets by title only.
+            Tickets have too many required fields (user, type, product,
+            serial, reason, ...) for a title-only create to make sense
+            in the repair flow.
+          * edit="0" delete="0" plus emptying the kanban-menu template —
+            no 3-dots on the card. Editing/deleting must go through the
+            form view where the field-level gates and workflow rules
+            apply.
+          * Remove the activity_ids kanban_activity widget — the clock
+            icon and its schedule-activity popover on each card. The
+            repair workflow drives activities through the stage-
+            transition buttons; freeform activity scheduling from
+            kanban muddies the audit trail.
+
+        Priority bumped 99 -> 100 so this inherit lands AFTER Studio's
+        kanban customization inherit (id 4735 at priority 99). A
+        priority tie was letting Studio's arch win on some renders.
     -->
     <record id="helpdesk_ticket_kanban_no_drag" model="ir.ui.view">
         <field name="name">helpdesk.ticket.kanban.no.drag</field>
         <field name="model">helpdesk.ticket</field>
         <field name="inherit_id"
                ref="helpdesk.helpdesk_ticket_view_kanban"/>
-        <field name="priority">99</field>
+        <field name="priority">100</field>
         <field name="arch" type="xml">
             <xpath expr="//kanban" position="attributes">
                 <attribute name="records_draggable">0</attribute>
+                <attribute name="groups_draggable">0</attribute>
                 <attribute name="group_create">0</attribute>
                 <attribute name="group_delete">0</attribute>
                 <attribute name="group_edit">0</attribute>
+                <attribute name="quick_create">0</attribute>
+                <attribute name="edit">0</attribute>
+                <attribute name="delete">0</attribute>
             </xpath>
+            <!--
+                Empty out the kanban-menu template so the 3-dots
+                dropdown doesn't render. Odoo's kanban runtime checks
+                whether the menu template has visible content; with all
+                menu items removed there's nothing to show and the
+                trigger button hides too.
+            -->
+            <xpath expr="//templates/t[@t-name='kanban-menu']" position="replace">
+                <t t-name="kanban-menu"/>
+            </xpath>
+            <!-- Remove the activity clock widget from card bodies. -->
+            <xpath expr="//field[@name='activity_ids'][@widget='kanban_activity']" position="replace"/>
         </field>
     </record>
 
