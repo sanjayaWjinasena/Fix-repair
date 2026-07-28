@@ -1511,6 +1511,27 @@ class HelpdeskTicket(models.Model):
         # any values already in env.context so future callers (test
         # fixtures, an alternate button, etc.) can override.
         ctx = dict(self.env.context)
+
+        # Strip default_location_id from the inherited context.
+        # The header button's `context` attribute — carried over from
+        # the v199 action-195 setup for backward compatibility with the
+        # Dispatch sibling that still opens the standard wizard — sets
+        # `default_location_id: (ship_back_cond and cust_loc_id) or
+        # False`, which evaluates to `False` in the New stage. Passing
+        # `default_location_id: False` through to
+        # stock.return.picking.create({}) makes Odoo treat location_id
+        # as "user-provided" and SKIP _compute_moves_locations entirely,
+        # leaving product_return_moves empty and location_id at False —
+        # which then trips automation 174 with
+        #     "Return Location should be equal to Suggested Return
+        #      Location."
+        # (This is exactly the failure the user hit through the UI on
+        # v212 — RPC calls without the button context worked fine
+        # because they never carried default_location_id at all.)
+        # Removing the key lets the compute run in full and set
+        # location_id to the correct suggested value.
+        ctx.pop('default_location_id', None)
+
         ctx.setdefault(
             'default_ticket_id',
             (self.repair_stage_state == 'new' and self.id) or False,
