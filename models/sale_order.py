@@ -864,6 +864,35 @@ class SaleOrder(models.Model):
                     if parent is not None:
                         parent.remove(el)
 
+            # v221 lockdown: on Repair-type SOs, freeze every field on
+            # the form and every row of the order-lines table — no
+            # manual edits, no Add-a-line, no in-place editing, no
+            # delete. Applies at every state (draft → sent → sale →
+            # done). The SO is meant to mirror the linked helpdesk
+            # ticket verbatim; ad-hoc backend tweaks defeat that.
+            #
+            # Merges with any existing readonly expression instead of
+            # overwriting it, so pre-existing state-based readonlies on
+            # non-Repair SOs still work. Fields hardcoded readonly="1"
+            # are left alone, and the helper fields injected above as
+            # invisible="1" are skipped.
+            #
+            # The ticket → SO creation flow writes via sudo(), which
+            # bypasses view-level readonly, so lines still populate on
+            # SO creation — only human backend edits are blocked.
+            lock_expr = "x_studio_quotation_type == 'Repair'"
+            for field_el in arch.xpath("//sheet//field | //header//field"):
+                if field_el.get('invisible') == '1':
+                    continue
+                existing = field_el.get('readonly')
+                if existing == '1':
+                    continue
+                if existing and existing not in ('0', 'False'):
+                    field_el.set('readonly',
+                                 f"({existing}) or ({lock_expr})")
+                else:
+                    field_el.set('readonly', lock_expr)
+
             # Re-estimate button in the SO header. Visible when the SO
             # is signed AND no outgoing delivery is validated AND no
             # invoice exists yet. Confirm dialog spells out the side
