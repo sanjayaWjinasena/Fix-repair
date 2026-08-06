@@ -824,6 +824,13 @@ class SaleOrder(models.Model):
             # rendering when x_studio_quotation_type == 'Repair'.
             # arch.xpath returns [] when Studio hasn't placed the field
             # into any view slot, so absent fields are silently skipped.
+            # OR-merge with any existing invisible expression so sibling
+            # modules that pre-set their own type-based hide (e.g.
+            # BugFix-Sales hides these fields on Sales-type quotations)
+            # don't get stomped by our overwrite. Fix-repair runs LAST
+            # in the _get_view MRO because it depends on BugFix-Sales,
+            # so a naïve .set() drops earlier hides silently.
+            repair_expr = "x_studio_quotation_type == 'Repair'"
             for fname in (
                 'sale_order_template_id',               # Quotation Template
                 'x_studio_sales_order_validity',        # Sales Order Validity
@@ -836,17 +843,31 @@ class SaleOrder(models.Model):
                 'x_studio_expired',                     # Expired
             ):
                 for field_el in arch.xpath(f"//field[@name='{fname}']"):
-                    field_el.set('invisible', "x_studio_quotation_type == 'Repair'")
+                    existing = field_el.get('invisible', '')
+                    if existing and existing not in ('0', 'False'):
+                        field_el.set(
+                            'invisible',
+                            f"({existing}) or ({repair_expr})",
+                        )
+                    else:
+                        field_el.set('invisible', repair_expr)
 
             # Document Introduction / Conclusion (from BugFix-Sales): hide
             # ONLY on Repair sale orders. Sales / Project quotations still
             # show them because the intro/conclusion selectors are useful
             # for those flows. Conditional invisible instead of "1" so the
             # visibility flips automatically when x_studio_quotation_type
-            # changes.
+            # changes. Same OR-merge for sibling-module cohabitation.
             for fname in ('bugfix_sales_intro_id', 'bugfix_sales_conclusion_id'):
                 for field_el in arch.xpath(f"//field[@name='{fname}']"):
-                    field_el.set('invisible', "x_studio_quotation_type == 'Repair'")
+                    existing = field_el.get('invisible', '')
+                    if existing and existing not in ('0', 'False'):
+                        field_el.set(
+                            'invisible',
+                            f"({existing}) or ({repair_expr})",
+                        )
+                    else:
+                        field_el.set('invisible', repair_expr)
 
             # Strip ghost Studio fields whose ir.model.fields row exists
             # but whose model registration is broken. Studio created two
