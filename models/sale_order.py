@@ -842,32 +842,43 @@ class SaleOrder(models.Model):
                 'plan_id',                              # Recurring Plan
                 'x_studio_expired',                     # Expired
             ):
-                for field_el in arch.xpath(f"//field[@name='{fname}']"):
-                    existing = field_el.get('invisible', '')
+                # Responsive SO header renders <label for="fname"/> in a
+                # separate cell from the <field name="fname"/>. Hiding
+                # only the field leaves the label dangling. Include both.
+                elements = (
+                    arch.xpath(f"//field[@name='{fname}']")
+                    + arch.xpath(f"//label[@for='{fname}']")
+                )
+                for el in elements:
+                    existing = el.get('invisible', '')
                     if existing and existing not in ('0', 'False'):
-                        field_el.set(
+                        el.set(
                             'invisible',
                             f"({existing}) or ({repair_expr})",
                         )
                     else:
-                        field_el.set('invisible', repair_expr)
+                        el.set('invisible', repair_expr)
 
             # Document Introduction / Conclusion (from BugFix-Sales): hide
             # ONLY on Repair sale orders. Sales / Project quotations still
             # show them because the intro/conclusion selectors are useful
             # for those flows. Conditional invisible instead of "1" so the
             # visibility flips automatically when x_studio_quotation_type
-            # changes. Same OR-merge for sibling-module cohabitation.
+            # changes. Same label + field pair treatment.
             for fname in ('bugfix_sales_intro_id', 'bugfix_sales_conclusion_id'):
-                for field_el in arch.xpath(f"//field[@name='{fname}']"):
-                    existing = field_el.get('invisible', '')
+                elements = (
+                    arch.xpath(f"//field[@name='{fname}']")
+                    + arch.xpath(f"//label[@for='{fname}']")
+                )
+                for el in elements:
+                    existing = el.get('invisible', '')
                     if existing and existing not in ('0', 'False'):
-                        field_el.set(
+                        el.set(
                             'invisible',
                             f"({existing}) or ({repair_expr})",
                         )
                     else:
-                        field_el.set('invisible', repair_expr)
+                        el.set('invisible', repair_expr)
 
             # Strip ghost Studio fields whose ir.model.fields row exists
             # but whose model registration is broken. Studio created two
