@@ -8,6 +8,7 @@ from . import ir_actions_report
 from . import project_task
 from . import repair_master_data
 from . import res_config_settings
+from . import res_partner
 from . import res_users
 from . import sale_order
 from . import stock_location
