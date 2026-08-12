@@ -790,6 +790,13 @@ class SaleOrder(models.Model):
                 for fname in ('ticket_repair_stage_state', 'x_customer_signed',
                               'can_re_estimate', 'x_repair_stock_ok',
                               'x_repair_customer_pays',
+                              # v263: x_studio_quotation_type is read by our
+                              # OR-merged invisible expressions below
+                              # (repair_expr). On standalone the base sale.order
+                              # arch doesn't happen to render this field, so OWL
+                              # can't evaluate the expression at render time
+                              # without a sentinel.
+                              'x_studio_quotation_type',
                               'x_studio_order_payment_method',
                               'x_studio_over_credit',
                               'x_studio_credit_limit_approved',
