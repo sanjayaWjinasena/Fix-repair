@@ -41,7 +41,11 @@ class XTaskDiagnosis(models.Model):
     # Odoo requires a _rec_name field. Studio uses x_name by convention
     # on all custom models; declared here so search-by-name UI still
     # works and the model doesn't fall back to id-only display_name.
-    x_name = fields.Char(string='Name', required=True)
+    # v262: Clear-DB has x_name required=False and all 586 existing
+    # diagnosis rows carry x_name=False (empty). Match verbatim so the
+    # tree-editable Repair Diagnosis tab can save rows without the UI
+    # exposing an x_name input (Studio hides it via column_invisible).
+    x_name = fields.Char(string='Name')
 
     # The back-reference project.task.x_studio_diagnosis_ids traverses
     # into on load-time setup_nonrelated. Must exist as a real Python
