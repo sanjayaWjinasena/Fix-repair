@@ -10,6 +10,18 @@ from odoo.exceptions import UserError
 class HelpdeskTicket(models.Model):
     _inherit = 'helpdesk.ticket'
 
+    # v245: Default 'New' on the required 'name' field so:
+    #   1. Save doesn't fail with "Invalid fields: Subject" when a
+    #      user creates a ticket without typing a Subject.
+    #   2. _repair_seq_no_on_create_or_write() has its sentinel value
+    #      to detect (see method below — it looks for name == 'New' OR
+    #      empty and then assigns from ir.sequence 'repair.seq').
+    # Mirrors Clear-DB's ir.default id=301 (json_value='"New"').
+    # Cross-checked with the field's default= on the Fix-repair port
+    # only; base helpdesk keeps 'name' required with no default, so
+    # this ir.default equivalent is our contribution.
+    name = fields.Char(default='New')
+
     repair_stage_state = fields.Selection([
         ('new',                          'New'),
         ('sent_to_factory',              'Sent to Factory'),

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Repair-related ir.sequence seed data (Chunk 1f).
+
+    On Clear-DB, ticket names are auto-assigned to values like
+    "REPAIR/2026/01234" by an ir.actions.server ("RR - Repair Seq.No",
+    id 1976) which calls helpdesk.ticket._repair_seq_no_on_create_or_write().
+    That method reads env['ir.sequence'].next_by_code('repair.seq').
+
+    On stand-alone the underlying ir.sequence records don't exist, so
+    next_by_code returns False and the name stays 'New' (or empty),
+    triggering "Invalid fields: Subject" when a user clicks Save.
+
+    Also seeded here: 'repair.serial.seq' (used by
+    action_create_repair_serial elsewhere in Fix-repair).
+
+    padding=5 and the year-based prefix match Clear-DB verbatim
+    (verified via ir.sequence.search on 2026-08-12).
+-->
+<odoo noupdate="1">
+
+    <record id="seq_repair_ticket" model="ir.sequence">
+        <field name="name">Repair Sequence No</field>
+        <field name="code">repair.seq</field>
+        <field name="prefix">REPAIR/%(year)s/</field>
+        <field name="padding">5</field>
+        <field name="number_next">1</field>
+        <field name="number_increment">1</field>
+        <field name="implementation">standard</field>
+    </record>
+
+    <record id="seq_repair_serial" model="ir.sequence">
+        <field name="name">Repair Serial Sequence No</field>
+        <field name="code">repair.serial.seq</field>
+        <field name="prefix">REP-SERIAL/%(year)s/</field>
+        <field name="padding">5</field>
+        <field name="number_next">1</field>
+        <field name="number_increment">1</field>
+        <field name="implementation">standard</field>
+    </record>
+
+</odoo>
