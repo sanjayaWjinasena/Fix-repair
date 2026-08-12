@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Studio-field-only hides on the helpdesk.ticket form.
+
+    Each xpath here targets a Studio-created x_studio_* field that
+    Studio added to the base helpdesk.ticket form. On the Jinasena
+    production DB every xpath resolves cleanly; on a stand-alone
+    Odoo install those fields aren't in the parent view arch and any
+    single unresolved xpath aborts the whole view load.
+
+    This file is loaded conditionally by hooks.py — only when
+    helpdesk.ticket.x_studio_rug_repair exists in the registry, taken
+    as a proxy for "Studio has added the field cluster to the view."
+    On stand-alone DBs the file is skipped and the module installs
+    cleanly with these hides simply absent.
+-->
+<odoo>
+    <record id="helpdesk_ticket_form_hide_studio_fields" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.form.hide.studio.fields</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='x_studio_rug_repair']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='x_studio_rug_confirmed']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='x_studio_quick_repair_status']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='x_studio_cancel_reason']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='x_studio_items']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='x_studio_source_location_1']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='x_studio_tracking']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='x_studio_normal_repair_with_serial_no']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='x_studio_normal_repair_without_serial_no']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -14,8 +14,18 @@ where module='studio_customization'. Field records themselves and
 their column data are left alone. Idempotent.
 """
 import logging
+import os
+
+from odoo.modules.module import get_module_path
+from odoo.tools import convert_file
 
 _logger = logging.getLogger(__name__)
+
+# (relative XML path, field on helpdesk.ticket that must exist for the
+# view inherit to have targets in the base view arch)
+_CONDITIONAL_DATA = [
+    ('views/helpdesk_ticket_studio_field_hides.xml', 'x_studio_rug_repair'),
+]
 
 # Kept in sync with models/res_partner.py.
 _PORTED_PARTNER_FIELDS = (
@@ -69,6 +79,58 @@ def strip_studio_xmlids_for_ported_fields(env):
     stale.unlink()
 
 
+def load_conditional_studio_view_hides(env):
+    """Load view inherits whose xpaths only resolve when Studio-added
+    fields are present in the parent view arch.
+
+    On the Jinasena production DB the target Studio fields exist and the
+    xpath resolves; on a stand-alone install those fields aren't there
+    and any unresolved xpath aborts the whole view load with:
+
+      Element '<xpath expr="//field[@name='x_studio_rug_repair']">'
+      cannot be located in parent view
+
+    Each entry in _CONDITIONAL_DATA names a sentinel Studio field. If
+    it exists on helpdesk.ticket (state=manual OR base), the whole view
+    inherit is loaded; otherwise skipped.
+    """
+    Fields = env['ir.model.fields'].sudo()
+    module_path = get_module_path('Fix-repair')
+
+    for rel_path, sentinel in _CONDITIONAL_DATA:
+        exists = Fields.search([
+            ('model', '=', 'helpdesk.ticket'),
+            ('name', '=', sentinel),
+        ], limit=1)
+        if not exists:
+            _logger.info(
+                "Fix-repair: skipping %s (sentinel field %r not present "
+                "on this DB — stand-alone install).",
+                rel_path, sentinel,
+            )
+            continue
+        full_path = os.path.join(module_path, rel_path)
+        if not os.path.exists(full_path):
+            _logger.warning(
+                "Fix-repair: %s listed as conditional data but missing "
+                "on disk — skipping.", rel_path,
+            )
+            continue
+        _logger.info("Fix-repair: loading %s (sentinel %r present).",
+                     rel_path, sentinel)
+        convert_file(
+            env.cr,
+            'Fix-repair',
+            rel_path,
+            {},
+            mode='init',
+            noupdate=False,
+            kind='data',
+            pathname=full_path,
+        )
+
+
 def post_init_hook(env):
     """Odoo 17 post-install hook signature: (env)."""
     strip_studio_xmlids_for_ported_fields(env)
+    load_conditional_studio_view_hides(env)

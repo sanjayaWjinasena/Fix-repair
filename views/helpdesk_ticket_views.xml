@@ -218,6 +218,11 @@
         </field>
     </record>
 
+    <!-- Safe hides — targets are always present on any DB. Studio-field
+         hides moved to views/helpdesk_ticket_studio_field_hides.xml
+         and loaded conditionally via post_init_hook so stand-alone
+         installs (where those Studio fields aren't in the parent
+         view arch) don't crash on unresolvable xpath. -->
     <record id="helpdesk_ticket_form_hide_fields" model="ir.ui.view">
         <field name="name">helpdesk.ticket.form.hide.fields</field>
         <field name="model">helpdesk.ticket</field>
@@ -225,33 +230,6 @@
         <field name="priority">99</field>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='team_id']" position="attributes">
-                <attribute name="invisible">1</attribute>
-            </xpath>
-            <xpath expr="//field[@name='x_studio_rug_repair']" position="attributes">
-                <attribute name="invisible">1</attribute>
-            </xpath>
-            <xpath expr="//field[@name='x_studio_rug_confirmed']" position="attributes">
-                <attribute name="invisible">1</attribute>
-            </xpath>
-            <xpath expr="//field[@name='x_studio_quick_repair_status']" position="attributes">
-                <attribute name="invisible">1</attribute>
-            </xpath>
-            <xpath expr="//field[@name='x_studio_cancel_reason']" position="attributes">
-                <attribute name="invisible">1</attribute>
-            </xpath>
-            <xpath expr="//field[@name='x_studio_items']" position="attributes">
-                <attribute name="invisible">1</attribute>
-            </xpath>
-            <xpath expr="//field[@name='x_studio_source_location_1']" position="attributes">
-                <attribute name="invisible">1</attribute>
-            </xpath>
-            <xpath expr="//field[@name='x_studio_tracking']" position="attributes">
-                <attribute name="invisible">1</attribute>
-            </xpath>
-            <xpath expr="//field[@name='x_studio_normal_repair_with_serial_no']" position="attributes">
-                <attribute name="invisible">1</attribute>
-            </xpath>
-            <xpath expr="//field[@name='x_studio_normal_repair_without_serial_no']" position="attributes">
                 <attribute name="invisible">1</attribute>
             </xpath>
         </field>
