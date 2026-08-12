@@ -6,6 +6,35 @@ from odoo.exceptions import UserError
 class StockReturnPicking(models.TransientModel):
     _inherit = 'stock.return.picking'
 
+    # v256: Studio fields ported verbatim from Clear-DB. Read by
+    # _compute_moves_locations below (company-1 branch reads
+    # x_studio_suggested_location_id, other-company branch reads
+    # _1 variant). Declared as base state so standalone has them.
+    # Clear-DB keeps them state='manual' owned by studio_customization.
+    x_studio_suggested_location_id = fields.Many2one(
+        'stock.location',
+        string='Suggested Location',
+        ondelete='set null',
+    )
+    x_studio_suggested_location_id_1 = fields.Many2one(
+        'stock.location',
+        string='Suggested Location (Company 2)',
+        ondelete='set null',
+    )
+    # v256: three Studio boolean flags on the return wizard —
+    # ticket-type filters copied by Clear-DB workflows into the
+    # wizard's default context. No Fix-repair Python reads them
+    # today, but declaring here keeps parity with Clear-DB's schema.
+    x_studio_repair_normal_with_serial_no = fields.Boolean(
+        string='Repair – Normal with Serial No',
+    )
+    x_studio_repair_normal_without_serial_no = fields.Boolean(
+        string='Repair – Normal without Serial No',
+    )
+    x_studio_repair_rug = fields.Boolean(
+        string='Repair – RUG',
+    )
+
     # Marker written to a phantom's `origin` field so we can find (and
     # reuse) the phantom on a subsequent wizard open instead of building
     # a fresh one every time. Uses `origin` rather than
