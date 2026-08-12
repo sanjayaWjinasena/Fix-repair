@@ -118,8 +118,12 @@ def load_conditional_studio_view_hides(env):
             continue
         _logger.info("Fix-repair: loading %s (sentinel %r present).",
                      rel_path, sentinel)
+        # Odoo 17 signature: convert_file(env, module, filename, idref,
+        # mode, noupdate, kind, pathname). First arg is the env, NOT
+        # the cursor — passing env.cr triggers AttributeError on the
+        # first `env.context` access inside xml_import.__init__.
         convert_file(
-            env.cr,
+            env,
             'Fix-repair',
             rel_path,
             {},
