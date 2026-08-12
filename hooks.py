@@ -21,60 +21,26 @@ from odoo.tools import convert_file
 
 _logger = logging.getLogger(__name__)
 
-# View inherits whose xpath targets are Studio-added fields on the
-# base view arch. These only resolve when studio_customization is
-# installed (that module's own view inherits add the fields to the
-# helpdesk.ticket form arch). On stand-alone Odoo installs no such
-# module exists → xpath fails → view load aborts.
+# View files loaded via post_init phase (deferred past manifest 'data')
+# so xpath validation runs after every module's sibling inherits are
+# applied to the parent view. ORDER MATTERS — ported.xml adds field
+# placements that field_hides.xml then targets.
 #
-# We can't use "field exists in ir.model.fields" as the sentinel: the
-# Fix-repair port declares several of these as Python fields, so the
-# metadata exists even where studio_customization is absent. The only
-# reliable proxy is the studio_customization module itself.
-def _button_195_in_helpdesk_ticket_arch(env):
-    # True iff some active helpdesk.ticket view has button name="195"
-    # in its arch_db. That's what view #4012's xpath references — a
-    # Clear-DB-specific numeric action ID (helpdesk_stock's Return
-    # button was created with id=195 on that DB). On stand-alone Odoo
-    # the same button was allocated a different id (typically 853),
-    # so this returns False and the ported view file is skipped.
-    #
-    # Raw SQL to avoid triggering another view-composition pass
-    # mid-upgrade.
-    # arch_db is a jsonb translated field in Odoo 17 — cast to text
-    # before pattern matching, otherwise Postgres errors with
-    # `operator does not exist: jsonb ~~ unknown`.
-    env.cr.execute(
-        "SELECT COUNT(1) FROM ir_ui_view "
-        "WHERE model = 'helpdesk.ticket' "
-        "AND active IS TRUE "
-        "AND arch_db::text LIKE '%name=\"195\"%'"
-    )
-    (count,) = env.cr.fetchone()
-    return count > 0
-
-
-# Each entry: (relative XML path, sentinel_callable_or_None).
-# Sentinel callable receives `env` and returns True when the file
-# is safe to load on this DB, False to skip.
+# v242: sentinel-gate dropped. helpdesk_ticket_studio_ported.xml no
+# longer references any Clear-DB-specific numeric action IDs (view
+# #4013 removed entirely, #4012's one //button[@name='195'] xpath
+# stripped). Files are safe to load on any DB now.
 _STUDIO_DEPENDENT_VIEW_FILES = [
-    # v233-v235: 4 helpdesk.ticket views repinned to Fix-repair during
-    # earlier migration but whose arch_db never landed in on-disk XML.
-    # Adds ~90 Studio field placements + tabs + button rewires.
-    # Sentinel: verify button name="195" actually exists in some
-    # active helpdesk.ticket view's arch. On Clear-DB it does (via
-    # helpdesk_stock.helpdesk_ticket_view_form_inherit_stock_user);
-    # on stand-alone it's action id 853, so this check returns
-    # False and the file is skipped.
-    ('views/helpdesk_ticket_studio_ported.xml',
-     _button_195_in_helpdesk_ticket_arch),
+    # 3 helpdesk.ticket views repinned to Fix-repair during earlier
+    # migration but whose arch_db never landed in on-disk XML:
+    #   view_helpdesk_ticket_form_4012  (form  — ~90 field placements)
+    #   view_helpdesk_ticket_kanban_4735 (kanban)
+    #   view_helpdesk_ticket_tree_5027  (tree)
+    'views/helpdesk_ticket_studio_ported.xml',
 
-    # v228: hides for 9 Studio-added fields. Depends on ported.xml
-    # having loaded first (its xpaths target fields ported.xml
-    # adds). Same sentinel — if ported.xml was skipped, this has
-    # nothing to target.
-    ('views/helpdesk_ticket_studio_field_hides.xml',
-     _button_195_in_helpdesk_ticket_arch),
+    # v228: hides for 9 Studio-added fields. Loads AFTER ported.xml —
+    # its xpaths target fields that ported.xml adds.
+    'views/helpdesk_ticket_studio_field_hides.xml',
 ]
 
 # Kept in sync with models/res_partner.py.
@@ -153,14 +119,7 @@ def load_post_init_view_files(env):
     safe on both envs.
     """
     module_path = get_module_path('Fix-repair')
-    for rel_path, sentinel in _STUDIO_DEPENDENT_VIEW_FILES:
-        if sentinel is not None and not sentinel(env):
-            _logger.info(
-                "Fix-repair: skipping %s — sentinel returned False on "
-                "this DB (typically because Studio-hardcoded action "
-                "IDs don't match here).", rel_path,
-            )
-            continue
+    for rel_path in _STUDIO_DEPENDENT_VIEW_FILES:
         full_path = os.path.join(module_path, rel_path)
         if not os.path.exists(full_path):
             _logger.warning(
