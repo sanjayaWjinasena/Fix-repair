@@ -207,8 +207,66 @@ def attach_repair_stages_to_all_teams(env):
     )
 
 
+def seed_default_stock_location_users(env):
+    """v251: link the built-in admin user (base.user_admin) to the
+    default WH stock locations so the "Return Receipt Location"
+    dropdown on helpdesk.ticket has non-empty options out of the box.
+
+    Background: the Return Receipt dropdown's domain is
+      [('x_studio_users_stock_location', 'in', user_id)]
+    plus Odoo's implicit multi-company filter. On a fresh Fix-repair
+    install the m2m is empty → dropdown returns 0 results → users can't
+    complete a repair ticket without first manually configuring
+    locations.
+
+    This seeds admin into the built-in WH internal locations so a
+    fresh install is immediately usable. Real user-location mappings
+    come from operations later (matching the Clear-DB pattern where
+    each branch user gets linked to their branch's stock).
+
+    Idempotent — checks membership before writing.
+    """
+    admin_user = env.ref('base.user_admin', raise_if_not_found=False)
+    if not admin_user:
+        _logger.info(
+            "Fix-repair: base.user_admin not found — skipping "
+            "default stock.location user seed.",
+        )
+        return
+
+    # Restrict to internal locations only in the user's active
+    # allowed companies. On a fresh install that's typically just
+    # 'My Company (San Francisco)' (id=1) but the search picks up
+    # whatever's actually there.
+    Stock = env['stock.location'].sudo()
+    default_locs = Stock.search([
+        ('usage', '=', 'internal'),
+        ('company_id', '!=', False),
+    ])
+    if not default_locs:
+        _logger.info(
+            "Fix-repair: no company-scoped internal stock locations "
+            "found — skipping default user seed."
+        )
+        return
+
+    changed = 0
+    for loc in default_locs:
+        if admin_user in loc.x_studio_users_stock_location:
+            continue
+        loc.x_studio_users_stock_location = [(4, admin_user.id)]
+        changed += 1
+
+    _logger.info(
+        "Fix-repair: linked admin (uid=%d) to %d default internal "
+        "stock.location record(s) via x_studio_users_stock_location.",
+        admin_user.id, changed,
+    )
+
+
 def post_init_hook(env):
     """Odoo 17 post-install hook signature: (env)."""
     strip_studio_xmlids_for_ported_fields(env)
     load_post_init_view_files(env)
     attach_repair_stages_to_all_teams(env)
+    seed_default_stock_location_users(env)
