@@ -33,6 +33,16 @@ _logger = logging.getLogger(__name__)
 # reliable proxy is the studio_customization module itself.
 _STUDIO_DEPENDENT_VIEW_FILES = [
     'views/helpdesk_ticket_studio_field_hides.xml',
+    # v234: 4 helpdesk.ticket views repinned to Fix-repair during earlier
+    # migration but whose arch_db never landed in on-disk XML. Loaded here
+    # instead of manifest data because they contain xpath references to
+    # //button[@name='195'] (Studio-added return button injected by
+    # helpdesk_stock's OWN sibling inherit at a different priority) —
+    # Odoo's strict init-time xml validation composes the parent view
+    # without sibling inherits and rejects the xpath. convert_file at
+    # post-init runs after ALL inherits are applied, so the xpath
+    # resolves cleanly.
+    'views/helpdesk_ticket_studio_ported.xml',
 ]
 
 # Kept in sync with models/res_partner.py.
