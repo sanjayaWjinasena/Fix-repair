@@ -207,6 +207,35 @@ def attach_repair_stages_to_all_teams(env):
     )
 
 
+def enable_product_returns_on_all_teams(env):
+    """v252: force `use_product_returns=True` on every helpdesk.team.
+
+    The helpdesk_stock "Return" button on helpdesk.ticket is gated by
+    `not use_product_returns` — if the team has this feature off, the
+    button never renders, the user can never create a return picking,
+    `has_return_picking` stays False, and the whole repair pipeline
+    is unreachable (Send to Factory only appears once a return picking
+    exists).
+
+    Clear-DB has this enabled on the Customer Care - Repair team; a
+    bare Odoo Enterprise install defaults it to False on the default
+    Customer Care team. Fix-repair's pipeline requires it on, so we
+    codify it as a module-managed invariant.
+
+    Idempotent — only writes when currently False.
+    """
+    Team = env['helpdesk.team'].sudo()
+    to_flip = Team.search([('use_product_returns', '=', False)])
+    if not to_flip:
+        return
+    to_flip.write({'use_product_returns': True})
+    _logger.info(
+        "Fix-repair: enabled use_product_returns on %d helpdesk.team "
+        "record(s): %s",
+        len(to_flip), to_flip.mapped('name'),
+    )
+
+
 def seed_default_stock_location_users(env):
     """v251: link the built-in admin user (base.user_admin) to the
     default WH stock locations so the "Return Receipt Location"
@@ -270,3 +299,4 @@ def post_init_hook(env):
     load_post_init_view_files(env)
     attach_repair_stages_to_all_teams(env)
     seed_default_stock_location_users(env)
+    enable_product_returns_on_all_teams(env)
