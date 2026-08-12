@@ -97,30 +97,29 @@ def strip_studio_xmlids_for_ported_fields(env):
     stale.unlink()
 
 
-def load_conditional_studio_view_hides(env):
-    """Load view inherits whose xpaths only resolve when the
-    studio_customization module has extended the parent view arch
-    with its Studio-added field cluster.
+def load_post_init_view_files(env):
+    """Load view inherits whose xpaths reference elements that only
+    exist AFTER the full inherit chain has been applied to the parent
+    view. Loading these at manifest-'data' time triggers Odoo's
+    init-time xml validation, which composes the parent view arch
+    WITHOUT sibling inherits and rejects xpaths pointing at
+    still-missing elements (e.g. `//button[@name='195']` added by
+    helpdesk_stock's own inherit).
 
-    Sentinel: `ir.module.module.state == 'installed'` for
-    studio_customization. That's the only reliable signal — a Python
-    port of a Studio field (state='base') doesn't imply the field
-    is present in the base view's arch, so an ir.model.fields lookup
-    would produce false positives on stand-alone DBs.
+    Running via convert_file at post_init phase side-steps that
+    validation — every module's own data has already been loaded by
+    the time this hook runs, so the composed arch has all buttons
+    and fields present.
+
+    v235: dropped the `studio_customization installed` gate. On
+    stand-alone Odoo installs we WANT these view arches loaded too
+    (they define the full repair-flow field layout on
+    helpdesk.ticket). The gate was defensive when the arches used
+    to hit fields that weren't Python-declared; the field audit
+    (2026-08-12) confirmed all 91 x_studio_* refs already have
+    Python declarations in Fix-repair (state=base), so loading is
+    safe on both envs.
     """
-    Module = env['ir.module.module'].sudo()
-    studio = Module.search([
-        ('name', '=', 'studio_customization'),
-        ('state', '=', 'installed'),
-    ], limit=1)
-    if not studio:
-        _logger.info(
-            "Fix-repair: skipping Studio-dependent view hides — "
-            "studio_customization module not installed on this DB "
-            "(stand-alone install)."
-        )
-        return
-
     module_path = get_module_path('Fix-repair')
     for rel_path in _STUDIO_DEPENDENT_VIEW_FILES:
         full_path = os.path.join(module_path, rel_path)
@@ -130,8 +129,7 @@ def load_conditional_studio_view_hides(env):
                 "on disk — skipping.", rel_path,
             )
             continue
-        _logger.info("Fix-repair: loading %s (studio_customization installed).",
-                     rel_path)
+        _logger.info("Fix-repair: loading %s.", rel_path)
         # Odoo 17: convert_file(env, module, filename, idref, mode,
         # noupdate, kind, pathname). First arg is the env, NOT the
         # cursor — passing env.cr triggers AttributeError on the first
@@ -148,7 +146,12 @@ def load_conditional_studio_view_hides(env):
         )
 
 
+# Backward-compat shim — external references (migration scripts,
+# tests) may still call the old name.
+load_conditional_studio_view_hides = load_post_init_view_files
+
+
 def post_init_hook(env):
     """Odoo 17 post-install hook signature: (env)."""
     strip_studio_xmlids_for_ported_fields(env)
-    load_conditional_studio_view_hides(env)
+    load_post_init_view_files(env)
