@@ -41,11 +41,14 @@ def _button_195_in_helpdesk_ticket_arch(env):
     #
     # Raw SQL to avoid triggering another view-composition pass
     # mid-upgrade.
+    # arch_db is a jsonb translated field in Odoo 17 — cast to text
+    # before pattern matching, otherwise Postgres errors with
+    # `operator does not exist: jsonb ~~ unknown`.
     env.cr.execute(
         "SELECT COUNT(1) FROM ir_ui_view "
         "WHERE model = 'helpdesk.ticket' "
         "AND active IS TRUE "
-        "AND arch_db LIKE '%name=\"195\"%'"
+        "AND arch_db::text LIKE '%name=\"195\"%'"
     )
     (count,) = env.cr.fetchone()
     return count > 0
