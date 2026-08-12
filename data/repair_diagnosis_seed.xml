@@ -1,0 +1,346 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Verbatim seed of Clear-DB Repair Diagnosis catalogues (v248).
+    Data extracted 2026-08-12 from
+      rohanabalagalla-jinstage-clear-db-35998550.dev.odoo.com
+
+    xmlid convention: fix_repair.<model>_<clear_db_id>
+    m2o refs use the same convention so linkages preserve on install.
+
+    noupdate="1" — subsequent Fix-repair upgrades will NOT overwrite
+    user edits. Users can freely rename/delete via UI without
+    reverting on upgrade.
+
+    Load order: parent models (areas, reasons) before child models
+    (codes referencing areas, sub_reasons referencing reasons).
+-->
+<odoo noupdate="1">
+
+    <!-- x_conditions (4 rows) -->
+    <record id="x_conditions_1" model="x_conditions">
+        <field name="x_name">When working for too long</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">When working for too long</field>
+    </record>
+    <record id="x_conditions_2" model="x_conditions">
+        <field name="x_name">When switched on</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">When switched on</field>
+    </record>
+    <record id="x_conditions_3" model="x_conditions">
+        <field name="x_name">Voltage spikes</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Voltage spikes</field>
+    </record>
+    <record id="x_conditions_4" model="x_conditions">
+        <field name="x_name">When working for too long</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">When working for too long</field>
+    </record>
+
+    <!-- x_symptom_areas (2 rows) -->
+    <record id="x_symptom_areas_1" model="x_symptom_areas">
+        <field name="x_name">Faulty</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Faulty</field>
+    </record>
+    <record id="x_symptom_areas_3" model="x_symptom_areas">
+        <field name="x_name">Faulty</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Faulty</field>
+    </record>
+
+    <!-- x_symptom_codes (1 rows) -->
+    <record id="x_symptom_codes_1" model="x_symptom_codes">
+        <field name="x_name">Symptom 01</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Symptom 01</field>
+        <field name="x_studio_symptom_area" ref="x_symptom_areas_1"/>
+    </record>
+
+    <!-- x_diagnosis_areas (10 rows) -->
+    <record id="x_diagnosis_areas_1" model="x_diagnosis_areas">
+        <field name="x_name">Burnt part</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Burnt part</field>
+    </record>
+    <record id="x_diagnosis_areas_2" model="x_diagnosis_areas">
+        <field name="x_name">Part coroded</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Part coroded</field>
+    </record>
+    <record id="x_diagnosis_areas_6" model="x_diagnosis_areas">
+        <field name="x_name">Part need replacement</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Part need replacement</field>
+    </record>
+    <record id="x_diagnosis_areas_7" model="x_diagnosis_areas">
+        <field name="x_name">Part damaged</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Part damaged</field>
+    </record>
+    <record id="x_diagnosis_areas_8" model="x_diagnosis_areas">
+        <field name="x_name">Part worn out</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Part worn out</field>
+    </record>
+    <record id="x_diagnosis_areas_9" model="x_diagnosis_areas">
+        <field name="x_name">Motor burnt</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Motor burnt</field>
+    </record>
+    <record id="x_diagnosis_areas_10" model="x_diagnosis_areas">
+        <field name="x_name">Burnt Part</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Burn Part</field>
+    </record>
+    <record id="x_diagnosis_areas_12" model="x_diagnosis_areas">
+        <field name="x_name">Coroded</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Part Coroded</field>
+    </record>
+    <record id="x_diagnosis_areas_13" model="x_diagnosis_areas">
+        <field name="x_name">Damgd</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Part Damaged</field>
+    </record>
+    <record id="x_diagnosis_areas_14" model="x_diagnosis_areas">
+        <field name="x_name">Defctv</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Defective Part</field>
+    </record>
+
+    <!-- x_diagnosis_codes (14 rows) -->
+    <record id="x_diagnosis_codes_1" model="x_diagnosis_codes">
+        <field name="x_name">Seal damaged</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Seal damaged</field>
+    </record>
+    <record id="x_diagnosis_codes_2" model="x_diagnosis_codes">
+        <field name="x_name">Shaft</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Shaft</field>
+        <field name="x_studio_diagnosis_area_1" ref="x_diagnosis_areas_2"/>
+    </record>
+    <record id="x_diagnosis_codes_3" model="x_diagnosis_codes">
+        <field name="x_name">Preasure booster tank</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Preasure booster tank</field>
+    </record>
+    <record id="x_diagnosis_codes_7" model="x_diagnosis_codes">
+        <field name="x_name">Circuit</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Circuit</field>
+        <field name="x_studio_diagnosis_area_1" ref="x_diagnosis_areas_1"/>
+    </record>
+    <record id="x_diagnosis_codes_8" model="x_diagnosis_codes">
+        <field name="x_name">Motor winding burnt</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Motor winding burnt</field>
+        <field name="x_studio_diagnosis_area_1" ref="x_diagnosis_areas_1"/>
+    </record>
+    <record id="x_diagnosis_codes_9" model="x_diagnosis_codes">
+        <field name="x_name">Condenser burnt</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Condenser burnt</field>
+        <field name="x_studio_diagnosis_area_1" ref="x_diagnosis_areas_1"/>
+    </record>
+    <record id="x_diagnosis_codes_10" model="x_diagnosis_codes">
+        <field name="x_name">Diodes</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Diodes</field>
+        <field name="x_studio_diagnosis_area_1" ref="x_diagnosis_areas_1"/>
+    </record>
+    <record id="x_diagnosis_codes_11" model="x_diagnosis_codes">
+        <field name="x_name">Fuse burnt</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Fuse burnt</field>
+        <field name="x_studio_diagnosis_area_1" ref="x_diagnosis_areas_1"/>
+    </record>
+    <record id="x_diagnosis_codes_12" model="x_diagnosis_codes">
+        <field name="x_name">Base plate</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Base plate</field>
+        <field name="x_studio_diagnosis_area_1" ref="x_diagnosis_areas_2"/>
+    </record>
+    <record id="x_diagnosis_codes_13" model="x_diagnosis_codes">
+        <field name="x_name">Motor housing</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Motor housing</field>
+        <field name="x_studio_diagnosis_area_1" ref="x_diagnosis_areas_2"/>
+    </record>
+    <record id="x_diagnosis_codes_14" model="x_diagnosis_codes">
+        <field name="x_name">Pump body</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Pump body</field>
+        <field name="x_studio_diagnosis_area_1" ref="x_diagnosis_areas_2"/>
+    </record>
+    <record id="x_diagnosis_codes_15" model="x_diagnosis_codes">
+        <field name="x_name">Base plate</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Base plate</field>
+        <field name="x_studio_diagnosis_area_1" ref="x_diagnosis_areas_10"/>
+    </record>
+    <record id="x_diagnosis_codes_58" model="x_diagnosis_codes">
+        <field name="x_name">BRNT-COIL</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Motor winding burnt</field>
+        <field name="x_studio_diagnosis_area_1" ref="x_diagnosis_areas_10"/>
+    </record>
+    <record id="x_diagnosis_codes_59" model="x_diagnosis_codes">
+        <field name="x_name">BRNT-COND</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Condenser burnt</field>
+        <field name="x_studio_diagnosis_area_1" ref="x_diagnosis_areas_10"/>
+    </record>
+
+    <!-- x_resolutions (4 rows) -->
+    <record id="x_resolutions_1" model="x_resolutions">
+        <field name="x_name">REJECT</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Repair rejected</field>
+    </record>
+    <record id="x_resolutions_2" model="x_resolutions">
+        <field name="x_name">REP</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Repaired</field>
+    </record>
+    <record id="x_resolutions_3" model="x_resolutions">
+        <field name="x_name">Reject</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Repair Rejected</field>
+    </record>
+    <record id="x_resolutions_4" model="x_resolutions">
+        <field name="x_name">REP</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Repaired</field>
+    </record>
+
+    <!-- x_repair_reason (4 rows) -->
+    <record id="x_repair_reason_1" model="x_repair_reason">
+        <field name="x_name">Internal</field>
+        <field name="x_studio_sequence" eval="10"/>
+    </record>
+    <record id="x_repair_reason_2" model="x_repair_reason">
+        <field name="x_name">External</field>
+        <field name="x_studio_sequence" eval="10"/>
+    </record>
+    <record id="x_repair_reason_6" model="x_repair_reason">
+        <field name="x_name">Internal</field>
+        <field name="x_studio_sequence" eval="10"/>
+    </record>
+    <record id="x_repair_reason_7" model="x_repair_reason">
+        <field name="x_name">External</field>
+        <field name="x_studio_sequence" eval="10"/>
+    </record>
+
+    <!-- x_repair_reason_custom (12 rows) -->
+    <record id="x_repair_reason_custom_4" model="x_repair_reason_custom">
+        <field name="x_name">Difficult to start the engine</field>
+        <field name="x_studio_sequence" eval="10"/>
+    </record>
+    <record id="x_repair_reason_custom_5" model="x_repair_reason_custom">
+        <field name="x_name">High current consumption</field>
+        <field name="x_studio_sequence" eval="10"/>
+    </record>
+    <record id="x_repair_reason_custom_6" model="x_repair_reason_custom">
+        <field name="x_name">Heavy smoke</field>
+        <field name="x_studio_sequence" eval="10"/>
+    </record>
+    <record id="x_repair_reason_custom_7" model="x_repair_reason_custom">
+        <field name="x_name">Maximum head not reached</field>
+        <field name="x_studio_sequence" eval="10"/>
+    </record>
+    <record id="x_repair_reason_custom_8" model="x_repair_reason_custom">
+        <field name="x_name">Low out put</field>
+        <field name="x_studio_sequence" eval="10"/>
+    </record>
+    <record id="x_repair_reason_custom_9" model="x_repair_reason_custom">
+        <field name="x_name">Low pressure</field>
+        <field name="x_studio_sequence" eval="10"/>
+    </record>
+    <record id="x_repair_reason_custom_10" model="x_repair_reason_custom">
+        <field name="x_name">Unit makes a mechanical noise or rattle</field>
+        <field name="x_studio_sequence" eval="10"/>
+    </record>
+    <record id="x_repair_reason_custom_11" model="x_repair_reason_custom">
+        <field name="x_name">Motor not getting started</field>
+        <field name="x_studio_sequence" eval="10"/>
+    </record>
+    <record id="x_repair_reason_custom_12" model="x_repair_reason_custom">
+        <field name="x_name">Motor getting tripped from TOC</field>
+        <field name="x_studio_sequence" eval="10"/>
+    </record>
+    <record id="x_repair_reason_custom_13" model="x_repair_reason_custom">
+        <field name="x_name">Pump stops after some time</field>
+        <field name="x_studio_sequence" eval="10"/>
+    </record>
+    <record id="x_repair_reason_custom_15" model="x_repair_reason_custom">
+        <field name="x_name">Low Pressue</field>
+        <field name="x_studio_sequence" eval="10"/>
+    </record>
+    <record id="x_repair_reason_custom_16" model="x_repair_reason_custom">
+        <field name="x_name">Difficult to start the engine</field>
+        <field name="x_studio_sequence" eval="10"/>
+    </record>
+
+    <!-- x_repair_sub_reason (4 rows) -->
+    <record id="x_repair_sub_reason_1" model="x_repair_sub_reason">
+        <field name="x_name">Hi voltage</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_reason_code" ref="x_repair_reason_2"/>
+    </record>
+    <record id="x_repair_sub_reason_2" model="x_repair_sub_reason">
+        <field name="x_name">Hi voltage - 02</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_reason_code" ref="x_repair_reason_1"/>
+    </record>
+    <record id="x_repair_sub_reason_37" model="x_repair_sub_reason">
+        <field name="x_name">Hi Voltage</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_reason_code" ref="x_repair_reason_6"/>
+    </record>
+    <record id="x_repair_sub_reason_38" model="x_repair_sub_reason">
+        <field name="x_name">Hi Voltage 2</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_reason_code" ref="x_repair_reason_7"/>
+    </record>
+
+    <!-- x_repair_stages (7 rows) -->
+    <record id="x_repair_stages_1" model="x_repair_stages">
+        <field name="x_name">1-REP-REC</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Repair receipt</field>
+    </record>
+    <record id="x_repair_stages_2" model="x_repair_stages">
+        <field name="x_name">2-STARTED</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Job started</field>
+    </record>
+    <record id="x_repair_stages_3" model="x_repair_stages">
+        <field name="x_name">3-WT-SP</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Waiting for spareparts</field>
+    </record>
+    <record id="x_repair_stages_4" model="x_repair_stages">
+        <field name="x_name">4-FINISHED</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Finished</field>
+    </record>
+    <record id="x_repair_stages_5" model="x_repair_stages">
+        <field name="x_name">5-READY</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Ready for collection</field>
+    </record>
+    <record id="x_repair_stages_6" model="x_repair_stages">
+        <field name="x_name">1-REP-REC</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Repair receipt</field>
+    </record>
+    <record id="x_repair_stages_7" model="x_repair_stages">
+        <field name="x_name">2-Started</field>
+        <field name="x_studio_sequence" eval="10"/>
+        <field name="x_studio_description">Job Started</field>
+    </record>
+
+</odoo>

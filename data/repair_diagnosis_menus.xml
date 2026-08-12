@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Repair Diagnosis top-nav dropdown for the Helpdesk app (v248).
+
+    Mirrors Clear-DB menu #1061 verbatim: 10 catalogue submenus
+    under a "Repair Diagnosis" parent placed as a peer of Overview /
+    Tickets / Reporting / Configuration in the Helpdesk app.
+
+    All 10 catalogue models (x_conditions, x_symptom_areas,
+    x_symptom_codes, x_diagnosis_areas, x_diagnosis_codes,
+    x_repair_reason, x_repair_reason_custom, x_repair_sub_reason,
+    x_resolutions, x_repair_stages) are already Python-declared
+    (v227 / v241) and have ACL rows (v246). Records get auto-generated
+    tree + form + search views since we don't ship custom ones —
+    the models have x_name / x_studio_sequence / x_studio_description
+    fields which Odoo's default views handle cleanly.
+
+    Sequences 0-9 on the submenus match Clear-DB precisely.
+-->
+<odoo>
+
+    <!-- Actions: one act_window per catalogue -->
+
+    <record id="action_x_conditions" model="ir.actions.act_window">
+        <field name="name">Conditions</field>
+        <field name="res_model">x_conditions</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="action_x_symptom_areas" model="ir.actions.act_window">
+        <field name="name">Symptom Areas</field>
+        <field name="res_model">x_symptom_areas</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="action_x_symptom_codes" model="ir.actions.act_window">
+        <field name="name">Symptom Codes</field>
+        <field name="res_model">x_symptom_codes</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="action_x_diagnosis_areas" model="ir.actions.act_window">
+        <field name="name">Diagnosis Areas</field>
+        <field name="res_model">x_diagnosis_areas</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="action_x_diagnosis_codes" model="ir.actions.act_window">
+        <field name="name">Diagnosis Codes</field>
+        <field name="res_model">x_diagnosis_codes</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="action_x_repair_reason" model="ir.actions.act_window">
+        <field name="name">Repair Reason</field>
+        <field name="res_model">x_repair_reason</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="action_x_repair_reason_custom" model="ir.actions.act_window">
+        <field name="name">Repair Reason - Customer</field>
+        <field name="res_model">x_repair_reason_custom</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="action_x_repair_sub_reason" model="ir.actions.act_window">
+        <field name="name">Repair Sub Reason</field>
+        <field name="res_model">x_repair_sub_reason</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="action_x_resolutions" model="ir.actions.act_window">
+        <field name="name">Resolutions</field>
+        <field name="res_model">x_resolutions</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="action_x_repair_stages" model="ir.actions.act_window">
+        <field name="name">Repair Stages</field>
+        <field name="res_model">x_repair_stages</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Parent menu: "Repair Diagnosis" (peer of Configuration) -->
+
+    <menuitem id="menu_repair_diagnosis_root"
+              name="Repair Diagnosis"
+              parent="helpdesk.menu_helpdesk_root"
+              sequence="101"/>
+
+    <!-- Children: 10 catalogue submenus, sequences 0-9 -->
+
+    <menuitem id="menu_repair_diagnosis_conditions"
+              name="Conditions"
+              parent="menu_repair_diagnosis_root"
+              action="action_x_conditions"
+              sequence="0"/>
+
+    <menuitem id="menu_repair_diagnosis_symptom_areas"
+              name="Symptom Areas"
+              parent="menu_repair_diagnosis_root"
+              action="action_x_symptom_areas"
+              sequence="1"/>
+
+    <menuitem id="menu_repair_diagnosis_symptom_codes"
+              name="Symptom Codes"
+              parent="menu_repair_diagnosis_root"
+              action="action_x_symptom_codes"
+              sequence="2"/>
+
+    <menuitem id="menu_repair_diagnosis_diagnosis_areas"
+              name="Diagnosis Areas"
+              parent="menu_repair_diagnosis_root"
+              action="action_x_diagnosis_areas"
+              sequence="3"/>
+
+    <menuitem id="menu_repair_diagnosis_diagnosis_codes"
+              name="Diagnosis Codes"
+              parent="menu_repair_diagnosis_root"
+              action="action_x_diagnosis_codes"
+              sequence="4"/>
+
+    <menuitem id="menu_repair_diagnosis_repair_reason"
+              name="Repair Reason"
+              parent="menu_repair_diagnosis_root"
+              action="action_x_repair_reason"
+              sequence="5"/>
+
+    <menuitem id="menu_repair_diagnosis_repair_reason_custom"
+              name="Repair Reason - Customer"
+              parent="menu_repair_diagnosis_root"
+              action="action_x_repair_reason_custom"
+              sequence="6"/>
+
+    <menuitem id="menu_repair_diagnosis_repair_sub_reason"
+              name="Repair Sub Reason"
+              parent="menu_repair_diagnosis_root"
+              action="action_x_repair_sub_reason"
+              sequence="7"/>
+
+    <menuitem id="menu_repair_diagnosis_resolutions"
+              name="Resolutions"
+              parent="menu_repair_diagnosis_root"
+              action="action_x_resolutions"
+              sequence="8"/>
+
+    <menuitem id="menu_repair_diagnosis_repair_stages"
+              name="Repair Stages"
+              parent="menu_repair_diagnosis_root"
+              action="action_x_repair_stages"
+              sequence="9"/>
+
+</odoo>
