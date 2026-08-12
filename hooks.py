@@ -355,6 +355,45 @@ def seed_admin_repair_location_defaults(env):
     )
 
 
+def seed_repair_return_receipt_locations(env):
+    """v254: flag every warehouse's main stock location
+    (`stock.warehouse.lot_stock_id`) as
+    `x_studio_repair_return_location=True`.
+
+    Clear-DB pattern: only stock.locations carrying this bool are
+    considered valid targets for the ticket's
+    `x_studio_return_receipt_location` m2o. The delegate
+    `_repair_studio_auto_create_repair_route` then searches for an
+    outgoing `stock.picking.type` where `default_location_src_id`
+    equals the ticket's chosen return-receipt location. The default
+    Delivery Orders picking type already points at `WH/Stock` on a
+    fresh Odoo install, so flagging `lot_stock_id` closes the loop
+    without needing to create additional picking types.
+
+    Idempotent — only writes when the flag is currently False.
+    """
+    Warehouse = env['stock.warehouse'].sudo()
+    warehouses = Warehouse.search([])
+    if not warehouses:
+        return
+
+    changed = 0
+    for wh in warehouses:
+        loc = wh.lot_stock_id
+        if not loc:
+            continue
+        if loc.x_studio_repair_return_location:
+            continue
+        loc.x_studio_repair_return_location = True
+        changed += 1
+
+    _logger.info(
+        "Fix-repair: flagged %d warehouse Stock location(s) as "
+        "x_studio_repair_return_location.",
+        changed,
+    )
+
+
 def post_init_hook(env):
     """Odoo 17 post-install hook signature: (env)."""
     strip_studio_xmlids_for_ported_fields(env)
@@ -363,3 +402,4 @@ def post_init_hook(env):
     seed_default_stock_location_users(env)
     enable_product_returns_on_all_teams(env)
     seed_admin_repair_location_defaults(env)
+    seed_repair_return_receipt_locations(env)
