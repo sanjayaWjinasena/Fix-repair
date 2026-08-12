@@ -21,10 +21,18 @@ from odoo.tools import convert_file
 
 _logger = logging.getLogger(__name__)
 
-# (relative XML path, field on helpdesk.ticket that must exist for the
-# view inherit to have targets in the base view arch)
-_CONDITIONAL_DATA = [
-    ('views/helpdesk_ticket_studio_field_hides.xml', 'x_studio_rug_repair'),
+# View inherits whose xpath targets are Studio-added fields on the
+# base view arch. These only resolve when studio_customization is
+# installed (that module's own view inherits add the fields to the
+# helpdesk.ticket form arch). On stand-alone Odoo installs no such
+# module exists → xpath fails → view load aborts.
+#
+# We can't use "field exists in ir.model.fields" as the sentinel: the
+# Fix-repair port declares several of these as Python fields, so the
+# metadata exists even where studio_customization is absent. The only
+# reliable proxy is the studio_customization module itself.
+_STUDIO_DEPENDENT_VIEW_FILES = [
+    'views/helpdesk_ticket_studio_field_hides.xml',
 ]
 
 # Kept in sync with models/res_partner.py.
