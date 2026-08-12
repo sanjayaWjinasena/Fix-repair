@@ -797,6 +797,12 @@ class SaleOrder(models.Model):
                               # can't evaluate the expression at render time
                               # without a sentinel.
                               'x_studio_quotation_type',
+                              # v264: Confirm-button invisible expression reads
+                              # both RUG flags plus is_subscription. Base arch
+                              # doesn't fetch them without sentinels on standalone.
+                              'x_studio_rug_confirmed',
+                              'x_studio_rug_rejected',
+                              'is_subscription',
                               'x_studio_order_payment_method',
                               'x_studio_over_credit',
                               'x_studio_credit_limit_approved',
