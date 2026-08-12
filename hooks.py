@@ -31,6 +31,26 @@ _logger = logging.getLogger(__name__)
 # Fix-repair port declares several of these as Python fields, so the
 # metadata exists even where studio_customization is absent. The only
 # reliable proxy is the studio_customization module itself.
+def _button_195_in_helpdesk_ticket_arch(env):
+    # True iff some active helpdesk.ticket view has button name="195"
+    # in its arch_db. That's what view #4012's xpath references — a
+    # Clear-DB-specific numeric action ID (helpdesk_stock's Return
+    # button was created with id=195 on that DB). On stand-alone Odoo
+    # the same button was allocated a different id (typically 853),
+    # so this returns False and the ported view file is skipped.
+    #
+    # Raw SQL to avoid triggering another view-composition pass
+    # mid-upgrade.
+    env.cr.execute(
+        "SELECT COUNT(1) FROM ir_ui_view "
+        "WHERE model = 'helpdesk.ticket' "
+        "AND active IS TRUE "
+        "AND arch_db LIKE '%name=\"195\"%'"
+    )
+    (count,) = env.cr.fetchone()
+    return count > 0
+
+
 # Each entry: (relative XML path, sentinel_callable_or_None).
 # Sentinel callable receives `env` and returns True when the file
 # is safe to load on this DB, False to skip.
@@ -38,36 +58,20 @@ _STUDIO_DEPENDENT_VIEW_FILES = [
     # v233-v235: 4 helpdesk.ticket views repinned to Fix-repair during
     # earlier migration but whose arch_db never landed in on-disk XML.
     # Adds ~90 Studio field placements + tabs + button rewires.
-    #
-    # SENTINEL: The Studio arch xpaths //button[@name='195'] where
-    # 195 was the Clear-DB-specific ir.actions.act_window / server
-    # ID that Studio's Return action lived on. On stand-alone Odoo
-    # installs that same button is action ID 853 (or whatever Odoo
-    # allocated when helpdesk_stock was installed). Loading the arch
-    # without the matching button ID triggers:
-    #   ParseError: Element '<xpath expr="//button[@name='195']">'
-    #   cannot be located in parent view
-    # Until Studio's numeric-ID references are rewritten to portable
-    # xmlids (proper Fix-repair Python declaration of action 195),
-    # gate this file on the presence of action 195. Clear-DB: loads.
-    # Stand-alone: skipped, form stays plainer.
-    (
-        'views/helpdesk_ticket_studio_ported.xml',
-        lambda env: bool(
-            env['ir.actions.actions'].sudo().browse(195).exists()
-        ),
-    ),
+    # Sentinel: verify button name="195" actually exists in some
+    # active helpdesk.ticket view's arch. On Clear-DB it does (via
+    # helpdesk_stock.helpdesk_ticket_view_form_inherit_stock_user);
+    # on stand-alone it's action id 853, so this check returns
+    # False and the file is skipped.
+    ('views/helpdesk_ticket_studio_ported.xml',
+     _button_195_in_helpdesk_ticket_arch),
 
-    # v228: hides for 9 Studio-added fields. Loads only after
-    # ported.xml (which provides the fields the xpaths target).
-    # Same sentinel — if ported.xml was skipped, hides.xml has
+    # v228: hides for 9 Studio-added fields. Depends on ported.xml
+    # having loaded first (its xpaths target fields ported.xml
+    # adds). Same sentinel — if ported.xml was skipped, this has
     # nothing to target.
-    (
-        'views/helpdesk_ticket_studio_field_hides.xml',
-        lambda env: bool(
-            env['ir.actions.actions'].sudo().browse(195).exists()
-        ),
-    ),
+    ('views/helpdesk_ticket_studio_field_hides.xml',
+     _button_195_in_helpdesk_ticket_arch),
 ]
 
 # Kept in sync with models/res_partner.py.
