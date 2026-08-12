@@ -39,6 +39,8 @@
         'views/helpdesk_ticket_studio_ported.xml',
         'views/helpdesk_ticket_studio_field_hides.xml',
         'views/helpdesk_ticket_type_views.xml',
+        # v259: Repair Diagnosis tab on project.task form
+        'views/project_task_studio_ported.xml',
         'views/res_config_settings_views.xml',
         'views/sale_report_templates.xml',
     ],

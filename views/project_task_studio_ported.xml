@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    v259 — Repair Diagnosis notebook tab on project.task.
+
+    First slice of the project.task form port (see chunk 1u in
+    the plan file). Mirrors Clear-DB Studio view #3019's "Repair
+    Diagnosis" page verbatim: an editable tree of x_task_diagnosis
+    rows with 9 catalogue m2o columns + description + sequence
+    handle. Only shown on tasks linked to a helpdesk ticket
+    (invisible="not helpdesk_ticket_id") so plain project.task
+    records outside the repair flow keep their default 3-tab layout.
+
+    The two domain expressions (x_studio_diagnosis_area_1 filter
+    on x_studio_diagnosis_code; x_studio_reason_code filter on
+    x_studio_sub_reason) mirror Clear-DB's cascading dropdowns.
+    Both target fields exist on the Chunk-1a catalogue models:
+      x_diagnosis_codes.x_studio_diagnosis_area_1 (m2o)
+      x_repair_sub_reason.x_studio_reason_code (m2o)
+-->
+<odoo>
+
+    <record id="view_project_task_repair_diagnosis" model="ir.ui.view">
+        <field name="name">project.task.form.repair.diagnosis</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_form2"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Repair Diagnosis"
+                      name="repair_diagnosis"
+                      invisible="not helpdesk_ticket_id">
+                    <field name="x_studio_diagnosis_ids"
+                           nolabel="1"
+                           force_save="1">
+                        <tree editable="bottom">
+                            <field name="x_studio_sequence" widget="handle"/>
+                            <field name="x_name" column_invisible="True"/>
+                            <field name="x_studio_condition" optional="show"/>
+                            <field name="x_studio_symptom_area" optional="show"/>
+                            <field name="x_studio_symptom_code" optional="show"/>
+                            <field name="x_studio_description" optional="show"/>
+                            <field name="x_studio_diagnosis_area" optional="show" required="1"/>
+                            <field name="x_studio_diagnosis_code"
+                                   optional="show"
+                                   required="1"
+                                   domain="[('x_studio_diagnosis_area_1','=',x_studio_diagnosis_area)]"/>
+                            <field name="x_studio_reason" optional="show" required="1"/>
+                            <field name="x_studio_sub_reason"
+                                   optional="show"
+                                   required="1"
+                                   domain="[('x_studio_reason_code','=',x_studio_reason)]"/>
+                            <field name="x_studio_resolution" optional="show" required="1"/>
+                            <field name="x_studio_repair_stage" optional="show" required="1"/>
+                            <field name="x_studio_task_id" column_invisible="True"/>
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
