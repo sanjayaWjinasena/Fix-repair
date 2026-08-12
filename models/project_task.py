@@ -607,9 +607,26 @@ class ProjectTask(models.Model):
         if view_type == 'form':
             # Inject helper fields as invisible so they are available in
             # button invisible expressions below.
+            # v258: extended the sentinel list — on standalone the base
+            # project.task arch doesn't happen to mention these fields,
+            # so OWL's FormRenderer raises "Name … is not defined" when
+            # our injected invisible expressions reference them. Clear-
+            # DB masks this because Studio's project.task view already
+            # renders (invisibly) most of these fields elsewhere.
             targets = arch.xpath("//sheet") or arch.xpath("//form")
             if targets:
-                for fname in ('ticket_repair_stage_state', 'so_cancelled'):
+                for fname in (
+                    'ticket_repair_stage_state',
+                    'so_cancelled',
+                    # v258 additions — read from the invisible/readonly
+                    # expressions our _get_view adds below.
+                    'helpdesk_ticket_id',
+                    'sale_order_id',
+                    'x_studio_valid_diagnosis',
+                    'x_studio_repair_image_01',
+                    'x_studio_end_quick_repair',
+                    'x_studio_cancelled',
+                ):
                     if not arch.xpath(f"//field[@name='{fname}']"):
                         field_el = etree.Element('field')
                         field_el.set('name', fname)
