@@ -1,3 +1,15 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_x_task_diagnosis_helpdesk_user,x_task_diagnosis helpdesk user,model_x_task_diagnosis,helpdesk.group_helpdesk_user,1,1,1,1
 access_x_task_diagnosis_helpdesk_manager,x_task_diagnosis helpdesk manager,model_x_task_diagnosis,helpdesk.group_helpdesk_manager,1,1,1,1
+access_x_conditions_user,x_conditions user,model_x_conditions,helpdesk.group_helpdesk_user,1,1,1,1
+access_x_conditions_manager,x_conditions manager,model_x_conditions,helpdesk.group_helpdesk_manager,1,1,1,1
+access_x_diagnosis_areas_user,x_diagnosis_areas user,model_x_diagnosis_areas,helpdesk.group_helpdesk_user,1,1,1,1
+access_x_diagnosis_areas_manager,x_diagnosis_areas manager,model_x_diagnosis_areas,helpdesk.group_helpdesk_manager,1,1,1,1
+access_x_diagnosis_codes_user,x_diagnosis_codes user,model_x_diagnosis_codes,helpdesk.group_helpdesk_user,1,1,1,1
+access_x_diagnosis_codes_manager,x_diagnosis_codes manager,model_x_diagnosis_codes,helpdesk.group_helpdesk_manager,1,1,1,1
+access_x_symptom_areas_user,x_symptom_areas user,model_x_symptom_areas,helpdesk.group_helpdesk_user,1,1,1,1
+access_x_symptom_areas_manager,x_symptom_areas manager,model_x_symptom_areas,helpdesk.group_helpdesk_manager,1,1,1,1
+access_x_symptom_codes_user,x_symptom_codes user,model_x_symptom_codes,helpdesk.group_helpdesk_user,1,1,1,1
+access_x_symptom_codes_manager,x_symptom_codes manager,model_x_symptom_codes,helpdesk.group_helpdesk_manager,1,1,1,1
+access_x_resolutions_user,x_resolutions user,model_x_resolutions,helpdesk.group_helpdesk_user,1,1,1,1
+access_x_resolutions_manager,x_resolutions manager,model_x_resolutions,helpdesk.group_helpdesk_manager,1,1,1,1

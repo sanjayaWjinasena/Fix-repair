@@ -170,6 +170,120 @@ class XRepairSubReason(models.Model):
         return records
 
 
+# ---------------------------------------------------------------------------
+# v241 — Diagnosis/repair master-data catalogues (Chunk 1a of the
+# chunk-by-chunk Studio→Python port).
+#
+# These 6 catalogues are pure lookup tables — no company scoping,
+# no automations, no server actions. On Clear-DB they exist as
+# Studio-manual models used by project.task.x_studio_diagnosis_ids
+# / x_task_diagnosis to categorise a repair diagnosis by area,
+# code, symptom, condition, and resolution. Porting them here
+# unblocks the eventual project.task view port (Chunk 5) which
+# references these via m2o traversal.
+# ---------------------------------------------------------------------------
+
+
+class XConditions(models.Model):
+    """Repair-condition catalogue. Referenced by
+    x_task_diagnosis.x_studio_condition (m2o)."""
+    _name = 'x_conditions'
+    _description = 'Repair Conditions'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _rec_name = 'x_name'
+    _order = 'x_studio_sequence, id'
+
+    x_active = fields.Boolean(string='Active', default=True)
+    x_name = fields.Char(string='Condition')
+    x_studio_description = fields.Char(string='Description')
+    x_studio_sequence = fields.Integer(string='Sequence')
+
+
+class XDiagnosisAreas(models.Model):
+    """Diagnosis-area catalogue. Referenced by
+    x_task_diagnosis.x_studio_diagnosis_area (m2o) and by
+    x_diagnosis_codes.x_studio_diagnosis_area_1."""
+    _name = 'x_diagnosis_areas'
+    _description = 'Diagnosis Areas'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _rec_name = 'x_name'
+    _order = 'x_studio_sequence, id'
+
+    x_active = fields.Boolean(string='Active', default=True)
+    x_name = fields.Char(string='Diagnosis Area')
+    x_studio_description = fields.Char(string='Description')
+    x_studio_sequence = fields.Integer(string='Sequence')
+
+
+class XDiagnosisCodes(models.Model):
+    """Diagnosis-code catalogue. Each code belongs to one area.
+    Referenced by x_task_diagnosis.x_studio_diagnosis_code (m2o)."""
+    _name = 'x_diagnosis_codes'
+    _description = 'Diagnosis Codes'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _rec_name = 'x_name'
+    _order = 'x_studio_sequence, id'
+
+    x_active = fields.Boolean(string='Active', default=True)
+    x_name = fields.Char(string='Diagnosis Code')
+    x_studio_description = fields.Char(string='Description')
+    x_studio_sequence = fields.Integer(string='Sequence')
+    x_studio_diagnosis_area_1 = fields.Many2one(
+        'x_diagnosis_areas',
+        string='Diagnosis Area',
+    )
+
+
+class XSymptomAreas(models.Model):
+    """Symptom-area catalogue. Referenced by
+    x_task_diagnosis.x_studio_symptom_area (m2o) and by
+    x_symptom_codes.x_studio_symptom_area."""
+    _name = 'x_symptom_areas'
+    _description = 'Symptom Areas'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _rec_name = 'x_name'
+    _order = 'x_studio_sequence, id'
+
+    x_active = fields.Boolean(string='Active', default=True)
+    x_name = fields.Char(string='Symptom Area')
+    x_studio_description = fields.Char(string='Description')
+    x_studio_sequence = fields.Integer(string='Sequence')
+
+
+class XSymptomCodes(models.Model):
+    """Symptom-code catalogue. Each code belongs to one area.
+    Referenced by x_task_diagnosis.x_studio_symptom_code (m2o)."""
+    _name = 'x_symptom_codes'
+    _description = 'Symptom Codes'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _rec_name = 'x_name'
+    _order = 'x_studio_sequence, id'
+
+    x_active = fields.Boolean(string='Active', default=True)
+    x_name = fields.Char(string='Symptom Code')
+    x_studio_description = fields.Char(string='Description')
+    x_studio_sequence = fields.Integer(string='Sequence')
+    x_studio_symptom_area = fields.Many2one(
+        'x_symptom_areas',
+        string='Symptom Area',
+    )
+
+
+class XResolutions(models.Model):
+    """Resolution catalogue. Referenced by
+    x_task_diagnosis.x_studio_resolution (m2o)."""
+    _name = 'x_resolutions'
+    _description = 'Resolutions'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _rec_name = 'x_name'
+    _order = 'x_studio_sequence, id'
+
+    x_active = fields.Boolean(string='Active', default=True)
+    x_name = fields.Char(string='Resolution')
+    x_studio_description = fields.Char(string='Description')
+    x_studio_sequence = fields.Integer(string='Sequence')
+
+
 class _RepairMasterDataMigration(models.AbstractModel):
     """Shared migration entrypoint for the five custom repair
     catalogue models. Flips state 'manual'→'base' on:
@@ -191,6 +305,13 @@ class _RepairMasterDataMigration(models.AbstractModel):
             'x_repair_reason_custom',
             'x_repair_stages',
             'x_repair_sub_reason',
+            # v241 chunk 1a additions
+            'x_conditions',
+            'x_diagnosis_areas',
+            'x_diagnosis_codes',
+            'x_symptom_areas',
+            'x_symptom_codes',
+            'x_resolutions',
         ]
         Model = self.env['ir.model'].sudo()
         Field = self.env['ir.model.fields'].sudo()
