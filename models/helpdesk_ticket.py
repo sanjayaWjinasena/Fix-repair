@@ -1848,6 +1848,15 @@ class HelpdeskTicket(models.Model):
         if view_type == 'form':
             # Inject computed/Studio fields used in button conditions below
             # that may not already be present in the arch.
+            #
+            # Every field referenced in a client-side `invisible=` /
+            # `readonly=` / `required=` modifier expression MUST also
+            # exist as a <field> element in the view — otherwise the
+            # client evaluator raises "Name '<field>' is not defined"
+            # at render time. On Jinasena production those fields are
+            # visible via Studio's own view inherits; on stand-alone
+            # installs the base helpdesk.ticket arch doesn't include
+            # them, so we inject invisible sentinels here.
             for sheet in arch.xpath("//sheet"):
                 for fname in (
                     'has_return_picking',
@@ -1866,6 +1875,20 @@ class HelpdeskTicket(models.Model):
                     # captured before first movement stays a truthful
                     # record.
                     'x_ticket_locked',
+                    # v232: fields referenced by the header-button
+                    # invisible= expressions written further down.
+                    # Client-side modifier eval requires these to
+                    # appear in the view so their values are fetched.
+                    'x_studio_rug_repair',
+                    'x_studio_rug_confirmed',
+                    'x_studio_valid_return',
+                    'x_studio_serial_no',
+                    'x_studio_repair_reason',
+                    'x_studio_warranty_card',
+                    'x_studio_pick_id',
+                    'repair_stage_state',
+                    'use_fsm',
+                    'fsm_task_count',
                 ):
                     if not arch.xpath(f"//field[@name='{fname}']"):
                         fld = etree.Element('field')
