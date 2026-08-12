@@ -32,17 +32,32 @@ _logger = logging.getLogger(__name__)
 # metadata exists even where studio_customization is absent. The only
 # reliable proxy is the studio_customization module itself.
 _STUDIO_DEPENDENT_VIEW_FILES = [
-    'views/helpdesk_ticket_studio_field_hides.xml',
-    # v234: 4 helpdesk.ticket views repinned to Fix-repair during earlier
-    # migration but whose arch_db never landed in on-disk XML. Loaded here
-    # instead of manifest data because they contain xpath references to
-    # //button[@name='195'] (Studio-added return button injected by
-    # helpdesk_stock's OWN sibling inherit at a different priority) —
-    # Odoo's strict init-time xml validation composes the parent view
-    # without sibling inherits and rejects the xpath. convert_file at
-    # post-init runs after ALL inherits are applied, so the xpath
-    # resolves cleanly.
+    # ORDER MATTERS. Odoo validates each new view's xpath against the
+    # CURRENT composed arch at load time. field_hides.xml xpaths into
+    # fields like x_studio_rug_repair, x_studio_quick_repair_status,
+    # etc. — which only exist in the composed arch AFTER ported.xml
+    # has been loaded. So ported.xml must load first.
+
+    # v233-v235: 4 helpdesk.ticket views repinned to Fix-repair during
+    # earlier migration but whose arch_db never landed in on-disk XML.
+    # Adds the full Studio field cluster (Return Receipt Location,
+    # Repair Reason, Job Location, Serial Number, Warranty Details
+    # tab, Cancel/Reopen Log tab, ~90 field placements total) and
+    # rewires several buttons.
+    #
+    # Loaded here instead of manifest data because contains xpath
+    # references to //button[@name='195'] (Studio-added return button
+    # injected by helpdesk_stock's OWN sibling inherit at a different
+    # priority) — Odoo's strict init-time xml validation composes the
+    # parent view without sibling inherits and rejects the xpath.
+    # convert_file at post-init runs after ALL inherits are applied,
+    # so the xpath resolves cleanly.
     'views/helpdesk_ticket_studio_ported.xml',
+
+    # v228: hides for 9 Studio-added fields that we don't want visible
+    # on the ticket form. xpath targets must exist in the composed arch
+    # → depends on ported.xml having loaded first.
+    'views/helpdesk_ticket_studio_field_hides.xml',
 ]
 
 # Kept in sync with models/res_partner.py.
