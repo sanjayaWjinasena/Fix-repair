@@ -31,33 +31,43 @@ _logger = logging.getLogger(__name__)
 # Fix-repair port declares several of these as Python fields, so the
 # metadata exists even where studio_customization is absent. The only
 # reliable proxy is the studio_customization module itself.
+# Each entry: (relative XML path, sentinel_callable_or_None).
+# Sentinel callable receives `env` and returns True when the file
+# is safe to load on this DB, False to skip.
 _STUDIO_DEPENDENT_VIEW_FILES = [
-    # ORDER MATTERS. Odoo validates each new view's xpath against the
-    # CURRENT composed arch at load time. field_hides.xml xpaths into
-    # fields like x_studio_rug_repair, x_studio_quick_repair_status,
-    # etc. — which only exist in the composed arch AFTER ported.xml
-    # has been loaded. So ported.xml must load first.
-
     # v233-v235: 4 helpdesk.ticket views repinned to Fix-repair during
     # earlier migration but whose arch_db never landed in on-disk XML.
-    # Adds the full Studio field cluster (Return Receipt Location,
-    # Repair Reason, Job Location, Serial Number, Warranty Details
-    # tab, Cancel/Reopen Log tab, ~90 field placements total) and
-    # rewires several buttons.
+    # Adds ~90 Studio field placements + tabs + button rewires.
     #
-    # Loaded here instead of manifest data because contains xpath
-    # references to //button[@name='195'] (Studio-added return button
-    # injected by helpdesk_stock's OWN sibling inherit at a different
-    # priority) — Odoo's strict init-time xml validation composes the
-    # parent view without sibling inherits and rejects the xpath.
-    # convert_file at post-init runs after ALL inherits are applied,
-    # so the xpath resolves cleanly.
-    'views/helpdesk_ticket_studio_ported.xml',
+    # SENTINEL: The Studio arch xpaths //button[@name='195'] where
+    # 195 was the Clear-DB-specific ir.actions.act_window / server
+    # ID that Studio's Return action lived on. On stand-alone Odoo
+    # installs that same button is action ID 853 (or whatever Odoo
+    # allocated when helpdesk_stock was installed). Loading the arch
+    # without the matching button ID triggers:
+    #   ParseError: Element '<xpath expr="//button[@name='195']">'
+    #   cannot be located in parent view
+    # Until Studio's numeric-ID references are rewritten to portable
+    # xmlids (proper Fix-repair Python declaration of action 195),
+    # gate this file on the presence of action 195. Clear-DB: loads.
+    # Stand-alone: skipped, form stays plainer.
+    (
+        'views/helpdesk_ticket_studio_ported.xml',
+        lambda env: bool(
+            env['ir.actions.actions'].sudo().browse(195).exists()
+        ),
+    ),
 
-    # v228: hides for 9 Studio-added fields that we don't want visible
-    # on the ticket form. xpath targets must exist in the composed arch
-    # → depends on ported.xml having loaded first.
-    'views/helpdesk_ticket_studio_field_hides.xml',
+    # v228: hides for 9 Studio-added fields. Loads only after
+    # ported.xml (which provides the fields the xpaths target).
+    # Same sentinel — if ported.xml was skipped, hides.xml has
+    # nothing to target.
+    (
+        'views/helpdesk_ticket_studio_field_hides.xml',
+        lambda env: bool(
+            env['ir.actions.actions'].sudo().browse(195).exists()
+        ),
+    ),
 ]
 
 # Kept in sync with models/res_partner.py.
@@ -136,7 +146,14 @@ def load_post_init_view_files(env):
     safe on both envs.
     """
     module_path = get_module_path('Fix-repair')
-    for rel_path in _STUDIO_DEPENDENT_VIEW_FILES:
+    for rel_path, sentinel in _STUDIO_DEPENDENT_VIEW_FILES:
+        if sentinel is not None and not sentinel(env):
+            _logger.info(
+                "Fix-repair: skipping %s — sentinel returned False on "
+                "this DB (typically because Studio-hardcoded action "
+                "IDs don't match here).", rel_path,
+            )
+            continue
         full_path = os.path.join(module_path, rel_path)
         if not os.path.exists(full_path):
             _logger.warning(
