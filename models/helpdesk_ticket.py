@@ -3011,6 +3011,14 @@ class HelpdeskTicket(models.Model):
                 'location_id': source_loc,
                 'location_dest_id': dest_loc.id,
                 'company_id': company.id,
+                # v255: stamp the ticket's partner so helpdesk_stock's
+                # has_partner_picking compute (used to gate the Return
+                # button) treats this synthetic delivery as a real
+                # prior delivery to the partner. Clear-DB masks the
+                # absence of this because their cash-customer partner
+                # has thousands of pre-existing done deliveries — on
+                # standalone we can't lean on that.
+                'partner_id': record.partner_id.id if record.partner_id else False,
             })
             update_prod_move = self.env['stock.picking'].search([
                 ('id', '=', prod_move.id),
@@ -4046,6 +4054,14 @@ class HelpdeskTicket(models.Model):
                 'location_id': source_loc,
                 'location_dest_id': dest_loc.id,
                 'company_id': company.id,
+                # v255: stamp the ticket's partner so helpdesk_stock's
+                # has_partner_picking compute (used to gate the Return
+                # button) treats this synthetic delivery as a real
+                # prior delivery to the partner. Clear-DB masks the
+                # absence of this because their cash-customer partner
+                # has thousands of pre-existing done deliveries — on
+                # standalone we can't lean on that.
+                'partner_id': record.partner_id.id if record.partner_id else False,
             })
             update_prod_move = self.env['stock.picking'].search([
                 ('id', '=', prod_move.id),
