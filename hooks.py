@@ -149,7 +149,76 @@ def load_post_init_view_files(env):
 load_conditional_studio_view_hides = load_post_init_view_files
 
 
+# v243: 12 repair-pipeline stage xmlids from data/repair_stages.xml.
+# Kept in sync with that file. Used by attach_repair_stages_to_all_teams
+# to iterate over the newly-seeded stages.
+_REPAIR_STAGE_XMLIDS = (
+    'Fix-repair.stage_sent_to_factory',
+    'Fix-repair.stage_received_at_factory',
+    'Fix-repair.stage_diagnosis',
+    'Fix-repair.stage_estimation_sent_to_customer',
+    'Fix-repair.stage_estimation_approval_received',
+    'Fix-repair.stage_advance_received',
+    'Fix-repair.stage_repair_started',
+    'Fix-repair.stage_repair_completed',
+    'Fix-repair.stage_sent_to_sales_centre',
+    'Fix-repair.stage_received_at_sales_centre',
+    'Fix-repair.stage_handed_over_to_customer',
+    'Fix-repair.stage_cancelled',
+)
+
+
+def attach_repair_stages_to_all_teams(env):
+    """Attach the 12 seeded repair-pipeline stages to every existing
+    helpdesk.team record.
+
+    Odoo's helpdesk.stage only shows on a team's statusbar when the
+    stage is in that team's team_ids m2m. We ship the stages via XML
+    without team_ids (so the seed works even before any team exists)
+    and then attach them here.
+
+    Idempotent — re-runs find the team already in stage.team_ids and
+    no-op via set() semantics on the m2m write.
+    """
+    Stage = env['helpdesk.stage'].sudo()
+    Team = env['helpdesk.team'].sudo()
+
+    stage_ids = []
+    for xmlid in _REPAIR_STAGE_XMLIDS:
+        stage = env.ref(xmlid, raise_if_not_found=False)
+        if stage:
+            stage_ids.append(stage.id)
+    if not stage_ids:
+        _logger.warning(
+            "Fix-repair: no repair-pipeline stages found via ir.model.data — "
+            "skipping team attachment. Was data/repair_stages.xml loaded?"
+        )
+        return
+
+    team_ids = Team.search([]).ids
+    if not team_ids:
+        _logger.info(
+            "Fix-repair: no helpdesk.team records exist yet — "
+            "repair-pipeline stages seeded but unattached. Attach via "
+            "Configuration → Stages once teams exist."
+        )
+        return
+
+    stages = Stage.browse(stage_ids)
+    for stage in stages:
+        current = set(stage.team_ids.ids)
+        needed = current | set(team_ids)
+        if needed != current:
+            stage.team_ids = [(6, 0, sorted(needed))]
+
+    _logger.info(
+        "Fix-repair: attached %d repair-pipeline stages to %d team(s).",
+        len(stage_ids), len(team_ids),
+    )
+
+
 def post_init_hook(env):
     """Odoo 17 post-install hook signature: (env)."""
     strip_studio_xmlids_for_ported_fields(env)
     load_post_init_view_files(env)
+    attach_repair_stages_to_all_teams(env)

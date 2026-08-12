@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Repair-pipeline helpdesk.stage seed data (Chunk 1d).
+
+    12 stages that mirror the Clear-DB Studio-managed repair pipeline.
+    The default helpdesk "New" stage stays as the pipeline entry point
+    (tickets start there) and is not re-seeded here — reuses
+    helpdesk.stage id=1.
+
+    Sequences 10-120 in steps of 10. Leaves room for user-added
+    stages. Default helpdesk stages sit at sequence 0-4 (In Progress,
+    On Hold, Solved, Canceled). Users can archive those from
+    Configuration → Stages if the mixed statusbar isn't desired.
+
+    No team_ids in this file — a stage without team_ids doesn't show
+    up on any team's statusbar. The post_init_hook function
+    attach_repair_stages_to_all_teams() runs at install / upgrade
+    time and attaches every seeded stage to every existing
+    helpdesk.team record. That makes the pipeline visible immediately
+    without requiring the user to configure team-stage links.
+
+    noupdate="1" is deliberately NOT set — we want re-installing /
+    upgrading Fix-repair to keep the stage names / sequences /
+    fold state aligned with the XML. User-edited stage names via
+    UI will be overwritten on upgrade; if that's undesirable,
+    switch to noupdate="1".
+-->
+<odoo>
+
+    <record id="stage_sent_to_factory" model="helpdesk.stage">
+        <field name="name">Sent to Factory</field>
+        <field name="sequence">10</field>
+        <field name="fold" eval="False"/>
+    </record>
+
+    <record id="stage_received_at_factory" model="helpdesk.stage">
+        <field name="name">Received at Factory</field>
+        <field name="sequence">20</field>
+        <field name="fold" eval="False"/>
+    </record>
+
+    <record id="stage_diagnosis" model="helpdesk.stage">
+        <field name="name">Diagnosis</field>
+        <field name="sequence">30</field>
+        <field name="fold" eval="False"/>
+    </record>
+
+    <record id="stage_estimation_sent_to_customer" model="helpdesk.stage">
+        <field name="name">Estimation Sent to Customer</field>
+        <field name="sequence">40</field>
+        <field name="fold" eval="False"/>
+    </record>
+
+    <record id="stage_estimation_approval_received" model="helpdesk.stage">
+        <field name="name">Estimation Approval Received</field>
+        <field name="sequence">50</field>
+        <field name="fold" eval="False"/>
+    </record>
+
+    <record id="stage_advance_received" model="helpdesk.stage">
+        <field name="name">Advance Received</field>
+        <field name="sequence">60</field>
+        <field name="fold" eval="True"/>
+    </record>
+
+    <record id="stage_repair_started" model="helpdesk.stage">
+        <field name="name">Repair Started</field>
+        <field name="sequence">70</field>
+        <field name="fold" eval="False"/>
+    </record>
+
+    <record id="stage_repair_completed" model="helpdesk.stage">
+        <field name="name">Repair Completed</field>
+        <field name="sequence">80</field>
+        <field name="fold" eval="False"/>
+    </record>
+
+    <record id="stage_sent_to_sales_centre" model="helpdesk.stage">
+        <field name="name">Sent to Sales Centre</field>
+        <field name="sequence">90</field>
+        <field name="fold" eval="False"/>
+    </record>
+
+    <record id="stage_received_at_sales_centre" model="helpdesk.stage">
+        <field name="name">Received at Sales Centre</field>
+        <field name="sequence">100</field>
+        <field name="fold" eval="True"/>
+    </record>
+
+    <record id="stage_handed_over_to_customer" model="helpdesk.stage">
+        <field name="name">Handed Over to Customer</field>
+        <field name="sequence">110</field>
+        <field name="fold" eval="True"/>
+    </record>
+
+    <record id="stage_cancelled" model="helpdesk.stage">
+        <field name="name">Cancelled</field>
+        <field name="sequence">120</field>
+        <field name="fold" eval="True"/>
+    </record>
+
+</odoo>
