@@ -7,6 +7,23 @@ from odoo.exceptions import UserError
 class StockPicking(models.Model):
     _inherit = 'stock.picking'
 
+    # Studio-created stamp linking a picking back to the helpdesk ticket
+    # that spawned the repair flow. Declared in Python here so that:
+    #   1. helpdesk.ticket.repair_picking_ids (One2many, inverse_name=
+    #      'x_studio_helpdesk_ticket_id') has an inverse field to hook
+    #      into at Python setup time — otherwise setup_nonrelated raises
+    #      KeyError on fresh installs where Studio hasn't provisioned it.
+    #   2. Fix-repair's write-side code stamps this reliably (see
+    #      helpdesk_ticket.py, stock_return_picking.py).
+    # Fresh installs get a plain m2o that behaves identically to what
+    # Studio would have generated.
+    x_studio_helpdesk_ticket_id = fields.Many2one(
+        'helpdesk.ticket',
+        string='Helpdesk Ticket',
+        ondelete='set null',
+        index=True,
+    )
+
     nuw_block_validate = fields.Boolean(
         compute='_compute_nuw_block_validate',
     )
