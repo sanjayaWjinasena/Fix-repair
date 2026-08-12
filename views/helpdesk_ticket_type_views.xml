@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    helpdesk.ticket.type form inherit — expose the 4 Studio-ported
+    config booleans so users can configure a Type as RUG / With serial /
+    Without serial from the Type form.
+
+    The fields themselves are declared in
+    Fix-repair/models/helpdesk_type_stage.py (v-earlier port). Without
+    this view inherit, the fields exist but there's no UI to edit them
+    on stand-alone (Clear-DB has an equivalent Studio arch we're
+    replacing here).
+
+    Sits after the sequence + name group in the base helpdesk.ticket.type
+    form. Fields render as a fresh <group> with column-2 layout.
+-->
+<odoo>
+
+    <record id="helpdesk_ticket_type_view_form_repair_config" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.type.form.repair.config</field>
+        <field name="model">helpdesk.ticket.type</field>
+        <field name="inherit_id" ref="helpdesk.helpdesk_ticket_type_view_form"/>
+        <field name="priority">50</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="x_studio_rug"/>
+                <field name="x_studio_rug_confirmed"/>
+                <field name="x_studio_with_serial_no"/>
+                <field name="x_studio_without_serial_no"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
