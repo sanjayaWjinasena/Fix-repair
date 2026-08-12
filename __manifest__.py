@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Fix Repair',
-    'version': '17.0.1.0.248',
+    'version': '17.0.1.0.249',
     'summary': 'Enhancements to the Customer Care - Repair helpdesk workflow',
     'author': 'Jinasena Agricultural Machinery (Pvt) Ltd.',
     'category': 'Helpdesk',
@@ -17,6 +17,13 @@
     # ORDER: ported.xml before field_hides.xml — the latter's xpaths
     # target fields that ported.xml adds to the composed arch.
     'data': [
+        # v249: MUST load before security/ir.model.access.csv so the
+        # 11 Studio-created model xmlids resolve when the ACL CSV is
+        # processed. Fresh installs don't need this (Odoo auto-pins
+        # newly-declared models) but existing Clear-DB upgrades do
+        # (models pre-existed as state='manual' Studio rows, never
+        # got a Fix-repair-owned ir.model.data pin auto-created).
+        'data/ir_model_pins.xml',
         'security/ir.model.access.csv',
         'data/fix_repair_data.xml',
         'data/repair_stages.xml',

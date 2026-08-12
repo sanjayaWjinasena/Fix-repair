@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    v249: force-create ir.model.data pins for the 11 Studio-created
+    models that Fix-repair now owns in Python. Guards against the
+    upgrade failure:
+
+      No matching record found for external id 'model_x_task_diagnosis'
+      in field 'Model'
+      security/ir.model.access.csv
+
+    Root cause: on stand-alone (fresh install), Odoo's pre-init phase
+    auto-creates the `model_<model_name>` ir.model.data pin when a
+    module declares a new models.Model class in Python. On Clear-DB
+    those model rows pre-existed as state='manual' rows created by
+    studio_customization; when Fix-repair v227/v241 later declared the
+    same _name in Python, the state flipped to 'base' but the
+    ir.model.data pin was NOT auto-created (since the ir.model row
+    itself wasn't new).
+
+    Result: on the NEXT upgrade, when the ACL CSV loader tries to
+    resolve model_x_task_diagnosis via env.ref(), no record exists
+    and load fails.
+
+    This file must load BEFORE security/ir.model.access.csv — check
+    __manifest__.py 'data' list ordering.
+
+    Records here use the standard xmlid convention Odoo uses for
+    auto-created pins: `model_<model_name_with_underscores>`.
+    Using `<record>` with just `model` field triggers Odoo to
+    find-or-create the ir.model row by name; existing rows are
+    updated in-place (state stays base, description stays as-is),
+    new rows are created cleanly.
+
+    Idempotent: re-installs and re-upgrades find existing pins by
+    xmlid and no-op.
+-->
+<odoo>
+
+    <!-- Chunk 1a (v241) — 6 diagnosis catalogues -->
+    <record id="model_x_conditions" model="ir.model">
+        <field name="name">Repair Conditions</field>
+        <field name="model">x_conditions</field>
+    </record>
+    <record id="model_x_symptom_areas" model="ir.model">
+        <field name="name">Symptom Areas</field>
+        <field name="model">x_symptom_areas</field>
+    </record>
+    <record id="model_x_symptom_codes" model="ir.model">
+        <field name="name">Symptom Codes</field>
+        <field name="model">x_symptom_codes</field>
+    </record>
+    <record id="model_x_diagnosis_areas" model="ir.model">
+        <field name="name">Diagnosis Areas</field>
+        <field name="model">x_diagnosis_areas</field>
+    </record>
+    <record id="model_x_diagnosis_codes" model="ir.model">
+        <field name="name">Diagnosis Codes</field>
+        <field name="model">x_diagnosis_codes</field>
+    </record>
+    <record id="model_x_resolutions" model="ir.model">
+        <field name="name">Resolutions</field>
+        <field name="model">x_resolutions</field>
+    </record>
+
+    <!-- Pre-Chunk-1a (v227 and earlier) — 5 repair-master models -->
+    <record id="model_x_repair_accounts" model="ir.model">
+        <field name="name">Repair Accounts</field>
+        <field name="model">x_repair_accounts</field>
+    </record>
+    <record id="model_x_repair_reason" model="ir.model">
+        <field name="name">Repair Reason</field>
+        <field name="model">x_repair_reason</field>
+    </record>
+    <record id="model_x_repair_reason_custom" model="ir.model">
+        <field name="name">Repair Reason - Customer</field>
+        <field name="model">x_repair_reason_custom</field>
+    </record>
+    <record id="model_x_repair_stages" model="ir.model">
+        <field name="name">Repair Stages</field>
+        <field name="model">x_repair_stages</field>
+    </record>
+    <record id="model_x_repair_sub_reason" model="ir.model">
+        <field name="name">Repair Sub Reason</field>
+        <field name="model">x_repair_sub_reason</field>
+    </record>
+
+    <!-- v227 — Task Diagnosis (the one that triggered the current failure) -->
+    <record id="model_x_task_diagnosis" model="ir.model">
+        <field name="name">Task Diagnosis</field>
+        <field name="model">x_task_diagnosis</field>
+    </record>
+
+</odoo>
