@@ -88,35 +88,31 @@ def strip_studio_xmlids_for_ported_fields(env):
 
 
 def load_conditional_studio_view_hides(env):
-    """Load view inherits whose xpaths only resolve when Studio-added
-    fields are present in the parent view arch.
+    """Load view inherits whose xpaths only resolve when the
+    studio_customization module has extended the parent view arch
+    with its Studio-added field cluster.
 
-    On the Jinasena production DB the target Studio fields exist and the
-    xpath resolves; on a stand-alone install those fields aren't there
-    and any unresolved xpath aborts the whole view load with:
-
-      Element '<xpath expr="//field[@name='x_studio_rug_repair']">'
-      cannot be located in parent view
-
-    Each entry in _CONDITIONAL_DATA names a sentinel Studio field. If
-    it exists on helpdesk.ticket (state=manual OR base), the whole view
-    inherit is loaded; otherwise skipped.
+    Sentinel: `ir.module.module.state == 'installed'` for
+    studio_customization. That's the only reliable signal — a Python
+    port of a Studio field (state='base') doesn't imply the field
+    is present in the base view's arch, so an ir.model.fields lookup
+    would produce false positives on stand-alone DBs.
     """
-    Fields = env['ir.model.fields'].sudo()
-    module_path = get_module_path('Fix-repair')
+    Module = env['ir.module.module'].sudo()
+    studio = Module.search([
+        ('name', '=', 'studio_customization'),
+        ('state', '=', 'installed'),
+    ], limit=1)
+    if not studio:
+        _logger.info(
+            "Fix-repair: skipping Studio-dependent view hides — "
+            "studio_customization module not installed on this DB "
+            "(stand-alone install)."
+        )
+        return
 
-    for rel_path, sentinel in _CONDITIONAL_DATA:
-        exists = Fields.search([
-            ('model', '=', 'helpdesk.ticket'),
-            ('name', '=', sentinel),
-        ], limit=1)
-        if not exists:
-            _logger.info(
-                "Fix-repair: skipping %s (sentinel field %r not present "
-                "on this DB — stand-alone install).",
-                rel_path, sentinel,
-            )
-            continue
+    module_path = get_module_path('Fix-repair')
+    for rel_path in _STUDIO_DEPENDENT_VIEW_FILES:
         full_path = os.path.join(module_path, rel_path)
         if not os.path.exists(full_path):
             _logger.warning(
@@ -124,12 +120,12 @@ def load_conditional_studio_view_hides(env):
                 "on disk — skipping.", rel_path,
             )
             continue
-        _logger.info("Fix-repair: loading %s (sentinel %r present).",
-                     rel_path, sentinel)
-        # Odoo 17 signature: convert_file(env, module, filename, idref,
-        # mode, noupdate, kind, pathname). First arg is the env, NOT
-        # the cursor — passing env.cr triggers AttributeError on the
-        # first `env.context` access inside xml_import.__init__.
+        _logger.info("Fix-repair: loading %s (studio_customization installed).",
+                     rel_path)
+        # Odoo 17: convert_file(env, module, filename, idref, mode,
+        # noupdate, kind, pathname). First arg is the env, NOT the
+        # cursor — passing env.cr triggers AttributeError on the first
+        # `env.context` access inside xml_import.__init__.
         convert_file(
             env,
             'Fix-repair',
