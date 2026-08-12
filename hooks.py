@@ -21,27 +21,17 @@ from odoo.tools import convert_file
 
 _logger = logging.getLogger(__name__)
 
-# View files loaded via post_init phase (deferred past manifest 'data')
-# so xpath validation runs after every module's sibling inherits are
-# applied to the parent view. ORDER MATTERS — ported.xml adds field
-# placements that field_hides.xml then targets.
+# v244: emptied. Both files formerly loaded here now go through the
+# normal manifest 'data' path — that keeps their ir.model.data
+# entries tracked so Odoo's module-upgrade cleanup doesn't purge
+# them. The button-195 xpath (whose init-time validation failure
+# originally forced the post-init route in v234) was stripped in
+# v242, so manifest-data loading works cleanly.
 #
-# v242: sentinel-gate dropped. helpdesk_ticket_studio_ported.xml no
-# longer references any Clear-DB-specific numeric action IDs (view
-# #4013 removed entirely, #4012's one //button[@name='195'] xpath
-# stripped). Files are safe to load on any DB now.
-_STUDIO_DEPENDENT_VIEW_FILES = [
-    # 3 helpdesk.ticket views repinned to Fix-repair during earlier
-    # migration but whose arch_db never landed in on-disk XML:
-    #   view_helpdesk_ticket_form_4012  (form  — ~90 field placements)
-    #   view_helpdesk_ticket_kanban_4735 (kanban)
-    #   view_helpdesk_ticket_tree_5027  (tree)
-    'views/helpdesk_ticket_studio_ported.xml',
-
-    # v228: hides for 9 Studio-added fields. Loads AFTER ported.xml —
-    # its xpaths target fields that ported.xml adds.
-    'views/helpdesk_ticket_studio_field_hides.xml',
-]
+# Kept as a list for the load_post_init_view_files function so any
+# future truly-must-be-post-init file can be added here without
+# reintroducing the same purge bug.
+_STUDIO_DEPENDENT_VIEW_FILES = []
 
 # Kept in sync with models/res_partner.py.
 _PORTED_PARTNER_FIELDS = (
