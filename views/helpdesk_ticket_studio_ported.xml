@@ -1,0 +1,433 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Studio-generated helpdesk.ticket view records, ported from
+    Clear-DB (Jinasena production) into Fix-repair's on-disk XML.
+
+    Background
+    ==========
+    During the earlier Studio→Python migration, four
+    "Odoo Studio: helpdesk.ticket.*" ir.ui.view records had their
+    ir.model.data xmlid ownership REPINNED from studio_customization
+    to Fix-repair — but the actual arch_db content stayed in the
+    Clear-DB records only, never landing in any on-disk XML file.
+
+    Result: on the production DB the views work (records exist from
+    Studio's original create); on any fresh install of Fix-repair
+    the views are never re-created and the helpdesk.ticket form
+    reverts to the base + Python-only inherits, losing every
+    Studio-added field placement, tab, and grouping.
+
+    This file re-materialises the arch on disk. Each <record> reuses
+    the exact xmlid Fix-repair.ir.model.data already has for the
+    view, so on Clear-DB upgrade the existing DB record is updated
+    in-place (same arch → no functional change); on stand-alone
+    install the record is created fresh with the correct arch.
+
+    Idempotent by definition — arch_db reflects exactly what
+    Clear-DB currently serves.
+
+    All 91 x_studio_* field references in these arches are already
+    Python-declared in Fix-repair (audited 2026-08-12). No extra
+    field declarations needed.
+-->
+<odoo>
+
+    <record id="view_helpdesk_ticket_form_4012" model="ir.ui.view">
+        <field name="name">Odoo Studio: helpdesk.ticket.form customization</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="type">form</field>
+        <field name="mode">extension</field>
+        <field name="priority">99</field>
+        <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
+        <field name="arch" type="xml">
+            <data>
+              <xpath expr="//button[@name='195']" position="attributes">
+                <attribute name="invisible">False</attribute>
+              </xpath>
+              <xpath expr="//button[@name='action_repair_order_form']" position="attributes">
+                <attribute name="invisible">True</attribute>
+              </xpath>
+              <xpath expr="//field[@name='team_id']" position="attributes">
+                <attribute name="force_save">1</attribute>
+                <attribute name="readonly">x_studio_rug_approved == True or x_studio_rug_request_sent == True or x_studio_stage_name != "New" or x_studio_valid_return == True or x_studio_cancelled == True</attribute>
+              </xpath>
+              <xpath expr="//form[1]/sheet[1]/group[1]/group[1]/field[@name='user_id']" position="attributes">
+                <attribute name="force_save">1</attribute>
+                <attribute name="readonly">x_studio_rug_approved == True or x_studio_rug_request_sent == True or x_studio_stage_name != "New" or x_studio_valid_return == True or x_studio_cancelled == True</attribute>
+              </xpath>
+              <xpath expr="//form[1]/sheet[1]/group[1]/group[1]/field[@name='user_id']" position="after">
+                <xpath expr="//field[@name='ticket_type_id']" position="move"/>
+              </xpath>
+              <xpath expr="//field[@name='domain_user_ids']" position="after">
+                <field name="x_studio_rug_repair" force_save="1" readonly="True" invisible="x_studio_rug_repair != True"/>
+                <field name="x_studio_rug_confirmed" force_save="1" readonly="True" invisible="x_studio_rug_confirmed != True"/>
+                <field name="x_studio_normal_repair_with_serial_no" force_save="1" readonly="True" invisible="x_studio_normal_repair_with_serial_no != True"/>
+                <field name="x_studio_normal_repair_without_serial_no" force_save="1" readonly="True" invisible="x_studio_normal_repair_without_serial_no != True"/>
+                <field name="x_studio_return_receipt_location" options="{'no_create': True}" required="user_id" force_save="1" readonly="x_studio_rug_approved == True or x_studio_rug_request_sent == True or x_studio_valid_confirm_return == True or x_studio_repair_serial_created == True or x_studio_cancelled == True or not user_id"/>
+                <field name="x_studio_repair_location" invisible="False" force_save="1" readonly="True"/>
+                <field name="x_studio_repair_reason" widget="many2many_tags" required="user_id" force_save="1" readonly="x_studio_cancelled == True or not user_id or x_studio_stage_name != &quot;New&quot;"/>
+                <field name="x_studio_job_location" required="x_studio_valid_confirm_return == True" force_save="0" readonly="False"/>
+              </xpath>
+              <xpath expr="//field[@name='tag_ids']" position="attributes">
+                <attribute name="invisible">True</attribute>
+              </xpath>
+              <xpath expr="//field[@name='tag_ids']" position="after">
+                <field name="x_studio_re_estimate_status" force_save="1" readonly="True"/>
+                <field name="x_studio_re_estimate_count" widget="many2one_reference" options="{'enable_formatting': false}" force_save="1" readonly="True"/>
+              </xpath>
+              <xpath expr="//field[@name='partner_id']" position="attributes">
+                <attribute name="force_save">0</attribute>
+                <attribute name="readonly">False</attribute>
+                <attribute name="required">user_id</attribute>
+              </xpath>
+              <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="partner_name" invisible="partner_id" force_save="1" readonly="x_studio_cancelled == True or not user_id"/>
+                <field name="partner_email" string="Email" force_save="1" readonly="x_studio_cancelled == True or not user_id or x_studio_stage_name == &quot;Handed Over to Customer&quot; or x_studio_stage_name == &quot;Cancelled&quot;"/>
+              </xpath>
+              <xpath expr="//field[@name='partner_phone']" position="attributes">
+                <attribute name="force_save">1</attribute>
+                <attribute name="readonly">x_studio_cancelled == True or not user_id</attribute>
+              </xpath>
+              <xpath expr="//field[@name='email_cc']" position="attributes">
+                <attribute name="force_save">1</attribute>
+                <attribute name="readonly">x_studio_cancelled == True or not user_id</attribute>
+              </xpath>
+              <xpath expr="//field[@name='email_cc']" position="after">
+                <field name="x_studio_serial_no" invisible="product_id and x_studio_tracking != &quot;serial&quot;" required="x_studio_rug_repair == True or x_studio_normal_repair_with_serial_no == True" force_save="1" readonly="x_studio_rug_approved == True or x_studio_rug_request_sent == True or x_studio_normal_repair_without_serial_no == True or not ticket_type_id or x_studio_stage_name != &quot;New&quot; or x_studio_valid_return == True or x_studio_cancelled == True or not user_id"/>
+              </xpath>
+              <xpath expr="//form[1]/sheet[1]/group[1]/group[2]/field[@name='sale_line_id']" position="after">
+                <field name="product_id" invisible="not use_credit_notes and not use_product_returns and not use_product_repairs" required="x_studio_normal_repair_with_serial_no == True" force_save="0" readonly="False"/>
+                <xpath expr="//field[@name='commercial_partner_id']" position="move"/>
+                <field name="x_studio_send_to_factory" invisible="True"/>
+                <field name="x_studio_receive_at_factory" invisible="True"/>
+                <field name="x_studio_send_to_centre" invisible="True"/>
+                <field name="x_studio_receive_at_centre" invisible="True"/>
+                <field name="x_studio_valid_confirm_return" invisible="True"/>
+                <field name="x_studio_handed_over" invisible="True"/>
+                <field name="x_studio_tracking" force_save="1" readonly="True"/>
+                <field name="x_studio_repair_serial_created" invisible="True"/>
+                <field name="x_studio_rug_approval_status" invisible="True"/>
+                <field name="x_studio_source_location" force_save="1" readonly="True" invisible="company_id != 1"/>
+                <field name="x_studio_source_location_1" force_save="1" readonly="True" invisible="company_id != 2"/>
+                <field name="x_studio_cancel_reason" invisible="not product_id or ( x_studio_normal_repair_without_serial_no == True and x_studio_repair_serial_created != True )" force_save="1" readonly="x_studio_cancelled == True or x_studio_stage_name == &quot;Estimation Approval Received&quot; or x_studio_stage_name == &quot;Advance Received&quot; or x_studio_stage_name == &quot;Repair Started&quot; or x_studio_stage_name == &quot;Repair Completed&quot; or x_studio_stage_name == &quot;Sent to Sales Centre&quot; or x_studio_stage_name == &quot;Received at Sales Centre&quot; or x_studio_stage_name == &quot;Handed Over to Customer&quot; or x_studio_stage_name == &quot;Cancelled&quot;"/>
+                <field name="x_studio_fsm_task_done" invisible="True"/>
+                <field name="x_studio_cancelled_2" invisible="True"/>
+                <field name="x_studio_qty" invisible="True"/>
+                <field name="x_studio_sales_price" invisible="True"/>
+                <field name="x_studio_items" widget="many2many_tags"/>
+                <field name="x_studio_quick_repair_status" force_save="1" readonly="True"/>
+                <field name="x_studio_user_location_validation" invisible="True"/>
+                <field name="x_studio_stage_name" invisible="True"/>
+                <field name="x_studio_sn_updated" invisible="True"/>
+                <field name="x_studio_sale_order" invisible="True"/>
+                <field name="x_studio_fully_paid_so" invisible="True"/>
+                <field name="x_studio_balance_due" invisible="True"/>
+                <field name="x_studio_reopen_status" invisible="True"/>
+                <field name="x_studio_cancel_status" invisible="True"/>
+                <field name="x_studio_cancelled_stage_id" invisible="True"/>
+                <field name="x_studio_reopened" invisible="True"/>
+                <field name="x_studio_cancelled" invisible="True"/>
+                <field name="x_studio_virtual_location" invisible="True"/>
+                <field name="x_studio_virtual_location_1" invisible="True"/>
+                <field name="x_studio_virtual_location_id" invisible="True"/>
+                <field name="x_studio_valid_return" invisible="x_studio_rug_repair == True or x_studio_serial_no or x_studio_normal_repair_with_serial_no == True or x_studio_normal_repair_without_serial_no == True or ( not use_credit_notes and not use_product_returns and not use_product_repairs )" force_save="1" readonly="x_studio_rug_repair == True"/>
+                <field name="x_studio_stage_date" invisible="True"/>
+                <field name="x_studio_pick_id" invisible="True"/>
+                <field name="x_studio_picking_id" invisible="True"/>
+                <xpath expr="//form[1]/sheet[1]/group[1]/group[2]/field[@name='sale_order_id'][2]" position="move"/>
+                <xpath expr="//form[1]/sheet[1]/group[1]/group[2]/field[@name='sale_order_id'][2]" position="move"/>
+                <xpath expr="//field[@name='display_invoice_button']" position="move"/>
+                <field name="x_studio_rug_request_sent" invisible="True"/>
+              </xpath>
+              <xpath expr="//form[1]/sheet[1]/group[1]/group[2]/field[@name='sale_line_id'][2]" position="after">
+                <field name="x_studio_rug_approved" invisible="True"/>
+                <field name="lot_id" invisible="x_studio_rug_repair == True or x_studio_serial_no or x_studio_normal_repair_with_serial_no == True or x_studio_normal_repair_without_serial_no == True or ( not use_credit_notes and not use_product_returns and not use_product_repairs )" force_save="1" readonly="x_studio_rug_repair == True"/>
+              </xpath>
+              <xpath expr="//form[1]/sheet[1]/group[1]" position="after">
+                <notebook name="studio_notebook_2qc_1j0bd1828">
+                  <page string="Factory Repair Details" name="studio_page_2qc" invisible="x_studio_job_location != &quot;Factory Repair&quot;">
+                    <group name="studio_group_81h_1j0bd4it8">
+                      <group name="studio_group_81h_left" string="Repair Transfer Details (Sales Centre)">
+                        <field name="x_studio_s_shipped_date" force_save="1" readonly="True"/>
+                        <field name="x_studio_s_shipped_by" force_save="1" readonly="True"/>
+                        <field name="x_studio_s_received_date" force_save="1" readonly="True"/>
+                        <field name="x_studio_s_received_by" force_save="1" readonly="True"/>
+                      </group>
+                      <group name="studio_group_81h_right" string="Repair Transfer Details (Factory)">
+                        <field name="x_studio_f_shipped_date" force_save="1" readonly="True"/>
+                        <field name="x_studio_f_shipped_by" force_save="1" readonly="True"/>
+                        <field name="x_studio_f_received_date" force_save="1" readonly="True"/>
+                        <field name="x_studio_f_received_by" force_save="1" readonly="True"/>
+                      </group>
+                    </group>
+                    <group name="studio_group_jm_1j0bd7u5v">
+                      <group name="studio_group_jm_left" string="Delivery Details">
+                        <field name="x_studio_driver_name" force_save="1" readonly="True"/>
+                        <field name="x_studio_vehicle_details" force_save="1" readonly="True"/>
+                      </group>
+                      <group name="studio_group_jm_right"/>
+                    </group>
+                  </page>
+                  <page string="Repair Status" name="studio_page_7uo_1j0bd3be1" invisible="True">
+                    <group name="studio_group_7uo">
+                      <group name="studio_group_7uo_left" string="Status Log">
+                        <field name="create_uid"/>
+                        <field name="create_date"/>
+                        <field name="x_studio_created_by_1" force_save="1" readonly="True"/>
+                        <field name="x_studio_created_on_1" force_save="1" readonly="True"/>
+                        <field name="x_studio_created_by_2" force_save="1" readonly="True"/>
+                        <field name="x_studio_created_on_2" force_save="1" readonly="True"/>
+                        <field name="x_studio_created_by_3" force_save="1" readonly="True"/>
+                        <field name="x_studio_created_on_3" force_save="1" readonly="True"/>
+                        <field name="x_studio_created_by_4" force_save="1" readonly="True"/>
+                        <field name="x_studio_created_on_4" force_save="1" readonly="True"/>
+                      </group>
+                      <group name="studio_group_7uo_right" string="Status Log">
+                        <field name="x_studio_created_by_5" force_save="1" readonly="True"/>
+                        <field name="x_studio_created_on_5" force_save="1" readonly="True"/>
+                        <field name="x_studio_created_by_6" force_save="1" readonly="True"/>
+                        <field name="x_studio_created_on_6" force_save="1" readonly="True"/>
+                        <field name="x_studio_created_by_7" force_save="1" readonly="True"/>
+                        <field name="x_studio_created_on_7" force_save="1" readonly="True"/>
+                        <field name="x_studio_created_by_8" force_save="1" readonly="True"/>
+                        <field name="x_studio_created_on_8" force_save="1" readonly="True"/>
+                        <field name="x_studio_created_by_9" force_save="1" readonly="True"/>
+                        <field name="x_studio_created_on_9" force_save="1" readonly="True"/>
+                        <field name="x_studio_created_by_10" force_save="1" readonly="True"/>
+                        <field name="x_studio_created_on_10" force_save="1" readonly="True"/>
+                      </group>
+                    </group>
+                  </page>
+                </notebook>
+              </xpath>
+              <xpath expr="//form[1]/sheet[1]/notebook[not(@name)][1]" position="inside">
+                <page string="Warranty Details" name="studio_page_2rr_1igln0ot0" invisible="x_studio_normal_repair_without_serial_no == True">
+                  <group name="studio_group_2rr">
+                    <group name="studio_group_2rr_left">
+                      <field name="x_studio_warranty_card" widget="tablet_image" required="x_studio_rug_confirmed == True"/>
+                    </group>
+                    <group name="studio_group_2rr_right">
+                      <field name="x_studio_related_information" widget="tablet_image"/>
+                    </group>
+                  </group>
+                </page>
+                <page string="Cancel/ Reopen Log" name="studio_page_5b5_1igln4fa1">
+                  <group name="studio_group_5b5">
+                    <group name="studio_group_5b5_left">
+                      <field name="x_studio_cancelled_by" force_save="1" readonly="True"/>
+                      <field name="x_studio_cancelled_date" force_save="1" readonly="True"/>
+                      <field name="x_studio_reopened_by" force_save="1" readonly="True"/>
+                      <field name="x_studio_reopened_date" force_save="1" readonly="True"/>
+                    </group>
+                  </group>
+                </page>
+              </xpath>
+              <xpath expr="//field[@name='ticket_type_id']" position="attributes">
+                <attribute name="force_save">1</attribute>
+                <attribute name="readonly">x_studio_rug_approved == True or x_studio_rug_request_sent == True or x_studio_repair_serial_created == True or x_studio_valid_return == True or x_studio_cancelled == True or not user_id or x_studio_stage_name != "New"</attribute>
+                <attribute name="required">user_id</attribute>
+              </xpath>
+              <xpath expr="//form[1]/sheet[1]/group[1]/group[2]/field[@name='sale_order_id'][2]" position="attributes">
+                <attribute name="groups">!sales_team.group_sale_salesman</attribute>
+                <attribute name="invisible">False</attribute>
+                <attribute name="options">{"no_open": True}</attribute>
+                <attribute name="readonly">1</attribute>
+              </xpath>
+            </data>
+        </field>
+    </record>
+
+    <record id="view_helpdesk_ticket_form_4013" model="ir.ui.view">
+        <field name="name">Odoo Studio: helpdesk.ticket.form-button</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="type">form</field>
+        <field name="mode">extension</field>
+        <field name="priority">50000</field>
+        <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
+        <field name="active" eval="False"/>
+        <field name="arch" type="xml">
+            <data>
+                <!--xpath expr="//header/button[@name='1811']" position="attributes">
+                  <attribute name="attrs">{'invisible': [('pickings_count', '=', 0)]}</attribute> 
+                </xpath-->
+                
+                <xpath expr="//header/button[@name='1811']" position="attributes">
+                  <attribute name="invisible">(use_product_repairs == False) or ((pickings_count == 0) or (x_studio_cancelled == True))</attribute></xpath>
+                
+                <xpath expr="//field[@name='sale_order_id']" position="attributes">
+                 <attribute name="domain">[["partner_id","=",partner_id]]</attribute>
+                </xpath>
+                
+                 <!--xpath expr="//header/button[@name='assign_ticket_to_self']" position="before">
+                  <button type="action" name="1980" string="Request RUG Approval" class="btn-primary" attrs="{'invisible': ['|','|','|',('user_id', '=', False),('x_studio_rug_repair', '!=', True),('x_studio_rug_approved', '=', True),('x_studio_rug_request_sent', '=', True)]}"></button>
+                </xpath-->
+                
+                <!--xpath expr="//header/button[@name='1980']" position="after">
+                  <button type="action" name="1981" string="Approve RUG" class="btn-primary" attrs="{'invisible': ['|','|',('x_studio_rug_repair', '!=', True),('x_studio_rug_approved', '=', True),('x_studio_rug_request_sent', '=', False)]}"></button>
+                </xpath-->
+                
+                <!--xpath expr="//button[@name='195']" position="attributes">
+                  <attribute name="attrs">{'invisible': ['|','|','|','|',('use_product_returns', '=', False),('x_studio_valid_return', '=', True),('ticket_type_id', '=', False),('x_studio_rug_repair', '!=', True),'&amp;',('x_studio_rug_repair', '=', True),('x_studio_rug_approved', '=', False)]}</attribute> 
+                </xpath-->
+                
+                <xpath expr="//button[@name='195']" position="attributes">
+                  <attribute name="invisible">((x_studio_sn_updated == False) and (x_studio_normal_repair_without_serial_no == False)) or ((x_studio_rug_repair != True) or ((ticket_type_id == False) or ((x_studio_valid_return == True) or ((use_product_returns == False) or (x_studio_cancelled == True)))))</attribute></xpath>
+                
+                <!--xpath expr="//button[@name='action_generate_fsm_task']" position="attributes">
+                  <attribute name="attrs">{'invisible': ['|','|','|','|','|',('fsm_task_count', '>', 0),('use_fsm', '=', False),('x_studio_valid_return', '=', False),('x_studio_valid_confirm_return', '=', False),'&amp;',('x_studio_rug_repair', '=', True),('x_studio_rug_approved', '=', False),'&amp;',('x_studio_job_location', '=', 'Factory Repair'),('x_studio_receive_at_factory', '=', False)]}</attribute> 
+                </xpath-->
+                
+                <xpath expr="//button[@name='action_generate_fsm_task']" position="attributes">
+                  <attribute name="invisible">((x_studio_receive_at_factory == False) and (x_studio_job_location == 'Factory Repair')) or ((x_studio_valid_confirm_return == False) or ((x_studio_valid_return == False) or ((use_fsm == False) or ((fsm_task_count &gt; 0) or (x_studio_cancelled == True)))))</attribute></xpath>
+               
+                <xpath expr="//button[@name='195']" position="attributes">
+                  <attribute name="context">{'default_ticket_id': id, 'default_company_id': company_id, 'default_picking_id': x_studio_pick_id}</attribute>
+                </xpath>
+                
+                <!--xpath expr="//header/button[@name='assign_ticket_to_self']" position="after">
+                  <button type="action" name="195" groups="stock.group_stock_user" string="Return" attrs="{'invisible': ['|','|','|','|','|','|',('use_product_returns', '=', False),('ticket_type_id', '=', False),('x_studio_valid_return', '=', True),('x_studio_rug_repair', '=', True),('x_studio_normal_repair_with_serial_no', '=', True),('x_studio_normal_repair_without_serial_no', '=', False),'&amp;',('x_studio_normal_repair_without_serial_no', '=', True),('x_studio_repair_serial_created', '=', False)]}" context="{'default_ticket_id': id, 'default_company_id': company_id, 'default_location_id': x_studio_virtual_location_id, 'default_picking_id': x_studio_pick_id}"/>
+                </xpath-->
+                
+                <!--xpath expr="//header/button[@name='195'][2]" position="after">
+                  <button type="action" name="195" groups="stock.group_stock_user" string="Return" attrs="{'invisible': ['|','|','|','|','|',('use_product_returns', '=', False),('ticket_type_id', '=', False),('x_studio_valid_return', '=', True),('x_studio_rug_repair', '=', True),('x_studio_normal_repair_with_serial_no', '=', False),('x_studio_normal_repair_without_serial_no', '=', True)]}" context="{'default_ticket_id': id, 'default_company_id': company_id, 'default_picking_id': x_studio_pick_id}"/>
+                </xpath-->
+                
+                <xpath expr="//header/button[@name='assign_ticket_to_self']" position="before">
+                 <button type="action" name="2159" string="Change Repair Type To RUG" class="btn-primary" confirm="Are you sure you want to change the repair type to RUG?" invisible="(x_studio_estimation_approved_stage_updated == True) or ((x_studio_valid_return == False) or ((x_studio_normal_repair_with_serial_no == False) or (x_studio_cancelled == True)))"/>
+                </xpath>
+                
+                <xpath expr="//header/button[@name='195']" position="before">
+                 <button type="action" name="2450" string="Update Serial" class="btn-primary" invisible="((x_studio_sn_updated == True) and (x_studio_rug_repair == True)) or (((x_studio_sn_updated == True) and (x_studio_normal_repair_with_serial_no == True)) or ((x_studio_serial_no == False) or (x_studio_normal_repair_without_serial_no == True)))"/>
+                </xpath>
+                
+                <xpath expr="//header/button[@name='assign_ticket_to_self']" position="after">
+                  <button type="action" name="195" groups="stock.group_stock_user" string="Receipt" context="{'default_ticket_id': id, 'default_company_id': company_id, 'default_location_id': x_studio_virtual_location_id, 'default_picking_id': x_studio_pick_id}" invisible="((x_studio_repair_serial_created == False) and (x_studio_normal_repair_without_serial_no == True)) or ((x_studio_normal_repair_without_serial_no == False) or ((x_studio_normal_repair_with_serial_no == True) or ((x_studio_rug_repair == True) or ((x_studio_valid_return == True) or ((ticket_type_id == False) or ((use_product_returns == False) or (x_studio_cancelled == True)))))))"/>
+                </xpath>
+                
+                <xpath expr="//header/button[@name='195'][2]" position="after">
+                  <button type="action" name="195" groups="stock.group_stock_user" string="Receipt" context="{'default_ticket_id': id, 'default_company_id': company_id, 'default_picking_id': x_studio_pick_id}" invisible="((x_studio_sn_updated == False) and (x_studio_normal_repair_without_serial_no == False)) or ((x_studio_normal_repair_without_serial_no == True) or ((x_studio_normal_repair_with_serial_no == False) or ((x_studio_rug_repair == True) or ((x_studio_valid_return == True) or ((ticket_type_id == False) or ((use_product_returns == False) or (x_studio_cancelled == True)))))))"/>
+                </xpath>
+                
+                <xpath expr="//header/button[@name='195'][3]" position="before">
+                  <button type="action" name="1994" string="Create Repair Serial" class="btn-primary" confirm="Are you sure you want to create repair serial no?" context="{'default_ticket_id': id, 'default_company_id': company_id, 'default_picking_id': x_studio_pick_id}" invisible="((x_studio_tracking != 'serial') and (x_studio_normal_repair_without_serial_no == True)) or (((x_studio_repair_serial_created == True) and (x_studio_normal_repair_without_serial_no == True)) or ((x_studio_normal_repair_without_serial_no != True) or ((x_studio_normal_repair_without_serial_no == False) or ((x_studio_normal_repair_with_serial_no == True) or ((x_studio_rug_repair == True) or ((ticket_type_id == False) or ((use_product_returns == False) or (x_studio_cancelled == True))))))))"/>
+                </xpath>
+                
+                <xpath expr="//header/button[@name='1994']" position="before">
+                  <button type="action" name="1993" string="Create Repair Route" class="btn-primary" confirm="Are you sure you want to create repair route?" context="{'default_ticket_id': id, 'default_company_id': company_id, 'default_picking_id': x_studio_pick_id}" invisible="((x_studio_tracking != 'none') and (x_studio_normal_repair_without_serial_no == True)) or (((x_studio_repair_serial_created == True) and (x_studio_normal_repair_without_serial_no == True)) or ((x_studio_normal_repair_without_serial_no != True) or ((x_studio_normal_repair_without_serial_no == False) or ((x_studio_normal_repair_with_serial_no == True) or ((x_studio_rug_repair == True) or ((ticket_type_id == False) or ((use_product_returns == False) or (x_studio_cancelled == True))))))))"/>
+                </xpath>
+                
+                <xpath expr="//field[@name='stage_id']" position="attributes">
+                <attribute name="options">{'clickable': False}</attribute>
+                </xpath>
+                
+                <xpath expr="//header/button[@name='action_generate_fsm_task']" position="before">
+                  <button type="action" name="2001" string="Send to Factory" class="btn-primary" invisible="(x_studio_job_location != 'Factory Repair') or ((x_studio_send_to_factory == True) or ((x_studio_valid_confirm_return == False) or ((x_studio_valid_return == False) or ((fsm_task_count &gt; 0) or (x_studio_cancelled == True)))))"/>
+                </xpath>
+                
+                <xpath expr="//header/button[@name='2001']" position="after">
+                  <button type="action" name="2002" string="Receive at Factory" class="btn-primary" invisible="((x_studio_send_to_factory == False) and (x_studio_job_location == 'Factory Repair')) or ((x_studio_job_location != 'Factory Repair') or ((x_studio_receive_at_factory == True) or ((x_studio_valid_confirm_return == False) or ((x_studio_valid_return == False) or ((fsm_task_count &gt; 0) or (x_studio_cancelled == True))))))"/>
+                </xpath>
+                
+                <xpath expr="//header/button[@name='2002']" position="before">
+                  <button type="action" name="2007" string="Send to Sales Centre" class="btn-primary" invisible="(x_studio_job_location != 'Factory Repair') or ((x_studio_send_to_centre == True) or ((x_studio_receive_at_factory == False) or ((x_studio_task_status == False) or ((x_studio_cancelled == True) or (x_studio_fsm_task_done == False)))))"/>
+                </xpath>
+                
+                <xpath expr="//header/button[@name='2007']" position="after">
+                  <button type="action" name="2006" string="Receive at Sales Centre" class="btn-primary" invisible="((x_studio_send_to_centre == False) and (x_studio_job_location == 'Factory Repair')) or ((x_studio_job_location != 'Factory Repair') or ((x_studio_receive_at_centre == True) or ((x_studio_task_status == False) or (x_studio_cancelled == True))))"/>
+                </xpath>
+                
+                <xpath expr="//header/button[@name='2006']" position="before">
+                  <button type="action" name="2220" string="Cancel" class="btn-primary" confirm="Are you sure you want to cancel the repair ticket?" invisible="(product_id == False) or ((x_studio_serial_no == False) or ((partner_id == False) or ((x_studio_repair_reason == False) or ((x_studio_return_receipt_location == False) or ((ticket_type_id == False) or ((x_studio_cancelled == True) or (stage_id in [3, 4, 7, 8, 9, 10, 11, 12, 13])))))))"/>
+                </xpath>
+                
+                <xpath expr="//header/button[@name='2220']" position="before">
+                  <button type="action" name="2221" string="Reopen" class="btn-primary" confirm="Are you sure you want to reopen the repair ticket?" invisible="x_studio_cancelled == False"/>
+                </xpath>
+                
+                <xpath expr="//header/button[@name='2221']" position="before">
+                  <button type="action" name="2343" string="Cancel" class="btn-primary" confirm="Are you sure you want to cancel the repair ticket?" invisible="(product_id == False) or ((x_studio_serial_no == False) or ((partner_id == False) or ((x_studio_repair_reason == False) or ((x_studio_return_receipt_location == False) or ((ticket_type_id == False) or ((x_studio_cancelled_2 == True) or (stage_id not in [10])))))))"/>
+                </xpath>
+                
+                <!--xpath expr="//header/button[@name='2221']" position="after">
+                  <button type="action" name="2269" string="Send Customer Letter" class="btn-primary" attrs="{'invisible': [('stage_id', 'not in', [13])]}"></button>
+                </xpath>
+                
+                <xpath expr="//header/button[@name='2269']" position="after">
+                  <button type="action" name="2308" string="Send Final Notice" class="btn-primary" attrs="{'invisible': [('stage_id', 'not in', [13])]}"></button>
+                </xpath>
+                
+                <xpath expr="//header/button[@name='2308']" position="after">
+                  <button type="action" name="2309" string="Send Final Notice - Estimated" class="btn-primary" attrs="{'invisible': [('stage_id', 'not in', [13])]}"></button>
+                </xpath>
+                
+                <xpath expr="//header/button[@name='2309']" position="after">
+                  <button type="action" name="2310" string="Send Final Notice - Scrappage" class="btn-primary" attrs="{'invisible': [('stage_id', 'not in', [13])]}"></button>
+                </xpath>
+                
+                <xpath expr="//header/button[@name='2310']" position="after">
+                  <button type="action" name="2311" string="Send Reminding Letter" class="btn-primary" attrs="{'invisible': [('stage_id', 'not in', [13])]}"></button>
+                </xpath-->
+                
+              </data>
+        </field>
+    </record>
+
+    <record id="view_helpdesk_ticket_kanban_4735" model="ir.ui.view">
+        <field name="name">Odoo Studio: helpdesk.ticket.kanban customization</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="type">kanban</field>
+        <field name="mode">extension</field>
+        <field name="priority">99</field>
+        <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_kanban"/>
+        <field name="arch" type="xml">
+            <data>
+              <xpath expr="//field[@name='ticket_type_id']" position="after">
+                <field name="x_studio_quick_repair_status" display="full" invisible="x_studio_quick_repair_status != 'Quick Repair'"/>
+                <field name="x_studio_rug_confirmed" display="full" invisible="1"/>
+                <field name="x_studio_rug_approval_status" display="full" invisible="x_studio_rug_confirmed != True"/>
+                <field name="x_studio_material_availability" display="full"/>
+              </xpath>
+              <xpath expr="//div[@class='o_kanban_record_body']/field[@name='tag_ids']" position="after">
+                <field name="create_date" display="full"/>
+                <field name="x_studio_cancel_status" display="full" invisible="x_studio_cancel_status == 'None'"/>
+                <field name="x_studio_cancelled_date" display="full" invisible="x_studio_cancel_status == 'None'"/>
+                <field name="x_studio_reopen_status" display="full" invisible="x_studio_reopen_status == 'None'"/>
+                <field name="x_studio_reopened_date" display="full" invisible="x_studio_reopen_status == 'None'"/>
+                <field name="x_studio_stage_date" display="full"/>
+              </xpath>
+            </data>
+        </field>
+    </record>
+
+    <record id="view_helpdesk_ticket_tree_5027" model="ir.ui.view">
+        <field name="name">Odoo Studio: helpdesk.ticket.tree customization</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="type">tree</field>
+        <field name="mode">extension</field>
+        <field name="priority">900</field>
+        <field name="inherit_id" ref="helpdesk.helpdesk_tickets_view_tree"/>
+        <field name="arch" type="xml">
+            <data>
+              <xpath expr="//field[@name='partner_id']" position="replace"/>
+              <xpath expr="//tree[1]/field[@name='team_id']" position="replace">
+                <field name="partner_name" optional="show"/>
+                <field name="create_date" optional="show" widget="date"/>
+                <field optional="show" name="x_studio_materials_used" string="Materials Used"/>
+                <field optional="show" name="x_studio_quantity" string="Quantity"/>
+                <field optional="show" name="x_studio_unit_price" string="Unit Price"/>
+                <field name="x_studio_items" optional="show" widget="many2many_tags"/>
+                <field name="x_studio_qty" optional="show"/>
+                <field name="x_studio_sales_price" optional="show"/>
+                <field name="close_date" optional="show"/>
+              </xpath>
+              <xpath expr="//field[@name='legend_done']" position="after">
+                <field name="x_studio_sale_order" optional="show"/>
+              </xpath>
+              <xpath expr="//field[@name='sla_deadline']" position="after">
+                <field name="x_studio_repair_reason" optional="show" widget="many2many_tags"/>
+              </xpath>
+            </data>
+        </field>
+    </record>
+
+</odoo>
