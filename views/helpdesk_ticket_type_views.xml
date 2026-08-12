@@ -30,4 +30,26 @@
         </field>
     </record>
 
+    <!--
+        v247: tree inherit adding the 4 boolean columns to the
+        helpdesk.ticket.type list view. Mirrors Clear-DB's Studio
+        arch (view 4610, Fix-repair.view_helpdesk_ticket_type_tree_4610).
+        Users on the Configuration → Types list can toggle RUG /
+        With Serial No / etc. inline without opening each record.
+    -->
+    <record id="helpdesk_ticket_type_view_tree_repair_config" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.type.tree.repair.config</field>
+        <field name="model">helpdesk.ticket.type</field>
+        <field name="inherit_id" ref="helpdesk.helpdesk_ticket_type_view_tree"/>
+        <field name="priority">50</field>
+        <field name="arch" type="xml">
+            <xpath expr="//tree[1]/field[@name='name']" position="after">
+                <field name="x_studio_rug" optional="show" string="RUG"/>
+                <field name="x_studio_rug_confirmed" optional="show" string="RUG Confirmed"/>
+                <field name="x_studio_with_serial_no" optional="show" string="With Serial No"/>
+                <field name="x_studio_without_serial_no" optional="show" string="Without Serial No"/>
+            </xpath>
+        </field>
+    </record>
+
 </odoo>

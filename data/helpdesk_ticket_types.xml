@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Seed the 4 canonical repair helpdesk.ticket.type records.
+    Verbatim from Clear-DB helpdesk.ticket.type ids 1-4:
+
+      #1  Repair - Under Warranty - RUG
+          rug=True, rug_confirmed=True
+
+      #2  Repair - Under Warranty -  External not RUG
+          rug=True
+
+      #3  Repair - Not Under Warranty (With Serial No)
+          with_serial_no=True
+
+      #4  Repair - Not Under Warranty (Without Serial No)
+          without_serial_no=True
+
+    Fix-repair's _get_view / button-visibility logic keys off these
+    4 flags:
+      - RUG buttons visible when ticket_type_id.x_studio_rug == True
+      - Warranty Card required when x_studio_rug_confirmed
+      - Serial No required when x_studio_with_serial_no
+      - Create Serial button visible when x_studio_without_serial_no
+
+    Without these seed rows, a fresh Fix-repair install has no way to
+    reach the RUG / repair-flow-branching states — users would need to
+    create the 4 types manually and get every flag right, which nobody
+    does. Seed here so the workflow is immediately usable.
+
+    noupdate="0" (default) so subsequent Fix-repair upgrades keep the
+    names/flags aligned with the reference. If admins want to rename
+    a type via the UI, they can add noupdate="1" locally or archive
+    the record.
+-->
+<odoo>
+
+    <record id="ticket_type_rug" model="helpdesk.ticket.type">
+        <field name="name">Repair - Under Warranty - RUG</field>
+        <field name="sequence">10</field>
+        <field name="x_studio_rug" eval="True"/>
+        <field name="x_studio_rug_confirmed" eval="True"/>
+    </record>
+
+    <record id="ticket_type_external_not_rug" model="helpdesk.ticket.type">
+        <field name="name">Repair - Under Warranty -  External not RUG</field>
+        <field name="sequence">10</field>
+        <field name="x_studio_rug" eval="True"/>
+    </record>
+
+    <record id="ticket_type_not_under_warranty_with_serial" model="helpdesk.ticket.type">
+        <field name="name">Repair - Not Under Warranty (With Serial No)</field>
+        <field name="sequence">10</field>
+        <field name="x_studio_with_serial_no" eval="True"/>
+    </record>
+
+    <record id="ticket_type_not_under_warranty_without_serial" model="helpdesk.ticket.type">
+        <field name="name">Repair - Not Under Warranty (Without Serial No)</field>
+        <field name="sequence">10</field>
+        <field name="x_studio_without_serial_no" eval="True"/>
+    </record>
+
+</odoo>
