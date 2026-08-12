@@ -45,6 +45,50 @@ class StockPicking(models.Model):
         index=True,
     )
 
+    # v257: Studio fields the Fix-repair stock.picking view-arch hide
+    # gate (see _get_view below) references. Without them declared,
+    # OWL's FormRenderer raises "Name 'x_studio_quotation_type' is not
+    # defined" when trying to evaluate the invisible expression.
+    # Selection values verified verbatim against Clear-DB
+    # (ir.model.fields.selection ids 3974-3976 / 4249-4251).
+    x_studio_quotation_type = fields.Selection(
+        selection=[
+            ('Sales', 'Sales'),
+            ('Project', 'Project'),
+            ('Repair', 'Repair'),
+        ],
+        string='Quotation Type',
+    )
+    x_studio_quotation_type_2 = fields.Selection(
+        selection=[
+            ('Sales', 'Sales'),
+            ('Project', 'Project'),
+            ('Repair', 'Repair'),
+        ],
+        string='Quotation Type (2)',
+    )
+    # Studio-created duplicate m2o's onto sale.order. Fix-repair reads
+    # them from stock.picking._get_view's hide-gate loop and from the
+    # payment/GL computes.
+    x_studio_sales_order = fields.Many2one(
+        'sale.order', string='Sales Order (Studio)',
+        ondelete='set null', index=True,
+    )
+    x_studio_ticket_sales_order = fields.Many2one(
+        'sale.order', string='Ticket Sales Order (Studio)',
+        ondelete='set null', index=True,
+    )
+    x_studio_type_of_operation = fields.Selection(
+        selection=[
+            ('incoming', 'Receipt'),
+            ('outgoing', 'Delivery'),
+            ('internal', 'Internal Transfer'),
+            ('mrp_operation', 'Manufacturing'),
+        ],
+        string='Type of Operation',
+    )
+    x_studio_validation = fields.Char(string='Validation')
+
     nuw_block_validate = fields.Boolean(
         compute='_compute_nuw_block_validate',
     )
@@ -142,6 +186,16 @@ class StockPicking(models.Model):
                 ticket_fld.set('name', 'x_studio_helpdesk_ticket_id')
                 ticket_fld.set('invisible', '1')
                 sheet.insert(0, ticket_fld)
+                # v257: same treatment for x_studio_quotation_type — the
+                # hide gate references it. On Clear-DB the field lives
+                # as state='manual' Studio and is fetched by default;
+                # on standalone we declare it as base and inject the
+                # sentinel so OWL's FormRenderer can evaluate the
+                # invisible expression.
+                qt_fld = etree.Element('field')
+                qt_fld.set('name', 'x_studio_quotation_type')
+                qt_fld.set('invisible', '1')
+                sheet.insert(0, qt_fld)
                 break
             for btn in arch.xpath("//button[@name='button_validate']"):
                 existing = btn.get('invisible', '')
