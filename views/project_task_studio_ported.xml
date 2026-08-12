@@ -34,7 +34,60 @@
                        invisible="1"
                        string="Help Desk Ticket (sentinel)"/>
             </xpath>
+
+            <!-- v261: header field insertions matching Clear-DB Studio
+                 view 3019 verbatim. Rename user_ids label + insert
+                 helpdesk_ticket_id / x_studio_created_date /
+                 x_studio_repair_reason (invisible). Show sale_order_id
+                 and rename to Studio's typo "Sales Orderr" for
+                 parity. Insert x_studio_priority / _quotation_type /
+                 _material_availability after sale_order_id. -->
+            <xpath expr="//field[@name='user_ids']" position="attributes">
+                <attribute name="string">Assignees</attribute>
+            </xpath>
+            <xpath expr="//field[@name='user_ids']" position="after">
+                <field name="helpdesk_ticket_id"
+                       string="Help Desk Ticket"/>
+                <field name="x_studio_created_date"/>
+                <field name="x_studio_repair_reason" invisible="True"/>
+            </xpath>
+            <xpath expr="//field[@name='sale_order_id']" position="attributes">
+                <attribute name="invisible">False</attribute>
+                <attribute name="string">Sales Orderr</attribute>
+            </xpath>
+            <xpath expr="//field[@name='sale_order_id']" position="after">
+                <field name="x_studio_priority"/>
+                <field name="x_studio_quotation_type"/>
+                <field name="x_studio_material_availability"/>
+            </xpath>
+
             <xpath expr="//notebook" position="inside">
+                <!-- v261: Repair Image tab (Clear-DB view 3019 verbatim) -->
+                <page string="Repair Image" name="repair_image">
+                    <group>
+                        <group>
+                            <field name="x_studio_repair_image_01"
+                                   widget="image"/>
+                        </group>
+                        <group>
+                            <field name="x_studio_repair_image_02"
+                                   widget="image"/>
+                        </group>
+                    </group>
+                </page>
+                <!-- v261: Warranty Card tab (Clear-DB view 3019 verbatim) -->
+                <page string="Warranty Card" name="warranty_card">
+                    <group>
+                        <group>
+                            <field name="x_studio_warranty_card"
+                                   widget="image"/>
+                        </group>
+                        <group>
+                            <field name="x_studio_related_information"
+                                   widget="image"/>
+                        </group>
+                    </group>
+                </page>
                 <page string="Repair Diagnosis"
                       name="repair_diagnosis"
                       invisible="not helpdesk_ticket_id">
