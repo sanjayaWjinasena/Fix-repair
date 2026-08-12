@@ -24,6 +24,27 @@ class StockPicking(models.Model):
         index=True,
     )
 
+    # v253: written by _repair_studio_auto_create_repair_route on
+    # helpdesk.ticket (see models/helpdesk_ticket.py:3008). Same target
+    # model as x_studio_helpdesk_ticket_id — kept as a separate field to
+    # match Clear-DB's Studio schema verbatim (state=manual there).
+    x_studio_created_from_help_ticket = fields.Many2one(
+        'helpdesk.ticket',
+        string='Created from Help Ticket',
+        ondelete='set null',
+        index=True,
+    )
+
+    # v253: the return-receipt anchor stamped on the auto-created
+    # repair-route picking. Read by downstream repair-flow code to
+    # locate the anchoring warehouse when composing follow-up pickings.
+    x_studio_return_receipt_location = fields.Many2one(
+        'stock.location',
+        string='Return Receipt Location',
+        ondelete='set null',
+        index=True,
+    )
+
     nuw_block_validate = fields.Boolean(
         compute='_compute_nuw_block_validate',
     )

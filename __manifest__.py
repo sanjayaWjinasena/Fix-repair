@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Fix Repair',
-    'version': '17.0.1.0.252',
+    'version': '17.0.1.0.253',
     'summary': 'Enhancements to the Customer Care - Repair helpdesk workflow',
     'author': 'Jinasena Agricultural Machinery (Pvt) Ltd.',
     'category': 'Helpdesk',
@@ -31,6 +31,10 @@
         'data/helpdesk_ticket_types.xml',
         'data/repair_diagnosis_menus.xml',
         'data/repair_diagnosis_seed.xml',
+        # v253: expose RR - Auto Create Repair Route in the Actions
+        # dropdown. Load after ACL CSV (server action has no ACL of
+        # its own but keeps ordering consistent) and before view files.
+        'data/helpdesk_ticket_server_actions.xml',
         'views/helpdesk_ticket_views.xml',
         'views/helpdesk_ticket_studio_ported.xml',
         'views/helpdesk_ticket_studio_field_hides.xml',

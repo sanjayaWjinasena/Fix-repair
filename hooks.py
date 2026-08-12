@@ -293,6 +293,68 @@ def seed_default_stock_location_users(env):
     )
 
 
+def seed_admin_repair_location_defaults(env):
+    """v253: seed the two per-user repair location fields on every
+    internal user that has them unset.
+
+    `_repair_studio_auto_create_repair_route` (helpdesk_ticket.py:2958)
+    reads `x_studio_virtual_location` and `x_studio_source_location` on
+    the current user; if either is False it raises UserError and the
+    auto-create-route action can't run. On a fresh standalone install
+    every user has both fields empty because Fix-repair only declares
+    them — nothing populates them.
+
+    This seed picks the first internal stock.location within the user's
+    default company for each field. On multi-company DBs the `_1`
+    variants are left alone (they belong to the second company's
+    layout and require operator judgement).
+
+    Idempotent — only writes when the field is currently False.
+    """
+    Users = env['res.users'].sudo()
+    Stock = env['stock.location'].sudo()
+
+    internal_users = Users.search([
+        ('share', '=', False),
+        ('active', '=', True),
+    ])
+    if not internal_users:
+        return
+
+    location_by_company = {}
+    changed_users = 0
+    for user in internal_users:
+        needs_virtual = not user.x_studio_virtual_location
+        needs_source = not user.x_studio_source_location
+        if not (needs_virtual or needs_source):
+            continue
+        company = user.company_id
+        if not company:
+            continue
+        if company.id not in location_by_company:
+            location_by_company[company.id] = Stock.search([
+                ('usage', '=', 'internal'),
+                ('company_id', '=', company.id),
+            ], limit=1)
+        default_loc = location_by_company[company.id]
+        if not default_loc:
+            continue
+        vals = {}
+        if needs_virtual:
+            vals['x_studio_virtual_location'] = default_loc.id
+        if needs_source:
+            vals['x_studio_source_location'] = default_loc.id
+        if vals:
+            user.write(vals)
+            changed_users += 1
+
+    _logger.info(
+        "Fix-repair: seeded default repair location fields on %d "
+        "internal user(s).",
+        changed_users,
+    )
+
+
 def post_init_hook(env):
     """Odoo 17 post-install hook signature: (env)."""
     strip_studio_xmlids_for_ported_fields(env)
@@ -300,3 +362,4 @@ def post_init_hook(env):
     attach_repair_stages_to_all_teams(env)
     seed_default_stock_location_users(env)
     enable_product_returns_on_all_teams(env)
+    seed_admin_repair_location_defaults(env)

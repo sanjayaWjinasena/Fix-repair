@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    v253: expose the RR - Auto Create Repair Route Studio server
+    action as a Python-declared ir.actions.server so standalone
+    (repair-test-101) users see it in the helpdesk.ticket Actions
+    dropdown, matching Clear-DB.
+
+    The Python delegate _repair_studio_auto_create_repair_route lives
+    in models/helpdesk_ticket.py:2958 (ported v144-v145). It creates a
+    done outgoing stock.picking from the current user's source
+    location to Partners/Customers, which makes has_partner_picking
+    flip to True on the ticket — the gate that unblocks the Return →
+    Send to Factory pipeline.
+
+    binding_view_types="form,list" mirrors Clear-DB action 1993 so
+    the entry appears on both the ticket form and the ticket list
+    action menu.
+-->
+<odoo>
+
+    <record id="action_repair_auto_create_route" model="ir.actions.server">
+        <field name="name">RR - Auto Create Repair Route</field>
+        <field name="model_id" ref="helpdesk.model_helpdesk_ticket"/>
+        <field name="binding_model_id" ref="helpdesk.model_helpdesk_ticket"/>
+        <field name="binding_view_types">form,list</field>
+        <field name="state">code</field>
+        <field name="code">
+# Fix-repair v253: delegates to native Python method already ported
+# from Clear-DB Studio server action 1993.
+if record:
+    record._repair_studio_auto_create_repair_route()
+        </field>
+    </record>
+
+</odoo>
