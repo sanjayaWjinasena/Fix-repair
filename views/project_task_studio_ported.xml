@@ -24,6 +24,16 @@
         <field name="model">project.task</field>
         <field name="inherit_id" ref="project.view_task_form2"/>
         <field name="arch" type="xml">
+            <!-- Sentinel: helpdesk_ticket_id must be present in the
+                 composed arch for OWL to evaluate the page's invisible
+                 modifier. project_task._get_view adds this at runtime
+                 too but view-arch validation runs at install time
+                 before _get_view. Belt-and-braces here. -->
+            <xpath expr="//sheet" position="inside">
+                <field name="helpdesk_ticket_id"
+                       invisible="1"
+                       string="Help Desk Ticket (sentinel)"/>
+            </xpath>
             <xpath expr="//notebook" position="inside">
                 <page string="Repair Diagnosis"
                       name="repair_diagnosis"
