@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    v267 — Approve RUG / Reject RUG header buttons on sale.order.
+
+    Fix-repair models/sale_order.py already declares the two Python
+    methods `action_approve_rug_direct` and `action_reject_rug_direct`
+    (lines 1529 and 1534). It also has a `_get_view` block (line 1070)
+    that REWIRES Studio-original buttons `1981` and `2004` on
+    Clear-DB, renaming them to the direct-method names.
+
+    On standalone the Studio-original numeric buttons don't exist,
+    so the rewire silently no-ops and the buttons never appear.
+    This view file adds the two buttons statically, with the same
+    invisible expression Clear-DB uses verbatim.
+
+    Sentinel fields inside //header keep the invisible expression
+    evaluable at install-time view validation. Fields already
+    declared as state=base (via BugFix-Sales v38-v41).
+-->
+<odoo>
+
+    <record id="view_sale_order_rug_direct_buttons" model="ir.ui.view">
+        <field name="name">sale.order.form.rug.direct.buttons</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <!-- Sentinels for the buttons' invisible expression. Some
+                 of these are already injected by Fix-repair's
+                 sale_order._get_view (helpdesk_ticket_id, quotation_type,
+                 rug_confirmed, rug_rejected). The two below are net
+                 new to install-time validation. -->
+            <xpath expr="//sheet" position="inside">
+                <field name="x_studio_rug_approved" invisible="1"/>
+                <field name="x_studio_rug_request_sent" invisible="1"/>
+            </xpath>
+
+            <!-- Place both buttons after action_confirm in the header. -->
+            <xpath expr="//button[@name='action_confirm'][last()]" position="after">
+                <button name="action_approve_rug_direct"
+                        type="object"
+                        string="Approve RUG"
+                        class="btn-primary"
+                        invisible="(x_studio_quotation_type != 'Repair') or (x_repair_customer_pays) or (state not in ['draft', 'sent']) or (x_studio_rug_request_sent == False) or (x_studio_rug_rejected == True) or (x_studio_rug_approved == True)"/>
+                <button name="action_reject_rug_direct"
+                        type="object"
+                        string="Reject RUG"
+                        class="btn-primary"
+                        invisible="(x_studio_quotation_type != 'Repair') or (x_repair_customer_pays) or (state not in ['draft', 'sent']) or (x_studio_rug_request_sent == False) or (x_studio_rug_rejected == True) or (x_studio_rug_approved == True)"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
