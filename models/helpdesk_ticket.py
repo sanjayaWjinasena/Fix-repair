@@ -2487,16 +2487,25 @@ class HelpdeskTicket(models.Model):
 
         Centre = x_studio_return_receipt_location.warehouse_id, i.e. the
         warehouse that originally received the customer's item.
+
+        v273: same-warehouse fallback (see
+        _create_received_at_factory_picking for full rationale). When
+        centre == factory, centre.Intransit collides with the current
+        source. Fall back to centre.warehouse.lot_stock_id so the
+        movement is still recorded.
         """
         self.ensure_one()
         src_loc = self._current_item_location()
         anchor = self.x_studio_return_receipt_location
         if not (src_loc and anchor and anchor.warehouse_id):
             return False
-        intransit = anchor.warehouse_id._ensure_intransit_location()
-        if not intransit or src_loc == intransit:
+        wh = anchor.warehouse_id
+        dest_loc = wh._ensure_intransit_location()
+        if not dest_loc or src_loc == dest_loc:
+            dest_loc = wh.lot_stock_id
+        if not dest_loc or src_loc == dest_loc:
             return False
-        return self._create_repair_transfer(src_loc, intransit)
+        return self._create_repair_transfer(src_loc, dest_loc)
 
     def _create_received_at_sales_centre_picking(self):
         """current location (factory Intransit) -> centre virtual repair loc."""
@@ -2511,7 +2520,17 @@ class HelpdeskTicket(models.Model):
         return self._create_repair_transfer(src_loc, dest_loc)
 
     def _create_received_at_factory_picking(self):
-        """current location (centre/Intransit) -> factory warehouse/Intransit."""
+        """current location (centre/Intransit) -> factory warehouse/Intransit.
+
+        v273: same-warehouse fallback. When the centre and factory
+        resolve to the same warehouse (common on dev / demo envs with a
+        single Jinasena-style warehouse), factory.Intransit collides
+        with the current source (already at centre.Intransit from
+        Send to Factory). Falling back to factory.warehouse.lot_stock_id
+        preserves the movement log so the ticket's Movements smart
+        button shows all buttons' pickings. Clear-DB (centre != factory
+        always) never triggers the fallback.
+        """
         self.ensure_one()
         src_loc = self._current_item_location()
         if not src_loc:
@@ -2523,7 +2542,10 @@ class HelpdeskTicket(models.Model):
                 f"'{self.company_id.name}'. Set it in "
                 "Settings → Fix Repair → Factory Repair Location."
             )
-        dest_loc = anchor.warehouse_id._ensure_intransit_location()
+        wh = anchor.warehouse_id
+        dest_loc = wh._ensure_intransit_location()
+        if not dest_loc or src_loc == dest_loc:
+            dest_loc = wh.lot_stock_id
         if not dest_loc or src_loc == dest_loc:
             return False
         return self._create_repair_transfer(src_loc, dest_loc)
