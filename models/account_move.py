@@ -114,9 +114,20 @@ class AccountMove(models.Model):
             # Register Payment: hide on RUG-confirmed invoices, but ONLY while
             # the RUG is still confirmed. If it's been rejected the customer
             # pays the invoice and we want Register Payment available again.
+            #
+            # Previously referenced x_studio_rug_confirmed / x_studio_rug_rejected
+            # directly — those fields live on sale.order, not account.move.
+            # On dev env's account.move form, OWL couldn't resolve them
+            # ("Name 'x_studio_rug_confirmed' is not defined") and the entire
+            # invoice form crashed to render. Switched to is_rug_invoice which
+            # is a proper account.move field (compute above) that already
+            # encodes the same predicate: Repair quotation type, not customer-
+            # pays, not rug-rejected — i.e. a warranty invoice that will
+            # auto-settle via _rug_auto_settle() on post, so no manual
+            # Register Payment is needed.
             for btn in arch.xpath("//button[@name='action_register_payment']"):
                 existing = btn.get('invisible', '')
-                extra = "(x_studio_rug_confirmed and not x_studio_rug_rejected)"
+                extra = "is_rug_invoice"
                 btn.set('invisible', f"({existing}) or {extra}" if existing else extra)
 
             # Post (Confirm) button on RUG invoices: hide until the
