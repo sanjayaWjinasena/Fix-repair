@@ -149,13 +149,14 @@ class AccountPaymentRegister(models.TransientModel):
                               or o.x_studio_rug_rejected
                 )
                 for order in non_rug:
-                    config = self.env['x_minimum_sales_margin'].sudo().search(
-                        [('x_studio_company_id', '=', order.company_id.id)],
-                        limit=1,
-                    )
-                    if not config:
-                        continue
-                    pct = config.x_studio_advance_payment_ or 0.0
+                    # v275: read the % from res.company.x_studio_advance_payment_
+                    # (BugFix-Sales v22 cutover: proxy field backed by
+                    # ir.config_parameter key 'bugfix_sales.advance_payment_pct.<company_id>').
+                    # The old x_minimum_sales_margin Studio model isn't
+                    # declared on standalone dev env — env['x_minimum_sales_margin']
+                    # raised KeyError. Reading via the company proxy is
+                    # portable across Clear-DB + dev.
+                    pct = order.company_id.x_studio_advance_payment_ or 0.0
                     if pct <= 0:
                         continue
                     threshold = round(order.amount_total * pct / 100.0, 2)
