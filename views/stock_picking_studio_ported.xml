@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    v269 — repair-movement fields on stock.picking form.
+
+    Visual delta closed (per screenshot comparison of Clear-DB
+    BR-NE/RET/00304 vs standalone WH/RET/00008, 2026-08-13):
+
+    Left column additions after partner_id ("Receive From"):
+      * Helpdesk Ticket Id — x_studio_helpdesk_ticket_id
+      * Destination Location — location_dest_id
+
+    Right column additions after scheduled_date:
+      * Effective Date — date_done
+      * Ticket Sales Order — x_studio_ticket_sales_order
+
+    Every insertion is gated invisible="not x_studio_helpdesk_ticket_id"
+    so plain non-repair pickings (sales deliveries, receipts, internal
+    transfers unrelated to repair-flow) keep the default layout —
+    only repair-workflow pickings (created via the RR - Auto Create
+    Repair Route action or stamped by Fix-repair helpers) show the
+    extra fields.
+
+    Sentinels inline in //sheet for install-time view validation.
+    Fields x_studio_helpdesk_ticket_id and x_studio_ticket_sales_order
+    already declared state=base by Fix-repair v253 and v257.
+-->
+<odoo>
+
+    <record id="view_stock_picking_repair_movement_fields" model="ir.ui.view">
+        <field name="name">stock.picking.form.repair.movement.fields</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <!-- Sentinel: keep the gate field present in the arch so
+                 install-time validation can resolve the invisible
+                 expressions below. Fix-repair stock_picking._get_view
+                 also injects this at runtime, but that runs AFTER
+                 install-time XML validation. -->
+            <xpath expr="//sheet" position="inside">
+                <field name="x_studio_helpdesk_ticket_id"
+                       invisible="1"
+                       string="Helpdesk Ticket (sentinel v269)"/>
+            </xpath>
+
+            <!-- Left column, after Receive From / Partner. -->
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="x_studio_helpdesk_ticket_id"
+                       string="Helpdesk Ticket Id"
+                       invisible="not x_studio_helpdesk_ticket_id"
+                       readonly="1"/>
+                <field name="location_dest_id"
+                       string="Destination Location"
+                       invisible="not x_studio_helpdesk_ticket_id"
+                       readonly="1"/>
+            </xpath>
+
+            <!-- Right column, after Scheduled Date. -->
+            <xpath expr="//field[@name='scheduled_date']" position="after">
+                <field name="date_done"
+                       string="Effective Date"
+                       invisible="not x_studio_helpdesk_ticket_id"
+                       readonly="1"/>
+                <field name="x_studio_ticket_sales_order"
+                       string="Ticket Sales Order"
+                       invisible="not x_studio_helpdesk_ticket_id"
+                       readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

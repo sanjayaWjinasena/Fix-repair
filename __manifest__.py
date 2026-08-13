@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Fix Repair',
-    'version': '17.0.1.0.268',
+    'version': '17.0.1.0.269',
     'summary': 'Enhancements to the Customer Care - Repair helpdesk workflow',
     'author': 'Jinasena Agricultural Machinery (Pvt) Ltd.',
     'category': 'Helpdesk',
@@ -48,6 +48,8 @@
         'views/project_task_studio_ported.xml',
         # v267: Approve/Reject RUG direct-method buttons on sale.order
         'views/sale_order_studio_ported.xml',
+        # v269: repair-movement field placements on stock.picking
+        'views/stock_picking_studio_ported.xml',
         'views/res_config_settings_views.xml',
         'views/sale_report_templates.xml',
     ],
