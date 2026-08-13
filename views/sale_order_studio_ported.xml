@@ -30,8 +30,18 @@
                  rug_confirmed, rug_rejected). The two below are net
                  new to install-time validation. -->
             <xpath expr="//sheet" position="inside">
+                <!-- v268: full sentinel set for the RUG-button invisible
+                     expression. All these are declared state=base but
+                     the base sale.order arch on standalone doesn't
+                     render them, so install-time view validation
+                     doesn't see them without static sentinels. Fix-
+                     repair sale_order._get_view runtime-injects some
+                     of these too — belt-and-braces here. -->
                 <field name="x_studio_rug_approved" invisible="1"/>
                 <field name="x_studio_rug_request_sent" invisible="1"/>
+                <field name="x_studio_rug_rejected" invisible="1"/>
+                <field name="x_studio_quotation_type" invisible="1"/>
+                <field name="x_repair_customer_pays" invisible="1"/>
             </xpath>
 
             <!-- Place both buttons after action_confirm in the header. -->
