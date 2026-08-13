@@ -2564,7 +2564,17 @@ class HelpdeskTicket(models.Model):
         # virtual / warehouse-less location, fall back to the destination
         # warehouse (still gives a sensible XX-YY prefix) before the
         # generic any-internal-in-this-company fallback.
-        PickType = self.env['stock.picking.type'].sudo()
+        #
+        # v272: active_test=False. Bare Odoo installs sometimes ship
+        # the default warehouse's Internal Transfers picking type in
+        # an inactive state — the ORM's implicit active=True filter
+        # would then hide it and every repair-flow picking would
+        # silently no-op. activate_internal_picking_types(env) in
+        # hooks.py also flips those types active=True at install /
+        # upgrade time, so both layers are covered.
+        PickType = self.env['stock.picking.type'].sudo().with_context(
+            active_test=False,
+        )
         pick_type = False
         if source_loc.warehouse_id:
             pick_type = PickType.search([

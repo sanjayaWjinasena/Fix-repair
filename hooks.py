@@ -450,6 +450,43 @@ def enable_project_extras(env):
     )
 
 
+def activate_internal_picking_types(env):
+    """v272: flip active=True on every stock.picking.type with
+    code='internal' whose warehouse_id is set.
+
+    Bare Odoo installs sometimes ship the default warehouse's
+    "Internal Transfers" picking type in an inactive state. Odoo's
+    ORM auto-filters active=True on searches, so
+    stock.picking.type.search([('code','=','internal')]) returns
+    empty on those envs — and _create_repair_transfer (helpdesk_ticket.py)
+    silently returns False for Send-to-Factory / Received-at-Factory /
+    Send-to-Sales-Centre / Received-at-Sales-Centre. The stage still
+    advances (action_* methods ignore the return value) but no
+    stock.picking is created, breaking the movement chain after the
+    initial Return.
+
+    Idempotent: only writes when active is currently False.
+    Warehouse scope (warehouse_id set) skips company-scoped-only or
+    orphan internal types that shouldn't be resurrected.
+    """
+    PickType = env['stock.picking.type'].sudo().with_context(
+        active_test=False,
+    )
+    dormant = PickType.search([
+        ('code', '=', 'internal'),
+        ('warehouse_id', '!=', False),
+        ('active', '=', False),
+    ])
+    if not dormant:
+        return
+    dormant.write({'active': True})
+    _logger.info(
+        "Fix-repair: reactivated %d dormant internal stock.picking.type "
+        "record(s): %s",
+        len(dormant), dormant.mapped('name'),
+    )
+
+
 def post_init_hook(env):
     """Odoo 17 post-install hook signature: (env)."""
     strip_studio_xmlids_for_ported_fields(env)
@@ -460,3 +497,4 @@ def post_init_hook(env):
     seed_admin_repair_location_defaults(env)
     seed_repair_return_receipt_locations(env)
     enable_project_extras(env)
+    activate_internal_picking_types(env)
