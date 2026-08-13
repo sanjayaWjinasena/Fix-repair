@@ -1874,6 +1874,32 @@ class HelpdeskTicket(models.Model):
                         sheet.insert(0, fld)
                 break
 
+            # v225: relocated from views/helpdesk_ticket_views.xml's
+            # `helpdesk_ticket_form_hide_fields` record. That XML inherit
+            # broke Clear-DB install (2026-08-13) with:
+            #   Element <xpath expr="//field[@name='x_studio_rug_repair']">
+            #   cannot be located in parent view
+            # because Studio's arch no longer places these 9 x_studio_*
+            # fields on the composed helpdesk.ticket form. XML xpath fails
+            # install-time validation for a target that isn't in the
+            # merged parent arch. Python-side arch.xpath silently returns
+            # [] for missing targets so the loop skips them — same
+            # end-state (hidden if present, no-op if absent).
+            _HIDE_IF_PRESENT = (
+                'x_studio_rug_repair',
+                'x_studio_rug_confirmed',
+                'x_studio_quick_repair_status',
+                'x_studio_cancel_reason',
+                'x_studio_items',
+                'x_studio_source_location_1',
+                'x_studio_tracking',
+                'x_studio_normal_repair_with_serial_no',
+                'x_studio_normal_repair_without_serial_no',
+            )
+            for fname in _HIDE_IF_PRESENT:
+                for el in arch.xpath(f"//field[@name='{fname}']"):
+                    el.set('invisible', '1')
+
             # Recolour Return (action 195) and Plan Intervention
             # (action_generate_fsm_task) buttons to primary purple.
             # Done here in Python instead of in the XML inherit

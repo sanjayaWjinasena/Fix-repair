@@ -218,40 +218,25 @@
         </field>
     </record>
 
-    <record id="helpdesk_ticket_form_hide_fields" model="ir.ui.view">
-        <field name="name">helpdesk.ticket.form.hide.fields</field>
+    <!--
+        v225: helpdesk_ticket_form_hide_fields inherit REMOVED. All 9
+        x_studio_* field hides moved into
+        models/helpdesk_ticket.py:_get_view (see _HIDE_IF_PRESENT
+        tuple). The XML inherit failed install-time validation on
+        Clear-DB (2026-08-13) because Studio's arch no longer places
+        those fields in the merged parent view — XML xpath fails on
+        a missing target, whereas Python arch.xpath returns [] and
+        the loop safely no-ops. Only field left that used to hide
+        here (team_id) is a native field always present in the base
+        arch, so keeping it as its own inherit for clarity.
+    -->
+    <record id="helpdesk_ticket_form_hide_team_id" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.form.hide.team_id</field>
         <field name="model">helpdesk.ticket</field>
         <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
         <field name="priority">99</field>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='team_id']" position="attributes">
-                <attribute name="invisible">1</attribute>
-            </xpath>
-            <xpath expr="//field[@name='x_studio_rug_repair']" position="attributes">
-                <attribute name="invisible">1</attribute>
-            </xpath>
-            <xpath expr="//field[@name='x_studio_rug_confirmed']" position="attributes">
-                <attribute name="invisible">1</attribute>
-            </xpath>
-            <xpath expr="//field[@name='x_studio_quick_repair_status']" position="attributes">
-                <attribute name="invisible">1</attribute>
-            </xpath>
-            <xpath expr="//field[@name='x_studio_cancel_reason']" position="attributes">
-                <attribute name="invisible">1</attribute>
-            </xpath>
-            <xpath expr="//field[@name='x_studio_items']" position="attributes">
-                <attribute name="invisible">1</attribute>
-            </xpath>
-            <xpath expr="//field[@name='x_studio_source_location_1']" position="attributes">
-                <attribute name="invisible">1</attribute>
-            </xpath>
-            <xpath expr="//field[@name='x_studio_tracking']" position="attributes">
-                <attribute name="invisible">1</attribute>
-            </xpath>
-            <xpath expr="//field[@name='x_studio_normal_repair_with_serial_no']" position="attributes">
-                <attribute name="invisible">1</attribute>
-            </xpath>
-            <xpath expr="//field[@name='x_studio_normal_repair_without_serial_no']" position="attributes">
                 <attribute name="invisible">1</attribute>
             </xpath>
         </field>
