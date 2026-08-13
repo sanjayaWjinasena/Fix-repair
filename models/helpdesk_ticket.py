@@ -1866,6 +1866,18 @@ class HelpdeskTicket(models.Model):
                     # captured before first movement stays a truthful
                     # record.
                     'x_ticket_locked',
+                    # Follow-up to the 18b277d hide-loop relocation
+                    # (2026-08-13). Studio's arch on Clear-DB no
+                    # longer places x_studio_rug_repair or
+                    # x_studio_valid_return anywhere, so OWL raises
+                    # `Name 'x_studio_rug_repair' is not defined`
+                    # when the Plan Intervention button's
+                    # invisible expression (set later in this
+                    # _get_view) tries to evaluate. Injecting
+                    # sentinels here — additive, no removal from
+                    # the Clear-DB arch.
+                    'x_studio_rug_repair',
+                    'x_studio_valid_return',
                 ):
                     if not arch.xpath(f"//field[@name='{fname}']"):
                         fld = etree.Element('field')
