@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Fix Repair',
-    'version': '17.0.1.0.264',
+    'version': '17.0.1.0.265',
     'summary': 'Enhancements to the Customer Care - Repair helpdesk workflow',
     'author': 'Jinasena Agricultural Machinery (Pvt) Ltd.',
     'category': 'Helpdesk',
@@ -35,6 +35,11 @@
         # dropdown. Load after ACL CSV (server action has no ACL of
         # its own but keeps ordering consistent) and before view files.
         'data/helpdesk_ticket_server_actions.xml',
+        # v265: expose RR - End Quick Repair (Tested OK button target)
+        # as a Python-declared ir.actions.server. MUST load before
+        # views/project_task_studio_ported.xml which references it via
+        # %(Fix-repair.action_repair_end_quick_repair)d.
+        'data/project_task_server_actions.xml',
         'views/helpdesk_ticket_views.xml',
         'views/helpdesk_ticket_studio_ported.xml',
         'views/helpdesk_ticket_studio_field_hides.xml',

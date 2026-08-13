@@ -394,6 +394,62 @@ def seed_repair_return_receipt_locations(env):
     )
 
 
+def enable_project_extras(env):
+    """v265: match Clear-DB's project-feature parity on standalone.
+
+    Three related toggles that light up 3 native project.task form
+    buttons which are absent on standalone because the underlying
+    features/settings default to off:
+
+      1. Task Dependencies (button `action_dependent_tasks`) —
+         controlled by both a group (`project.group_project_task_dependencies`)
+         and per-project `allow_task_dependencies` flag.
+      2. Recurring Tasks (button `action_recurring_tasks`) —
+         controlled by a group (`project.group_project_recurring_tasks`).
+      3. Ratings (button `action_open_ratings`) — controlled by
+         per-project `rating_active` flag. (Team-level `use_rating`
+         is already True on standalone via bare-install defaults.)
+
+    Idempotent — only writes when the flag/membership is currently off.
+    """
+    Users = env['res.users'].sudo()
+    Project = env['project.project'].sudo()
+
+    # Group memberships — pick every non-share active user.
+    internal_users = Users.search([
+        ('share', '=', False), ('active', '=', True),
+    ])
+    for xmlid in (
+        'project.group_project_task_dependencies',
+        'project.group_project_recurring_tasks',
+    ):
+        grp = env.ref(xmlid, raise_if_not_found=False)
+        if not grp:
+            continue
+        to_add = internal_users - grp.users
+        if to_add:
+            grp.write({'users': [(4, u.id) for u in to_add]})
+
+    # Per-project flags.
+    projects = Project.search([])
+    changed = 0
+    for proj in projects:
+        vals = {}
+        if not proj.allow_task_dependencies:
+            vals['allow_task_dependencies'] = True
+        if not proj.rating_active:
+            vals['rating_active'] = True
+        if vals:
+            proj.write(vals)
+            changed += 1
+
+    _logger.info(
+        "Fix-repair: enabled project extras on %d project(s); joined "
+        "%d internal user(s) to task-dependencies + recurring-tasks groups.",
+        changed, len(internal_users),
+    )
+
+
 def post_init_hook(env):
     """Odoo 17 post-install hook signature: (env)."""
     strip_studio_xmlids_for_ported_fields(env)
@@ -403,3 +459,4 @@ def post_init_hook(env):
     enable_product_returns_on_all_teams(env)
     seed_admin_repair_location_defaults(env)
     seed_repair_return_receipt_locations(env)
+    enable_project_extras(env)

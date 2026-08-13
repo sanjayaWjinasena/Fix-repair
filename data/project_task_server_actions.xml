@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    v265 — expose the RR - End Quick Repair Studio server action
+    (Clear-DB action id 2316) as a Python-declared ir.actions.server
+    so standalone (repair-test-101) users see the "Tested OK"
+    header button on project.task, matching Clear-DB.
+
+    Python delegate: _repair_studio_end_quick_repair
+    (models/project_task.py:521). It writes the task's
+    x_studio_end_quick_repair flag and advances the linked ticket
+    to the Repair Completed stage. Ported v144-v145; this file
+    ships the XML binding so the Actions dropdown + Tested OK button
+    can invoke it.
+
+    binding_view_types="form,list" mirrors Clear-DB action 2316
+    (list,form on Clear-DB but same effect — surfaced in the Actions
+    dropdown from both list and form views).
+-->
+<odoo>
+
+    <record id="action_repair_end_quick_repair" model="ir.actions.server">
+        <field name="name">RR - End Quick Repair</field>
+        <field name="model_id" ref="project.model_project_task"/>
+        <field name="binding_model_id" ref="project.model_project_task"/>
+        <field name="binding_view_types">form,list</field>
+        <field name="state">code</field>
+        <field name="code">
+# Fix-repair v265: delegates to native Python method already ported
+# from Clear-DB Studio server action 2316.
+if record:
+    record._repair_studio_end_quick_repair()
+        </field>
+    </record>
+
+</odoo>

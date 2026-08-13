@@ -35,6 +35,21 @@
                        string="Help Desk Ticket (sentinel)"/>
             </xpath>
 
+            <!-- v265: Tested OK header button — matches Clear-DB's
+                 Studio arch verbatim (invisible expression identical),
+                 binds to Fix-repair.action_repair_end_quick_repair
+                 (delegates to project.task._repair_studio_end_quick_repair
+                 in models/project_task.py:521). Insert AFTER the
+                 personal_stage_type_id field, same slot Clear-DB
+                 view 3019 uses. -->
+            <xpath expr="//field[@name='personal_stage_type_id']" position="after">
+                <button name="%(Fix-repair.action_repair_end_quick_repair)d"
+                        type="action"
+                        string="Tested OK"
+                        class="btn-primary"
+                        invisible="material_line_product_count &gt; 0 or x_studio_cancelled == True or not helpdesk_ticket_id or x_studio_end_quick_repair == True"/>
+            </xpath>
+
             <!-- v261: header field insertions matching Clear-DB Studio
                  view 3019 verbatim. Rename user_ids label + insert
                  helpdesk_ticket_id / x_studio_created_date /
