@@ -47,6 +47,11 @@ class XTaskDiagnosis(models.Model):
     # exposing an x_name input (Studio hides it via column_invisible).
     x_name = fields.Char(string='Name')
 
+    # v276: standard Odoo active pattern — mirrors Clear-DB's Studio
+    # x_active. Diagnosis rows can be soft-deleted from catalogues
+    # without cascading through project.task history.
+    x_active = fields.Boolean(string='Active', default=True)
+
     # The back-reference project.task.x_studio_diagnosis_ids traverses
     # into on load-time setup_nonrelated. Must exist as a real Python
     # field for Fix-repair to install cleanly.

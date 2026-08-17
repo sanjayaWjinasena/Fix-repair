@@ -65,3 +65,18 @@ class StockLocation(models.Model):
         column2='user_id',
         string='Users (Internal Transfer)',
     )
+
+    # v276: third Studio-generated m2m to res.users. Cryptic name kept
+    # verbatim to match Clear-DB. Distinct relation table from the two
+    # above so writes on this field don't leak into stock/internal
+    # transfer scopes. Purpose: additional per-user location scope
+    # referenced by Studio view arch; no Python consumer today, but
+    # declared so install-time view validation and future Studio arch
+    # ports (Clear-DB upgrade) resolve cleanly.
+    x_studio_many2many_field_7kpUe = fields.Many2many(
+        'res.users',
+        relation='stock_location_users_scope_7kpue_rel',
+        column1='location_id',
+        column2='user_id',
+        string='Users (Scope 7kpUe)',
+    )

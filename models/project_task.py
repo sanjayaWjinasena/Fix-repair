@@ -292,6 +292,29 @@ class ProjectTask(models.Model):
         string='Diagnosis Ids',
     )
 
+    # v276: three remaining Studio-manual fields ported verbatim from
+    # Clear-DB. All three are cross-cutting between repair and other
+    # workflows on the same project.task record.
+    x_studio_payment_type = fields.Selection(
+        selection=[
+            ('Cash', 'Cash'),
+            ('Credit', 'Credit'),
+            ('Advance', 'Advance'),
+        ],
+        string='Payment Type',
+    )
+    x_studio_starting_date = fields.Datetime(
+        string='Starting Date',
+    )
+    # Studio-generated stat counter: number of sale.order records whose
+    # task_id points at this task. Kept as a plain integer to preserve
+    # arch references (Studio wired a stat button to it); actual value
+    # would be computed by Odoo/Studio in prod. Non-stored, no compute
+    # here — reads return 0 on dev env unless separately populated.
+    x_task_id_sale_order_count = fields.Integer(
+        string='Task Id Sale Order Count',
+    )
+
     # Non-stored computed. Studio's original compute added a no-op
     # branch that set valid=False when it was already False — dropped
     # from the port; observable behaviour is unchanged.

@@ -197,6 +197,7 @@ class XConditions(models.Model):
     x_name = fields.Char(string='Condition')
     x_studio_description = fields.Char(string='Description')
     x_studio_sequence = fields.Integer(string='Sequence')
+    x_studio_company_id = fields.Many2one('res.company', string='Company')
 
 
 class XDiagnosisAreas(models.Model):
@@ -213,6 +214,7 @@ class XDiagnosisAreas(models.Model):
     x_name = fields.Char(string='Diagnosis Area')
     x_studio_description = fields.Char(string='Description')
     x_studio_sequence = fields.Integer(string='Sequence')
+    x_studio_company_id = fields.Many2one('res.company', string='Company')
 
 
 class XDiagnosisCodes(models.Model):
@@ -232,6 +234,7 @@ class XDiagnosisCodes(models.Model):
         'x_diagnosis_areas',
         string='Diagnosis Area',
     )
+    x_studio_company_id = fields.Many2one('res.company', string='Company')
 
 
 class XSymptomAreas(models.Model):
@@ -248,6 +251,7 @@ class XSymptomAreas(models.Model):
     x_name = fields.Char(string='Symptom Area')
     x_studio_description = fields.Char(string='Description')
     x_studio_sequence = fields.Integer(string='Sequence')
+    x_studio_company_id = fields.Many2one('res.company', string='Company')
 
 
 class XSymptomCodes(models.Model):
@@ -267,6 +271,7 @@ class XSymptomCodes(models.Model):
         'x_symptom_areas',
         string='Symptom Area',
     )
+    x_studio_company_id = fields.Many2one('res.company', string='Company')
 
 
 class XResolutions(models.Model):
@@ -282,6 +287,7 @@ class XResolutions(models.Model):
     x_name = fields.Char(string='Resolution')
     x_studio_description = fields.Char(string='Description')
     x_studio_sequence = fields.Integer(string='Sequence')
+    x_studio_company_id = fields.Many2one('res.company', string='Company')
 
 
 class _RepairMasterDataMigration(models.AbstractModel):
