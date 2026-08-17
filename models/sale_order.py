@@ -1321,7 +1321,59 @@ class SaleOrder(models.Model):
                     partner = self.env['res.partner'].sudo().browse(partner_id)
                     if partner.x_studio_payment_method:
                         vals['x_studio_order_payment_method'] = partner.x_studio_payment_method
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        records._fix_repair_auto_generate_quotation_type()
+        return records
+
+    def _fix_repair_auto_generate_quotation_type(self):
+        """v277: port of Studio automation 176 / server action 1995
+        'RR - Auto Generate Quotation Type for Repair SOs'.
+
+        Sets x_studio_quotation_type='Repair' (and copies the partner's
+        payment method) on any SO that is FSM-task-linked to a repair
+        project. Clear-DB's version checks
+        `task.project_id.x_studio_repair_project == True`. That field is
+        on project.project and belongs to the deferred Group C (project
+        master data) port — not yet on dev env.
+
+        Dev-env-friendly fallback: if `x_studio_repair_project` isn't
+        declared on project.project, use the presence of
+        `task.helpdesk_ticket_id` (which Fix-repair itself ports) as
+        the repair-flow signal. Same semantic outcome — an SO whose
+        FSM task is tied to a repair helpdesk ticket is a repair SO.
+
+        Idempotent: skips SOs whose quotation_type is already set
+        to something (any value).
+        """
+        Task = self.env['project.task'].sudo()
+        # Detect whether Group C is installed by probing the field.
+        # `_fields` lookup is O(1) and avoids a per-record hasattr on
+        # the browse cache.
+        has_repair_project_flag = (
+            'x_studio_repair_project' in self.env['project.project']._fields
+        )
+        for order in self:
+            if not order.id:
+                continue
+            if order.x_studio_quotation_type:
+                continue  # already set — Studio behaviour is set-once
+            if has_repair_project_flag:
+                task = Task.search([
+                    ('sale_order_id', '=', order.id),
+                    ('project_id.x_studio_repair_project', '=', True),
+                ], limit=1)
+            else:
+                task = Task.search([
+                    ('sale_order_id', '=', order.id),
+                    ('helpdesk_ticket_id', '!=', False),
+                ], limit=1)
+            if not task:
+                continue
+            update = {'x_studio_quotation_type': 'Repair'}
+            partner = order.partner_id
+            if partner and getattr(partner, 'x_studio_payment_method', False):
+                update['x_studio_order_payment_method'] = partner.x_studio_payment_method
+            order.write(update)
 
     def action_quotation_send(self):
         action = super().action_quotation_send()
@@ -1651,5 +1703,11 @@ class SaleOrder(models.Model):
                     for line in order.order_line:
                         if line.product_id:
                             line.write({'price_unit': line.product_id.standard_price})
+
+        # v277: task_id was just set (typical FSM task-create path) —
+        # re-evaluate quotation-type auto-detect. Idempotent on the
+        # helper side (already-set records skip themselves).
+        if 'task_id' in vals:
+            self._fix_repair_auto_generate_quotation_type()
 
         return res
