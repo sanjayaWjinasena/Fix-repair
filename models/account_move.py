@@ -48,6 +48,30 @@ class AccountMove(models.Model):
     is_rug_invoice = fields.Boolean(compute='_compute_is_rug_invoice')
     is_rug_account_set = fields.Boolean(compute='_compute_is_rug_account_set')
 
+    # v280 — Studio field ports required by the 'RR - Validate RUG in
+    # Customer Invoice' automation port. Both live on account.move on
+    # Clear-DB (state=manual, owned by studio_customization).
+    #
+    # x_studio_rug_confirmed: mirror of the linked sale.order's RUG
+    #   confirmation flag. Declared as related through x_studio_sale_id
+    #   (m2o sale.order, declared by studio_migrations). Read-only —
+    #   the source of truth is the SO. Stored so search domains work.
+    x_studio_rug_confirmed = fields.Boolean(
+        string='RUG Confirmed',
+        related='x_studio_sale_id.x_studio_rug_confirmed',
+        store=True,
+        readonly=True,
+    )
+    # x_studio_rug_acc_updated: True once the salesperson has clicked
+    # the 'Change to RUG Account' button on the invoice. Fix-repair's
+    # action_change_to_rug_account (below) sets this to True after
+    # writing the RUG account onto the product lines. Studio's
+    # automation 215 uses it (along with rug_confirmed) as the gate
+    # for firing the auto-settlement on write.
+    x_studio_rug_acc_updated = fields.Boolean(
+        string='RUG Account Updated',
+    )
+
     @api.depends('invoice_origin', 'move_type')
     def _compute_is_rug_invoice(self):
         for move in self:
@@ -192,6 +216,10 @@ class AccountMove(models.Model):
                 lambda l: l.display_type not in ('line_section', 'line_note')
             )
             product_lines.write({'account_id': rug_account.id})
+            # v280 — mirror Studio's rug_acc_updated flag so automation
+            # 215's port (write() override below) can gate on the same
+            # signal it did on Clear-DB.
+            move.x_studio_rug_acc_updated = True
 
     def action_post(self):
         res = super().action_post()
@@ -200,6 +228,58 @@ class AccountMove(models.Model):
                     and move.is_rug_invoice
                     and move.state == 'posted'):
                 move._rug_auto_settle()
+        return res
+
+    def write(self, vals):
+        """v280 — port of Studio automation 215 'RR - Validate RUG in
+        Customer Invoice' (server action 2331).
+
+        Clear-DB code (paraphrased):
+            if rug_confirmed AND rug_acc_updated AND state=='posted':
+              so = env['sale.order'].search([('id','=', x_studio_sale_id.id),
+                                             ('state','=','done')], limit=1)
+              if so:
+                  record['payment_state'] = 'in_payment'
+              else:
+                  raise UserError('Incomplete sales order.')
+
+        Fix-repair's action_post already fires _rug_auto_settle() on
+        RUG invoices at post time — that creates the proper clearing
+        journal entry + reconciles Debtors → payment_state becomes
+        'paid' (better than Studio's cosmetic 'in_payment' flip).
+
+        This write override covers the case Studio caught but
+        action_post can't: when rug_confirmed OR rug_acc_updated
+        transitions True on an ALREADY-posted invoice. Re-runs
+        _rug_auto_settle (idempotent — its early-return guards handle
+        the already-settled case).
+
+        Also matches Studio's error path: raise UserError when the
+        linked sale.order isn't in state='done'.
+        """
+        res = super().write(vals)
+        # Only re-evaluate when a relevant field just changed.
+        triggers = {'x_studio_rug_confirmed', 'x_studio_rug_acc_updated',
+                    'state', 'payment_state'}
+        if not (triggers & set(vals or ())):
+            return res
+        for move in self:
+            if move.state != 'posted':
+                continue
+            if not (move.x_studio_rug_confirmed and move.x_studio_rug_acc_updated):
+                continue
+            if move.move_type != 'out_invoice':
+                continue
+            if move.payment_state not in ('not_paid', 'partial'):
+                continue  # already settled — nothing to do
+            # Studio's guard: linked SO must be in done state
+            so = move.x_studio_sale_id
+            if not so or so.state != 'done':
+                raise UserError(
+                    "Cannot settle RUG invoice %s — the linked sale "
+                    "order must be in Sales Order (done) state." % (move.name,)
+                )
+            move._rug_auto_settle()
         return res
 
     def _rug_auto_settle(self):
