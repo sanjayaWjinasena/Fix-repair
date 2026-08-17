@@ -1352,22 +1352,43 @@ class SaleOrder(models.Model):
         has_repair_project_flag = (
             'x_studio_repair_project' in self.env['project.project']._fields
         )
+
+        def _task_is_repair(task):
+            if not task:
+                return False
+            if has_repair_project_flag:
+                return bool(task.project_id and task.project_id.x_studio_repair_project)
+            # dev-env fallback: repair signal = the task is linked to a
+            # repair helpdesk ticket. Fix-repair itself sets this on
+            # every task created via Plan Intervention.
+            return bool(task.helpdesk_ticket_id)
+
         for order in self:
             if not order.id:
                 continue
             if order.x_studio_quotation_type:
                 continue  # already set — Studio behaviour is set-once
-            if has_repair_project_flag:
-                task = Task.search([
-                    ('sale_order_id', '=', order.id),
-                    ('project_id.x_studio_repair_project', '=', True),
-                ], limit=1)
-            else:
-                task = Task.search([
-                    ('sale_order_id', '=', order.id),
-                    ('helpdesk_ticket_id', '!=', False),
-                ], limit=1)
-            if not task:
+            # Two possible link directions between sale.order and task:
+            #   1. sale.order.task_id -> project.task  (SO created FROM
+            #      a task, most common FSM path)
+            #   2. project.task.sale_order_id -> sale.order  (task
+            #      created FROM an SO; used by some create-from-quote
+            #      flows)
+            # Check the direct link on the SO first, then fall back
+            # to searching by the reverse.
+            candidate = order.task_id if order.task_id else False
+            if not _task_is_repair(candidate):
+                if has_repair_project_flag:
+                    candidate = Task.search([
+                        ('sale_order_id', '=', order.id),
+                        ('project_id.x_studio_repair_project', '=', True),
+                    ], limit=1)
+                else:
+                    candidate = Task.search([
+                        ('sale_order_id', '=', order.id),
+                        ('helpdesk_ticket_id', '!=', False),
+                    ], limit=1)
+            if not _task_is_repair(candidate):
                 continue
             update = {'x_studio_quotation_type': 'Repair'}
             partner = order.partner_id
