@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from . import account_move
+from . import account_payment
 from . import account_payment_register
 from . import helpdesk_ticket
 from . import helpdesk_create_fsm_task
