@@ -53,15 +53,32 @@ class AccountMove(models.Model):
     # Clear-DB (state=manual, owned by studio_customization).
     #
     # x_studio_rug_confirmed: mirror of the linked sale.order's RUG
-    #   confirmation flag. Declared as related through x_studio_sale_id
-    #   (m2o sale.order, declared by studio_migrations). Read-only —
-    #   the source of truth is the SO. Stored so search domains work.
+    #   confirmation flag. Computed by walking invoice_origin →
+    #   sale.order (same pattern as is_rug_invoice above). Not a
+    #   `related` because x_studio_sale_id lives in the optional
+    #   `studio_migrations` module — Fix-repair can't hard-depend on
+    #   it without expanding the tree, and Odoo's setup_related bails
+    #   at load time when the source field isn't yet registered.
+    #   Compute is stored so search domains work.
     x_studio_rug_confirmed = fields.Boolean(
         string='RUG Confirmed',
-        related='x_studio_sale_id.x_studio_rug_confirmed',
+        compute='_compute_x_studio_rug_confirmed',
         store=True,
         readonly=True,
     )
+
+    @api.depends('invoice_origin', 'move_type')
+    def _compute_x_studio_rug_confirmed(self):
+        for move in self:
+            if not move.invoice_origin:
+                move.x_studio_rug_confirmed = False
+                continue
+            so = self.env['sale.order'].sudo().search(
+                [('name', '=', move.invoice_origin)], limit=1
+            )
+            move.x_studio_rug_confirmed = bool(
+                so and getattr(so, 'x_studio_rug_confirmed', False)
+            )
     # x_studio_rug_acc_updated: True once the salesperson has clicked
     # the 'Change to RUG Account' button on the invoice. Fix-repair's
     # action_change_to_rug_account (below) sets this to True after
@@ -272,8 +289,18 @@ class AccountMove(models.Model):
                 continue
             if move.payment_state not in ('not_paid', 'partial'):
                 continue  # already settled — nothing to do
-            # Studio's guard: linked SO must be in done state
-            so = move.x_studio_sale_id
+            # Studio's guard: linked SO must be in done state. Prefer
+            # x_studio_sale_id (Studio's direct m2o link — declared by
+            # studio_migrations) when present; fall back to
+            # invoice_origin lookup (Fix-repair's standard mechanism)
+            # for envs without studio_migrations installed.
+            so = False
+            if hasattr(move, 'x_studio_sale_id') and move.x_studio_sale_id:
+                so = move.x_studio_sale_id
+            elif move.invoice_origin:
+                so = self.env['sale.order'].sudo().search(
+                    [('name', '=', move.invoice_origin)], limit=1
+                )
             if not so or so.state != 'done':
                 raise UserError(
                     "Cannot settle RUG invoice %s — the linked sale "
