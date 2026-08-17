@@ -1735,11 +1735,14 @@ class SaleOrder(models.Model):
         if 'task_id' in vals:
             self._fix_repair_auto_generate_quotation_type()
 
-        # v283: track lock/unlock cycle for repair SOs (ports Studio
-        # automations 202 + 203). Only re-evaluate when one of the
-        # gate fields changed; the helper is itself guarded against
-        # its own re-entry via _fix_repair_track_lock context flag.
-        lock_triggers = {'state', 'x_studio_quotation_type',
+        # v283/v285: track lock/unlock cycle for repair SOs.
+        # v285: watches native `locked` field (Odoo 17) instead of the
+        # legacy `state == 'done'` gate the Studio automation used --
+        # see _fix_repair_apply_track_lock_status docstring for
+        # background. Only re-evaluate when a gate field changed; the
+        # helper is guarded against re-entry via
+        # _fix_repair_track_lock context flag.
+        lock_triggers = {'locked', 'x_studio_quotation_type',
                          'x_studio_locked', 'x_studio_unlocked',
                          'x_studio_re_estimate_count'}
         if lock_triggers & set(vals or ()):
@@ -1749,26 +1752,38 @@ class SaleOrder(models.Model):
         return res
 
     def _fix_repair_apply_track_lock_status(self):
-        """v283: port of Studio automations 202 + 203 (RR - Track Lock
-        Status / - 2).
+        """v283/v285: port of Studio automations 202 + 203 (RR - Track
+        Lock Status / - 2), adapted for Odoo 17.
 
-        202 (lock): when a Repair SO reaches state='done', lock it and
-        sync the header's re_estimate_count from the most recent
-        re-estimated line's per-line count.
+        Odoo-17 semantic gap: the original Studio code gated on
+        `state == 'done'`. Odoo 17 removed the `done` state from
+        sale.order (states are draft/sent/sale/cancel only) and moved
+        the lock semantic to a Boolean field `locked`. The Studio code
+        has therefore been dead on Clear-DB since the Odoo 17 upgrade --
+        no SO ever satisfied the guard so x_studio_locked / -unlocked
+        / -re_estimate_count have been stuck at their defaults.
 
-        203 (unlock): when a locked Repair SO drops back to state='sale'
-        (typical trigger: user re-opens for re-estimation), unlock it.
+        v285 adapts to Odoo 17 by watching `locked` instead:
 
-        Both are idempotent: the write is skipped when the target
-        values already match. Recursion into write() is prevented by
-        the _fix_repair_track_lock context flag.
+        202 (lock): when a Repair SO's native `locked` flips True,
+            mirror to x_studio_locked=True, x_studio_unlocked=False,
+            and sync the header's re_estimate_count from the most
+            recent re-estimated line's per-line count.
+
+        203 (unlock): when a locked Repair SO's native `locked` flips
+            back to False, mirror x_studio_locked=False,
+            x_studio_unlocked=True.
+
+        Both branches are idempotent: the write is skipped when the
+        target values already match. Recursion into write() is
+        prevented by the _fix_repair_track_lock context flag.
         """
         Line = self.env['sale.order.line'].sudo()
         for order in self:
             if order.x_studio_quotation_type != 'Repair':
                 continue
-            # 202 - lock path
-            if order.state == 'done':
+            # 202 - lock path (native locked = True)
+            if order.locked:
                 re_line = Line.search([
                     ('order_id', '=', order.id),
                     ('x_studio_re_estimated', '=', True),
@@ -1785,8 +1800,8 @@ class SaleOrder(models.Model):
                         'x_studio_unlocked': False,
                         'x_studio_re_estimate_count': target_count,
                     })
-            # 203 - unlock path
-            elif order.state == 'sale' and order.x_studio_locked:
+            # 203 - unlock path (native locked = False, Studio locked still True)
+            elif order.x_studio_locked:
                 order.with_context(_fix_repair_track_lock=True).write({
                     'x_studio_locked': False,
                     'x_studio_unlocked': True,
