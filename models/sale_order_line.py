@@ -84,3 +84,35 @@ class SaleOrderLine(models.Model):
             return res
         self._fix_repair_maybe_reprice_rug_line()
         return res
+
+    @api.onchange('product_id', 'product_uom_qty', 'price_unit')
+    def _fix_repair_onchange_track_re_estimate(self):
+        """v283: port of Studio automation 204 / server action 2252
+        (RR - Track Lock Status - 3).
+
+        When the parent Repair SO is currently unlocked (i.e. the user
+        has re-opened it for re-estimation via automation 203's path),
+        any line-level edit in the form marks the line as re-estimated
+        and stamps its per-line counter to (header.re_estimate_count + 1).
+
+        Studio's trigger has no field filter -- fires on ANY change --
+        but this Python onchange watches only the fields that meaningfully
+        affect a re-estimate (product change, qty change, price change).
+        Add more fields here if a Studio-form edit is missed in practice.
+
+        Reads header state via record.order_id.x_studio_xxx instead of
+        declaring line-level related copies -- the Studio automation
+        used implicit line-level related fields, but for the Python
+        port there's no need to add three redundant related fields to
+        the schema.
+        """
+        for line in self:
+            order = line.order_id
+            if not order:
+                continue
+            if order.x_studio_quotation_type != 'Repair':
+                continue
+            if not order.x_studio_unlocked:
+                continue
+            line.x_studio_re_estimated = True
+            line.x_studio_count_1 = order.x_studio_re_estimate_count + 1

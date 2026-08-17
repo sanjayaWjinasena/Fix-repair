@@ -1323,6 +1323,10 @@ class SaleOrder(models.Model):
                         vals['x_studio_order_payment_method'] = partner.x_studio_payment_method
         records = super().create(vals_list)
         records._fix_repair_auto_generate_quotation_type()
+        # v283: newly-created SOs that came in already at state='done'
+        # (rare but possible for imports/data-fix scripts) should get
+        # locked on create too. No-op for the common draft-create path.
+        records._fix_repair_apply_track_lock_status()
         return records
 
     def _fix_repair_auto_generate_quotation_type(self):
@@ -1731,4 +1735,59 @@ class SaleOrder(models.Model):
         if 'task_id' in vals:
             self._fix_repair_auto_generate_quotation_type()
 
+        # v283: track lock/unlock cycle for repair SOs (ports Studio
+        # automations 202 + 203). Only re-evaluate when one of the
+        # gate fields changed; the helper is itself guarded against
+        # its own re-entry via _fix_repair_track_lock context flag.
+        lock_triggers = {'state', 'x_studio_quotation_type',
+                         'x_studio_locked', 'x_studio_unlocked',
+                         'x_studio_re_estimate_count'}
+        if lock_triggers & set(vals or ()):
+            if not self.env.context.get('_fix_repair_track_lock'):
+                self._fix_repair_apply_track_lock_status()
+
         return res
+
+    def _fix_repair_apply_track_lock_status(self):
+        """v283: port of Studio automations 202 + 203 (RR - Track Lock
+        Status / - 2).
+
+        202 (lock): when a Repair SO reaches state='done', lock it and
+        sync the header's re_estimate_count from the most recent
+        re-estimated line's per-line count.
+
+        203 (unlock): when a locked Repair SO drops back to state='sale'
+        (typical trigger: user re-opens for re-estimation), unlock it.
+
+        Both are idempotent: the write is skipped when the target
+        values already match. Recursion into write() is prevented by
+        the _fix_repair_track_lock context flag.
+        """
+        Line = self.env['sale.order.line'].sudo()
+        for order in self:
+            if order.x_studio_quotation_type != 'Repair':
+                continue
+            # 202 - lock path
+            if order.state == 'done':
+                re_line = Line.search([
+                    ('order_id', '=', order.id),
+                    ('x_studio_re_estimated', '=', True),
+                ], limit=1, order='id desc')
+                target_count = re_line.x_studio_count_1 if re_line else 0
+                needs_update = (
+                    not order.x_studio_locked
+                    or order.x_studio_unlocked
+                    or order.x_studio_re_estimate_count != target_count
+                )
+                if needs_update:
+                    order.with_context(_fix_repair_track_lock=True).write({
+                        'x_studio_locked': True,
+                        'x_studio_unlocked': False,
+                        'x_studio_re_estimate_count': target_count,
+                    })
+            # 203 - unlock path
+            elif order.state == 'sale' and order.x_studio_locked:
+                order.with_context(_fix_repair_track_lock=True).write({
+                    'x_studio_locked': False,
+                    'x_studio_unlocked': True,
+                })
