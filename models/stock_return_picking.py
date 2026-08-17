@@ -309,6 +309,83 @@ class StockReturnPicking(models.TransientModel):
 
         return arch, view
 
+    def _fix_repair_validate_return_location(self):
+        """Validate location_id matches the ticket's suggested return
+        location for RUG or Normal-with-Serial-No repair returns.
+
+        Ports Studio automation 174 -> server action 1991 (RR - Auto
+        Select Product for RUG Repairs-3). Original code re-searched
+        helpdesk.ticket by (id, company_id) to gate on active-company
+        ownership and branched location field by company_id == 1.
+
+        Our _compute_moves_locations already coerces location_id to the
+        suggested value, so this guard normally never trips -- it only
+        catches operator overrides after the auto-set.
+        """
+        for wizard in self:
+            if not wizard.ticket_id:
+                continue
+            if not (wizard.x_studio_repair_rug
+                    or wizard.x_studio_repair_normal_with_serial_no):
+                continue
+            active_company_id = (
+                self.env.context.get('allowed_company_ids',
+                                     [self.env.company.id])
+                or [self.env.company.id]
+            )[0]
+            # Symmetric with automation 174 and _compute_moves_locations:
+            # company 1 uses the base field, all others use the _1 variant.
+            if active_company_id == 1:
+                suggested = wizard.x_studio_suggested_location_id
+            else:
+                suggested = wizard.x_studio_suggested_location_id_1
+            # Skip if the ticket has no suggested location -- the ticket
+            # is under-configured and a UserError here would just be noise.
+            if not suggested:
+                continue
+            # Match automation 174's own re-search: only enforce when the
+            # ticket belongs to the active company. A ticket in company X
+            # opened under company Y falls through without validation.
+            ticket = self.env['helpdesk.ticket'].sudo().search([
+                ('id', '=', wizard.ticket_id.id),
+                ('company_id', '=', active_company_id),
+            ], limit=1)
+            if not ticket:
+                continue
+            if wizard.location_id.id != suggested.id:
+                raise UserError(
+                    "Return Location should be equal to Suggested "
+                    "Return Location."
+                )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        # fix_repair:idempotent-v1 -- port of automation 174 (on_create).
+        # Our _compute_moves_locations is precompute=True on location_id,
+        # so by the time create() returns the wizard already carries the
+        # coerced value. Validation here catches any manual location_id
+        # in vals_list that overrode the compute output.
+        records = super().create(vals_list)
+        records._fix_repair_validate_return_location()
+        return records
+
+    def write(self, vals):
+        res = super().write(vals)
+        # fix_repair:idempotent-v1 -- port of automation 174 (on_write).
+        # Guarded on watched-field changes so unrelated writes (e.g.
+        # line quantity edits from downstream computes) don't re-run
+        # the check for no benefit.
+        watched = {
+            'location_id', 'ticket_id',
+            'x_studio_repair_rug',
+            'x_studio_repair_normal_with_serial_no',
+            'x_studio_suggested_location_id',
+            'x_studio_suggested_location_id_1',
+        }
+        if watched & set(vals or ()):
+            self._fix_repair_validate_return_location()
+        return res
+
     @api.depends('picking_id', 'ticket_id')
     def _compute_moves_locations(self):
         super()._compute_moves_locations()
