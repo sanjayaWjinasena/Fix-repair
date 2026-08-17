@@ -289,11 +289,13 @@ class AccountMove(models.Model):
                 continue
             if move.payment_state not in ('not_paid', 'partial'):
                 continue  # already settled — nothing to do
-            # Studio's guard: linked SO must be in done state. Prefer
-            # x_studio_sale_id (Studio's direct m2o link — declared by
+            # Studio's guard: linked SO must be in done state. Odoo 17
+            # removed sale.order.state='done' -- the native lock
+            # semantic moved to a Boolean field `locked` (same v285
+            # gap that broke the Track Lock trio's port). Prefer
+            # x_studio_sale_id (Studio's direct m2o link declared by
             # studio_migrations) when present; fall back to
-            # invoice_origin lookup (Fix-repair's standard mechanism)
-            # for envs without studio_migrations installed.
+            # invoice_origin lookup for envs without studio_migrations.
             so = False
             if hasattr(move, 'x_studio_sale_id') and move.x_studio_sale_id:
                 so = move.x_studio_sale_id
@@ -301,10 +303,11 @@ class AccountMove(models.Model):
                 so = self.env['sale.order'].sudo().search(
                     [('name', '=', move.invoice_origin)], limit=1
                 )
-            if not so or so.state != 'done':
+            if not so or not so.locked:
                 raise UserError(
-                    "Cannot settle RUG invoice %s — the linked sale "
-                    "order must be in Sales Order (done) state." % (move.name,)
+                    "Cannot settle RUG invoice %s -- the linked sale "
+                    "order must be locked (equivalent to the pre-Odoo-17 "
+                    "'done' state)." % (move.name,)
                 )
             move._rug_auto_settle()
         return res
