@@ -275,10 +275,14 @@ class AccountMove(models.Model):
         linked sale.order isn't in state='done'.
         """
         res = super().write(vals)
-        # Only re-evaluate when a relevant field just changed.
-        triggers = {'x_studio_rug_confirmed', 'x_studio_rug_acc_updated',
-                    'state', 'payment_state'}
-        if not (triggers & set(vals or ())):
+        # v288: narrowed guard. v286 fired on ANY change to any of
+        # {rug_confirmed, rug_acc_updated, state, payment_state}, which
+        # was too broad -- v287's SO -> invoice compute propagation
+        # would trip it and raise "SO must be locked" errors on background
+        # writes. Studio's automation only fires meaningfully when the
+        # user (or an upstream automation) sets rug_acc_updated=True on
+        # a posted RUG invoice. Match that intent precisely.
+        if vals.get('x_studio_rug_acc_updated') is not True:
             return res
         for move in self:
             if move.state != 'posted':
