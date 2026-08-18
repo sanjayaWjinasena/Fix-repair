@@ -1,26 +1,49 @@
 # -*- coding: utf-8 -*-
-"""res.users Studio-port surface fully relocated to
-`studio_usermodel_migration` — this module now owns nothing on
-res.users.
+"""res.users Studio field declarations moved to
+`studio_usermodel_migration` (v0.0.7). This file retains only the
+`_migrate_studio_res_users_cluster_to_base` one-shot migration method
+because data/fix_repair_data.xml still calls it via <function>.
 
-Historical context:
-  v215-v275: this file declared 6 Studio fields on res.users
-    (4 location m2o + 2 super-user booleans) plus the
-    _super_user_validate guard and create/write overrides that
-    replaced automation 250.
-  v289: fields, guard, and overrides moved to
-    studio_usermodel_migration/models/res_users.py so that
-    module's res.users form view arch (which references those
-    fields) can validate cleanly at load time (SUM loads BEFORE
-    Fix-repair in the dep graph — the fields must exist by then).
-  v290 (this file): removed the ResUsers class entirely to prevent
-    accidental double-declaration or drift.
-
-helpdesk.ticket related='user_id.x_studio_virtual_location' chains
-still work because SUM declares the underlying user field first.
-
-Kept as a stub so:
-  * imports (from . import res_users in models/__init__.py) don't
-    KeyError
-  * any git history reference to this path resolves
+The method is idempotent -- flips `state='manual' -> 'base'` on the
+4 location fields (which now live in SUM). If SUM has already
+completed that migration, the search returns nothing and the call
+is a no-op. Safe to run on any DB.
 """
+from odoo import api, models
+
+
+class ResUsers(models.Model):
+    _inherit = 'res.users'
+
+    @api.model
+    def _migrate_studio_res_users_cluster_to_base(self):
+        """Flip state='manual'->'base' + unlink studio_customization
+        pins for the 4 x_studio_* location fields on res.users.
+        Idempotent; data preserved. Method stays here for backwards-
+        compat with data/fix_repair_data.xml which invokes it as a
+        <function>. Actual fields are now declared in
+        studio_usermodel_migration.
+        """
+        cluster = [
+            'x_studio_source_location',
+            'x_studio_source_location_1',
+            'x_studio_virtual_location',
+            'x_studio_virtual_location_1',
+        ]
+        Field = self.env['ir.model.fields'].sudo()
+        rows = Field.search([
+            ('model', '=', 'res.users'),
+            ('name', 'in', cluster),
+        ])
+        manual_rows = rows.filtered(lambda f: f.state == 'manual')
+        if manual_rows:
+            manual_rows.write({'state': 'base'})
+
+        ModelData = self.env['ir.model.data'].sudo()
+        studio_pins = ModelData.search([
+            ('model', '=', 'ir.model.fields'),
+            ('res_id', 'in', rows.ids),
+            ('module', '=', 'studio_customization'),
+        ])
+        if studio_pins:
+            studio_pins.unlink()
