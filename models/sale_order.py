@@ -1749,6 +1749,25 @@ class SaleOrder(models.Model):
             if not self.env.context.get('_fix_repair_track_lock'):
                 self._fix_repair_apply_track_lock_status()
 
+        # v287: propagate x_studio_rug_confirmed changes to child
+        # invoices. The invoice-side stored compute (in Fix-repair's
+        # account_move.py) only depends on `invoice_origin` +
+        # `move_type` because it walks name -> SO by string match.
+        # Odoo's ORM can't trace that reverse-lookup dependency, so
+        # when this field flips on the SO, the invoice's cached
+        # value stays stale until something forces a recompute.
+        # Force one explicitly by calling the compute on any invoice
+        # whose invoice_origin matches an SO whose flag just changed.
+        if 'x_studio_rug_confirmed' in (vals or {}):
+            so_names = [n for n in self.mapped('name') if n]
+            if so_names:
+                invoices = self.env['account.move'].sudo().search([
+                    ('invoice_origin', 'in', so_names),
+                    ('move_type', '=', 'out_invoice'),
+                ])
+                if invoices:
+                    invoices._compute_x_studio_rug_confirmed()
+
         return res
 
     def _fix_repair_apply_track_lock_status(self):
