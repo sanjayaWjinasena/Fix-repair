@@ -13,29 +13,16 @@ class ResUsers(models.Model):
     """
     _inherit = 'res.users'
 
-    x_studio_source_location = fields.Many2one(
-        'stock.location',
-        string='Source Location',
-    )
-
-    # Duplicate slot from an earlier Studio iteration. Kept for schema
-    # compatibility (helpdesk.ticket's x_studio_source_location_1
-    # related chain walks here).
-    x_studio_source_location_1 = fields.Many2one(
-        'stock.location',
-        string='Source Location',
-    )
-
-    x_studio_virtual_location = fields.Many2one(
-        'stock.location',
-        string='Virtual Location',
-    )
-
-    # Duplicate slot (same reason as source_location_1).
-    x_studio_virtual_location_1 = fields.Many2one(
-        'stock.location',
-        string='Virtual Location',
-    )
+    # v289: the 4 location fields (x_studio_source_location{,_1},
+    # x_studio_virtual_location{,_1}) moved to
+    # studio_usermodel_migration/models/res_users.py. Their old home
+    # here caused a load-order fault: studio_usermodel_migration's
+    # res.users form view references x_studio_virtual_location, but
+    # SUM loads before Fix-repair, so the field wasn't yet declared
+    # when the view arch validation ran. Relocating to SUM keeps the
+    # helpdesk_ticket related='user_id.x_studio_virtual_location'
+    # chain working (SUM loads first, res.users has the field, then
+    # Fix-repair loads and helpdesk.ticket picks it up via related).
 
     # Two mutually-exclusive super-user permissions read by
     # _super_user_validate below (Studio server action id 2544 native
