@@ -3,6 +3,7 @@
   <record id="ported_view_helpdesk_stage_form_5964" model="ir.ui.view">
     <field name="name">Odoo Studio: helpdesk.stage.form customization</field>
     <field name="model">helpdesk.stage</field>
+    <field name="key">Fix-repair.view_helpdesk_stage_form_5964</field>
     <field name="type">form</field>
     <field name="priority">99</field>
     <field name="mode">extension</field>
