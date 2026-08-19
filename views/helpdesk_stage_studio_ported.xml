@@ -10,9 +10,7 @@
     <field name="inherit_id" ref="helpdesk.helpdesk_stage_view_form"/>
     <field name="arch" type="xml">
       <data>
-        <xpath expr="//field[@name='sequence']" position="after">
-          <field name="x_studio_company_id" string="Company"/>
-        </xpath>
+        
       </data>
     </field>
   </record>
