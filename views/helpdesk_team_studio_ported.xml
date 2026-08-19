@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="ported_odoo_studio_helpdesk_28046b65_e20c_4a5e_8a99_12fc2676bd8f" model="ir.ui.view">
+    <field name="name">Odoo Studio: helpdesk.team.dashboard customization</field>
+    <field name="model">helpdesk.team</field>
+    <field name="key">studio_customization.odoo_studio_helpdesk_28046b65-e20c-4a5e-8a99-12fc2676bd8f</field>
+    <field name="type">kanban</field>
+    <field name="priority">160</field>
+    <field name="mode">extension</field>
+    <field name="inherit_id" ref="helpdesk.helpdesk_team_view_kanban"/>
+    <field name="arch" type="xml">
+      <data>
+        <xpath expr="//kanban[1]" position="attributes">
+          <attribute name="quick_create">true</attribute>
+        </xpath>
+        
+      </data>
+    </field>
+  </record>
+</odoo>

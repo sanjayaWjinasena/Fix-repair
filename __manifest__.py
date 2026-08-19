@@ -53,6 +53,8 @@
         'views/res_config_settings_views.xml',
         'views/sale_report_templates.xml',
         'views/helpdesk_stage_studio_ported.xml',
+        'views/helpdesk_team_studio_ported.xml',
+        'views/helpdesk_ticket_type_studio_ported.xml',
     ],
     'assets': {
         'web.assets_backend': [
