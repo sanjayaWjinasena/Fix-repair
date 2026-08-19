@@ -52,6 +52,7 @@
         'views/stock_picking_studio_ported.xml',
         'views/res_config_settings_views.xml',
         'views/sale_report_templates.xml',
+        'views/helpdesk_stage_studio_ported.xml',
     ],
     'assets': {
         'web.assets_backend': [

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="ported_view_helpdesk_stage_form_5964" model="ir.ui.view">
+    <field name="name">Odoo Studio: helpdesk.stage.form customization</field>
+    <field name="model">helpdesk.stage</field>
+    <field name="type">form</field>
+    <field name="priority">99</field>
+    <field name="mode">extension</field>
+    <field name="inherit_id" ref="helpdesk.helpdesk_stage_view_form"/>
+    <field name="arch" type="xml">
+      <data>
+        <xpath expr="//field[@name='sequence']" position="after">
+          <field name="x_studio_company_id" string="Company"/>
+        </xpath>
+      </data>
+    </field>
+  </record>
+</odoo>
