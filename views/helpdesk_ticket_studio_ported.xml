@@ -26,6 +26,26 @@
         
         
         
+        <!-- Ghost-field anchors: these x_studio_* fields are Python-declared
+             in helpdesk_ticket.py and originally added to the form by Odoo
+             Studio on the production DB. On dev/stand-alone DBs the Studio
+             view may not include them. We add them here as invisible="1" so
+             they are always present in the composed view arch.
+             helpdesk_ticket_studio_field_hides.xml targets them with
+             xpath position="attributes"; without anchors in the arch that
+             view raises a ParseError and aborts module loading entirely. -->
+        <xpath expr="//form[1]/sheet[1]/notebook[not(@name)][1]" position="before">
+          <field name="x_studio_rug_repair" invisible="1"/>
+          <field name="x_studio_rug_confirmed" invisible="1"/>
+          <field name="x_studio_normal_repair_with_serial_no" invisible="1"/>
+          <field name="x_studio_normal_repair_without_serial_no" invisible="1"/>
+          <field name="x_studio_source_location_1" invisible="1"/>
+          <field name="x_studio_cancel_reason" invisible="1"/>
+          <field name="x_studio_items" invisible="1"/>
+          <field name="x_studio_quick_repair_status" invisible="1"/>
+          <field name="x_studio_tracking" invisible="1"/>
+        </xpath>
+
         <xpath expr="//form[1]/sheet[1]/notebook[not(@name)][1]" position="inside">
           <page string="Warranty Details" name="studio_page_2rr_1igln0ot0" invisible="x_studio_normal_repair_without_serial_no == True">
             <group name="studio_group_2rr">

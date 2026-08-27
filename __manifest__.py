@@ -6,8 +6,19 @@
     'author': 'Jinasena Agricultural Machinery (Pvt) Ltd.',
     'category': 'Helpdesk',
     'license': 'LGPL-3',
-    'depends': ['base_setup', 'helpdesk', 'helpdesk_fsm', 'sale', 'sale_stock', 'industry_fsm_sale', 'industry_fsm_stock', 'BugFix-Sales'],
+    'depends': ['base_setup', 'helpdesk', 'helpdesk_fsm', 'sale', 'sale_stock', 'industry_fsm_sale', 'industry_fsm_stock', 'BugFix-Sales', 'studio_usermodel_migration'],
     'post_init_hook': 'post_init_hook',
+    # v292: added studio_usermodel_migration to depends.
+    # helpdesk_ticket.py declares related fields (x_studio_source_location,
+    # x_studio_virtual_location, etc.) that traverse user_id -> res.users.
+    # Those res.users fields were moved from Fix-repair's own res_users.py
+    # to studio_usermodel_migration in v0.0.7 of that module, but the
+    # manifest dep was never updated. Without this dep, Odoo's topological
+    # loader may process Fix-repair before studio_usermodel_migration,
+    # causing setup_related() to fail with KeyError on those fields.
+    # Load order is now:
+    #   BugFix-Sales -> studio_migrations -> studio_usermodel_migration
+    #     -> Fix-repair -> Fix-Repair-Wizard-Nav
     # v244: helpdesk_ticket_studio_ported.xml + _studio_field_hides.xml
     # moved BACK to manifest 'data' now that the button-195 xpath was
     # stripped in v242. Loading via post_init_hook worked once but the
@@ -40,9 +51,16 @@
         # views/project_task_studio_ported.xml which references it via
         # %(Fix-repair.action_repair_end_quick_repair)d.
         'data/project_task_server_actions.xml',
-        'views/helpdesk_ticket_views.xml',
+        # v292: studio_ported.xml MUST load before helpdesk_ticket_views.xml.
+        # studio_ported.xml adds ghost-field anchors (invisible x_studio_*
+        # fields) so that helpdesk_ticket_studio_field_hides.xml xpaths can
+        # resolve on DBs where the Studio view does not include those fields.
+        # Without this ordering, the DB still holds the old ported view (no
+        # ghost fields) when helpdesk_ticket_views.xml triggers full view
+        # tree validation — causing a ParseError on the hide view's xpaths.
         'views/helpdesk_ticket_studio_ported.xml',
         'views/helpdesk_ticket_studio_field_hides.xml',
+        'views/helpdesk_ticket_views.xml',
         'views/helpdesk_ticket_type_views.xml',
         # v259: Repair Diagnosis tab on project.task form
         'views/project_task_studio_ported.xml',
