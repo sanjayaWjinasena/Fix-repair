@@ -1913,6 +1913,16 @@ class HelpdeskTicket(models.Model):
                     'x_studio_cancelled',
                     'x_studio_stage_name',
                     'x_studio_valid_confirm_return',
+                    # v295: fields referenced by the Customer Name /
+                    # Serial Number / Product / Valid Return / Lot
+                    # invisible+readonly expressions further down.
+                    # `x_studio_tracking` gates the Serial visibility;
+                    # the three `use_*` helpdesk.team booleans gate the
+                    # Product / Valid Return / Lot cluster.
+                    'x_studio_tracking',
+                    'use_credit_notes',
+                    'use_product_returns',
+                    'use_product_repairs',
                 ):
                     if not arch.xpath(f"//field[@name='{fname}']"):
                         fld = etree.Element('field')
@@ -2571,6 +2581,165 @@ class HelpdeskTicket(models.Model):
                 etree.SubElement(del_group, 'group')
 
                 primary_groups[0].addnext(nb)
+
+            # ============================================================
+            # v295: additional Clear-DB customer-block visible fields.
+            # Layers on top of v293:
+            #   - partner_name  (Customer Name) — right before partner_email
+            #   - x_studio_serial_no  (Serial Number) — after email_cc
+            #   - product_id  (Product) — after sale_line_id
+            #   - x_studio_valid_return  (Valid Return) — after product_id
+            #   - lot_id  (Lot/Serial Number) — after valid_return
+            # Matches the Clear-DB view 4012 xpaths that couldn't be
+            # ported to XML because their target elements live in
+            # sibling module inherits.
+            # ============================================================
+
+            # ---- Customer Name (partner_name) before partner_email ---
+            partner_id_nodes = arch.xpath("//field[@name='partner_id']")
+            if partner_id_nodes:
+                p_name = _reposition_or_create(
+                    'partner_name',
+                    invisible='partner_id',
+                    force_save='1',
+                    readonly=(
+                        'x_studio_cancelled == True or '
+                        'not user_id or '
+                        'x_ticket_locked'
+                    ),
+                )
+                # addnext puts p_name immediately after partner_id.
+                # partner_email (added in v293) stays after — result:
+                # partner_id → partner_name → partner_email.
+                partner_id_nodes[0].addnext(p_name)
+
+            # ---- Serial Number (x_studio_serial_no) visible ----------
+            # Clear-DB slots it after email_cc. On envs where email_cc
+            # isn't in the arch (older helpdesk fork) fall back to
+            # partner_phone.
+            serial_anchor = None
+            for xp in (
+                "//field[@name='email_cc']",
+                "//field[@name='partner_phone']",
+            ):
+                matches = arch.xpath(xp)
+                if matches:
+                    serial_anchor = matches[0]
+                    break
+            if serial_anchor is not None:
+                sn = _reposition_or_create(
+                    'x_studio_serial_no',
+                    invisible='product_id and x_studio_tracking != "serial"',
+                    force_save='1',
+                    readonly=(
+                        'x_studio_rug_approved == True or '
+                        'x_studio_rug_request_sent == True or '
+                        'x_studio_normal_repair_without_serial_no == True or '
+                        'not ticket_type_id or '
+                        'x_studio_stage_name != "New" or '
+                        'x_studio_valid_return == True or '
+                        'x_studio_cancelled == True or '
+                        'not user_id or '
+                        'x_ticket_locked'
+                    ),
+                )
+                # Re-apply the domain+options the earlier serial-domain
+                # block above set on the sentinel (that block ran before
+                # we lifted the sentinel out).
+                sn.set('domain', "[('is_issued', '=', True)]")
+                sn.set(
+                    'options',
+                    "{'no_create': True, 'no_quick_create': True}",
+                )
+                # Re-apply the required= gate the earlier required-fields
+                # block set on the sentinel.
+                sn.set(
+                    'required',
+                    'ticket_type_id and not x_studio_normal_repair_without_serial_no',
+                )
+                serial_anchor.addnext(sn)
+
+            # ---- Product (product_id) visible after sale_line_id -----
+            # product_id already exists in the base helpdesk arch; the
+            # existing readonly / domain / required blocks above set
+            # attributes on the FIRST occurrence they find. Repositioning
+            # via _reposition_or_create wipes attrs, so we re-apply
+            # everything here — matching Clear-DB visibility gate plus
+            # the two-flavour readonly (from ticket-type discriminator)
+            # and the ticket-lock freeze.
+            sale_line_nodes = arch.xpath("//field[@name='sale_line_id']")
+            if sale_line_nodes:
+                prod = _reposition_or_create(
+                    'product_id',
+                    invisible=(
+                        'not use_credit_notes and '
+                        'not use_product_returns and '
+                        'not use_product_repairs'
+                    ),
+                    required='ticket_type_id',
+                    force_save='0',
+                    readonly=(
+                        'not x_studio_normal_repair_without_serial_no or '
+                        'x_ticket_locked'
+                    ),
+                    domain=(
+                        "[('tracking', '=', 'serial')] "
+                        "if x_studio_normal_repair_without_serial_no "
+                        "else []"
+                    ),
+                )
+                sale_line_nodes[0].addnext(prod)
+
+                # ---- Valid Return (x_studio_valid_return) ------------
+                vr = _reposition_or_create(
+                    'x_studio_valid_return',
+                    invisible=(
+                        'x_studio_rug_repair == True or '
+                        'x_studio_serial_no or '
+                        'x_studio_normal_repair_with_serial_no == True or '
+                        'x_studio_normal_repair_without_serial_no == True or '
+                        '(not use_credit_notes and '
+                        'not use_product_returns and '
+                        'not use_product_repairs)'
+                    ),
+                    force_save='1',
+                    readonly=(
+                        'x_studio_rug_repair == True or '
+                        'x_ticket_locked'
+                    ),
+                )
+                prod_now = arch.xpath("//field[@name='product_id']")
+                if prod_now:
+                    prod_now[0].addnext(vr)
+
+                # ---- Lot/Serial Number (lot_id) ---------------------
+                lot = _reposition_or_create(
+                    'lot_id',
+                    invisible=(
+                        'x_studio_rug_repair == True or '
+                        'x_studio_serial_no or '
+                        'x_studio_normal_repair_with_serial_no == True or '
+                        'x_studio_normal_repair_without_serial_no == True or '
+                        '(not use_credit_notes and '
+                        'not use_product_returns and '
+                        'not use_product_repairs)'
+                    ),
+                    force_save='1',
+                    readonly=(
+                        'x_studio_rug_repair == True or '
+                        'x_ticket_locked'
+                    ),
+                )
+                # Re-apply the serial-lot domain+options that the
+                # earlier serial-domain block set on the sentinel.
+                lot.set('domain', "[('is_issued', '=', True)]")
+                lot.set(
+                    'options',
+                    "{'no_create': True, 'no_quick_create': True}",
+                )
+                vr_now = arch.xpath("//field[@name='x_studio_valid_return']")
+                if vr_now:
+                    vr_now[0].addnext(lot)
         return arch, view
 
     def action_change_to_rug(self):
