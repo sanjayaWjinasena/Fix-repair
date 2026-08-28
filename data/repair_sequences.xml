@@ -19,6 +19,14 @@
 -->
 <odoo noupdate="1">
 
+    <!-- v296: The XML seeds a company_id=False "template" sequence
+         for each code. hooks.seed_repair_sequences_per_company then
+         mints per-company copies at install time (post_init_hook) —
+         matching Clear-DB's pattern of one sequence per company per
+         code, so each company keeps its own counter. The global
+         template stays around as a safety net in case a company
+         gets added later and no one re-runs the seed. -->
+
     <record id="seq_repair_ticket" model="ir.sequence">
         <field name="name">Repair Sequence No</field>
         <field name="code">repair.seq</field>
@@ -27,6 +35,7 @@
         <field name="number_next">1</field>
         <field name="number_increment">1</field>
         <field name="implementation">standard</field>
+        <field name="company_id" eval="False"/>
     </record>
 
     <record id="seq_repair_serial" model="ir.sequence">
@@ -37,6 +46,7 @@
         <field name="number_next">1</field>
         <field name="number_increment">1</field>
         <field name="implementation">standard</field>
+        <field name="company_id" eval="False"/>
     </record>
 
 </odoo>

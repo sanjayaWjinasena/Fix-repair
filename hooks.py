@@ -487,6 +487,118 @@ def activate_internal_picking_types(env):
     )
 
 
+_REPAIR_SEQUENCE_CODES = (
+    # (code, template_xmlid) — template is the company_id=False
+    # "master" seeded from data/repair_sequences.xml. Per-company
+    # copies duplicate name / prefix / padding / implementation from
+    # the template so the two counter families stay visually
+    # consistent even after Studio-era numbering diverges by company
+    # (Clear-DB pattern).
+    ('repair.seq', 'Fix-repair.seq_repair_ticket'),
+    ('repair.serial.seq', 'Fix-repair.seq_repair_serial'),
+)
+
+
+def seed_repair_sequences_per_company(env):
+    """v296: mint a per-company copy of repair.seq and repair.serial.seq
+    for every existing res.company so ir.sequence.next_by_code resolves
+    under the caller's active-company context.
+
+    Odoo's next_by_code prefers a sequence with company_id matching
+    self.env.company; falls back to company_id=False; else returns
+    False. Studio-era Clear-DB stores one sequence per company (each
+    with its own counter — e.g. Jinasena Pvt and Jinasena Ag Machinery
+    have independent REPAIR/YYYY/NNNNN counters). Mirroring that here.
+
+    Idempotent — skips companies that already have a per-company copy
+    for the given code.
+    """
+    Company = env['res.company'].sudo()
+    Sequence = env['ir.sequence'].sudo()
+
+    companies = Company.search([])
+    if not companies:
+        return
+
+    for code, template_xmlid in _REPAIR_SEQUENCE_CODES:
+        template = env.ref(template_xmlid, raise_if_not_found=False)
+        if not template:
+            _logger.warning(
+                "Fix-repair: sequence template %s missing — cannot "
+                "seed per-company copies for code %s.",
+                template_xmlid, code,
+            )
+            continue
+
+        for company in companies:
+            existing = Sequence.search([
+                ('code', '=', code),
+                ('company_id', '=', company.id),
+            ], limit=1)
+            if existing:
+                continue
+            template.copy({
+                'name': f"{template.name} ({company.name})",
+                'company_id': company.id,
+                # Fresh counter per company — don't inherit the
+                # template's current number_next (which reflects
+                # global usage during the transition period).
+                'number_next': 1,
+            })
+
+    _logger.info(
+        "Fix-repair: ensured per-company repair sequences on %d "
+        "company/code pair(s).",
+        len(companies) * len(_REPAIR_SEQUENCE_CODES),
+    )
+
+
+def assign_names_to_stale_new_tickets(env):
+    """v296: rename every helpdesk.ticket whose name is still 'New'
+    (or empty) to a proper REPAIR/YYYY/NNNNN sequence value, scoped
+    to each ticket's own company.
+
+    Runs after seed_repair_sequences_per_company so next_by_code
+    always resolves. Iterates per ticket rather than as a recordset
+    so the sequence advances one per ticket (records[0].name = ...N
+    style batching would only bump the sequence once for the whole
+    batch).
+    """
+    Ticket = env['helpdesk.ticket'].sudo()
+    Sequence = env['ir.sequence'].sudo()
+
+    stale = Ticket.search(['|', ('name', '=', 'New'), ('name', '=', False)])
+    if not stale:
+        return
+
+    renamed = 0
+    for ticket in stale:
+        # Company-scoped next_by_code — must match the ticket's own
+        # company_id, not env.company, otherwise a multi-company
+        # backfill run under the SUPERUSER's context would draw all
+        # numbers from the SUPERUSER's active company.
+        seq = Sequence.with_context(
+            company_id=ticket.company_id.id,
+        ).next_by_code('repair.seq')
+        if not seq:
+            _logger.warning(
+                "Fix-repair: repair.seq unresolved for company %s "
+                "(id=%s) while renaming ticket id=%s — skipping.",
+                ticket.company_id.display_name,
+                ticket.company_id.id,
+                ticket.id,
+            )
+            continue
+        ticket.write({'name': seq})
+        renamed += 1
+
+    _logger.info(
+        "Fix-repair: renamed %d stale-'New' helpdesk.ticket record(s) "
+        "to sequence-generated names.",
+        renamed,
+    )
+
+
 def post_init_hook(env):
     """Odoo 17 post-install hook signature: (env)."""
     strip_studio_xmlids_for_ported_fields(env)
@@ -498,3 +610,5 @@ def post_init_hook(env):
     seed_repair_return_receipt_locations(env)
     enable_project_extras(env)
     activate_internal_picking_types(env)
+    seed_repair_sequences_per_company(env)
+    assign_names_to_stale_new_tickets(env)
