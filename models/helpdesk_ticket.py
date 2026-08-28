@@ -1901,6 +1901,18 @@ class HelpdeskTicket(models.Model):
                     'repair_stage_state',
                     'use_fsm',
                     'fsm_task_count',
+                    # v294: fields referenced by the v293 visible-field
+                    # readonly= expressions further down (ticket_type_id
+                    # / return_receipt_location / repair_reason /
+                    # partner_email etc.). Owl's modifier evaluator
+                    # crashes with "Name '<field>' is not defined" if
+                    # any of them isn't in the composed arch.
+                    'x_studio_rug_approved',
+                    'x_studio_rug_request_sent',
+                    'x_studio_repair_serial_created',
+                    'x_studio_cancelled',
+                    'x_studio_stage_name',
+                    'x_studio_valid_confirm_return',
                 ):
                     if not arch.xpath(f"//field[@name='{fname}']"):
                         fld = etree.Element('field')
