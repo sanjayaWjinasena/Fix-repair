@@ -2249,6 +2249,316 @@ class HelpdeskTicket(models.Model):
                 so_node.attrib.pop('invisible', None)
                 so_node.set('invisible', 'not sale_order_id')
                 serial_nodes[0].addnext(so_node)
+
+            # ============================================================
+            # v293: port visible Studio field placements from Clear-DB
+            # view 4012.
+            #
+            # Background
+            # ----------
+            # helpdesk_ticket_studio_ported.xml was aggressively stripped
+            # in v292 down to just the ghost anchors + Warranty/Cancel
+            # notebook pages — the rest of the Clear-DB Studio arch
+            # (Return Receipt Location, Repair Location, Repair Reason,
+            # Job Location, Re-estimate Status/Count, Customer Email,
+            # Factory Repair Details notebook, etc.) failed install-time
+            # xpath validation because those xpaths targeted elements
+            # added by sibling module inherits (not the direct parent
+            # view) — Odoo rejected them silently, leaving fresh-install
+            # Fix-repair with the bare helpdesk.ticket form.
+            #
+            # Same pattern the buttons 195 / 2254 / 991 use: XML inherit
+            # can't reach them, so we place them here on the merged arch
+            # where every sibling module's own inherits have already
+            # been applied.
+            #
+            # Every readonly expression appends `or x_ticket_locked` so
+            # the ticket-lock freeze (see readonly loop above) still
+            # applies to these newly-visible fields — they were added
+            # after that loop ran.
+            # ============================================================
+
+            def _reposition_or_create(name, **attrs):
+                """Locate an existing <field name=name/> anywhere in the
+                arch, remove it (dropping every attribute except name),
+                re-set the given attributes and return the element ready
+                to be inserted at a target position. If no existing
+                element matches, create a fresh one.
+
+                Handles the case where the sentinel-injection loop above
+                already placed the field as invisible=1 at sheet[0]: we
+                take that element, wipe its attributes, and reuse it in
+                its Clear-DB-appropriate position.
+                """
+                existing = arch.xpath(f"//field[@name='{name}']")
+                if existing:
+                    el = existing[0]
+                    el.getparent().remove(el)
+                    for k in list(el.attrib.keys()):
+                        if k != 'name':
+                            del el.attrib[k]
+                else:
+                    el = etree.Element('field')
+                    el.set('name', name)
+                for k, v in attrs.items():
+                    el.set(k, v)
+                return el
+
+            # ---- Move ticket_type_id after user_id -------------------
+            # Clear-DB layout groups ticket_type_id with the assignee
+            # rather than leaving it at the top. Do this BEFORE inserting
+            # the fields below so the domain_user_ids anchor sits in the
+            # expected place.
+            user_id_slots = arch.xpath(
+                "//sheet//group[1]/group[1]/field[@name='user_id']"
+            )
+            tt_nodes = arch.xpath("//field[@name='ticket_type_id']")
+            if user_id_slots and tt_nodes:
+                tt = tt_nodes[0]
+                tt.getparent().remove(tt)
+                tt.set('force_save', '1')
+                tt.set('required', 'user_id')
+                tt.set('readonly',
+                    'x_studio_rug_approved == True or '
+                    'x_studio_rug_request_sent == True or '
+                    'x_studio_repair_serial_created == True or '
+                    'x_studio_valid_return == True or '
+                    'x_studio_cancelled == True or '
+                    'not user_id or '
+                    'x_studio_stage_name != "New" or '
+                    'x_ticket_locked'
+                )
+                user_id_slots[0].addnext(tt)
+
+            # ---- Anchor after which we drop the assignee-block fields.
+            # domain_user_ids is added by helpdesk_fsm; on very bare
+            # installs it might not exist, so we fall back to user_id.
+            anchor_xpath_candidates = (
+                "//field[@name='domain_user_ids']",
+                "//sheet//group[1]/group[1]/field[@name='user_id']",
+            )
+            assignee_anchor = None
+            for xp in anchor_xpath_candidates:
+                matches = arch.xpath(xp)
+                if matches:
+                    assignee_anchor = matches[-1]
+                    break
+
+            if assignee_anchor is not None:
+                # Fields to insert in Clear-DB order.
+                # addnext inserts immediately after — build a list and
+                # iterate in reverse so each new element ends up right
+                # after the anchor in the correct order.
+                new_fields = []
+
+                # Four Studio ticket-type status booleans, visible only
+                # when True (matching Clear-DB's `X != True` invisible
+                # expression). Each doubles as its own indicator badge.
+                for bool_name in (
+                    'x_studio_rug_repair',
+                    'x_studio_rug_confirmed',
+                    'x_studio_normal_repair_with_serial_no',
+                    'x_studio_normal_repair_without_serial_no',
+                ):
+                    new_fields.append(_reposition_or_create(
+                        bool_name,
+                        force_save='1',
+                        readonly='True',
+                        invisible=f"{bool_name} != True",
+                    ))
+
+                # Return Receipt Location — where the returned item is
+                # first booked in. Domain (users-stock-location scope)
+                # is set by a separate xpath block above; we only place
+                # the field here.
+                new_fields.append(_reposition_or_create(
+                    'x_studio_return_receipt_location',
+                    options="{'no_create': True}",
+                    required='user_id',
+                    force_save='1',
+                    readonly=(
+                        'x_studio_rug_approved == True or '
+                        'x_studio_rug_request_sent == True or '
+                        'x_studio_valid_confirm_return == True or '
+                        'x_studio_repair_serial_created == True or '
+                        'x_studio_cancelled == True or '
+                        'not user_id or '
+                        'x_ticket_locked'
+                    ),
+                ))
+
+                # Repair Location — computed / stamped by the flow,
+                # always readonly on the form.
+                new_fields.append(_reposition_or_create(
+                    'x_studio_repair_location',
+                    force_save='1',
+                    readonly='True',
+                ))
+
+                # Repair Reason — many2many tags. Required post-assignee,
+                # locked once the ticket leaves New (or is cancelled).
+                new_fields.append(_reposition_or_create(
+                    'x_studio_repair_reason',
+                    widget='many2many_tags',
+                    required='user_id',
+                    force_save='1',
+                    readonly=(
+                        'x_studio_cancelled == True or '
+                        'not user_id or '
+                        'x_studio_stage_name != "New" or '
+                        'x_ticket_locked'
+                    ),
+                ))
+
+                # Job Location — where the repair actually happens
+                # (Factory Repair / Centre Repair / …). Drives the
+                # Factory Repair Details notebook visibility below.
+                new_fields.append(_reposition_or_create(
+                    'x_studio_job_location',
+                    required='x_studio_valid_confirm_return == True',
+                    force_save='0',
+                    readonly='x_ticket_locked',
+                ))
+
+                for el in reversed(new_fields):
+                    assignee_anchor.addnext(el)
+
+            # ---- Re-estimate Status + Count after tag_ids ------------
+            # Clear-DB hides tag_ids and slots the two re-estimate
+            # markers in its place. Same here.
+            tag_nodes = arch.xpath("//field[@name='tag_ids']")
+            if tag_nodes:
+                tag_el = tag_nodes[0]
+                tag_el.set('invisible', 'True')
+
+                re_count = _reposition_or_create(
+                    'x_studio_re_estimate_count',
+                    widget='many2one_reference',
+                    options="{'enable_formatting': false}",
+                    force_save='1',
+                    readonly='True',
+                )
+                re_status = _reposition_or_create(
+                    'x_studio_re_estimate_status',
+                    force_save='1',
+                    readonly='True',
+                )
+                # addnext twice → status ends up first, count second.
+                tag_el.addnext(re_count)
+                tag_el.addnext(re_status)
+
+            # ---- partner_email as visible "Email" after partner_id ----
+            # partner_id itself: Clear-DB makes it required once a user
+            # is assigned. Fix-repair's existing required= block already
+            # requires it on ticket_type_id — we OR-strengthen readonly
+            # to include the ticket-lock and cancelled-ticket freezes.
+            partner_nodes = arch.xpath("//field[@name='partner_id']")
+            if partner_nodes:
+                p_el = partner_nodes[0]
+                # Don't override the required= gate the earlier block
+                # sets on partner_id — only set force_save/readonly.
+                p_el.set('force_save', '0')
+                existing_ro = p_el.get('readonly', '')
+                p_el.set('readonly',
+                    f"({existing_ro}) or x_ticket_locked"
+                    if existing_ro else 'x_ticket_locked'
+                )
+
+                p_email = _reposition_or_create(
+                    'partner_email',
+                    string='Email',
+                    force_save='1',
+                    readonly=(
+                        'x_studio_cancelled == True or '
+                        'not user_id or '
+                        'x_studio_stage_name == "Handed Over to Customer" or '
+                        'x_studio_stage_name == "Cancelled" or '
+                        'x_ticket_locked'
+                    ),
+                )
+                p_el.addnext(p_email)
+
+            # ---- Factory Repair Details notebook page ---------------
+            # Studio adds a whole separate notebook (studio_notebook_2qc)
+            # after the primary group holding the transfer + delivery
+            # audit trail. Visible only when Job Location == 'Factory
+            # Repair'. Fields inside are stamped by the flow (shipped
+            # by/date, received by/date, driver, vehicle).
+            primary_groups = arch.xpath("//sheet/group[1]")
+            already_has_factory_notebook = arch.xpath(
+                "//notebook[@name='studio_notebook_2qc_1j0bd1828']"
+            )
+            if primary_groups and not already_has_factory_notebook:
+                nb = etree.Element(
+                    'notebook',
+                    name='studio_notebook_2qc_1j0bd1828',
+                )
+
+                fr_page = etree.SubElement(
+                    nb,
+                    'page',
+                    string='Factory Repair Details',
+                    name='studio_page_2qc',
+                    invisible=(
+                        "x_studio_job_location != 'Factory Repair'"
+                    ),
+                )
+
+                # Group row 1: Sales Centre + Factory transfer details
+                tx_group = etree.SubElement(fr_page, 'group')
+                sc_group = etree.SubElement(
+                    tx_group, 'group',
+                    string='Repair Transfer Details (Sales Centre)',
+                )
+                for fname, label in (
+                    ('x_studio_s_shipped_date', 'Shipped Date'),
+                    ('x_studio_s_shipped_by', 'Shipped By'),
+                    ('x_studio_s_received_date', 'Received Date'),
+                    ('x_studio_s_received_by', 'Received By'),
+                ):
+                    etree.SubElement(
+                        sc_group, 'field',
+                        name=fname,
+                        force_save='1',
+                        readonly='True',
+                    )
+                fac_group = etree.SubElement(
+                    tx_group, 'group',
+                    string='Repair Transfer Details (Factory)',
+                )
+                for fname, label in (
+                    ('x_studio_f_shipped_date', 'Shipped Date'),
+                    ('x_studio_f_shipped_by', 'Shipped By'),
+                    ('x_studio_f_received_date', 'Received Date'),
+                    ('x_studio_f_received_by', 'Received By'),
+                ):
+                    etree.SubElement(
+                        fac_group, 'field',
+                        name=fname,
+                        force_save='1',
+                        readonly='True',
+                    )
+
+                # Group row 2: Delivery Details
+                del_group = etree.SubElement(fr_page, 'group')
+                del_left = etree.SubElement(
+                    del_group, 'group',
+                    string='Delivery Details',
+                )
+                for fname in (
+                    'x_studio_driver_name',
+                    'x_studio_vehicle_details',
+                ):
+                    etree.SubElement(
+                        del_left, 'field',
+                        name=fname,
+                        force_save='1',
+                        readonly='True',
+                    )
+                # Empty right group for two-column balance
+                etree.SubElement(del_group, 'group')
+
+                primary_groups[0].addnext(nb)
         return arch, view
 
     def action_change_to_rug(self):
