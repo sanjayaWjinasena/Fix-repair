@@ -2126,19 +2126,17 @@ class HelpdeskTicket(models.Model):
                 existing = btn.get('invisible', '')
                 btn.set('invisible', f"({existing}) or x_studio_job_location == 'Centre Repair'" if existing else "x_studio_job_location == 'Centre Repair'")
 
-            # Send to Factory: shown while the ticket is still in New
-            # stage. v297 relaxed the extra has_return_picking +
-            # x_studio_job_location gates so the button matches
-            # Clear-DB behaviour — the intake operator can see it
-            # without every prerequisite already filled in.
-            # action_send_to_factory raises UserError when the flow
-            # can't actually run (no picking to hand off, wrong job
-            # location, etc), so making the button visible earlier
-            # doesn't skip validation, just moves the feedback point
-            # from silent-hide to click-and-see-message.
+            # Send to Factory: verbatim from Clear-DB Studio arch —
+            # visible only in New stage, only after the intake return
+            # picking exists, only for Factory Repair jobs. Confirmed
+            # against Clear-DB composed arch on 2026-08-28. v297 had
+            # relaxed the extras but Clear-DB actually keeps them, so
+            # v298 restores the stricter gate.
             for btn in arch.xpath("//button[@name='action_send_to_factory']"):
                 btn.set('invisible',
-                    "repair_stage_state != 'new' or x_ticket_locked"
+                    "repair_stage_state != 'new' or "
+                    "not has_return_picking or "
+                    "x_studio_job_location != 'Factory Repair'"
                 )
 
             # Plan Intervention:
@@ -2184,19 +2182,26 @@ class HelpdeskTicket(models.Model):
                 "'default_company_id': company_id}"
             )
             for btn in arch.xpath("//button[@name='195']"):
-                # v297: match Clear-DB visibility. Studio's view 4012
-                # sets invisible=False on this button — it just always
-                # shows until a return picking exists. The stricter
-                # "must have every field filled" gate we had before
-                # made the button silently invisible on partially-
-                # populated tickets, which the operator reads as
-                # "the module is broken". fix_repair_action_direct_return
-                # validates its own prerequisites and raises UserError
-                # if any are missing, so relaxing the visibility just
-                # moves the feedback from a hidden button to a click-
-                # and-see-error path — matching Clear-DB UX.
+                # v298: verbatim from Clear-DB Studio arch. Confirmed
+                # against the composed helpdesk.ticket form arch on
+                # Clear-DB (2026-08-28). Every field in this expression
+                # is a required prerequisite for the return picking
+                # flow — Studio was strict on purpose, so the operator
+                # can't kick off a return until the ticket carries
+                # every downstream reference the wizard needs.
+                #
+                # v297 had relaxed this to just `has_return_picking`,
+                # but the Clear-DB match is the strict form below —
+                # v298 restores it.
                 btn.set('invisible',
-                    "has_return_picking or x_ticket_locked"
+                    "has_return_picking or "
+                    "not partner_id or "
+                    "not ticket_type_id or "
+                    "not x_studio_job_location or "
+                    "not x_studio_repair_reason or "
+                    "not x_studio_serial_no or "
+                    "not product_id or "
+                    "(x_studio_rug_confirmed and not x_studio_warranty_card)"
                 )
                 btn.set('context', btn_context)
                 # Retarget the Return button from action 195 (which opens
