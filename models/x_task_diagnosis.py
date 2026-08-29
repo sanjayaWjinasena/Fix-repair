@@ -36,6 +36,14 @@ from odoo import fields, models
 class XTaskDiagnosis(models.Model):
     _name = 'x_task_diagnosis'
     _description = 'Task Diagnosis'
+    # v304: mail.thread + mail.activity.mixin match the sister
+    # repair-diagnosis catalog models in repair_master_data.py
+    # (x_conditions / x_diagnosis_codes / etc.) and match Clear-DB
+    # verbatim. Without these mixins the Studio-generated form arch
+    # (ported in v299 as repair_diagnosis_catalog_views.xml) fails
+    # view validation with "Field 'message_follower_ids' does not
+    # exist in model 'x_task_diagnosis'".
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'x_studio_sequence, id'
 
     # Odoo requires a _rec_name field. Studio uses x_name by convention
