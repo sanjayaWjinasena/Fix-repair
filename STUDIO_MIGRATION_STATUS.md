@@ -1,3 +1,15 @@
+> **⚠ SUPERSEDED — cross-repo tracker moved.**
+>
+> This document was RPC-verified on 2026-07-16 (Fix-repair v167). Since
+> then v292–v298 shipped. For current cross-repo migration state see:
+>
+>     D:\Odoo Playwright Tests\PlayWrite Testings\MIGRATION_TRACKER.md
+>
+> Refresh with `python scripts/refresh_migration_tracker.py --live`.
+> Content below preserved for provenance.
+
+---
+
 # Fix-repair — Studio → Python Migration Status
 
 **Scope:** Helpdesk-repair only. Sale.order / stock.picking / account.move

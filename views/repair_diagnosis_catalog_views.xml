@@ -1,0 +1,675 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Repair diagnosis catalogue views (v299).
+
+    Purpose
+    =======
+    Port Clear-DB's Studio-generated form / tree / search views for the
+    seven repair-diagnosis catalogue models so a fresh install of
+    Fix-repair produces exactly the same UX as Clear-DB — the operator
+    should not be able to tell whether they're on Studio-Clear-DB or
+    a Python-only fresh install.
+
+    Without these records Odoo falls back to auto-generated defaults
+    which are structurally close but LOSE the Studio inherit-tree
+    customisations (editable="bottom", extra columns for
+    Description / Area / Company, x_name label rename).
+
+    Models covered (all Python-declared in
+    models/repair_master_data.py + models/x_task_diagnosis.py):
+
+      - x_diagnosis_codes    (Clear-DB view ids 4968-4971)
+      - x_symptom_codes      (Clear-DB view ids 4960-4963)
+      - x_conditions         (Clear-DB view ids 4950-4953)
+      - x_diagnosis_areas    (Clear-DB view ids 4964-4967)
+      - x_resolutions        (Clear-DB view ids 4977-4980)
+      - x_symptom_areas      (Clear-DB view ids 4954-4959)
+      - x_task_diagnosis     (Clear-DB view ids 4985-4988)
+
+    Per model we ship 4 records:
+      1. Primary form view — title (x_name), Archived ribbon, empty
+         Studio-named groups, chatter
+      2. Primary tree view — x_studio_sequence handle + x_name
+      3. Primary search view — x_name search + Archived filter
+      4. Studio inherit tree (prio 99) — makes list editable and
+         adds Description / Area / Company columns (label rename on
+         x_name matches the model's "friendly" label from Clear-DB)
+
+    Arch strings are byte-for-byte matches of Clear-DB's arch_db,
+    exported 2026-08-29. See feedback_clear_db_verbatim rule.
+-->
+<odoo>
+
+    <!-- ============================================================ -->
+    <!-- x_diagnosis_codes                                           -->
+    <!-- ============================================================ -->
+
+    <record id="view_x_diagnosis_codes_form" model="ir.ui.view">
+        <field name="name">x_diagnosis_codes.form</field>
+        <field name="model">x_diagnosis_codes</field>
+        <field name="type">form</field>
+        <field name="mode">primary</field>
+        <field name="priority">16</field>
+        <field name="arch" type="xml">
+            <form>
+                <header/>
+                <sheet string="Diagnosis Codes">
+                    <widget name="web_ribbon" text="Archived" bg_color="bg-danger" invisible="x_active == True"/>
+                    <field name="x_active" invisible="1"/>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="x_name" required="1" placeholder="Name..."/>
+                        </h1>
+                    </div>
+                    <group name="studio_group_484e69">
+                        <group name="studio_group_484e69_left"/>
+                        <group name="studio_group_484e69_right"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter" name="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                    <field name="activity_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_x_diagnosis_codes_tree" model="ir.ui.view">
+        <field name="name">x_diagnosis_codes.tree</field>
+        <field name="model">x_diagnosis_codes</field>
+        <field name="type">tree</field>
+        <field name="mode">primary</field>
+        <field name="priority">16</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="x_studio_sequence" widget="handle"/>
+                <field name="x_name"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_x_diagnosis_codes_search" model="ir.ui.view">
+        <field name="name">x_diagnosis_codes.search</field>
+        <field name="model">x_diagnosis_codes</field>
+        <field name="type">search</field>
+        <field name="mode">primary</field>
+        <field name="priority">16</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="x_name"/>
+                <separator/>
+                <filter string="Archived" name="archived_x_diagnosis_codes" domain="[['x_active', '=', False]]"/>
+                <separator/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_x_diagnosis_codes_tree_inherit" model="ir.ui.view">
+        <field name="name">x_diagnosis_codes.tree.inherit</field>
+        <field name="model">x_diagnosis_codes</field>
+        <field name="type">tree</field>
+        <field name="mode">extension</field>
+        <field name="priority">99</field>
+        <field name="inherit_id" ref="view_x_diagnosis_codes_tree"/>
+        <field name="arch" type="xml">
+            <data>
+                <xpath expr="//tree[1]" position="attributes">
+                    <attribute name="editable">bottom</attribute>
+                </xpath>
+                <xpath expr="//field[@name='x_studio_sequence']" position="attributes">
+                    <attribute name="column_invisible">1</attribute>
+                </xpath>
+                <xpath expr="//field[@name='x_name']" position="attributes">
+                    <attribute name="string">Diagnosis Code</attribute>
+                </xpath>
+                <xpath expr="//field[@name='x_name']" position="after">
+                    <field optional="show" name="x_studio_description" string="Description"/>
+                    <field optional="show" name="x_studio_diagnosis_area_1" string="Diagnosis Area" options="{'no_create': True}"/>
+                    <field optional="show" name="x_studio_company_id" string="Company"/>
+                </xpath>
+            </data>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- x_symptom_codes                                             -->
+    <!-- ============================================================ -->
+
+    <record id="view_x_symptom_codes_form" model="ir.ui.view">
+        <field name="name">x_symptom_codes.form</field>
+        <field name="model">x_symptom_codes</field>
+        <field name="type">form</field>
+        <field name="mode">primary</field>
+        <field name="priority">16</field>
+        <field name="arch" type="xml">
+            <form>
+                <header/>
+                <sheet string="Symptom Codes">
+                    <widget name="web_ribbon" text="Archived" bg_color="bg-danger" invisible="x_active == True"/>
+                    <field name="x_active" invisible="1"/>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="x_name" required="1" placeholder="Name..."/>
+                        </h1>
+                    </div>
+                    <group name="studio_group_4d111b">
+                        <group name="studio_group_4d111b_left"/>
+                        <group name="studio_group_4d111b_right"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter" name="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                    <field name="activity_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_x_symptom_codes_tree" model="ir.ui.view">
+        <field name="name">x_symptom_codes.tree</field>
+        <field name="model">x_symptom_codes</field>
+        <field name="type">tree</field>
+        <field name="mode">primary</field>
+        <field name="priority">16</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="x_studio_sequence" widget="handle"/>
+                <field name="x_name"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_x_symptom_codes_search" model="ir.ui.view">
+        <field name="name">x_symptom_codes.search</field>
+        <field name="model">x_symptom_codes</field>
+        <field name="type">search</field>
+        <field name="mode">primary</field>
+        <field name="priority">16</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="x_name"/>
+                <separator/>
+                <filter string="Archived" name="archived_x_symptom_codes" domain="[['x_active', '=', False]]"/>
+                <separator/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_x_symptom_codes_tree_inherit" model="ir.ui.view">
+        <field name="name">x_symptom_codes.tree.inherit</field>
+        <field name="model">x_symptom_codes</field>
+        <field name="type">tree</field>
+        <field name="mode">extension</field>
+        <field name="priority">99</field>
+        <field name="inherit_id" ref="view_x_symptom_codes_tree"/>
+        <field name="arch" type="xml">
+            <data>
+                <xpath expr="//tree[1]" position="attributes">
+                    <attribute name="editable">bottom</attribute>
+                </xpath>
+                <xpath expr="//field[@name='x_studio_sequence']" position="attributes">
+                    <attribute name="column_invisible">1</attribute>
+                </xpath>
+                <xpath expr="//field[@name='x_name']" position="attributes">
+                    <attribute name="string">Symptom Code</attribute>
+                </xpath>
+                <xpath expr="//field[@name='x_name']" position="after">
+                    <field optional="show" name="x_studio_description" string="Description"/>
+                    <field optional="show" name="x_studio_symptom_area" string="Symptom Area" options="{'no_create': True}"/>
+                    <field optional="show" name="x_studio_company_id" string="Company"/>
+                </xpath>
+            </data>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- x_conditions                                                -->
+    <!-- ============================================================ -->
+
+    <record id="view_x_conditions_form" model="ir.ui.view">
+        <field name="name">x_conditions.form</field>
+        <field name="model">x_conditions</field>
+        <field name="type">form</field>
+        <field name="mode">primary</field>
+        <field name="priority">16</field>
+        <field name="arch" type="xml">
+            <form>
+                <header/>
+                <sheet string="Conditions">
+                    <widget name="web_ribbon" text="Archived" bg_color="bg-danger" invisible="x_active == True"/>
+                    <field name="x_active" invisible="1"/>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="x_name" required="1" placeholder="Name..."/>
+                        </h1>
+                    </div>
+                    <group name="studio_group_b55814">
+                        <group name="studio_group_b55814_left"/>
+                        <group name="studio_group_b55814_right"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter" name="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                    <field name="activity_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_x_conditions_tree" model="ir.ui.view">
+        <field name="name">x_conditions.tree</field>
+        <field name="model">x_conditions</field>
+        <field name="type">tree</field>
+        <field name="mode">primary</field>
+        <field name="priority">16</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="x_studio_sequence" widget="handle"/>
+                <field name="x_name"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_x_conditions_search" model="ir.ui.view">
+        <field name="name">x_conditions.search</field>
+        <field name="model">x_conditions</field>
+        <field name="type">search</field>
+        <field name="mode">primary</field>
+        <field name="priority">16</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="x_name"/>
+                <separator/>
+                <filter string="Archived" name="archived_x_conditions" domain="[['x_active', '=', False]]"/>
+                <separator/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_x_conditions_tree_inherit" model="ir.ui.view">
+        <field name="name">x_conditions.tree.inherit</field>
+        <field name="model">x_conditions</field>
+        <field name="type">tree</field>
+        <field name="mode">extension</field>
+        <field name="priority">99</field>
+        <field name="inherit_id" ref="view_x_conditions_tree"/>
+        <field name="arch" type="xml">
+            <data>
+                <xpath expr="//tree[1]" position="attributes">
+                    <attribute name="editable">bottom</attribute>
+                </xpath>
+                <xpath expr="//field[@name='x_studio_sequence']" position="attributes">
+                    <attribute name="column_invisible">1</attribute>
+                </xpath>
+                <xpath expr="//field[@name='x_name']" position="attributes">
+                    <attribute name="string">Condition</attribute>
+                </xpath>
+                <xpath expr="//field[@name='x_name']" position="after">
+                    <field optional="show" name="x_studio_description" string="Description"/>
+                    <field optional="show" name="x_studio_company_id" string="Company"/>
+                </xpath>
+            </data>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- x_diagnosis_areas                                           -->
+    <!-- ============================================================ -->
+
+    <record id="view_x_diagnosis_areas_form" model="ir.ui.view">
+        <field name="name">x_diagnosis_areas.form</field>
+        <field name="model">x_diagnosis_areas</field>
+        <field name="type">form</field>
+        <field name="mode">primary</field>
+        <field name="priority">16</field>
+        <field name="arch" type="xml">
+            <form>
+                <header/>
+                <sheet string="Diagnosis Areas">
+                    <widget name="web_ribbon" text="Archived" bg_color="bg-danger" invisible="x_active == True"/>
+                    <field name="x_active" invisible="1"/>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="x_name" required="1" placeholder="Name..."/>
+                        </h1>
+                    </div>
+                    <group name="studio_group_36cd75">
+                        <group name="studio_group_36cd75_left"/>
+                        <group name="studio_group_36cd75_right"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter" name="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                    <field name="activity_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_x_diagnosis_areas_tree" model="ir.ui.view">
+        <field name="name">x_diagnosis_areas.tree</field>
+        <field name="model">x_diagnosis_areas</field>
+        <field name="type">tree</field>
+        <field name="mode">primary</field>
+        <field name="priority">16</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="x_studio_sequence" widget="handle"/>
+                <field name="x_name"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_x_diagnosis_areas_search" model="ir.ui.view">
+        <field name="name">x_diagnosis_areas.search</field>
+        <field name="model">x_diagnosis_areas</field>
+        <field name="type">search</field>
+        <field name="mode">primary</field>
+        <field name="priority">16</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="x_name"/>
+                <separator/>
+                <filter string="Archived" name="archived_x_diagnosis_areas" domain="[['x_active', '=', False]]"/>
+                <separator/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_x_diagnosis_areas_tree_inherit" model="ir.ui.view">
+        <field name="name">x_diagnosis_areas.tree.inherit</field>
+        <field name="model">x_diagnosis_areas</field>
+        <field name="type">tree</field>
+        <field name="mode">extension</field>
+        <field name="priority">99</field>
+        <field name="inherit_id" ref="view_x_diagnosis_areas_tree"/>
+        <field name="arch" type="xml">
+            <data>
+                <xpath expr="//tree[1]" position="attributes">
+                    <attribute name="editable">bottom</attribute>
+                </xpath>
+                <xpath expr="//field[@name='x_studio_sequence']" position="attributes">
+                    <attribute name="column_invisible">1</attribute>
+                </xpath>
+                <xpath expr="//field[@name='x_name']" position="attributes">
+                    <attribute name="string">Diagnosis Area</attribute>
+                </xpath>
+                <xpath expr="//field[@name='x_name']" position="after">
+                    <field optional="show" name="x_studio_description" string="Description"/>
+                    <field optional="show" name="x_studio_company_id" string="Company"/>
+                </xpath>
+            </data>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- x_resolutions                                               -->
+    <!-- ============================================================ -->
+
+    <record id="view_x_resolutions_form" model="ir.ui.view">
+        <field name="name">x_resolutions.form</field>
+        <field name="model">x_resolutions</field>
+        <field name="type">form</field>
+        <field name="mode">primary</field>
+        <field name="priority">16</field>
+        <field name="arch" type="xml">
+            <form>
+                <header/>
+                <sheet string="Resolutions">
+                    <widget name="web_ribbon" text="Archived" bg_color="bg-danger" invisible="x_active == True"/>
+                    <field name="x_active" invisible="1"/>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="x_name" required="1" placeholder="Name..."/>
+                        </h1>
+                    </div>
+                    <group name="studio_group_6a461b">
+                        <group name="studio_group_6a461b_left"/>
+                        <group name="studio_group_6a461b_right"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter" name="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                    <field name="activity_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_x_resolutions_tree" model="ir.ui.view">
+        <field name="name">x_resolutions.tree</field>
+        <field name="model">x_resolutions</field>
+        <field name="type">tree</field>
+        <field name="mode">primary</field>
+        <field name="priority">16</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="x_studio_sequence" widget="handle"/>
+                <field name="x_name"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_x_resolutions_search" model="ir.ui.view">
+        <field name="name">x_resolutions.search</field>
+        <field name="model">x_resolutions</field>
+        <field name="type">search</field>
+        <field name="mode">primary</field>
+        <field name="priority">16</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="x_name"/>
+                <separator/>
+                <filter string="Archived" name="archived_x_resolutions" domain="[['x_active', '=', False]]"/>
+                <separator/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_x_resolutions_tree_inherit" model="ir.ui.view">
+        <field name="name">x_resolutions.tree.inherit</field>
+        <field name="model">x_resolutions</field>
+        <field name="type">tree</field>
+        <field name="mode">extension</field>
+        <field name="priority">99</field>
+        <field name="inherit_id" ref="view_x_resolutions_tree"/>
+        <field name="arch" type="xml">
+            <data>
+                <xpath expr="//tree[1]" position="attributes">
+                    <attribute name="editable">bottom</attribute>
+                </xpath>
+                <xpath expr="//field[@name='x_studio_sequence']" position="attributes">
+                    <attribute name="column_invisible">1</attribute>
+                </xpath>
+                <xpath expr="//field[@name='x_name']" position="attributes">
+                    <attribute name="string">Resolution</attribute>
+                </xpath>
+                <xpath expr="//field[@name='x_name']" position="after">
+                    <field optional="show" name="x_studio_description" string="Description"/>
+                    <field optional="show" name="x_studio_company_id" string="Company"/>
+                </xpath>
+            </data>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- x_symptom_areas                                             -->
+    <!-- ============================================================ -->
+
+    <record id="view_x_symptom_areas_form" model="ir.ui.view">
+        <field name="name">x_symptom_areas.form</field>
+        <field name="model">x_symptom_areas</field>
+        <field name="type">form</field>
+        <field name="mode">primary</field>
+        <field name="priority">16</field>
+        <field name="arch" type="xml">
+            <form>
+                <header/>
+                <sheet string="Symptom Areas">
+                    <widget name="web_ribbon" text="Archived" bg_color="bg-danger" invisible="x_active == True"/>
+                    <field name="x_active" invisible="1"/>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="x_name" required="1" placeholder="Name..."/>
+                        </h1>
+                    </div>
+                    <group name="studio_group_eb0399">
+                        <group name="studio_group_eb0399_left"/>
+                        <group name="studio_group_eb0399_right"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter" name="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                    <field name="activity_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_x_symptom_areas_tree" model="ir.ui.view">
+        <field name="name">x_symptom_areas.tree</field>
+        <field name="model">x_symptom_areas</field>
+        <field name="type">tree</field>
+        <field name="mode">primary</field>
+        <field name="priority">16</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="x_studio_sequence" widget="handle"/>
+                <field name="x_name"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_x_symptom_areas_search" model="ir.ui.view">
+        <field name="name">x_symptom_areas.search</field>
+        <field name="model">x_symptom_areas</field>
+        <field name="type">search</field>
+        <field name="mode">primary</field>
+        <field name="priority">16</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="x_name"/>
+                <separator/>
+                <filter string="Archived" name="archived_x_symptom_areas" domain="[['x_active', '=', False]]"/>
+                <separator/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_x_symptom_areas_tree_inherit" model="ir.ui.view">
+        <field name="name">x_symptom_areas.tree.inherit</field>
+        <field name="model">x_symptom_areas</field>
+        <field name="type">tree</field>
+        <field name="mode">extension</field>
+        <field name="priority">99</field>
+        <field name="inherit_id" ref="view_x_symptom_areas_tree"/>
+        <field name="arch" type="xml">
+            <data>
+                <xpath expr="//tree[1]" position="attributes">
+                    <attribute name="editable">bottom</attribute>
+                </xpath>
+                <xpath expr="//field[@name='x_studio_sequence']" position="attributes">
+                    <attribute name="column_invisible">1</attribute>
+                </xpath>
+                <xpath expr="//field[@name='x_name']" position="attributes">
+                    <attribute name="string">Symptom Area</attribute>
+                </xpath>
+                <xpath expr="//field[@name='x_name']" position="after">
+                    <field optional="show" name="x_studio_description" string="Description"/>
+                    <field optional="show" name="x_studio_company_id" string="Company"/>
+                </xpath>
+            </data>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- x_task_diagnosis                                            -->
+    <!-- ============================================================ -->
+
+    <record id="view_x_task_diagnosis_form" model="ir.ui.view">
+        <field name="name">x_task_diagnosis.form</field>
+        <field name="model">x_task_diagnosis</field>
+        <field name="type">form</field>
+        <field name="mode">primary</field>
+        <field name="priority">16</field>
+        <field name="arch" type="xml">
+            <form>
+                <header/>
+                <sheet string="Task Diagnosis">
+                    <widget name="web_ribbon" text="Archived" bg_color="bg-danger" invisible="x_active == True"/>
+                    <field name="x_active" invisible="1"/>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="x_name" required="1" placeholder="Name..."/>
+                        </h1>
+                    </div>
+                    <group name="studio_group_39d2e1">
+                        <group name="studio_group_39d2e1_left"/>
+                        <group name="studio_group_39d2e1_right"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter" name="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                    <field name="activity_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_x_task_diagnosis_tree" model="ir.ui.view">
+        <field name="name">x_task_diagnosis.tree</field>
+        <field name="model">x_task_diagnosis</field>
+        <field name="type">tree</field>
+        <field name="mode">primary</field>
+        <field name="priority">16</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="x_studio_sequence" widget="handle"/>
+                <field name="x_name"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_x_task_diagnosis_search" model="ir.ui.view">
+        <field name="name">x_task_diagnosis.search</field>
+        <field name="model">x_task_diagnosis</field>
+        <field name="type">search</field>
+        <field name="mode">primary</field>
+        <field name="priority">16</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="x_name"/>
+                <separator/>
+                <filter string="Archived" name="archived_x_task_diagnosis" domain="[['x_active', '=', False]]"/>
+                <separator/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_x_task_diagnosis_tree_inherit" model="ir.ui.view">
+        <field name="name">x_task_diagnosis.tree.inherit</field>
+        <field name="model">x_task_diagnosis</field>
+        <field name="type">tree</field>
+        <field name="mode">extension</field>
+        <field name="priority">99</field>
+        <field name="inherit_id" ref="view_x_task_diagnosis_tree"/>
+        <field name="arch" type="xml">
+            <data>
+                <xpath expr="//tree[1]" position="attributes">
+                    <attribute name="editable">bottom</attribute>
+                </xpath>
+                <xpath expr="//field[@name='x_name']" position="after">
+                    <field optional="show" name="x_studio_task_id" string="Task Id" column_invisible="1"/>
+                </xpath>
+            </data>
+        </field>
+    </record>
+
+</odoo>

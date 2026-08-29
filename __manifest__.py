@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Fix Repair',
-    'version': '17.0.1.0.298',
+    'version': '17.0.1.0.299',
     'summary': 'Enhancements to the Customer Care - Repair helpdesk workflow',
     'author': 'Jinasena Agricultural Machinery (Pvt) Ltd.',
     'category': 'Helpdesk',
     'license': 'LGPL-3',
-    'depends': ['base_setup', 'helpdesk', 'helpdesk_fsm', 'sale', 'sale_stock', 'industry_fsm_sale', 'industry_fsm_stock', 'BugFix-Sales', 'studio_usermodel_migration'],
+    # v299: added `repair` to depends — models/repair_order.py ports
+    # x_studio_confirm_draft_quotation onto repair.order. Without this
+    # dep the _inherit target isn't in the registry when Fix-repair
+    # loads on a fresh install.
+    'depends': ['base_setup', 'helpdesk', 'helpdesk_fsm', 'repair', 'sale', 'sale_stock', 'industry_fsm_sale', 'industry_fsm_stock', 'BugFix-Sales', 'studio_usermodel_migration'],
     'post_init_hook': 'post_init_hook',
     # v292: added studio_usermodel_migration to depends.
     # helpdesk_ticket.py declares related fields (x_studio_source_location,
@@ -40,6 +44,14 @@
         'data/repair_stages.xml',
         'data/repair_sequences.xml',
         'data/helpdesk_ticket_types.xml',
+        # v299: catalog views (form / tree / search + Studio inherit
+        # tree) for the 7 diagnosis-catalogue models. MUST load
+        # before repair_diagnosis_menus.xml so the actions that menu
+        # file creates already have primary views available on fresh
+        # install (Odoo would otherwise auto-generate a default tree
+        # that lacks the Studio inherit's editable="bottom" +
+        # Description / Area / Company extra columns).
+        'views/repair_diagnosis_catalog_views.xml',
         'data/repair_diagnosis_menus.xml',
         'data/repair_diagnosis_seed.xml',
         # v253: expose RR - Auto Create Repair Route in the Actions

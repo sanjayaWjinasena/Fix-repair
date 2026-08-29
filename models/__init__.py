@@ -6,6 +6,7 @@ from . import helpdesk_type_stage
 from . import ir_actions_report
 from . import project_task
 from . import repair_master_data
+from . import repair_order
 from . import res_config_settings
 from . import res_partner
 from . import res_users

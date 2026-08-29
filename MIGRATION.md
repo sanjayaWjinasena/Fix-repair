@@ -1,3 +1,19 @@
+> **⚠ SUPERSEDED — cross-repo tracker moved.**
+>
+> This document is a historical snapshot (dated at Fix-repair v162, when
+> HEAD is now well past v298). The canonical Studio → Python migration
+> state lives at:
+>
+>     D:\Odoo Playwright Tests\PlayWrite Testings\MIGRATION_TRACKER.md
+>
+> Refresh with `python scripts/refresh_migration_tracker.py --live`.
+> Do NOT update this file for new work — append to the tracker's
+> Iteration Log instead. Content below is preserved for provenance
+> (it remains the best deep reference for the Fix-repair-scope migration
+> patterns).
+
+---
+
 # Fix-repair — Migration & Development Log
 
 **Module** `Fix-repair` — enhancements to the Customer Care – Repair helpdesk
