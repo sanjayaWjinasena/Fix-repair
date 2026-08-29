@@ -1931,6 +1931,19 @@ class HelpdeskTicket(models.Model):
                         sheet.insert(0, fld)
                 break
 
+            # v303: hide the Coupon button contributed by the
+            # `sale_loyalty` / helpdesk-sale-loyalty stock module.
+            # Clear-DB has no such button in its composed header (the
+            # loyalty module isn't installed there), so a fresh-install
+            # standalone should match. Cannot xpath by action id
+            # (auto-assigned, was 1750 on standalone) — match by string
+            # label + type='action' instead. Safe because no custom
+            # button uses that combo.
+            for btn in arch.xpath(
+                "//header/button[@string='Coupon' and @type='action']"
+            ):
+                btn.set('invisible', '1')
+
             # Recolour Return (action 195) and Plan Intervention
             # (action_generate_fsm_task) buttons to primary purple.
             # Done here in Python instead of in the XML inherit
