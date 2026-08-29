@@ -201,10 +201,27 @@ class StockPicking(models.Model):
                 existing = btn.get('invisible', '')
                 extra = 'nuw_block_validate'
                 btn.set('invisible', f"({existing}) or {extra}" if existing else extra)
-            # Hide the Return button (action 195) entirely — returns are
+            # Hide the standard Return button entirely — returns are
             # initiated from the helpdesk ticket itself, never from the
             # picking form.
-            for btn in arch.xpath("//button[@name='195']"):
+            #
+            # v302: resolve the Return action id via env.ref instead of
+            # hardcoding `name='195'` (Clear-DB's id; standalone had
+            # 853). Same fix pattern as helpdesk_ticket._get_view.
+            return_action = self.env.ref(
+                'stock.act_stock_return_picking',
+                raise_if_not_found=False,
+            )
+            return_btns: list = []
+            if return_action:
+                return_btns = arch.xpath(
+                    f"//button[@name='{return_action.id}']"
+                )
+            if not return_btns:
+                return_btns = arch.xpath(
+                    "//button[@string='Return' and @type='action']"
+                )
+            for btn in return_btns:
                 btn.set('invisible', '1')
 
             # Hide "Retun Reject Reason" button (typo in original

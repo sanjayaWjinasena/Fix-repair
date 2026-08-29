@@ -2181,7 +2181,36 @@ class HelpdeskTicket(models.Model):
                 f"'default_location_id': ({ship_back_cond} and {cust_loc_id}) or False, "
                 "'default_company_id': company_id}"
             )
-            for btn in arch.xpath("//button[@name='195']"):
+            # v302: match the standard Return button by resolved
+            # action id + string fallback instead of the hardcoded
+            # `name='195'`. The base Odoo `stock` module's
+            # `stock.return.picking` window action carries a fresh
+            # ir.model.data auto-numbered id on every install; on
+            # Clear-DB it's 195, on the standalone dev env it's 853.
+            # A literal xpath on 195 silently skipped the retargeting
+            # on standalone — Fix-repair's Return + Dispatch buttons
+            # never landed there. Resolve at render time via env.ref,
+            # fall back to matching by string='Return' if the xmlid
+            # is missing (e.g. rebranded fork).
+            return_action = self.env.ref(
+                'stock.act_stock_return_picking',
+                raise_if_not_found=False,
+            )
+            return_ids = [str(return_action.id)] if return_action else []
+            return_btns = []
+            for candidate_id in return_ids:
+                return_btns.extend(
+                    arch.xpath(f"//header/button[@name='{candidate_id}']")
+                )
+            if not return_btns:
+                # Fallback: string match. Restricts to the Odoo-stock-
+                # provided Return button (string="Return" on English
+                # locale); anything else with string="Return" is
+                # unlikely inside a helpdesk.ticket header.
+                return_btns = arch.xpath(
+                    "//header/button[@string='Return' and @type='action']"
+                )
+            for btn in return_btns:
                 # v298: verbatim from Clear-DB Studio arch. Confirmed
                 # against the composed helpdesk.ticket form arch on
                 # Clear-DB (2026-08-28). Every field in this expression
