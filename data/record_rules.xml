@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fix-repair v0.1.0.305: 23 record rules. -->
+<odoo>
+
+  <record id="rule_366_sla_multi_company" model="ir.rule">
+    <field name="name">SLA: multi-company</field>
+    <field name="model_id" ref="helpdesk.model_helpdesk_sla"/>
+    <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="True"/>
+    <field name="perm_create" eval="True"/>
+    <field name="perm_unlink" eval="True"/>
+    <field name="active" eval="True"/>
+  </record>
+
+  <record id="rule_616_jin_multi_company_helpdesk_stage" model="ir.rule">
+    <field name="name">JIN - Multi-Company - Helpdesk Stage</field>
+    <field name="model_id" ref="Fix-repair.model_helpdesk_stage"/>
+    <field name="domain_force">['|', ('x_studio_company_id', 'in', company_ids), ('x_studio_company_id', '=', False)]</field>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="True"/>
+    <field name="perm_create" eval="True"/>
+    <field name="perm_unlink" eval="True"/>
+    <field name="active" eval="True"/>
+  </record>
+
+  <record id="rule_360_helpdesk_administrator" model="ir.rule">
+    <field name="name">Helpdesk Administrator</field>
+    <field name="model_id" ref="helpdesk.model_helpdesk_team"/>
+    <field name="domain_force">[(1,'=',1)]</field>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="True"/>
+    <field name="perm_create" eval="True"/>
+    <field name="perm_unlink" eval="True"/>
+    <field name="active" eval="True"/>
+    <field name="groups" eval="[(6, 0, [ref('helpdesk.group_helpdesk_manager')])]"/>
+  </record>
+
+  <record id="rule_362_helpdesk_user" model="ir.rule">
+    <field name="name">Helpdesk User</field>
+    <field name="model_id" ref="helpdesk.model_helpdesk_team"/>
+    <field name="domain_force">['|',
+                                            ('privacy_visibility', '!=', 'invited_internal'),
+                                            ('message_partner_ids', 'in', [user.partner_id.id])
+                                        ]</field>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="True"/>
+    <field name="perm_create" eval="True"/>
+    <field name="perm_unlink" eval="True"/>
+    <field name="active" eval="True"/>
+    <field name="groups" eval="[(6, 0, [ref('helpdesk.group_helpdesk_user')])]"/>
+  </record>
+
+  <record id="rule_365_team_multi_company" model="ir.rule">
+    <field name="name">Team: multi-company</field>
+    <field name="model_id" ref="helpdesk.model_helpdesk_team"/>
+    <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="True"/>
+    <field name="perm_create" eval="True"/>
+    <field name="perm_unlink" eval="True"/>
+    <field name="active" eval="True"/>
+  </record>
+
+  <record id="rule_695_public_user_published_helpdesk_team" model="ir.rule">
+    <field name="name">Public User: Published Helpdesk Team</field>
+    <field name="model_id" ref="helpdesk.model_helpdesk_team"/>
+    <field name="domain_force">[('website_published', '=', True)]</field>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="True"/>
+    <field name="perm_create" eval="True"/>
+    <field name="perm_unlink" eval="True"/>
+    <field name="active" eval="True"/>
+    <field name="groups" eval="[(6, 0, [ref('base.group_public')])]"/>
+  </record>
+
+  <record id="rule_395_helpdesk_ticket_report_multi_company" model="ir.rule">
+    <field name="name">Helpdesk Ticket Report: multi-company</field>
+    <field name="model_id" ref="helpdesk.model_helpdesk_ticket_report_analysis"/>
+    <field name="domain_force">[('company_id', 'in', company_ids + [False])]</field>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="True"/>
+    <field name="perm_create" eval="True"/>
+    <field name="perm_unlink" eval="True"/>
+    <field name="active" eval="True"/>
+  </record>
+
+  <record id="rule_396_helpdesk_ticket_report_helpdesk_ticket_user" model="ir.rule">
+    <field name="name">Helpdesk Ticket Report: Helpdesk Ticket User</field>
+    <field name="model_id" ref="helpdesk.model_helpdesk_ticket_report_analysis"/>
+    <field name="domain_force">[
+                '|', 
+                    ('team_id.privacy_visibility', '!=', 'invited_internal'),
+                    '|',
+                        ('team_id.message_partner_ids', 'in', [user.partner_id.id]),
+                        ('ticket_id.message_partner_ids', 'in', [user.partner_id.id]),
+            ]</field>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="True"/>
+    <field name="perm_create" eval="True"/>
+    <field name="perm_unlink" eval="True"/>
+    <field name="active" eval="True"/>
+    <field name="groups" eval="[(6, 0, [ref('helpdesk.group_helpdesk_user')])]"/>
+  </record>
+
+  <record id="rule_679_helpdesk_ticket_report_helpdesk_ticket_administrator" model="ir.rule">
+    <field name="name">Helpdesk Ticket Report: Helpdesk Ticket Administrator</field>
+    <field name="model_id" ref="helpdesk.model_helpdesk_ticket_report_analysis"/>
+    <field name="domain_force">[(1,'=',1)]</field>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="True"/>
+    <field name="perm_create" eval="True"/>
+    <field name="perm_unlink" eval="True"/>
+    <field name="active" eval="True"/>
+    <field name="groups" eval="[(6, 0, [ref('helpdesk.group_helpdesk_manager')])]"/>
+  </record>
+
+  <record id="rule_223_repair_order_multi_company" model="ir.rule">
+    <field name="name">repair order multi-company</field>
+    <field name="model_id" ref="Fix-repair.model_repair_order"/>
+    <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="True"/>
+    <field name="perm_create" eval="True"/>
+    <field name="perm_unlink" eval="True"/>
+    <field name="active" eval="True"/>
+  </record>
+
+  <record id="rule_21_user_rule" model="ir.rule">
+    <field name="name">user rule</field>
+    <field name="model_id" ref="Fix-repair.model_res_users"/>
+    <field name="domain_force">['|', ('share', '=', False), ('company_ids', 'in', company_ids)]</field>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="True"/>
+    <field name="perm_create" eval="True"/>
+    <field name="perm_unlink" eval="True"/>
+    <field name="active" eval="True"/>
+  </record>
+
+  <record id="rule_921_stock_data_warehouse" model="ir.rule">
+    <field name="name">Stock data warehouse</field>
+    <field name="model_id" ref="Fix-repair.model_stock_warehouse"/>
+    <field name="domain_force">[(1,'=',1)]</field>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="True"/>
+    <field name="perm_create" eval="True"/>
+    <field name="perm_unlink" eval="True"/>
+    <field name="active" eval="True"/>
+    <field name="groups" eval="[(6, 0, [ref('stock.group_stock_manager')])]"/>
+  </record>
+
+  <record id="rule_552_jin_multi_company_conditions" model="ir.rule">
+    <field name="name">JIN - Multi-Company - Conditions</field>
+    <field name="model_id" ref="Fix-repair.model_x_conditions"/>
+    <field name="domain_force">['|', ('x_studio_company_id', 'in', company_ids), ('x_studio_company_id', '=', False)]</field>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="True"/>
+    <field name="perm_create" eval="True"/>
+    <field name="perm_unlink" eval="True"/>
+    <field name="active" eval="True"/>
+  </record>
+
+  <record id="rule_555_jin_multi_company_diagnosis_areas" model="ir.rule">
+    <field name="name">JIN - Multi-Company - Diagnosis Areas</field>
+    <field name="model_id" ref="Fix-repair.model_x_diagnosis_areas"/>
+    <field name="domain_force">['|', ('x_studio_company_id', 'in', company_ids), ('x_studio_company_id', '=', False)]</field>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="True"/>
+    <field name="perm_create" eval="True"/>
+    <field name="perm_unlink" eval="True"/>
+    <field name="active" eval="True"/>
+  </record>
+
+  <record id="rule_556_jin_multi_company_diagnosis_codes" model="ir.rule">
+    <field name="name">JIN - Multi-Company - Diagnosis Codes</field>
+    <field name="model_id" ref="Fix-repair.model_x_diagnosis_codes"/>
+    <field name="domain_force">['|', ('x_studio_company_id', 'in', company_ids), ('x_studio_company_id', '=', False)]</field>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="True"/>
+    <field name="perm_create" eval="True"/>
+    <field name="perm_unlink" eval="True"/>
+    <field name="active" eval="True"/>
+  </record>
+
+  <record id="rule_626_jin_multi_company_repair_accounts" model="ir.rule">
+    <field name="name">JIN - Multi-Company - Repair Accounts</field>
+    <field name="model_id" ref="Fix-repair.model_x_repair_accounts"/>
+    <field name="domain_force">['|', ('x_studio_company_id', 'in', company_ids), ('x_studio_company_id', '=', False)]</field>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="True"/>
+    <field name="perm_create" eval="True"/>
+    <field name="perm_unlink" eval="True"/>
+    <field name="active" eval="True"/>
+  </record>
+
+  <record id="rule_557_jin_multi_company_repair_reason" model="ir.rule">
+    <field name="name">JIN - Multi-Company - Repair Reason</field>
+    <field name="model_id" ref="Fix-repair.model_x_repair_reason"/>
+    <field name="domain_force">['|', ('x_studio_company_id', 'in', company_ids), ('x_studio_company_id', '=', False)]</field>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="True"/>
+    <field name="perm_create" eval="True"/>
+    <field name="perm_unlink" eval="True"/>
+    <field name="active" eval="True"/>
+  </record>
+
+  <record id="rule_558_jin_multi_company_repair_reason_customer" model="ir.rule">
+    <field name="name">JIN - Multi-Company - Repair Reason - Customer</field>
+    <field name="model_id" ref="Fix-repair.model_x_repair_reason_custom"/>
+    <field name="domain_force">['|', ('x_studio_company_id', 'in', company_ids), ('x_studio_company_id', '=', False)]</field>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="True"/>
+    <field name="perm_create" eval="True"/>
+    <field name="perm_unlink" eval="True"/>
+    <field name="active" eval="True"/>
+  </record>
+
+  <record id="rule_561_jin_multi_company_repair_stages" model="ir.rule">
+    <field name="name">JIN - Multi-Company - Repair Stages</field>
+    <field name="model_id" ref="Fix-repair.model_x_repair_stages"/>
+    <field name="domain_force">['|', ('x_studio_company_id', 'in', company_ids), ('x_studio_company_id', '=', False)]</field>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="True"/>
+    <field name="perm_create" eval="True"/>
+    <field name="perm_unlink" eval="True"/>
+    <field name="active" eval="True"/>
+  </record>
+
+  <record id="rule_559_jin_multi_company_repair_sub_reason" model="ir.rule">
+    <field name="name">JIN - Multi-Company - Repair Sub Reason</field>
+    <field name="model_id" ref="Fix-repair.model_x_repair_sub_reason"/>
+    <field name="domain_force">['|', ('x_studio_company_id', 'in', company_ids), ('x_studio_company_id', '=', False)]</field>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="True"/>
+    <field name="perm_create" eval="True"/>
+    <field name="perm_unlink" eval="True"/>
+    <field name="active" eval="True"/>
+  </record>
+
+  <record id="rule_560_jin_multi_company_resolutions" model="ir.rule">
+    <field name="name">JIN - Multi-Company - Resolutions</field>
+    <field name="model_id" ref="Fix-repair.model_x_resolutions"/>
+    <field name="domain_force">['|', ('x_studio_company_id', 'in', company_ids), ('x_studio_company_id', '=', False)]</field>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="True"/>
+    <field name="perm_create" eval="True"/>
+    <field name="perm_unlink" eval="True"/>
+    <field name="active" eval="True"/>
+  </record>
+
+  <record id="rule_553_jin_multi_company_symptom_areas" model="ir.rule">
+    <field name="name">JIN - Multi-Company - Symptom Areas</field>
+    <field name="model_id" ref="Fix-repair.model_x_symptom_areas"/>
+    <field name="domain_force">['|', ('x_studio_company_id', 'in', company_ids), ('x_studio_company_id', '=', False)]</field>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="True"/>
+    <field name="perm_create" eval="True"/>
+    <field name="perm_unlink" eval="True"/>
+    <field name="active" eval="True"/>
+  </record>
+
+  <record id="rule_554_jin_multi_company_symptom_codes" model="ir.rule">
+    <field name="name">JIN - Multi-Company - Symptom Codes</field>
+    <field name="model_id" ref="Fix-repair.model_x_symptom_codes"/>
+    <field name="domain_force">['|', ('x_studio_company_id', 'in', company_ids), ('x_studio_company_id', '=', False)]</field>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="True"/>
+    <field name="perm_create" eval="True"/>
+    <field name="perm_unlink" eval="True"/>
+    <field name="active" eval="True"/>
+  </record>
+
+</odoo>

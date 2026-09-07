@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fix-repair v0.1.0.305: Phase 3.2 sub-batch C - 16 windows. -->
+<odoo>
+
+  <record id="act_window_1802_success_rate_analysis" model="ir.actions.act_window">
+    <field name="name">Success Rate Analysis</field>
+    <field name="res_model">helpdesk.ticket.report.analysis</field>
+    <field name="view_mode">pivot,graph</field>
+    <field name="domain">[('close_date', '&gt;=', '2025-03-11 10:18:26')]</field>
+    <field name="context">{
+            'search_default_is_close': True,
+            'search_default_my_ticket': True,
+            'search_default_sla_success': True,
+            'search_default_last_7days': True,
+            'pivot_measures': ['__count__'],
+        }</field>
+    <field name="help" type="html"><p class="o_view_nocontent_empty_folder">
+                No data yet!
+            </p><p>
+                Create tickets to get statistics.
+            </p>
+        </field>
+  </record>
+
+  <record id="act_window_1975_repair_reason" model="ir.actions.act_window">
+    <field name="name">Repair Reason</field>
+    <field name="res_model">x_repair_reason</field>
+    <field name="view_mode">tree,form</field>
+    <field name="context">{}</field>
+    <field name="help" type="html"><p class="o_view_nocontent_smiling_face">
+                    This is your new action.
+                </p>
+                <p>By default, it contains a list and a form view and possibly
+                    other view types depending on the options you chose for your model.
+                </p>
+                <p>
+                    You can start customizing these screens by clicking on the Studio icon on the
+                    top right corner (you can also customize this help message there).
+                </p>
+            </field>
+  </record>
+
+  <record id="act_window_2175_repair_accounts" model="ir.actions.act_window">
+    <field name="name">Repair Accounts</field>
+    <field name="res_model">x_repair_accounts</field>
+    <field name="view_mode">tree,form</field>
+    <field name="context">{}</field>
+    <field name="help" type="html"><p class="o_view_nocontent_smiling_face">
+                    This is your new action.
+                </p>
+                <p>By default, it contains a list and a form view and possibly
+                    other view types depending on the options you chose for your model.
+                </p>
+                <p>
+                    You can start customizing these screens by clicking on the Studio icon on the
+                    top right corner (you can also customize this help message there).
+                </p>
+            </field>
+  </record>
+
+  <record id="act_window_2209_conditions" model="ir.actions.act_window">
+    <field name="name">Conditions</field>
+    <field name="res_model">x_conditions</field>
+    <field name="view_mode">tree,form</field>
+    <field name="context">{}</field>
+    <field name="help" type="html"><p class="o_view_nocontent_smiling_face">
+                    This is your new action.
+                </p>
+                <p>By default, it contains a list and a form view and possibly
+                    other view types depending on the options you chose for your model.
+                </p>
+                <p>
+                    You can start customizing these screens by clicking on the Studio icon on the
+                    top right corner (you can also customize this help message there).
+                </p>
+            </field>
+  </record>
+
+  <record id="act_window_2210_symptom_areas" model="ir.actions.act_window">
+    <field name="name">Symptom Areas</field>
+    <field name="res_model">x_symptom_areas</field>
+    <field name="view_mode">tree,form</field>
+    <field name="context">{}</field>
+    <field name="help" type="html"><p class="o_view_nocontent_smiling_face">
+                    This is your new action.
+                </p>
+                <p>By default, it contains a list and a form view and possibly
+                    other view types depending on the options you chose for your model.
+                </p>
+                <p>
+                    You can start customizing these screens by clicking on the Studio icon on the
+                    top right corner (you can also customize this help message there).
+                </p>
+            </field>
+  </record>
+
+  <record id="act_window_2211_symptom_codes" model="ir.actions.act_window">
+    <field name="name">Symptom Codes</field>
+    <field name="res_model">x_symptom_codes</field>
+    <field name="view_mode">tree,form</field>
+    <field name="context">{}</field>
+    <field name="help" type="html"><p class="o_view_nocontent_smiling_face">
+                    This is your new action.
+                </p>
+                <p>By default, it contains a list and a form view and possibly
+                    other view types depending on the options you chose for your model.
+                </p>
+                <p>
+                    You can start customizing these screens by clicking on the Studio icon on the
+                    top right corner (you can also customize this help message there).
+                </p>
+            </field>
+  </record>
+
+  <record id="act_window_2212_diagnosis_areas" model="ir.actions.act_window">
+    <field name="name">Diagnosis Areas</field>
+    <field name="res_model">x_diagnosis_areas</field>
+    <field name="view_mode">tree,form</field>
+    <field name="context">{}</field>
+    <field name="help" type="html"><p class="o_view_nocontent_smiling_face">
+                    This is your new action.
+                </p>
+                <p>By default, it contains a list and a form view and possibly
+                    other view types depending on the options you chose for your model.
+                </p>
+                <p>
+                    You can start customizing these screens by clicking on the Studio icon on the
+                    top right corner (you can also customize this help message there).
+                </p>
+            </field>
+  </record>
+
+  <record id="act_window_2213_diagnosis_codes" model="ir.actions.act_window">
+    <field name="name">Diagnosis Codes</field>
+    <field name="res_model">x_diagnosis_codes</field>
+    <field name="view_mode">tree,form</field>
+    <field name="context">{}</field>
+    <field name="help" type="html"><p class="o_view_nocontent_smiling_face">
+                    This is your new action.
+                </p>
+                <p>By default, it contains a list and a form view and possibly
+                    other view types depending on the options you chose for your model.
+                </p>
+                <p>
+                    You can start customizing these screens by clicking on the Studio icon on the
+                    top right corner (you can also customize this help message there).
+                </p>
+            </field>
+  </record>
+
+  <record id="act_window_2214_repair_sub_reason" model="ir.actions.act_window">
+    <field name="name">Repair Sub Reason</field>
+    <field name="res_model">x_repair_sub_reason</field>
+    <field name="view_mode">tree,form</field>
+    <field name="context">{}</field>
+    <field name="help" type="html"><p class="o_view_nocontent_smiling_face">
+                    This is your new action.
+                </p>
+                <p>By default, it contains a list and a form view and possibly
+                    other view types depending on the options you chose for your model.
+                </p>
+                <p>
+                    You can start customizing these screens by clicking on the Studio icon on the
+                    top right corner (you can also customize this help message there).
+                </p>
+            </field>
+  </record>
+
+  <record id="act_window_2215_resolutions" model="ir.actions.act_window">
+    <field name="name">Resolutions</field>
+    <field name="res_model">x_resolutions</field>
+    <field name="view_mode">tree,form</field>
+    <field name="context">{}</field>
+    <field name="help" type="html"><p class="o_view_nocontent_smiling_face">
+                    This is your new action.
+                </p>
+                <p>By default, it contains a list and a form view and possibly
+                    other view types depending on the options you chose for your model.
+                </p>
+                <p>
+                    You can start customizing these screens by clicking on the Studio icon on the
+                    top right corner (you can also customize this help message there).
+                </p>
+            </field>
+  </record>
+
+  <record id="act_window_2216_repair_stages" model="ir.actions.act_window">
+    <field name="name">Repair Stages</field>
+    <field name="res_model">x_repair_stages</field>
+    <field name="view_mode">tree,form</field>
+    <field name="context">{}</field>
+    <field name="help" type="html"><p class="o_view_nocontent_smiling_face">
+                    This is your new action.
+                </p>
+                <p>By default, it contains a list and a form view and possibly
+                    other view types depending on the options you chose for your model.
+                </p>
+                <p>
+                    You can start customizing these screens by clicking on the Studio icon on the
+                    top right corner (you can also customize this help message there).
+                </p>
+            </field>
+  </record>
+
+  <record id="act_window_2217_task_diagnosis" model="ir.actions.act_window">
+    <field name="name">Task Diagnosis</field>
+    <field name="res_model">x_task_diagnosis</field>
+    <field name="view_mode">tree,form</field>
+    <field name="context">{}</field>
+    <field name="help" type="html"><p class="o_view_nocontent_smiling_face">
+                    This is your new action.
+                </p>
+                <p>By default, it contains a list and a form view and possibly
+                    other view types depending on the options you chose for your model.
+                </p>
+                <p>
+                    You can start customizing these screens by clicking on the Studio icon on the
+                    top right corner (you can also customize this help message there).
+                </p>
+            </field>
+  </record>
+
+  <record id="act_window_2218_repair_reason_customer" model="ir.actions.act_window">
+    <field name="name">Repair Reason - Customer</field>
+    <field name="res_model">x_repair_reason_custom</field>
+    <field name="view_mode">tree,form</field>
+    <field name="context">{}</field>
+    <field name="help" type="html"><p class="o_view_nocontent_smiling_face">
+                    This is your new action.
+                </p>
+                <p>By default, it contains a list and a form view and possibly
+                    other view types depending on the options you chose for your model.
+                </p>
+                <p>
+                    You can start customizing these screens by clicking on the Studio icon on the
+                    top right corner (you can also customize this help message there).
+                </p>
+            </field>
+  </record>
+
+  <record id="act_window_2239_customer_letter_report" model="ir.actions.act_window">
+    <field name="name">Customer Letter Report</field>
+    <field name="res_model">helpdesk.team</field>
+    <field name="view_mode">kanban,tree,form</field>
+    <field name="context">{}</field>
+    <field name="help" type="html"><p class="o_view_nocontent_smiling_face">
+                    This is your new action.
+                </p>
+                <p>By default, it contains a list and a form view and possibly
+                    other view types depending on the options you chose for your model.
+                </p>
+                <p>
+                    You can start customizing these screens by clicking on the Studio icon on the
+                    top right corner (you can also customize this help message there).
+                </p>
+            </field>
+  </record>
+
+  <record id="act_window_2807_repair_order" model="ir.actions.act_window">
+    <field name="name">repair.order</field>
+    <field name="res_model">repair.order</field>
+    <field name="view_mode">kanban,tree,form,pivot,graph</field>
+    <field name="context">{}</field>
+    <field name="help" type="html"><p class="o_view_nocontent_smiling_face">
+                    This is your new action.
+                </p>
+                <p>By default, it contains a list and a form view and possibly
+                    other view types depending on the options you chose for your model.
+                </p>
+                <p>
+                    You can start customizing these screens by clicking on the Studio icon on the
+                    top right corner (you can also customize this help message there).
+                </p>
+            </field>
+  </record>
+
+  <record id="act_window_2876_helpdesk_team_helpdesk_team" model="ir.actions.act_window">
+    <field name="name">Helpdesk Team (helpdesk.team)</field>
+    <field name="res_model">helpdesk.team</field>
+    <field name="view_mode">kanban,tree,form</field>
+    <field name="context">{}</field>
+    <field name="help" type="html"><p class="o_view_nocontent_smiling_face">
+                    This is your new action.
+                </p>
+                <p>By default, it contains a list and a form view and possibly
+                    other view types depending on the options you chose for your model.
+                </p>
+                <p>
+                    You can start customizing these screens by clicking on the Studio icon on the
+                    top right corner (you can also customize this help message there).
+                </p>
+            </field>
+  </record>
+
+</odoo>

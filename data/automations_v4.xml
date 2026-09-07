@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fix-repair v0.1.0.305: Phase 3.1 sub-batch C automations. -->
+<odoo>
+
+  <record id="base_automation_149_rr_notify_customer_in_ro_end_final" model="base.automation">
+    <field name="name">RR - Notify Customer in RO End - Final</field>
+    <field name="active" eval="True"/>
+    <field name="model_id" search="[('model', '=', 'repair.order')]"/>
+    <field name="trigger">on_create_or_write</field>
+    <field name="action_server_ids" eval="[(6, 0, [ref('Fix-repair.server_action_1817_rr_notify_customer_in_ro_end_final')])]"/>
+  </record>
+
+  <record id="base_automation_293_jin_company_id_in_conditions" model="base.automation">
+    <field name="name">JIN - Company Id in Conditions</field>
+    <field name="active" eval="True"/>
+    <field name="model_id" search="[('model', '=', 'x_conditions')]"/>
+    <field name="trigger">on_create_or_write</field>
+    <field name="trigger_field_ids" eval="[(6, 0, [ref('Fix-repair.field_x_conditions__create_date')])]"/>
+    <field name="action_server_ids" eval="[(6, 0, [ref('Fix-repair.server_action_2656_jin_company_id_in_conditions')])]"/>
+  </record>
+
+  <record id="base_automation_300_jin_company_id_in_diagnosis_areas" model="base.automation">
+    <field name="name">JIN - Company Id in Diagnosis Areas</field>
+    <field name="active" eval="True"/>
+    <field name="model_id" search="[('model', '=', 'x_diagnosis_areas')]"/>
+    <field name="trigger">on_create_or_write</field>
+    <field name="trigger_field_ids" eval="[(6, 0, [ref('Fix-repair.field_x_diagnosis_areas__create_date')])]"/>
+    <field name="action_server_ids" eval="[(6, 0, [ref('Fix-repair.server_action_2664_jin_company_id_in_diagnosis_areas')])]"/>
+  </record>
+
+  <record id="base_automation_301_jin_company_id_in_diagnosis_codes" model="base.automation">
+    <field name="name">JIN - Company Id in Diagnosis Codes</field>
+    <field name="active" eval="True"/>
+    <field name="model_id" search="[('model', '=', 'x_diagnosis_codes')]"/>
+    <field name="trigger">on_create_or_write</field>
+    <field name="trigger_field_ids" eval="[(6, 0, [ref('Fix-repair.field_x_diagnosis_codes__create_date')])]"/>
+    <field name="action_server_ids" eval="[(6, 0, [ref('Fix-repair.server_action_2665_jin_company_id_in_diagnosis_codes')])]"/>
+  </record>
+
+  <record id="base_automation_305_jin_company_id_in_resolutions" model="base.automation">
+    <field name="name">JIN - Company Id in Resolutions</field>
+    <field name="active" eval="True"/>
+    <field name="model_id" search="[('model', '=', 'x_resolutions')]"/>
+    <field name="trigger">on_create_or_write</field>
+    <field name="trigger_field_ids" eval="[(6, 0, [ref('Fix-repair.field_x_resolutions__create_date')])]"/>
+    <field name="action_server_ids" eval="[(6, 0, [ref('Fix-repair.server_action_2669_jin_company_id_in_resolutions')])]"/>
+  </record>
+
+  <record id="base_automation_294_jin_company_id_in_symptom_areas" model="base.automation">
+    <field name="name">JIN - Company Id in Symptom Areas</field>
+    <field name="active" eval="True"/>
+    <field name="model_id" search="[('model', '=', 'x_symptom_areas')]"/>
+    <field name="trigger">on_create_or_write</field>
+    <field name="trigger_field_ids" eval="[(6, 0, [ref('Fix-repair.field_x_symptom_areas__create_date')])]"/>
+    <field name="action_server_ids" eval="[(6, 0, [ref('Fix-repair.server_action_2658_jin_company_id_in_symptom_areas')])]"/>
+  </record>
+
+  <record id="base_automation_295_jin_company_id_in_symptom_codes" model="base.automation">
+    <field name="name">JIN - Company Id in Symptom Codes</field>
+    <field name="active" eval="True"/>
+    <field name="model_id" search="[('model', '=', 'x_symptom_codes')]"/>
+    <field name="trigger">on_create_or_write</field>
+    <field name="trigger_field_ids" eval="[(6, 0, [ref('Fix-repair.field_x_symptom_codes__create_date')])]"/>
+    <field name="action_server_ids" eval="[(6, 0, [ref('Fix-repair.server_action_2659_jin_company_id_in_symptom_codes')])]"/>
+  </record>
+
+</odoo>

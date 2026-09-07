@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fix-repair v0.1.0.305: Phase 3.1 sub-batch C server actions.
+     Ships 17 unported server actions from routing audit backlog. -->
+<odoo>
+
+  <record id="server_action_1817_rr_notify_customer_in_ro_end_final" model="ir.actions.server">
+    <field name="name">RR - Notify Customer in RO End - Final</field>
+    <field name="model_id" search="[('model', '=', 'repair.order')]"/>
+    <field name="state">next_activity</field>
+    <field name="usage">base_automation</field>
+    <field name="activity_type_id" ref="mail.mail_activity_data_todo"/>
+    <field name="activity_user_type">generic</field>
+    <field name="activity_summary">Repair Completed Confirmation.</field>
+    <field name="activity_note">&lt;p&gt;&lt;span style='font-family: Roboto, "Odoo Unicode Support Noto", sans-serif; background-color: rgb(237, 239, 241);'&gt;Dear Madam/Sir,&lt;/span&gt;&lt;br&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Your repair has been completed.&lt;/p&gt;</field>
+  </record>
+
+  <record id="server_action_2760_jin_company_id_in_helpdesk_stage" model="ir.actions.server">
+    <field name="name">JIN - Company Id in Helpdesk Stage</field>
+    <field name="model_id" search="[('model', '=', 'helpdesk.stage')]"/>
+    <field name="state">code</field>
+    <field name="usage">base_automation</field>
+    <field name="code"><![CDATA[# fix_repair:idempotent-v1
+record._jin_set_company_id()
+]]></field>
+  </record>
+
+  <record id="server_action_1814_rr_add_draft_quotation_confirm_button" model="ir.actions.server">
+    <field name="name">RR - Add Draft Quotation Confirm Button</field>
+    <field name="model_id" search="[('model', '=', 'repair.order')]"/>
+    <field name="state">code</field>
+    <field name="usage">ir_actions_server</field>
+    <field name="code"><![CDATA[if record.id:
+  record['x_studio_confirm_draft_quotation'] = True
+  ]]></field>
+  </record>
+
+  <record id="server_action_1820_rr_notify_customer_in_ro_end_final_2" model="ir.actions.server">
+    <field name="name">RR - Notify Customer in RO End - Final - 2</field>
+    <field name="model_id" search="[('model', '=', 'repair.order')]"/>
+    <field name="state">code</field>
+    <field name="usage">ir_actions_server</field>
+    <field name="code"><![CDATA[
+mail_pool = env['mail.mail']
+
+values={}
+
+values.update({'subject': 'Repair Complete Confirmation'})
+
+values.update({'email_to': 'janitharc@gmail.com'})
+
+values.update({'body_html': 'Repair Complete Confirmation' })
+
+values.update({'body': 'Repair Complete Confirmation' })
+
+msg_id = mail_pool.create(values)
+
+# And then call send function of the mail.mail,
+
+if msg_id:
+  mail_pool.send([msg_id])
+
+
+
+]]></field>
+  </record>
+
+  <record id="server_action_1979_rr_update_so_in_ro" model="ir.actions.server">
+    <field name="name">RR - Update SO in RO</field>
+    <field name="model_id" search="[('model', '=', 'repair.order')]"/>
+    <field name="state">code</field>
+    <field name="usage">ir_actions_server</field>
+    <field name="code"><![CDATA[if record.ticket_id.id:
+  record['sale_order_id'] = record.ticket_id.sale_order_id.id]]></field>
+  </record>
+
+  <record id="server_action_2544_super_user_validate" model="ir.actions.server">
+    <field name="name">Super User Validate</field>
+    <field name="model_id" search="[('model', '=', 'res.users')]"/>
+    <field name="state">code</field>
+    <field name="usage">base_automation</field>
+    <field name="code"><![CDATA[# fix_repair:idempotent-v1
+record._super_user_validate()
+]]></field>
+  </record>
+
+  <record id="server_action_2656_jin_company_id_in_conditions" model="ir.actions.server">
+    <field name="name">JIN - Company Id in Conditions</field>
+    <field name="model_id" search="[('model', '=', 'x_conditions')]"/>
+    <field name="state">code</field>
+    <field name="usage">base_automation</field>
+    <field name="code"><![CDATA[company_id = env.context.get('allowed_company_ids', [env.user.company_id.id])[0]
+company = env['res.company'].browse(company_id)
+
+record['x_studio_company_id'] = company.id]]></field>
+  </record>
+
+  <record id="server_action_2664_jin_company_id_in_diagnosis_areas" model="ir.actions.server">
+    <field name="name">JIN - Company Id in Diagnosis Areas</field>
+    <field name="model_id" search="[('model', '=', 'x_diagnosis_areas')]"/>
+    <field name="state">code</field>
+    <field name="usage">base_automation</field>
+    <field name="code"><![CDATA[company_id = env.context.get('allowed_company_ids', [env.user.company_id.id])[0]
+company = env['res.company'].browse(company_id)
+
+record['x_studio_company_id'] = company.id]]></field>
+  </record>
+
+  <record id="server_action_2665_jin_company_id_in_diagnosis_codes" model="ir.actions.server">
+    <field name="name">JIN - Company Id in Diagnosis Codes</field>
+    <field name="model_id" search="[('model', '=', 'x_diagnosis_codes')]"/>
+    <field name="state">code</field>
+    <field name="usage">base_automation</field>
+    <field name="code"><![CDATA[company_id = env.context.get('allowed_company_ids', [env.user.company_id.id])[0]
+company = env['res.company'].browse(company_id)
+
+record['x_studio_company_id'] = company.id]]></field>
+  </record>
+
+  <record id="server_action_2790_jin_company_id_in_repair_accounts" model="ir.actions.server">
+    <field name="name">JIN - Company Id in Repair Accounts</field>
+    <field name="model_id" search="[('model', '=', 'x_repair_accounts')]"/>
+    <field name="state">code</field>
+    <field name="usage">base_automation</field>
+    <field name="code"><![CDATA[# fix_repair:idempotent-v1
+record._jin_set_company_id()
+]]></field>
+  </record>
+
+  <record id="server_action_2666_jin_company_id_in_repair_reason" model="ir.actions.server">
+    <field name="name">JIN - Company Id in Repair Reason</field>
+    <field name="model_id" search="[('model', '=', 'x_repair_reason')]"/>
+    <field name="state">code</field>
+    <field name="usage">base_automation</field>
+    <field name="code"><![CDATA[# fix_repair:idempotent-v1
+record._jin_set_company_id()
+]]></field>
+  </record>
+
+  <record id="server_action_2667_jin_company_id_in_repair_reason_customer" model="ir.actions.server">
+    <field name="name">JIN - Company Id in Repair Reason - Customer</field>
+    <field name="model_id" search="[('model', '=', 'x_repair_reason_custom')]"/>
+    <field name="state">code</field>
+    <field name="usage">base_automation</field>
+    <field name="code"><![CDATA[# fix_repair:idempotent-v1
+record._jin_set_company_id()
+]]></field>
+  </record>
+
+  <record id="server_action_2670_jin_company_id_in_repair_stages" model="ir.actions.server">
+    <field name="name">JIN - Company Id in Repair Stages</field>
+    <field name="model_id" search="[('model', '=', 'x_repair_stages')]"/>
+    <field name="state">code</field>
+    <field name="usage">base_automation</field>
+    <field name="code"><![CDATA[# fix_repair:idempotent-v1
+record._jin_set_company_id()
+]]></field>
+  </record>
+
+  <record id="server_action_2668_jin_company_id_in_repair_sub_reason" model="ir.actions.server">
+    <field name="name">JIN - Company Id in Repair Sub Reason</field>
+    <field name="model_id" search="[('model', '=', 'x_repair_sub_reason')]"/>
+    <field name="state">code</field>
+    <field name="usage">base_automation</field>
+    <field name="code"><![CDATA[# fix_repair:idempotent-v1
+record._jin_set_company_id()
+]]></field>
+  </record>
+
+  <record id="server_action_2669_jin_company_id_in_resolutions" model="ir.actions.server">
+    <field name="name">JIN - Company Id in Resolutions</field>
+    <field name="model_id" search="[('model', '=', 'x_resolutions')]"/>
+    <field name="state">code</field>
+    <field name="usage">base_automation</field>
+    <field name="code"><![CDATA[company_id = env.context.get('allowed_company_ids', [env.user.company_id.id])[0]
+company = env['res.company'].browse(company_id)
+
+record['x_studio_company_id'] = company.id]]></field>
+  </record>
+
+  <record id="server_action_2658_jin_company_id_in_symptom_areas" model="ir.actions.server">
+    <field name="name">JIN - Company Id in Symptom Areas</field>
+    <field name="model_id" search="[('model', '=', 'x_symptom_areas')]"/>
+    <field name="state">code</field>
+    <field name="usage">base_automation</field>
+    <field name="code"><![CDATA[company_id = env.context.get('allowed_company_ids', [env.user.company_id.id])[0]
+company = env['res.company'].browse(company_id)
+
+record['x_studio_company_id'] = company.id]]></field>
+  </record>
+
+  <record id="server_action_2659_jin_company_id_in_symptom_codes" model="ir.actions.server">
+    <field name="name">JIN - Company Id in Symptom Codes</field>
+    <field name="model_id" search="[('model', '=', 'x_symptom_codes')]"/>
+    <field name="state">code</field>
+    <field name="usage">base_automation</field>
+    <field name="code"><![CDATA[company_id = env.context.get('allowed_company_ids', [env.user.company_id.id])[0]
+company = env['res.company'].browse(company_id)
+
+record['x_studio_company_id'] = company.id]]></field>
+  </record>
+
+</odoo>

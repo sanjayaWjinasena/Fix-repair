@@ -23,3 +23,57 @@ access_x_repair_stages_user,x_repair_stages user,model_x_repair_stages,helpdesk.
 access_x_repair_stages_manager,x_repair_stages manager,model_x_repair_stages,helpdesk.group_helpdesk_manager,1,1,1,1
 access_x_repair_sub_reason_user,x_repair_sub_reason user,model_x_repair_sub_reason,helpdesk.group_helpdesk_user,1,1,1,1
 access_x_repair_sub_reason_manager,x_repair_sub_reason manager,model_x_repair_sub_reason,helpdesk.group_helpdesk_manager,1,1,1,1
+access_6067_helpdesk_sla,helpdesk.sla,helpdesk.model_helpdesk_sla,,1,0,0,0
+access_6052_helpdesk_sla,helpdesk.sla,helpdesk.model_helpdesk_sla,,1,0,0,0
+access_6138_helpdesk_sla,helpdesk.sla,helpdesk.model_helpdesk_sla,,1,0,0,0
+access_6068_helpdesk_sla_status,helpdesk.sla.status,helpdesk.model_helpdesk_sla_status,,1,0,0,0
+access_6053_helpdesk_sla_status,helpdesk.sla.status,helpdesk.model_helpdesk_sla_status,,1,0,0,0
+access_6139_helpdesk_sla_status,helpdesk.sla.status,helpdesk.model_helpdesk_sla_status,,1,0,0,0
+access_6069_helpdesk_stage,helpdesk.stage,Fix-repair.model_helpdesk_stage,,1,0,0,0
+access_6054_helpdesk_stage,helpdesk.stage,Fix-repair.model_helpdesk_stage,,1,0,0,0
+access_6140_helpdesk_stage,helpdesk.stage,Fix-repair.model_helpdesk_stage,,1,0,0,0
+access_6066_helpdesk_tag,helpdesk.tag,helpdesk.model_helpdesk_tag,,1,0,0,0
+access_6051_helpdesk_tag,helpdesk.tag,helpdesk.model_helpdesk_tag,,1,0,0,0
+access_6137_helpdesk_tag,helpdesk.tag,helpdesk.model_helpdesk_tag,,1,1,1,1
+access_8642_access_helpdesk_team_rohana_read,access_helpdesk_team_rohana_read,helpdesk.model_helpdesk_team,,1,0,0,0
+access_6072_helpdesk_ticket_report_analysis_user,helpdesk.ticket.report.analysis.user,helpdesk.model_helpdesk_ticket_report_analysis,,1,0,0,0
+access_6057_helpdesk_ticket_report_analysis_user,helpdesk.ticket.report.analysis.user,helpdesk.model_helpdesk_ticket_report_analysis,,1,0,0,0
+access_6143_helpdesk_ticket_report_analysis_user,helpdesk.ticket.report.analysis.user,helpdesk.model_helpdesk_ticket_report_analysis,,1,0,0,0
+access_6071_helpdesk_ticket_type_user,helpdesk.ticket.type.user,Fix-repair.model_helpdesk_ticket_type,,1,0,0,0
+access_6056_helpdesk_ticket_type_user,helpdesk.ticket.type.user,Fix-repair.model_helpdesk_ticket_type,,1,0,0,0
+access_6142_helpdesk_ticket_type_user,helpdesk.ticket.type.user,Fix-repair.model_helpdesk_ticket_type,,1,0,0,0
+access_8643_access_helpdesk_ticket_type_rohana_read,access_helpdesk_ticket_type_rohana_read,Fix-repair.model_helpdesk_ticket_type,,1,0,0,0
+access_6556_repair_user,Repair user,Fix-repair.model_repair_order,,1,0,0,0
+access_6442_repair_user,Repair user,Fix-repair.model_repair_order,,1,0,0,0
+access_5707_repair_user,Repair user,Fix-repair.model_repair_order,,1,0,0,0
+access_7319_repair_oreder,Repair Oreder,Fix-repair.model_repair_order,,1,1,1,1
+access_6557_repair_tags_user,Repair Tags user,repair.model_repair_tags,,1,0,0,0
+access_6443_repair_tags_user,Repair Tags user,repair.model_repair_tags,,1,0,0,0
+access_5708_repair_tags_user,Repair Tags user,repair.model_repair_tags,,1,0,0,0
+access_6911_stock_warehouse,stock.warehouse,Fix-repair.model_stock_warehouse,,1,0,0,0
+access_6836_stock_warehouse_user,stock.warehouse.user,Fix-repair.model_stock_warehouse,,1,0,0,0
+access_8700_access_stock_warehouse_rohana_read,access_stock_warehouse_rohana_read,Fix-repair.model_stock_warehouse,,1,0,0,0
+access_1783_conditions_group_user,Conditions group_user,Fix-repair.model_x_conditions,base.group_user,1,0,0,0
+access_1782_conditions_group_system,Conditions group_system,Fix-repair.model_x_conditions,base.group_system,1,1,1,1
+access_1789_diagnosis_areas_group_user,Diagnosis Areas group_user,Fix-repair.model_x_diagnosis_areas,base.group_user,1,0,0,0
+access_1788_diagnosis_areas_group_system,Diagnosis Areas group_system,Fix-repair.model_x_diagnosis_areas,base.group_system,1,1,1,1
+access_1791_diagnosis_codes_group_user,Diagnosis Codes group_user,Fix-repair.model_x_diagnosis_codes,base.group_user,1,0,0,0
+access_1790_diagnosis_codes_group_system,Diagnosis Codes group_system,Fix-repair.model_x_diagnosis_codes,base.group_system,1,1,1,1
+access_1775_repair_accounts_group_user,Repair Accounts group_user,Fix-repair.model_x_repair_accounts,base.group_user,1,0,0,0
+access_1774_repair_accounts_group_system,Repair Accounts group_system,Fix-repair.model_x_repair_accounts,base.group_system,1,1,1,1
+access_1676_repair_reason_group_user,Repair Reason group_user,Fix-repair.model_x_repair_reason,base.group_user,1,0,0,0
+access_1675_repair_reason_group_system,Repair Reason group_system,Fix-repair.model_x_repair_reason,base.group_system,1,1,1,1
+access_1801_repair_reason___customer_group_user,Repair Reason - Customer group_user,Fix-repair.model_x_repair_reason_custom,base.group_user,1,0,0,0
+access_1800_repair_reason___customer_group_system,Repair Reason - Customer group_system,Fix-repair.model_x_repair_reason_custom,base.group_system,1,1,1,1
+access_1797_repair_stages_group_user,Repair Stages group_user,Fix-repair.model_x_repair_stages,base.group_user,1,0,0,0
+access_1796_repair_stages_group_system,Repair Stages group_system,Fix-repair.model_x_repair_stages,base.group_system,1,1,1,1
+access_1793_repair_sub_reason_group_user,Repair Sub Reason group_user,Fix-repair.model_x_repair_sub_reason,base.group_user,1,0,0,0
+access_1792_repair_sub_reason_group_system,Repair Sub Reason group_system,Fix-repair.model_x_repair_sub_reason,base.group_system,1,1,1,1
+access_1795_resolutions_group_user,Resolutions group_user,Fix-repair.model_x_resolutions,base.group_user,1,0,0,0
+access_1794_resolutions_group_system,Resolutions group_system,Fix-repair.model_x_resolutions,base.group_system,1,1,1,1
+access_1785_symptom_areas_group_user,Symptom Areas group_user,Fix-repair.model_x_symptom_areas,base.group_user,1,0,0,0
+access_1784_symptom_areas_group_system,Symptom Areas group_system,Fix-repair.model_x_symptom_areas,base.group_system,1,1,1,1
+access_1787_symptom_codes_group_user,Symptom Codes group_user,Fix-repair.model_x_symptom_codes,base.group_user,1,0,0,0
+access_1786_symptom_codes_group_system,Symptom Codes group_system,Fix-repair.model_x_symptom_codes,base.group_system,1,1,1,1
+access_1799_task_diagnosis_group_user,Task Diagnosis group_user,Fix-repair.model_x_task_diagnosis,base.group_user,1,0,0,0
+access_1798_task_diagnosis_group_system,Task Diagnosis group_system,Fix-repair.model_x_task_diagnosis,base.group_system,1,1,1,1
