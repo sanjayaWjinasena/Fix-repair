@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fix-repair: 33 ir.default records routed from Phase D2 sweep -->
+<odoo>
+  <data noupdate="1">
+
+    <record id="default_7_res_partner_x_studio_vat_registration_status" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_res_partner__x_studio_vat_registration_status"/>
+      <field name="json_value">"VAT Not Registered"</field>
+    </record>
+
+    <record id="default_8_res_partner_x_studio_svat_registration_status" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_res_partner__x_studio_svat_registration_status"/>
+      <field name="json_value">"SVAT Nor Registered"</field>
+    </record>
+
+    <record id="default_298_helpdesk_ticket_x_studio_pick_id" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_helpdesk_ticket__x_studio_pick_id"/>
+      <field name="json_value">"0"</field>
+    </record>
+
+    <record id="default_299_x_repair_reason_x_active" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_x_repair_reason__x_active"/>
+      <field name="json_value">true</field>
+    </record>
+
+    <record id="default_300_x_repair_reason_x_studio_sequence" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_x_repair_reason__x_studio_sequence"/>
+      <field name="json_value">10</field>
+    </record>
+
+    <record id="default_301_helpdesk_ticket_name" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_helpdesk_ticket__name"/>
+      <field name="json_value">"New"</field>
+    </record>
+
+    <record id="default_328_x_repair_accounts_x_active" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_x_repair_accounts__x_active"/>
+      <field name="json_value">true</field>
+    </record>
+
+    <record id="default_329_x_repair_accounts_x_studio_sequence" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_x_repair_accounts__x_studio_sequence"/>
+      <field name="json_value">10</field>
+    </record>
+
+    <record id="default_332_x_conditions_x_active" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_x_conditions__x_active"/>
+      <field name="json_value">true</field>
+    </record>
+
+    <record id="default_333_x_conditions_x_studio_sequence" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_x_conditions__x_studio_sequence"/>
+      <field name="json_value">10</field>
+    </record>
+
+    <record id="default_334_x_symptom_areas_x_active" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_x_symptom_areas__x_active"/>
+      <field name="json_value">true</field>
+    </record>
+
+    <record id="default_335_x_symptom_areas_x_studio_sequence" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_x_symptom_areas__x_studio_sequence"/>
+      <field name="json_value">10</field>
+    </record>
+
+    <record id="default_336_x_symptom_codes_x_active" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_x_symptom_codes__x_active"/>
+      <field name="json_value">true</field>
+    </record>
+
+    <record id="default_337_x_symptom_codes_x_studio_sequence" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_x_symptom_codes__x_studio_sequence"/>
+      <field name="json_value">10</field>
+    </record>
+
+    <record id="default_338_x_diagnosis_areas_x_active" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_x_diagnosis_areas__x_active"/>
+      <field name="json_value">true</field>
+    </record>
+
+    <record id="default_339_x_diagnosis_areas_x_studio_sequence" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_x_diagnosis_areas__x_studio_sequence"/>
+      <field name="json_value">10</field>
+    </record>
+
+    <record id="default_340_x_diagnosis_codes_x_active" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_x_diagnosis_codes__x_active"/>
+      <field name="json_value">true</field>
+    </record>
+
+    <record id="default_341_x_diagnosis_codes_x_studio_sequence" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_x_diagnosis_codes__x_studio_sequence"/>
+      <field name="json_value">10</field>
+    </record>
+
+    <record id="default_343_x_repair_sub_reason_x_active" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_x_repair_sub_reason__x_active"/>
+      <field name="json_value">true</field>
+    </record>
+
+    <record id="default_344_x_repair_sub_reason_x_studio_sequence" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_x_repair_sub_reason__x_studio_sequence"/>
+      <field name="json_value">10</field>
+    </record>
+
+    <record id="default_349_x_resolutions_x_active" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_x_resolutions__x_active"/>
+      <field name="json_value">true</field>
+    </record>
+
+    <record id="default_350_x_resolutions_x_studio_sequence" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_x_resolutions__x_studio_sequence"/>
+      <field name="json_value">10</field>
+    </record>
+
+    <record id="default_353_x_repair_stages_x_active" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_x_repair_stages__x_active"/>
+      <field name="json_value">true</field>
+    </record>
+
+    <record id="default_354_x_repair_stages_x_studio_sequence" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_x_repair_stages__x_studio_sequence"/>
+      <field name="json_value">10</field>
+    </record>
+
+    <record id="default_355_x_task_diagnosis_x_active" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_x_task_diagnosis__x_active"/>
+      <field name="json_value">true</field>
+    </record>
+
+    <record id="default_356_x_task_diagnosis_x_studio_sequence" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_x_task_diagnosis__x_studio_sequence"/>
+      <field name="json_value">10</field>
+    </record>
+
+    <record id="default_357_x_repair_reason_custom_x_active" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_x_repair_reason_custom__x_active"/>
+      <field name="json_value">true</field>
+    </record>
+
+    <record id="default_358_x_repair_reason_custom_x_studio_sequence" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_x_repair_reason_custom__x_studio_sequence"/>
+      <field name="json_value">10</field>
+    </record>
+
+    <record id="default_360_helpdesk_ticket_x_studio_cancel_status" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_helpdesk_ticket__x_studio_cancel_status"/>
+      <field name="json_value">"None"</field>
+    </record>
+
+    <record id="default_361_helpdesk_ticket_x_studio_reopen_status" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_helpdesk_ticket__x_studio_reopen_status"/>
+      <field name="json_value">"None"</field>
+    </record>
+
+    <record id="default_368_helpdesk_ticket_x_studio_re_estimate_status" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_helpdesk_ticket__x_studio_re_estimate_status"/>
+      <field name="json_value">"None"</field>
+    </record>
+
+    <record id="default_369_helpdesk_ticket_x_studio_re_estimate_count" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_helpdesk_ticket__x_studio_re_estimate_count"/>
+      <field name="json_value">"0"</field>
+    </record>
+
+    <record id="default_372_helpdesk_ticket_x_studio_quick_repair_status" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_helpdesk_ticket__x_studio_quick_repair_status"/>
+      <field name="json_value">"None"</field>
+    </record>
+
+  </data>
+</odoo>
