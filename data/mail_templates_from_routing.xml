@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fix-repair: 6 Studio-created Repair customer letter mail templates -->
+<odoo>
+  <data noupdate="1">
+
+    <record id="mail_template_56_repair_customer_letter" model="mail.template">
+      <field name="name">Repair - Customer Letter</field>
+      <field name="model_id" ref="helpdesk.model_helpdesk_ticket"/>
+      <field name="subject">{{ object.display_name }}</field>
+      <field name="email_from">{{ object._rating_get_operator().email_formatted }}</field>
+      <field name="email_to">{{ (object.partner_email if not object.sudo().partner_id.email or object.sudo().partner_id.email != object.partner_email else '') }}</field>
+      <field name="partner_to">{{ object.partner_id.id if object.sudo().partner_id.email and object.sudo().partner_id.email == object.partner_email else '' }}</field>
+      <field name="lang">{{ object.partner_id.lang or object.user_id.lang or user.lang }}</field>
+      <field name="auto_delete" eval="True"/>
+      <field name="body_html" type="html"><p style="box-sizing:border-box;margin-bottom: 0px;">Customer Name :<t t-out="object.partner_id.display_name" style="box-sizing:border-box;"> </t> </p><p style="margin:0px 0 12px 0;box-sizing:border-box;"/><p style="box-sizing:border-box;margin-bottom: 0px;">
+Dear Sir/Madam ,
+</p><p style="box-sizing:border-box;margin-bottom: 0px;">  
+</p><p style="margin:0px 0 12px 0;box-sizing:border-box;"/><p style="box-sizing:border-box;margin-bottom: 0px;">
+We have pleasure in advising you that the <t t-out="object.product_id.display_name" style="box-sizing:border-box;"> </t> pumping unit sent to us for repairs is now is ready for collection.
+(IF THIS UNIT IS NOT COLLECTED WITHIN 2 WEEKS OF LETTER STORAGE CHARGE OF RS 15/- PER DAY WILL BE LEVIED.)</p><p style="caret-color:#37352f;position:relative;box-sizing:border-box;margin-bottom: 0px;"><br/></p><p style="box-sizing:border-box;margin-bottom: 0px;">  
+ </p><p style="box-sizing:border-box;margin-bottom: 0px;">
+
+The balance due Rs. <t t-out="object.x_studio_balance_due" style="box-sizing:border-box;"> </t> should be paid in cash prior to collection (IF PAYMENT IS MADE BY CHEQUE, THE PUMP CAN BE COLLECTED ONLY ON REALIZATION OF THE CHEQUE) </p><p style="box-sizing:border-box;margin-bottom: 0px;"><br/></p><p style="box-sizing:border-box;margin-bottom: 0px;">When calling to make final payment and collecting the pump our reservation deposit number and our machinery report number <t t-out="object.display_name" style="box-sizing:border-box;"> </t>  must be surrendered. (IF EITHER OR BOTH OF RECEIPTS ARE LOST, OT CANNOT BE SURRENDERED, AN AFFIDAVIT MUST BE SUBMITTED.) </p><p style="box-sizing:border-box;margin-bottom: 0px;"><br/></p><p style="box-sizing:border-box;margin-bottom: 0px;">If the pump is to be handed over to a representative, please send through him/her letter authorizing us to hand over the pump to him/her. His/her specimen signature and national identity card should be certified by you. </p><p style="box-sizing:border-box;margin-bottom: 0px;"><br/></p><p style="box-sizing:border-box;margin-bottom: 0px;">Assuring your of our best attention </p><p style="box-sizing:border-box;margin-bottom: 0px;"><br/></p><p style="box-sizing:border-box;margin-bottom: 0px;">Yours faithfully,
+
+</p><p style="margin:0px 0 12px 0;box-sizing:border-box;"/><p style="margin:0px 0 12px 0;box-sizing:border-box;"/><p style="box-sizing:border-box;margin-bottom: 0px;"><br/></p><p style="margin:0px 0 12px 0;box-sizing:border-box;"/></field>
+    </record>
+
+    <record id="mail_template_59_repair_customer_letter_2" model="mail.template">
+      <field name="name">Repair - Customer Letter - 2</field>
+      <field name="model_id" ref="helpdesk.model_helpdesk_ticket"/>
+      <field name="subject">{{ object.display_name }}</field>
+      <field name="email_from">{{ object._rating_get_operator().email_formatted }}</field>
+      <field name="email_to">{{ (object.partner_email if not object.sudo().partner_id.email or object.sudo().partner_id.email != object.partner_email else '') }}</field>
+      <field name="partner_to">{{ object.partner_id.id if object.sudo().partner_id.email and object.sudo().partner_id.email == object.partner_email else '' }}</field>
+      <field name="lang">{{ object.partner_id.lang or object.user_id.lang or user.lang }}</field>
+      <field name="auto_delete" eval="True"/>
+      <field name="body_html" type="html"><div>
+    <t t-set="access_token" t-value="object._rating_get_access_token()">
+
+<span style="color: #444b5a;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff">Dear </span>Madam/Sir<span style="color: #444b5a;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff">,</span><br/><br/><span style="color: #444b5a;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff">Your request </span> <span style="color: #444b5a;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff">has been received and is being reviewed by our </span>Table legs are unbalanced<span style="color: #444b5a;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff"> team. The reference of your ticket is </span>15<span style="color: #444b5a;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff">.</span><br/><a style="text-decoration:none;box-sizing:border-box;background-color:transparent;color:inherit;">View the ticket</a><br/><span style="color: #444b5a;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff">To add additional comments, reply to this email.</span><br/><br/><span style="color: #444b5a;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff">Thank you,</span><br/><br/>Helpdesk<span style="color: #444b5a;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff"> Team.</span>
+
+<br/></t><t t-set="access_token" t-value="object._rating_get_access_token()"/><t t-set="partner" t-value="object._rating_get_partner()"/><t t-set="access_token" t-value="object._rating_get_access_token()"/><t t-set="access_token" t-value="object._rating_get_access_token()"/></div></field>
+    </record>
+
+    <record id="mail_template_66_repair_final_notice" model="mail.template">
+      <field name="name">Repair - Final Notice</field>
+      <field name="model_id" ref="helpdesk.model_helpdesk_ticket"/>
+      <field name="subject">{{ object.display_name }}</field>
+      <field name="email_from">{{ object._rating_get_operator().email_formatted }}</field>
+      <field name="email_to">{{ (object.partner_email if not object.sudo().partner_id.email or object.sudo().partner_id.email != object.partner_email else '') }}</field>
+      <field name="partner_to">{{ object.partner_id.id if object.sudo().partner_id.email and object.sudo().partner_id.email == object.partner_email else '' }}</field>
+      <field name="lang">{{ object.partner_id.lang or object.user_id.lang or user.lang }}</field>
+      <field name="auto_delete" eval="True"/>
+      <field name="body_html" type="html"><p style="margin:0px 0 12px 0;box-sizing:border-box;">
+
+<span style="color: #444b5a;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff">Customer Name : <t t-out="object.partner_id.display_name" style="box-sizing:border-box;"> </t></span></p><p style="margin:0px 0 12px 0;box-sizing:border-box;"><span style="color: #444b5a;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff"/><span style="color: #000000;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff">REPAIRS TO  <t t-out="object.product_id.display_name" style="box-sizing:border-box;"> </t> PUMP - FINAL NOTICE</span><br/><br/>Dear Sir/Madam ,<br/><span style="font-size: 13px">We refer to the <span style="color: #444b5a;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff">"CENTRIC"</span>
+
+type </span>pumping unit No <span style="color: #444b5a;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff"><t t-out="object.product_id.display_name" style="box-sizing:border-box;"> </t></span>
+
+ repaired on the above references and job number. We note that you have not responded to our email dated  <t t-out="object.x_studio_created_on_8" style="box-sizing:border-box;"> </t> and requesting you to collect same.<br/><br/><br/>Since we are unable to store this pumping unit any longer, we must finally request you to make payment of Rs. <t t-out="object.x_studio_balance_due" style="box-sizing:border-box;"> </t><span style="color: #444b5a;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff"> </span>in cash and remove same from our workshop within 2 weeks of this letter. (PLEASE NOTE THAT A STORAGGE CHARGE OF RS 15/- PER DAY WILL BE LEVIED FROM <t t-out="object.x_studio_created_on_8" style="box-sizing:border-box;"> </t> IN ADDITION TO THE REPAIR CHARGE. )<br/><br/>When calling to make final payment and collecting the pump our reservation deposit receipt number <t t-out="object.name" style="box-sizing:border-box;"> </t>   OR BOTH OF THESE RECEIPTS ARE LOST, OR CANNOT BE SURRENDERED AN AFFIDAVIT MUST BE SUBMITTED. )<br/><br/><br/>If the pump is to be handed over to a representative, please send through him a letter authorizing us to hand over the pump to him/her. His/her specimen signature and national identity card number should be certified by you.<br/><br/>If the pump is not collected within 2 weeks of this letter, it will be considered to be abandoned and will be destroyed.<br/>Yours faithfully,<br/><span style="font-size: 13px"><strong style="box-sizing:border-box;font-weight: bolder"><br/><br/><br/>Jinasena Ltd</strong></span><br/><br/><strong style="box-sizing:border-box;font-weight: bolder"><br/><br/><br/><br/><br/>Repairs Department</strong>
+
+<br/></p></field>
+    </record>
+
+    <record id="mail_template_67_repair_final_notice_estimated" model="mail.template">
+      <field name="name">Repair - Final Notice - Estimated</field>
+      <field name="model_id" ref="helpdesk.model_helpdesk_ticket"/>
+      <field name="subject">{{ object.display_name }}</field>
+      <field name="email_from">{{ object._rating_get_operator().email_formatted }}</field>
+      <field name="email_to">{{ (object.partner_email if not object.sudo().partner_id.email or object.sudo().partner_id.email != object.partner_email else '') }}</field>
+      <field name="partner_to">{{ object.partner_id.id if object.sudo().partner_id.email and object.sudo().partner_id.email == object.partner_email else '' }}</field>
+      <field name="lang">{{ object.partner_id.lang or object.user_id.lang or user.lang }}</field>
+      <field name="auto_delete" eval="True"/>
+      <field name="body_html" type="html"><p style="margin:0px 0 12px 0;box-sizing:border-box;">
+
+<span style="color: #444b5a;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff">Customer Name : <t t-out="object.partner_id.display_name" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t></span></p><p style="margin:0px 0 12px 0;box-sizing:border-box;"><span style="color: #444b5a;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff"/><span style="color: #000000;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff">CENTRIC PUMPS HANDED IN FOR REPAIRS - FINAL NOTICE</span><br/><br/>Dear Sir/Madam ,</p><p style="margin:0px 0 12px 0;box-sizing:border-box;"><br/>We refer to the "CENTRIC" type <t t-out="object.product_id.display_name" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t> given to us for repairs and our quotation dated <t t-out="object.x_studio_sale_order.create_date" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t> .It is noted with regret that you have not responded to this quotation to date. We now wish to inform you that this quotation is no longer valid and e are not in a position to store this pump in our stores.<br/></p><p style="margin:0px 0 12px 0;box-sizing:border-box;">Due to limited space we have, we must make an urgent request to you, to make necessary arrangements to collect same within 10 days of this e-mail, in which event, we shall not be responsible for this item after the stipulated time period.</p><p style="margin:0px 0 12px 0;box-sizing:border-box;">When calling to collect same, please ensure to produce the repair receipt issued to you at the time the pump was handed over to us.  <br/><br/><br/><br/>Yours faithfully,<br/><span style="font-size: 13px"><strong style="box-sizing:border-box;font-weight: bolder"><br/><br/><br/>Jinasena Ltd</strong></span><br/><br/><strong style="box-sizing:border-box;font-weight: bolder"><br/><br/><br/><br/><br/>Repairs Department</strong>
+
+<br/></p></field>
+    </record>
+
+    <record id="mail_template_69_repair_final_notice_scrappage" model="mail.template">
+      <field name="name">Repair - Final Notice - Scrappage</field>
+      <field name="model_id" ref="helpdesk.model_helpdesk_ticket"/>
+      <field name="subject">{{ object.display_name }}</field>
+      <field name="email_from">{{ object._rating_get_operator().email_formatted }}</field>
+      <field name="email_to">{{ (object.partner_email if not object.sudo().partner_id.email or object.sudo().partner_id.email != object.partner_email else '') }}</field>
+      <field name="partner_to">{{ object.partner_id.id if object.sudo().partner_id.email and object.sudo().partner_id.email == object.partner_email else '' }}</field>
+      <field name="lang">{{ object.partner_id.lang or object.user_id.lang or user.lang }}</field>
+      <field name="auto_delete" eval="True"/>
+      <field name="body_html" type="html"><p style="box-sizing:border-box;margin-bottom: 0px;">Customer Name :<t t-out="object.partner_id.display_name" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t> </p><p style="margin:0px 0 12px 0;box-sizing:border-box;"/><p style="box-sizing:border-box;margin-bottom: 0px;">NOTICE OF SCRAPPAGE</p><p style="box-sizing:border-box;margin-bottom: 0px;"><br/></p><p style="box-sizing:border-box;margin-bottom: 0px;">Dear Sir/Madam ,
+</p><p style="box-sizing:border-box;margin-bottom: 0px;">  
+</p><p style="margin:0px 0 12px 0;box-sizing:border-box;"/><p style="box-sizing:border-box;margin-bottom: 0px;"><br/></p><p style="box-sizing:border-box;margin-bottom: 0px;">We refer to the "CENTRIC" type <t t-out="object.product_id.display_name" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t>  water pump handed over to us on <t t-out="object.x_studio_created_on_1" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t> under the reference number <t t-out="object.name" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t> and regret to note that in spite of ready for collection notices sent to you on <t t-out="object.create_date" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t> &amp; XXXX &amp; XXXX, you have failed to respond positively.</p><p style="box-sizing:border-box;margin-bottom: 0px;"><br/>
+
+</p><p style="box-sizing:border-box;margin-bottom: 0px;"><span style="color: #000000;font-size: 13px;font-style: normal;font-weight: 400;background-color: rgba(1, 126, 132, 0.1)"><br/></span><span style="box-sizing:border-box;background-color:#f6f6f6;color: #000000; font-size: 13px; font-style: normal; font-weight: 400;" class="bg-o-color-3">We regret to note that continue to ignore our notices and can only assume that you are no longer interested in this pump and accordingly we have scrapped this item.<br/><br/><br/>Therefore, please be informed that we are no longer responsible for this item.</span>
+
+<br/></p><p style="box-sizing:border-box;margin-bottom: 0px;"><font class="bg-o-color-3" style="box-sizing:border-box;background-color:#f6f6f6;color:#091124;">​</font></p><p style="box-sizing:border-box;margin-bottom: 0px;"><br/></p><p style="box-sizing:border-box;margin-bottom: 0px;"><br/></p><p style="box-sizing:border-box;margin-bottom: 0px;">Yours faithfully,
+
+</p><p style="margin:0px 0 12px 0;box-sizing:border-box;"/><p style="margin:0px 0 12px 0;box-sizing:border-box;"/><p style="box-sizing:border-box;margin-bottom: 0px;"><br/></p><p style="caret-color:#37352f;position:relative;margin:0px 0 12px 0;box-sizing:border-box;"/></field>
+    </record>
+
+    <record id="mail_template_70_repair_reminding_letter" model="mail.template">
+      <field name="name">Repair - Reminding Letter</field>
+      <field name="model_id" ref="helpdesk.model_helpdesk_ticket"/>
+      <field name="subject">{{ object.display_name }}</field>
+      <field name="email_from">{{ object._rating_get_operator().email_formatted }}</field>
+      <field name="email_to">{{ (object.partner_email if not object.sudo().partner_id.email or object.sudo().partner_id.email != object.partner_email else '') }}</field>
+      <field name="partner_to">{{ object.partner_id.id if object.sudo().partner_id.email and object.sudo().partner_id.email == object.partner_email else '' }}</field>
+      <field name="lang">{{ object.partner_id.lang or object.user_id.lang or user.lang }}</field>
+      <field name="auto_delete" eval="True"/>
+      <field name="body_html" type="html"><p style="margin:0px 0 12px 0;box-sizing:border-box;">
+
+<span style="color: #444b5a;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff">Customer Name : <t t-out="object.partner_id.display_name" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t></span></p><p style="margin:0px 0 12px 0;box-sizing:border-box;"><span style="color: #444b5a;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff">REMINDER</span><br/><br/>Dear Sir/Madam ,<br/><span style="font-size: 13px">We refer to the <span style="color: #444b5a;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff">"CENTRIC"</span>
+
+type <t t-out="object.product_id.display_name" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t></span> pumping unit No <t t-out="object.x_studio_serial_no.display_name" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t> repaired on the above references and job number. We note that you have not responded to our letter dated <t t-out="object.create_date" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t>   and requesting you to collect same.<br/><br/><br/>Due to limited sapce for holding " Awaiting collection pumps " in colombo and therefore we must take an urgent request to you to make necessary arrangements to collect same from our repair department at Colombo.</p><p style="margin:0px 0 12px 0;box-sizing:border-box;"><br/>When calling to collect please ensure that you have all necessary documents including the repair receipt issued to you at the time the pump was handed over to us.<br/><br/><br/>In the event that the pump is not collected within 10 days of this letter we will be transferring this pump to our warehouse in Ekala and the pump can only be collected by you from our warehouse after making payment (if any) at our colombo office.</p><p style="margin:0px 0 12px 0;box-sizing:border-box;">To avoid the resultant inconvinience to you, plea ensure you pay close attention to this communication.<br/><br/></p><p style="margin:0px 0 12px 0;box-sizing:border-box;">Yours faithfully,<br/><span style="font-size: 13px"><strong style="box-sizing:border-box;font-weight: bolder"><br/><br/><br/>Jinasena Ltd</strong></span><br/><br/><strong style="box-sizing:border-box;font-weight: bolder"><br/><br/><br/><br/><br/>Repairs Department</strong>
+
+<br/></p></field>
+    </record>
+
+  </data>
+</odoo>
