@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fix-repair: 5 gap window actions -->
+<odoo>
+
+
+  <record id="act_window_2312_repair_job_details" model="ir.actions.act_window">
+    <field name="name">Repair Job Details</field>
+    <field name="res_model">helpdesk.ticket</field>
+    <field name="view_mode">kanban,tree,form,pivot,graph,activity</field>
+  </record>
+
+  <record id="act_window_2234_repair_job_details_for_the_period_rug_only" model="ir.actions.act_window">
+    <field name="name">Repair Job Details for the Period - RUG Only</field>
+    <field name="res_model">helpdesk.ticket</field>
+    <field name="view_mode">kanban,tree,form,pivot,graph,activity</field>
+  </record>
+
+  <record id="act_window_2807_repair_order" model="ir.actions.act_window">
+    <field name="name">repair.order</field>
+    <field name="res_model">repair.order</field>
+    <field name="view_mode">kanban,tree,form,pivot,graph</field>
+  </record>
+
+  <record id="act_window_2469_warehouse" model="ir.actions.act_window">
+    <field name="name">Warehouse</field>
+    <field name="res_model">stock.warehouse</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <record id="act_window_2468_warehouse" model="ir.actions.act_window">
+    <field name="name">WareHouse</field>
+    <field name="res_model">stock.warehouse</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+</odoo>

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Jinasena : Module : Repair',
-    'version': '17.0.1.0.308',
+    'version': '17.0.1.0.309',
     'summary': 'Enhancements to the Customer Care - Repair helpdesk workflow',
     'author': 'Jinasena Agricultural Machinery (Pvt) Ltd.',
     'category': 'Helpdesk',
@@ -92,6 +92,10 @@
         'data/window_actions_v2.xml',
         'data/menus_from_routing.xml',
         'data/mail_templates_from_routing.xml',
+        'data/record_rules_gap.xml',
+        'data/server_actions_gap.xml',
+        'data/automations_gap.xml',
+        'data/window_actions_gap.xml',
     ],
     'assets': {
         'web.assets_backend': [

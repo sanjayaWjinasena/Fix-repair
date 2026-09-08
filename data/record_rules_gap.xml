@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fix-repair: 1 gap record rules -->
+<odoo>
+  <data noupdate="0">
+
+    <record id="rule_552_jin_multi_company_conditions" model="ir.rule">
+      <field name="name">JIN - Multi-Company - Conditions</field>
+      <field name="model_id" ref="Fix-repair.model_x_conditions"/>
+      <field name="domain_force"> ['|', ('x_studio_company_id', 'in', company_ids), ('x_studio_company_id', '=', False)]</field>
+      <field name="perm_read" eval="True"/>
+      <field name="perm_write" eval="True"/>
+      <field name="perm_create" eval="True"/>
+      <field name="perm_unlink" eval="True"/>
+      <field name="active" eval="True"/>
+    </record>
+
+  </data>
+</odoo>

@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fix-repair: 16 gap automations -->
+<odoo>
+
+
+  <record id="base_automation_171_jin_helpdesk_repair_seq_no" model="base.automation">
+    <field name="name">JIN-Helpdesk(Repair) Seq.No</field>
+    <field name="active" eval="False"/>
+    <field name="model_id" ref="helpdesk.model_helpdesk_ticket"/>
+    <field name="trigger">on_create_or_write</field>
+    <field name="action_server_ids" eval="[(6, 0, [ref('Fix-repair.server_action_1976_rr_repair_seq_no')])]"/>
+  </record>
+
+  <record id="base_automation_172_rr_auto_select_product_for_rug_repairs" model="base.automation">
+    <field name="name">RR - Auto Select Product for RUG Repairs</field>
+    <field name="active" eval="False"/>
+    <field name="model_id" ref="helpdesk.model_helpdesk_ticket"/>
+    <field name="trigger">on_change</field>
+    <field name="action_server_ids" eval="[(6, 0, [ref('Fix-repair.server_action_1989_rr_auto_select_product_for_rug_repairs')])]"/>
+  </record>
+
+  <record id="base_automation_173_rr_auto_select_product_for_rug_repairs_2" model="base.automation">
+    <field name="name">RR - Auto Select Product for RUG Repairs-2</field>
+    <field name="active" eval="False"/>
+    <field name="model_id" ref="helpdesk.model_helpdesk_ticket"/>
+    <field name="trigger">on_write</field>
+    <field name="filter_domain">[]</field>
+    <field name="action_server_ids" eval="[(6, 0, [ref('Fix-repair.server_action_1990_rr_auto_select_product_for_rug_repairs_2')])]"/>
+  </record>
+
+  <record id="base_automation_175_rr_auto_select_product_for_rug_repairs_4" model="base.automation">
+    <field name="name">RR - Auto Select Product for RUG Repairs-4</field>
+    <field name="active" eval="False"/>
+    <field name="model_id" ref="helpdesk.model_helpdesk_ticket"/>
+    <field name="trigger">on_change</field>
+    <field name="action_server_ids" eval="[(6, 0, [ref('Fix-repair.server_action_1992_rr_auto_select_product_for_rug_repairs_4')])]"/>
+  </record>
+
+  <record id="base_automation_178_rr_auto_populate_repair_location" model="base.automation">
+    <field name="name">RR - Auto Populate Repair Location</field>
+    <field name="active" eval="False"/>
+    <field name="model_id" ref="helpdesk.model_helpdesk_ticket"/>
+    <field name="trigger">on_change</field>
+    <field name="action_server_ids" eval="[(6, 0, [ref('Fix-repair.server_action_2000_rr_auto_populate_repair_location')])]"/>
+  </record>
+
+  <record id="base_automation_201_rr_validate_cancelled_tickets" model="base.automation">
+    <field name="name">RR - Validate Cancelled Tickets</field>
+    <field name="active" eval="False"/>
+    <field name="model_id" ref="helpdesk.model_helpdesk_ticket"/>
+    <field name="trigger">on_unlink</field>
+    <field name="filter_domain">[["x_studio_cancelled","=",True]]</field>
+    <field name="action_server_ids" eval="[(6, 0, [ref('Fix-repair.server_action_2222_rr_validate_cancelled_tickets')])]"/>
+  </record>
+
+  <record id="base_automation_240_slowness_test" model="base.automation">
+    <field name="name">Slowness - Test</field>
+    <field name="active" eval="False"/>
+    <field name="model_id" ref="helpdesk.model_helpdesk_ticket"/>
+    <field name="trigger">on_create_or_write</field>
+    <field name="filter_domain">["&amp;",["team_id","=",1],["ticket_type_id","!=",False]]</field>
+  </record>
+
+  <record id="base_automation_243_rr_auto_select_product_for_rug_repairs_33" model="base.automation">
+    <field name="name">RR - Auto Select Product for RUG Repairs-33</field>
+    <field name="active" eval="False"/>
+    <field name="model_id" ref="helpdesk.model_helpdesk_ticket"/>
+    <field name="trigger">on_change</field>
+    <field name="filter_domain">[]</field>
+    <field name="action_server_ids" eval="[(6, 0, [ref('Fix-repair.server_action_2451_rr_auto_select_product_for_rug_repairs_33')])]"/>
+  </record>
+
+  <record id="base_automation_250_super_user_validate" model="base.automation">
+    <field name="name">Super User Validate</field>
+    <field name="active" eval="False"/>
+    <field name="model_id" ref="resource.model_res_users"/>
+    <field name="trigger">on_create_or_write</field>
+  </record>
+
+  <record id="base_automation_252_user_location_validation_helpdesk" model="base.automation">
+    <field name="name">User Location Validation - Helpdesk</field>
+    <field name="active" eval="False"/>
+    <field name="model_id" ref="helpdesk.model_helpdesk_ticket"/>
+    <field name="trigger">on_create_or_write</field>
+    <field name="filter_domain">[["stage_id","=",1]]</field>
+  </record>
+
+  <record id="base_automation_302_jin_company_id_in_repair_reason" model="base.automation">
+    <field name="name">JIN - Company Id in Repair Reason</field>
+    <field name="active" eval="False"/>
+    <field name="model_id" ref="Fix-repair.model_x_repair_reason"/>
+    <field name="trigger">on_create_or_write</field>
+  </record>
+
+  <record id="base_automation_303_jin_company_id_in_repair_reason_customer" model="base.automation">
+    <field name="name">JIN - Company Id in Repair Reason - Customer</field>
+    <field name="active" eval="False"/>
+    <field name="model_id" ref="Fix-repair.model_x_repair_reason_custom"/>
+    <field name="trigger">on_create_or_write</field>
+  </record>
+
+  <record id="base_automation_304_jin_company_id_in_repair_sub_reason" model="base.automation">
+    <field name="name">JIN - Company Id in Repair Sub Reason</field>
+    <field name="active" eval="False"/>
+    <field name="model_id" ref="Fix-repair.model_x_repair_sub_reason"/>
+    <field name="trigger">on_create_or_write</field>
+  </record>
+
+  <record id="base_automation_306_jin_company_id_in_repair_stages" model="base.automation">
+    <field name="name">JIN - Company Id in Repair Stages</field>
+    <field name="active" eval="False"/>
+    <field name="model_id" ref="Fix-repair.model_x_repair_stages"/>
+    <field name="trigger">on_create_or_write</field>
+  </record>
+
+  <record id="base_automation_329_jin_company_id_in_helpdesk_stage" model="base.automation">
+    <field name="name">JIN - Company Id in Helpdesk Stage</field>
+    <field name="active" eval="False"/>
+    <field name="model_id" ref="helpdesk.model_helpdesk_stage"/>
+    <field name="trigger">on_create_or_write</field>
+  </record>
+
+  <record id="base_automation_331_jin_company_id_in_repair_accounts" model="base.automation">
+    <field name="name">JIN - Company Id in Repair Accounts</field>
+    <field name="active" eval="False"/>
+    <field name="model_id" ref="Fix-repair.model_x_repair_accounts"/>
+    <field name="trigger">on_create_or_write</field>
+  </record>
+
+</odoo>
