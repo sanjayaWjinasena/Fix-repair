@@ -116,5 +116,56 @@ type <t t-out="object.product_id.display_name" style="box-sizing:border-box;" co
 <br/></p></field>
     </record>
 
+
+    <record id="mail_template_60_rr_customer_repair_letter_test" model="mail.template">
+      <field name="name">RR- Customer Repair Letter - Test</field>
+      <field name="model_id" ref="helpdesk.model_helpdesk_ticket"/>
+      <field name="subject">{{ object.display_name }}</field>
+      <field name="partner_to">{{ object.partner_id.id }}</field>
+      <field name="lang">{{ object.partner_id.lang }}</field>
+      <field name="body_html" type="html"><div style="margin: 0px; padding: 0px;">
+    <p style="box-sizing:border-box;margin: 0px; padding: 0px; font-size: 13px;">
+        <t t-assign="variable1" t-value="variable1"/>
+        <t t-assign="variable2" t-value="variable2"/>
+
+        </p><div>
+            <!-- Use the variables in the content section -->
+            <p style="margin:0px 0 12px 0;box-sizing:border-box;"><br/></p><p style="margin:0px 0 12px 0;box-sizing:border-box;">{{ <a href="https://object.partner_id.active" style="text-decoration:none;box-sizing:border-box;background-color:transparent;color:#008f8c;">object.partner_id.active</a> }}<br/></p><p style="margin:0px 0 12px 0;box-sizing:border-box;">Hello <span t-esc="variable1"/></p>
+            <p style="margin:0px 0 12px 0;box-sizing:border-box;">Your email is: <span t-esc="variable2"/></p>
+        </div>
+        
+    <p style="margin:0px 0 12px 0;box-sizing:border-box;"/>
+</div></field>
+    </record>
+
+    <record id="mail_template_63_rr_customer_repair_letter_test2" model="mail.template">
+      <field name="name">RR- Customer Repair Letter - Test2</field>
+      <field name="model_id" ref="helpdesk.model_helpdesk_ticket"/>
+      <field name="subject">{{ object.display_name }}</field>
+      <field name="partner_to">{{ object.partner_id.id }}</field>
+      <field name="lang">{{ object.partner_id.lang }}</field>
+      <field name="body_html" type="html"><p style="box-sizing:border-box;margin-bottom: 0px;">Customer :<t t-out="object.partner_id.display_name" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t> Write Your Wording Here</p><p style="box-sizing:border-box;margin-bottom: 0px;">Write Your Wording Here</p><p style="box-sizing:border-box;margin-bottom: 0px;">Write Your Wording Here
+</p><p style="margin:0px 0 12px 0;box-sizing:border-box;"/></field>
+    </record>
+
+    <record id="mail_template_64_rr_customer_repair_letter_test3" model="mail.template">
+      <field name="name">RR- Customer Repair Letter - Test3</field>
+      <field name="model_id" ref="helpdesk.model_helpdesk_ticket"/>
+      <field name="subject">{{ object.display_name }}</field>
+      <field name="partner_to">{{ object.partner_id.id }}</field>
+      <field name="lang">{{ object.partner_id.lang }}</field>
+      <field name="body_html" type="html"><p style="box-sizing:border-box;margin-bottom: 0px;">Customer :<t t-out="object.partner_id.display_name" style="box-sizing:border-box;"> </t> Write Your Wording Here</p><p style="box-sizing:border-box;margin-bottom: 0px;">Write Your Wording Here</p><p style="box-sizing:border-box;margin-bottom: 0px;">Write Your Wording Here
+</p><p style="margin:0px 0 12px 0;box-sizing:border-box;"/></field>
+    </record>
+
+    <record id="mail_template_71_rr_customer_repair_letter_test4" model="mail.template">
+      <field name="name">RR- Customer Repair Letter - Test4</field>
+      <field name="model_id" ref="helpdesk.model_helpdesk_ticket"/>
+      <field name="subject">{{ object.display_name }}</field>
+      <field name="partner_to">{{ object.partner_id.id }}</field>
+      <field name="lang">{{ object.partner_id.lang }}</field>
+      <field name="body_html" type="html"><p style="box-sizing:border-box;margin-bottom: 0px;">Customer :<t t-out="object.fsm_task_count.sale_order_id.display_name" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true"> </t> Write Your Wording Here</p><p style="box-sizing:border-box;margin-bottom: 0px;">Write Your Wording Here</p><p style="box-sizing:border-box;margin-bottom: 0px;">Write Your Wording Here
+</p><p style="margin:0px 0 12px 0;box-sizing:border-box;"/></field>
+    </record>
   </data>
 </odoo>
