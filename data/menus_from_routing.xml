@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Fix-repair: menu sweep from routing audit (1 candidates) --><!-- Uses <menuitem> shortcut with dev-verified parent + action refs --><odoo>
+
+  <menuitem id="menu_1054_repair_accounts" name="Repair Accounts" parent="helpdesk.helpdesk_menu_config" action="Fix-repair.act_window_2175_repair_accounts" sequence="7"/>
+
+</odoo>
