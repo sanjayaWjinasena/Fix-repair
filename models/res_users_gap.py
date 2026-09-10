@@ -4,50 +4,50 @@ from odoo import models, fields
 class ResUsersGap(models.Model):
     _inherit = 'res.users'
 
-    x_studio_binary_field_0lxfw = fields.Binary(string='New File', related='partner_id.x_studio_binary_field_0lxfw')
-    x_studio_binary_field_0lxfw_filename = fields.Char(string='Filename for x_studio_binary_field_0lxfw', related='partner_id.x_studio_binary_field_0lxfw_filename')
-    x_studio_binary_field_6Qgy3 = fields.Binary(string='New File', related='partner_id.x_studio_binary_field_6Qgy3')
-    x_studio_binary_field_6Qgy3_filename = fields.Char(string='Filename for x_studio_binary_field_6Qgy3', related='partner_id.x_studio_binary_field_6Qgy3_filename')
-    x_studio_boolean_field_5hcBi = fields.Boolean(string='New Checkbox', related='partner_id.x_studio_boolean_field_5hcBi')
-    x_studio_boolean_field_IhZPZ = fields.Boolean(string='New Checkbox', related='partner_id.x_studio_boolean_field_IhZPZ')
-    x_studio_boolean_field_iWSSd = fields.Boolean(string='New Checkbox', related='partner_id.x_studio_boolean_field_iWSSd')
-    x_studio_char_field_169HD = fields.Char(string='New Text', related='partner_id.x_studio_char_field_169HD')
-    x_studio_char_field_vHXsn = fields.Char(string='New Text', related='partner_id.x_studio_char_field_vHXsn')
-    x_studio_char_field_zMp65 = fields.Char(string='New Text', related='partner_id.x_studio_char_field_zMp65')
-    x_studio_created_date = fields.Date(string='Created DAte', related='partner_id.x_studio_created_date')
-    x_studio_created_date_1 = fields.Date(string='X Studio Created Date 1', related='partner_id.x_studio_created_date_1')
-    x_studio_credit_limit = fields.Float(string='Credit Limit', related='partner_id.x_studio_credit_limit')
-    x_studio_customer_group1 = fields.Many2one(string='Customer Group1', related='partner_id.x_studio_customer_group1')
-    x_studio_customer_group2 = fields.Many2one(string='Customer Group2', related='partner_id.x_studio_customer_group2')
-    x_studio_date_field_Gq9rN = fields.Date(string='New Date', related='partner_id.x_studio_date_field_Gq9rN')
-    x_studio_date_field_TBq7w = fields.Date(string='New Date', related='partner_id.x_studio_date_field_TBq7w')
-    x_studio_float_field_73nGS = fields.Float(string='New Decimal', related='partner_id.x_studio_float_field_73nGS')
-    x_studio_float_field_zLCsm = fields.Float(string='New Decimal', related='partner_id.x_studio_float_field_zLCsm')
-    x_studio_mandatory_bank_gu = fields.Boolean(string='Mandatory Bank Gu', related='partner_id.x_studio_mandatory_bank_gu', readonly=True)
-    x_studio_many2many_field_f1lwc = fields.Many2many(string='Contact', related='partner_id.x_studio_many2many_field_f1lwc')
-    x_studio_many2one_field_3LBKs = fields.Many2one(string='Group', related='partner_id.x_studio_many2one_field_3LBKs')
-    x_studio_many2one_field_3xHed = fields.Many2one(string='Contact', related='partner_id.x_studio_many2one_field_3xHed')
-    x_studio_many2one_field_9xxxo = fields.Many2one(string='Customer Groups XXX', related='partner_id.x_studio_many2one_field_9xxxo')
-    x_studio_many2one_field_V9cmo = fields.Many2one(string='Customer Groups', related='partner_id.x_studio_many2one_field_V9cmo')
-    x_studio_many2one_field_hl9yL = fields.Many2one(string='Customer Group', related='partner_id.x_studio_many2one_field_hl9yL')
-    x_studio_many2one_field_jhSr4 = fields.Many2one(string='Contact', related='partner_id.x_studio_many2one_field_jhSr4')
-    x_studio_many2one_field_pbZO1 = fields.Many2one(string='Contact', related='partner_id.x_studio_many2one_field_pbZO1')
-    x_studio_many2one_field_qX4FU = fields.Many2one(string='Vendor Group', related='partner_id.x_studio_many2one_field_qX4FU')
-    x_studio_payment_term = fields.Many2one(string='Payment Term-Delete', related='partner_id.x_studio_payment_term', readonly=True)
-    x_studio_related_field_49eDN = fields.Boolean(string='New Related Field', related='partner_id.x_studio_related_field_49eDN', readonly=True)
-    x_studio_related_field_TZMCl = fields.Char(string='New Related Field', related='partner_id.x_studio_related_field_TZMCl', readonly=True)
-    x_studio_related_field_Uojrf = fields.Char(string='New Related Field', related='partner_id.x_studio_related_field_Uojrf', readonly=True)
-    x_studio_related_field_UwEX1 = fields.Char(string='New Related Field', related='partner_id.x_studio_related_field_UwEX1', readonly=True)
-    x_studio_related_field_YVuN0 = fields.Char(string='New Related Field', related='partner_id.x_studio_related_field_YVuN0', readonly=True)
-    x_studio_related_field_j3X4Q = fields.Many2one(string='New Related Field', related='partner_id.x_studio_related_field_j3X4Q', readonly=True)
-    x_studio_related_field_ngmve = fields.Many2one(string='New Related Field', related='partner_id.x_studio_related_field_ngmve', readonly=True)
-    x_studio_related_field_pEksg = fields.Selection(string='New Related Field', related='partner_id.x_studio_related_field_pEksg', readonly=True)
-    x_studio_related_field_tLbBY = fields.Many2one(string='New Related Field', related='partner_id.x_studio_related_field_tLbBY', readonly=True)
-    x_studio_related_field_xfyUN = fields.Char(string='New Related Field', related='partner_id.x_studio_related_field_xfyUN', readonly=True)
-    x_studio_sdfsdf = fields.Date(string='X Studio Sdfsdf', related='partner_id.x_studio_sdfsdf')
-    x_studio_selection_field_3FlOG = fields.Selection(string='New Selection', related='partner_id.x_studio_selection_field_3FlOG')
-    x_studio_selection_field_VAQjO = fields.Selection(string='New Selection', related='partner_id.x_studio_selection_field_VAQjO')
-    x_studio_selection_field_lm0NR = fields.Selection(string='New Selection', related='partner_id.x_studio_selection_field_lm0NR')
-    x_studio_selection_field_sDxoe = fields.Selection(string='New Selection', related='partner_id.x_studio_selection_field_sDxoe')
-    x_studio_terms_of_payment = fields.Many2one(string='Terms of Payment', related='partner_id.x_studio_terms_of_payment', readonly=True)
-    x_studio_vendor_group1 = fields.Many2one(string='Vendor Group1', related='partner_id.x_studio_vendor_group1')
+    # STRIPPED x_studio_binary_field_0lxfw: related field chain not resolvable on target
+    # STRIPPED x_studio_binary_field_0lxfw_filename: related field chain not resolvable on target
+    # STRIPPED x_studio_binary_field_6Qgy3: related field chain not resolvable on target
+    # STRIPPED x_studio_binary_field_6Qgy3_filename: related field chain not resolvable on target
+    # STRIPPED x_studio_boolean_field_5hcBi: related field chain not resolvable on target
+    # STRIPPED x_studio_boolean_field_IhZPZ: related field chain not resolvable on target
+    # STRIPPED x_studio_boolean_field_iWSSd: related field chain not resolvable on target
+    # STRIPPED x_studio_char_field_169HD: related field chain not resolvable on target
+    # STRIPPED x_studio_char_field_vHXsn: related field chain not resolvable on target
+    # STRIPPED x_studio_char_field_zMp65: related field chain not resolvable on target
+    # STRIPPED x_studio_created_date: related field chain not resolvable on target
+    # STRIPPED x_studio_created_date_1: related field chain not resolvable on target
+    # STRIPPED x_studio_credit_limit: related field chain not resolvable on target
+    # STRIPPED x_studio_customer_group1: related field chain not resolvable on target
+    # STRIPPED x_studio_customer_group2: related field chain not resolvable on target
+    # STRIPPED x_studio_date_field_Gq9rN: related field chain not resolvable on target
+    # STRIPPED x_studio_date_field_TBq7w: related field chain not resolvable on target
+    # STRIPPED x_studio_float_field_73nGS: related field chain not resolvable on target
+    # STRIPPED x_studio_float_field_zLCsm: related field chain not resolvable on target
+    # STRIPPED x_studio_mandatory_bank_gu: related field chain not resolvable on target
+    # STRIPPED x_studio_many2many_field_f1lwc: related field chain not resolvable on target
+    # STRIPPED x_studio_many2one_field_3LBKs: related field chain not resolvable on target
+    # STRIPPED x_studio_many2one_field_3xHed: related field chain not resolvable on target
+    # STRIPPED x_studio_many2one_field_9xxxo: related field chain not resolvable on target
+    # STRIPPED x_studio_many2one_field_V9cmo: related field chain not resolvable on target
+    # STRIPPED x_studio_many2one_field_hl9yL: related field chain not resolvable on target
+    # STRIPPED x_studio_many2one_field_jhSr4: related field chain not resolvable on target
+    # STRIPPED x_studio_many2one_field_pbZO1: related field chain not resolvable on target
+    # STRIPPED x_studio_many2one_field_qX4FU: related field chain not resolvable on target
+    # STRIPPED x_studio_payment_term: related field chain not resolvable on target
+    # STRIPPED x_studio_related_field_49eDN: related field chain not resolvable on target
+    # STRIPPED x_studio_related_field_TZMCl: related field chain not resolvable on target
+    # STRIPPED x_studio_related_field_Uojrf: related field chain not resolvable on target
+    # STRIPPED x_studio_related_field_UwEX1: related field chain not resolvable on target
+    # STRIPPED x_studio_related_field_YVuN0: related field chain not resolvable on target
+    # STRIPPED x_studio_related_field_j3X4Q: related field chain not resolvable on target
+    # STRIPPED x_studio_related_field_ngmve: related field chain not resolvable on target
+    # STRIPPED x_studio_related_field_pEksg: related field chain not resolvable on target
+    # STRIPPED x_studio_related_field_tLbBY: related field chain not resolvable on target
+    # STRIPPED x_studio_related_field_xfyUN: related field chain not resolvable on target
+    # STRIPPED x_studio_sdfsdf: related field chain not resolvable on target
+    # STRIPPED x_studio_selection_field_3FlOG: related field chain not resolvable on target
+    # STRIPPED x_studio_selection_field_VAQjO: related field chain not resolvable on target
+    # STRIPPED x_studio_selection_field_lm0NR: related field chain not resolvable on target
+    # STRIPPED x_studio_selection_field_sDxoe: related field chain not resolvable on target
+    # STRIPPED x_studio_terms_of_payment: related field chain not resolvable on target
+    # STRIPPED x_studio_vendor_group1: related field chain not resolvable on target
