@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fix-repair: Phase E - 4 views for x_resolutions -->
+<odoo>
+  <data>
+    <record id="view_4978_default_form_view_for_x_resolutions_e" model="ir.ui.view">
+      <field name="name">Default form view for x_resolutions</field>
+      <field name="model">x_resolutions</field>
+      <field name="type">form</field>
+      <field name="arch" type="xml">
+        <form>
+  <header/>
+  <sheet string="Resolutions">
+    <widget name="web_ribbon" text="Archived" bg_color="bg-danger" invisible="x_active == True"/>
+    <field name="x_active" invisible="1"/>
+    <div class="oe_title">
+                <h1>
+                    <field name="x_name" required="1" placeholder="Name..."/>
+                </h1>
+            </div>
+    <group name="studio_group_6a461b">
+      <group name="studio_group_6a461b_left"/>
+      <group name="studio_group_6a461b_right"/>
+    </group>
+  </sheet>
+  <div class="oe_chatter" name="oe_chatter">
+    <field name="message_follower_ids"/>
+    <field name="message_ids"/>
+    <field name="activity_ids"/>
+  </div>
+</form>
+      </field>
+    </record>
+
+    <record id="view_4977_default_list_view_for_x_resolutions_e" model="ir.ui.view">
+      <field name="name">Default list view for x_resolutions</field>
+      <field name="model">x_resolutions</field>
+      <field name="type">tree</field>
+      <field name="arch" type="xml">
+        <tree>
+  <field name="x_studio_sequence" widget="handle"/>
+  <field name="x_name"/>
+</tree>
+      </field>
+    </record>
+
+    <record id="view_4979_default_search_view_for_x_resolutions_e" model="ir.ui.view">
+      <field name="name">Default search view for x_resolutions</field>
+      <field name="model">x_resolutions</field>
+      <field name="type">search</field>
+      <field name="arch" type="xml">
+        <search>
+  <field name="x_name"/>
+  <separator/>
+  <filter string="Archived" name="archived_x_resolutions" domain="[['x_active', '=', False]]"/>
+  <separator/>
+</search>
+      </field>
+    </record>
+
+  </data>
+</odoo>

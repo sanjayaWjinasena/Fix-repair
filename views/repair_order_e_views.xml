@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fix-repair: Phase E - 2 views for repair.order -->
+<odoo>
+  <data>
+    <record id="view_4014_odoo_studio_repair_form_customization_e" model="ir.ui.view">
+      <field name="name">Odoo Studio: repair.form customization</field>
+      <field name="model">repair.order</field>
+      <field name="type">form</field>
+      <field name="priority">99</field>
+      <field name="inherit_id" ref="repair.view_repair_order_form"/>
+      <field name="mode">extension</field>
+      <field name="arch" type="xml">
+        <data>
+  <xpath expr="//field[@name='tag_ids']" position="after">
+    <field name="x_studio_confirm_draft_quotation" string="Confirm Draft Quotation" force_save="True" readonly="1"/>
+  </xpath>
+  <xpath expr="//field[@name='product_packaging_id']" position="after">
+    <field name="price_unit" optional="show"/>
+  </xpath>
+</data>
+      </field>
+    </record>
+
+    <record id="view_4015_odoo_studio_repair_form_customization_button_e" model="ir.ui.view">
+      <field name="name">Odoo Studio: repair.form customization_button</field>
+      <field name="model">repair.order</field>
+      <field name="type">form</field>
+      <field name="priority">99</field>
+      <field name="inherit_id" ref="repair.view_repair_order_form"/>
+      <field name="mode">extension</field>
+      <field name="arch" type="xml">
+        <data>
+    <xpath expr="//header/button[@name='action_validate']" position="before"> x_studio_confirm_draft_quotation
+      <button type="action" name="1814" string="Confirm Draft Quotation" class="btn-primary" invisible="x_studio_confirm_draft_quotation == True"/>
+    </xpath>
+    
+    <xpath expr="//header/button[@name='action_validate']" position="attributes">
+      <attribute name="invisible">state != 'draft'</attribute></xpath>
+    
+    </data>
+      </field>
+    </record>
+
+  </data>
+</odoo>

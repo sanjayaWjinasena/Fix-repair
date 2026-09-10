@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fix-repair: Phase E - 1 views for res.users -->
+<odoo>
+  <data>
+    <record id="view_2391_odoo_studio_res_users_tree_customization_e" model="ir.ui.view">
+      <field name="name">Odoo Studio: res.users.tree customization</field>
+      <field name="model">res.users</field>
+      <field name="type">tree</field>
+      <field name="priority">99</field>
+      <field name="inherit_id" ref="base.view_users_tree"/>
+      <field name="mode">extension</field>
+      <field name="arch" type="xml">
+        <data>
+  <xpath expr="//field[@name='company_id']" position="after">
+    <field name="active"/>
+    <field name="create_uid" optional="show"/>
+    <field name="create_date" optional="show"/>
+    <field name="id" optional="show"/>
+  </xpath>
+</data>
+      </field>
+    </record>
+
+  </data>
+</odoo>

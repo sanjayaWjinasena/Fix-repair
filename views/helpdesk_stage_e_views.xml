@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fix-repair: Phase E - 2 views for helpdesk.stage -->
+<odoo>
+  <data>
+    <record id="view_5964_odoo_studio_helpdesk_stage_form_customization_e" model="ir.ui.view">
+      <field name="name">Odoo Studio: helpdesk.stage.form customization</field>
+      <field name="model">helpdesk.stage</field>
+      <field name="type">form</field>
+      <field name="priority">99</field>
+      <field name="inherit_id" ref="helpdesk.helpdesk_stage_view_form"/>
+      <field name="mode">extension</field>
+      <field name="arch" type="xml">
+        <data>
+  <xpath expr="//field[@name='sequence']" position="after">
+    <field name="x_studio_company_id" string="Company"/>
+  </xpath>
+</data>
+      </field>
+    </record>
+
+    <record id="view_4611_odoo_studio_helpdesk_stages_tree_customization_e" model="ir.ui.view">
+      <field name="name">Odoo Studio: helpdesk.stages.tree customization</field>
+      <field name="model">helpdesk.stage</field>
+      <field name="type">tree</field>
+      <field name="priority">99</field>
+      <field name="inherit_id" ref="helpdesk.helpdesk_stage_view_tree"/>
+      <field name="mode">extension</field>
+      <field name="arch" type="xml">
+        <data>
+  <xpath expr="//field[@name='fold']" position="after">
+    <field name="id" optional="show"/>
+  </xpath>
+</data>
+      </field>
+    </record>
+
+  </data>
+</odoo>

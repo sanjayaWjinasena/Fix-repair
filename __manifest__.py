@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Jinasena : Module : Repair',
-    'version': '17.0.1.0.313',
+    'version': '17.0.1.0.314',
     'summary': 'Enhancements to the Customer Care - Repair helpdesk workflow',
     'author': 'Jinasena Agricultural Machinery (Pvt) Ltd.',
     'category': 'Helpdesk',
@@ -97,6 +97,24 @@
         'data/automations_gap.xml',
         'data/window_actions_gap.xml',
         'data/ir_defaults_gap.xml',
+        'views/helpdesk_stage_e_views.xml',
+        'views/helpdesk_ticket_e_views.xml',
+        'views/helpdesk_ticket_type_e_views.xml',
+        'views/repair_order_e_views.xml',
+        'views/res_users_e_views.xml',
+        'views/stock_warehouse_e_views.xml',
+        'views/x_conditions_e_views.xml',
+        'views/x_diagnosis_areas_e_views.xml',
+        'views/x_diagnosis_codes_e_views.xml',
+        'views/x_repair_accounts_e_views.xml',
+        'views/x_repair_reason_custom_e_views.xml',
+        'views/x_repair_reason_e_views.xml',
+        'views/x_repair_stages_e_views.xml',
+        'views/x_repair_sub_reason_e_views.xml',
+        'views/x_resolutions_e_views.xml',
+        'views/x_symptom_areas_e_views.xml',
+        'views/x_symptom_codes_e_views.xml',
+        'views/x_task_diagnosis_e_views.xml',
     ],
     'assets': {
         'web.assets_backend': [
