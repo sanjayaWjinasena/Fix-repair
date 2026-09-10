@@ -18,3 +18,12 @@ from . import stock_picking
 from . import stock_return_picking
 from . import stock_warehouse
 from . import x_task_diagnosis
+
+from . import res_users_gap
+from . import x_conditions_gap
+from . import x_diagnosis_areas_gap
+from . import x_diagnosis_codes_gap
+from . import x_resolutions_gap
+from . import x_symptom_areas_gap
+from . import x_symptom_codes_gap
+from . import x_task_diagnosis_gap
