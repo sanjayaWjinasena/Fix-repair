@@ -89,11 +89,11 @@
       <button type="action" name="1981" string="Approve RUG" class="btn-primary" attrs="{'invisible': ['|','|',('x_studio_rug_repair', '!=', True),('x_studio_rug_approved', '=', True),('x_studio_rug_request_sent', '=', False)]}"></button>
     </xpath-->
     
-    <!--xpath expr="//button[@name='195']" position="attributes">
+    <!--xpath expr="//button[@name='%(stock.act_stock_return_picking)d']" position="attributes">
       <attribute name="attrs">{'invisible': ['|','|','|','|',('use_product_returns', '=', False),('x_studio_valid_return', '=', True),('ticket_type_id', '=', False),('x_studio_rug_repair', '!=', True),'&amp;',('x_studio_rug_repair', '=', True),('x_studio_rug_approved', '=', False)]}</attribute> 
     </xpath-->
     
-    <xpath expr="//button[@name='195']" position="attributes">
+    <xpath expr="//button[@name='%(stock.act_stock_return_picking)d']" position="attributes">
       <attribute name="invisible">((x_studio_sn_updated == False) and (x_studio_normal_repair_without_serial_no == False)) or ((x_studio_rug_repair != True) or ((ticket_type_id == False) or ((x_studio_valid_return == True) or ((use_product_returns == False) or (x_studio_cancelled == True)))))</attribute></xpath>
     
     <!--xpath expr="//button[@name='action_generate_fsm_task']" position="attributes">
@@ -103,40 +103,40 @@
     <xpath expr="//button[@name='action_generate_fsm_task']" position="attributes">
       <attribute name="invisible">((x_studio_receive_at_factory == False) and (x_studio_job_location == 'Factory Repair')) or ((x_studio_valid_confirm_return == False) or ((x_studio_valid_return == False) or ((use_fsm == False) or ((fsm_task_count &gt; 0) or (x_studio_cancelled == True)))))</attribute></xpath>
    
-    <xpath expr="//button[@name='195']" position="attributes">
+    <xpath expr="//button[@name='%(stock.act_stock_return_picking)d']" position="attributes">
       <attribute name="context">{'default_ticket_id': id, 'default_company_id': company_id, 'default_picking_id': x_studio_pick_id}</attribute>
     </xpath>
     
     <!--xpath expr="//header/button[@name='assign_ticket_to_self']" position="after">
-      <button type="action" name="195" groups="stock.group_stock_user" string="Return" attrs="{'invisible': ['|','|','|','|','|','|',('use_product_returns', '=', False),('ticket_type_id', '=', False),('x_studio_valid_return', '=', True),('x_studio_rug_repair', '=', True),('x_studio_normal_repair_with_serial_no', '=', True),('x_studio_normal_repair_without_serial_no', '=', False),'&amp;',('x_studio_normal_repair_without_serial_no', '=', True),('x_studio_repair_serial_created', '=', False)]}" context="{'default_ticket_id': id, 'default_company_id': company_id, 'default_location_id': x_studio_virtual_location_id, 'default_picking_id': x_studio_pick_id}"/>
+      <button type="action" name="%(stock.act_stock_return_picking)d" groups="stock.group_stock_user" string="Return" attrs="{'invisible': ['|','|','|','|','|','|',('use_product_returns', '=', False),('ticket_type_id', '=', False),('x_studio_valid_return', '=', True),('x_studio_rug_repair', '=', True),('x_studio_normal_repair_with_serial_no', '=', True),('x_studio_normal_repair_without_serial_no', '=', False),'&amp;',('x_studio_normal_repair_without_serial_no', '=', True),('x_studio_repair_serial_created', '=', False)]}" context="{'default_ticket_id': id, 'default_company_id': company_id, 'default_location_id': x_studio_virtual_location_id, 'default_picking_id': x_studio_pick_id}"/>
     </xpath-->
     
     <!--xpath expr="//header/button[@name='195'][2]" position="after">
-      <button type="action" name="195" groups="stock.group_stock_user" string="Return" attrs="{'invisible': ['|','|','|','|','|',('use_product_returns', '=', False),('ticket_type_id', '=', False),('x_studio_valid_return', '=', True),('x_studio_rug_repair', '=', True),('x_studio_normal_repair_with_serial_no', '=', False),('x_studio_normal_repair_without_serial_no', '=', True)]}" context="{'default_ticket_id': id, 'default_company_id': company_id, 'default_picking_id': x_studio_pick_id}"/>
+      <button type="action" name="%(stock.act_stock_return_picking)d" groups="stock.group_stock_user" string="Return" attrs="{'invisible': ['|','|','|','|','|',('use_product_returns', '=', False),('ticket_type_id', '=', False),('x_studio_valid_return', '=', True),('x_studio_rug_repair', '=', True),('x_studio_normal_repair_with_serial_no', '=', False),('x_studio_normal_repair_without_serial_no', '=', True)]}" context="{'default_ticket_id': id, 'default_company_id': company_id, 'default_picking_id': x_studio_pick_id}"/>
     </xpath-->
     
     <xpath expr="//header/button[@name='assign_ticket_to_self']" position="before">
-     <button type="action" name="2159" string="Change Repair Type To RUG" class="btn-primary" confirm="Are you sure you want to change the repair type to RUG?" invisible="(x_studio_estimation_approved_stage_updated == True) or ((x_studio_valid_return == False) or ((x_studio_normal_repair_with_serial_no == False) or (x_studio_cancelled == True)))"/>
+     <!-- STRIPPED action button aid=2159 unresolvable -->
     </xpath>
     
     <xpath expr="//header/button[@name='195']" position="before">
-     <button type="action" name="2450" string="Update Serial" class="btn-primary" invisible="((x_studio_sn_updated == True) and (x_studio_rug_repair == True)) or (((x_studio_sn_updated == True) and (x_studio_normal_repair_with_serial_no == True)) or ((x_studio_serial_no == False) or (x_studio_normal_repair_without_serial_no == True)))"/>
+     <!-- STRIPPED action button aid=2450 unresolvable -->
     </xpath>
     
     <xpath expr="//header/button[@name='assign_ticket_to_self']" position="after">
-      <button type="action" name="195" groups="stock.group_stock_user" string="Receipt" context="{'default_ticket_id': id, 'default_company_id': company_id, 'default_location_id': x_studio_virtual_location_id, 'default_picking_id': x_studio_pick_id}" invisible="((x_studio_repair_serial_created == False) and (x_studio_normal_repair_without_serial_no == True)) or ((x_studio_normal_repair_without_serial_no == False) or ((x_studio_normal_repair_with_serial_no == True) or ((x_studio_rug_repair == True) or ((x_studio_valid_return == True) or ((ticket_type_id == False) or ((use_product_returns == False) or (x_studio_cancelled == True)))))))"/>
+      <button type="action" name="%(stock.act_stock_return_picking)d" groups="stock.group_stock_user" string="Receipt" context="{'default_ticket_id': id, 'default_company_id': company_id, 'default_location_id': x_studio_virtual_location_id, 'default_picking_id': x_studio_pick_id}" invisible="((x_studio_repair_serial_created == False) and (x_studio_normal_repair_without_serial_no == True)) or ((x_studio_normal_repair_without_serial_no == False) or ((x_studio_normal_repair_with_serial_no == True) or ((x_studio_rug_repair == True) or ((x_studio_valid_return == True) or ((ticket_type_id == False) or ((use_product_returns == False) or (x_studio_cancelled == True)))))))"/>
     </xpath>
     
     <xpath expr="//header/button[@name='195'][2]" position="after">
-      <button type="action" name="195" groups="stock.group_stock_user" string="Receipt" context="{'default_ticket_id': id, 'default_company_id': company_id, 'default_picking_id': x_studio_pick_id}" invisible="((x_studio_sn_updated == False) and (x_studio_normal_repair_without_serial_no == False)) or ((x_studio_normal_repair_without_serial_no == True) or ((x_studio_normal_repair_with_serial_no == False) or ((x_studio_rug_repair == True) or ((x_studio_valid_return == True) or ((ticket_type_id == False) or ((use_product_returns == False) or (x_studio_cancelled == True)))))))"/>
+      <button type="action" name="%(stock.act_stock_return_picking)d" groups="stock.group_stock_user" string="Receipt" context="{'default_ticket_id': id, 'default_company_id': company_id, 'default_picking_id': x_studio_pick_id}" invisible="((x_studio_sn_updated == False) and (x_studio_normal_repair_without_serial_no == False)) or ((x_studio_normal_repair_without_serial_no == True) or ((x_studio_normal_repair_with_serial_no == False) or ((x_studio_rug_repair == True) or ((x_studio_valid_return == True) or ((ticket_type_id == False) or ((use_product_returns == False) or (x_studio_cancelled == True)))))))"/>
     </xpath>
     
     <xpath expr="//header/button[@name='195'][3]" position="before">
-      <button type="action" name="1994" string="Create Repair Serial" class="btn-primary" confirm="Are you sure you want to create repair serial no?" context="{'default_ticket_id': id, 'default_company_id': company_id, 'default_picking_id': x_studio_pick_id}" invisible="((x_studio_tracking != 'serial') and (x_studio_normal_repair_without_serial_no == True)) or (((x_studio_repair_serial_created == True) and (x_studio_normal_repair_without_serial_no == True)) or ((x_studio_normal_repair_without_serial_no != True) or ((x_studio_normal_repair_without_serial_no == False) or ((x_studio_normal_repair_with_serial_no == True) or ((x_studio_rug_repair == True) or ((ticket_type_id == False) or ((use_product_returns == False) or (x_studio_cancelled == True))))))))"/>
+      <!-- STRIPPED action button aid=1994 unresolvable -->
     </xpath>
     
     <xpath expr="//header/button[@name='1994']" position="before">
-      <button type="action" name="1993" string="Create Repair Route" class="btn-primary" confirm="Are you sure you want to create repair route?" context="{'default_ticket_id': id, 'default_company_id': company_id, 'default_picking_id': x_studio_pick_id}" invisible="((x_studio_tracking != 'none') and (x_studio_normal_repair_without_serial_no == True)) or (((x_studio_repair_serial_created == True) and (x_studio_normal_repair_without_serial_no == True)) or ((x_studio_normal_repair_without_serial_no != True) or ((x_studio_normal_repair_without_serial_no == False) or ((x_studio_normal_repair_with_serial_no == True) or ((x_studio_rug_repair == True) or ((ticket_type_id == False) or ((use_product_returns == False) or (x_studio_cancelled == True))))))))"/>
+      <!-- STRIPPED action button aid=1993 unresolvable -->
     </xpath>
     
     <xpath expr="//field[@name='stage_id']" position="attributes">
@@ -144,31 +144,31 @@
     </xpath>
     
     <xpath expr="//header/button[@name='action_generate_fsm_task']" position="before">
-      <button type="action" name="2001" string="Send to Factory" class="btn-primary" invisible="(x_studio_job_location != 'Factory Repair') or ((x_studio_send_to_factory == True) or ((x_studio_valid_confirm_return == False) or ((x_studio_valid_return == False) or ((fsm_task_count &gt; 0) or (x_studio_cancelled == True)))))"/>
+      <!-- STRIPPED action button aid=2001 unresolvable -->
     </xpath>
     
     <xpath expr="//header/button[@name='2001']" position="after">
-      <button type="action" name="2002" string="Receive at Factory" class="btn-primary" invisible="((x_studio_send_to_factory == False) and (x_studio_job_location == 'Factory Repair')) or ((x_studio_job_location != 'Factory Repair') or ((x_studio_receive_at_factory == True) or ((x_studio_valid_confirm_return == False) or ((x_studio_valid_return == False) or ((fsm_task_count &gt; 0) or (x_studio_cancelled == True))))))"/>
+      <!-- STRIPPED action button aid=2002 unresolvable -->
     </xpath>
     
     <xpath expr="//header/button[@name='2002']" position="before">
-      <button type="action" name="2007" string="Send to Sales Centre" class="btn-primary" invisible="(x_studio_job_location != 'Factory Repair') or ((x_studio_send_to_centre == True) or ((x_studio_receive_at_factory == False) or ((x_studio_task_status == False) or ((x_studio_cancelled == True) or (x_studio_fsm_task_done == False)))))"/>
+      <!-- STRIPPED action button aid=2007 unresolvable -->
     </xpath>
     
     <xpath expr="//header/button[@name='2007']" position="after">
-      <button type="action" name="2006" string="Receive at Sales Centre" class="btn-primary" invisible="((x_studio_send_to_centre == False) and (x_studio_job_location == 'Factory Repair')) or ((x_studio_job_location != 'Factory Repair') or ((x_studio_receive_at_centre == True) or ((x_studio_task_status == False) or (x_studio_cancelled == True))))"/>
+      <!-- STRIPPED action button aid=2006 unresolvable -->
     </xpath>
     
     <xpath expr="//header/button[@name='2006']" position="before">
-      <button type="action" name="2220" string="Cancel" class="btn-primary" confirm="Are you sure you want to cancel the repair ticket?" invisible="(product_id == False) or ((x_studio_serial_no == False) or ((partner_id == False) or ((x_studio_repair_reason == False) or ((x_studio_return_receipt_location == False) or ((ticket_type_id == False) or ((x_studio_cancelled == True) or (stage_id in [3, 4, 7, 8, 9, 10, 11, 12, 13])))))))"/>
+      <!-- STRIPPED action button aid=2220 unresolvable -->
     </xpath>
     
     <xpath expr="//header/button[@name='2220']" position="before">
-      <button type="action" name="2221" string="Reopen" class="btn-primary" confirm="Are you sure you want to reopen the repair ticket?" invisible="x_studio_cancelled == False"/>
+      <!-- STRIPPED action button aid=2221 unresolvable -->
     </xpath>
     
     <xpath expr="//header/button[@name='2221']" position="before">
-      <button type="action" name="2343" string="Cancel" class="btn-primary" confirm="Are you sure you want to cancel the repair ticket?" invisible="(product_id == False) or ((x_studio_serial_no == False) or ((partner_id == False) or ((x_studio_repair_reason == False) or ((x_studio_return_receipt_location == False) or ((ticket_type_id == False) or ((x_studio_cancelled_2 == True) or (stage_id not in [10])))))))"/>
+      <!-- STRIPPED action button aid=2343 unresolvable -->
     </xpath>
     
     <!--xpath expr="//header/button[@name='2221']" position="after">

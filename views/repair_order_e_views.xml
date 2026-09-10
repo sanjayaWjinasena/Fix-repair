@@ -31,7 +31,7 @@
       <field name="arch" type="xml">
         <data>
     <xpath expr="//header/button[@name='action_validate']" position="before"> x_studio_confirm_draft_quotation
-      <button type="action" name="1814" string="Confirm Draft Quotation" class="btn-primary" invisible="x_studio_confirm_draft_quotation == True"/>
+      <!-- STRIPPED action button aid=1814 unresolvable -->
     </xpath>
     
     <xpath expr="//header/button[@name='action_validate']" position="attributes">
