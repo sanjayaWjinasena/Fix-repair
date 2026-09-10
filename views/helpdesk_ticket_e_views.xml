@@ -74,10 +74,7 @@
     
     <xpath expr="//header/button[@name='%(helpdesk_repair.action_repair_order_form)d']" position="attributes">
       <attribute name="invisible">(use_product_repairs == False) or ((pickings_count == 0) or (x_studio_cancelled == True))</attribute></xpath>
-    
-    <xpath expr="//field[@name='sale_order_id']" position="attributes">
-     <attribute name="domain">[["partner_id","=",partner_id]]</attribute>
-    </xpath>
+  <!-- STRIPPED xpath sale_order_id: not on ported parent view -->
     
      <!-- STRIPPED malformed xpath comment block -->
     
