@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fix-repair: Phase F7 - 10 record rules -->
+<odoo>
+  <record id="rule_f7_x_symptom_codes_jin_multi_company_symptom_codes" model="ir.rule">
+    <field name="name">JIN - Multi-Company - Symptom Codes</field>
+    <field name="model_id" search="[('model', '=', 'x_symptom_codes')]"/>
+    <field name="domain_force">['|', ('x_studio_company_id', 'in', company_ids), ('x_studio_company_id', '=', False)]</field>
+  </record>
+  <record id="rule_f7_x_symptom_areas_jin_multi_company_symptom_areas" model="ir.rule">
+    <field name="name">JIN - Multi-Company - Symptom Areas</field>
+    <field name="model_id" search="[('model', '=', 'x_symptom_areas')]"/>
+    <field name="domain_force">['|', ('x_studio_company_id', 'in', company_ids), ('x_studio_company_id', '=', False)]</field>
+  </record>
+  <record id="rule_f7_x_resolutions_jin_multi_company_resolutions" model="ir.rule">
+    <field name="name">JIN - Multi-Company - Resolutions</field>
+    <field name="model_id" search="[('model', '=', 'x_resolutions')]"/>
+    <field name="domain_force">['|', ('x_studio_company_id', 'in', company_ids), ('x_studio_company_id', '=', False)]</field>
+  </record>
+  <record id="rule_f7_x_repair_sub_reason_jin_multi_company_repair_sub_reason" model="ir.rule">
+    <field name="name">JIN - Multi-Company - Repair Sub Reason</field>
+    <field name="model_id" search="[('model', '=', 'x_repair_sub_reason')]"/>
+    <field name="domain_force">['|', ('x_studio_company_id', 'in', company_ids), ('x_studio_company_id', '=', False)]</field>
+  </record>
+  <record id="rule_f7_x_repair_stages_jin_multi_company_repair_stages" model="ir.rule">
+    <field name="name">JIN - Multi-Company - Repair Stages</field>
+    <field name="model_id" search="[('model', '=', 'x_repair_stages')]"/>
+    <field name="domain_force">['|', ('x_studio_company_id', 'in', company_ids), ('x_studio_company_id', '=', False)]</field>
+  </record>
+  <record id="rule_f7_x_repair_reason_custom_jin_multi_company_repair_reason_customer" model="ir.rule">
+    <field name="name">JIN - Multi-Company - Repair Reason - Customer</field>
+    <field name="model_id" search="[('model', '=', 'x_repair_reason_custom')]"/>
+    <field name="domain_force">['|', ('x_studio_company_id', 'in', company_ids), ('x_studio_company_id', '=', False)]</field>
+  </record>
+  <record id="rule_f7_x_repair_reason_jin_multi_company_repair_reason" model="ir.rule">
+    <field name="name">JIN - Multi-Company - Repair Reason</field>
+    <field name="model_id" search="[('model', '=', 'x_repair_reason')]"/>
+    <field name="domain_force">['|', ('x_studio_company_id', 'in', company_ids), ('x_studio_company_id', '=', False)]</field>
+  </record>
+  <record id="rule_f7_x_repair_accounts_jin_multi_company_repair_accounts" model="ir.rule">
+    <field name="name">JIN - Multi-Company - Repair Accounts</field>
+    <field name="model_id" search="[('model', '=', 'x_repair_accounts')]"/>
+    <field name="domain_force">['|', ('x_studio_company_id', 'in', company_ids), ('x_studio_company_id', '=', False)]</field>
+  </record>
+  <record id="rule_f7_x_diagnosis_codes_jin_multi_company_diagnosis_codes" model="ir.rule">
+    <field name="name">JIN - Multi-Company - Diagnosis Codes</field>
+    <field name="model_id" search="[('model', '=', 'x_diagnosis_codes')]"/>
+    <field name="domain_force">['|', ('x_studio_company_id', 'in', company_ids), ('x_studio_company_id', '=', False)]</field>
+  </record>
+  <record id="rule_f7_x_diagnosis_areas_jin_multi_company_diagnosis_areas" model="ir.rule">
+    <field name="name">JIN - Multi-Company - Diagnosis Areas</field>
+    <field name="model_id" search="[('model', '=', 'x_diagnosis_areas')]"/>
+    <field name="domain_force">['|', ('x_studio_company_id', 'in', company_ids), ('x_studio_company_id', '=', False)]</field>
+  </record>
+</odoo>
