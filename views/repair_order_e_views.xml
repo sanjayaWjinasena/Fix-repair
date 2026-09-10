@@ -28,7 +28,7 @@
       <field name="mode">extension</field>
       <field name="arch" type="xml">
         <data>
-    <xpath expr="//header/button[@name='action_validate']" position="before"> x_studio_confirm_draft_quotation
+    <xpath expr="//form" position="inside"><field name="x_studio_confirm_draft_quotation" invisible="1"/></xpath><xpath expr="//header/button[@name='action_validate']" position="before"> x_studio_confirm_draft_quotation
       <!-- STRIPPED action button aid=1814 unresolvable -->
     </xpath>
     
