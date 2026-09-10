@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Jinasena : Module : Repair',
-    'version': '17.0.1.0.321',
+    'version': '17.0.1.0.322',
     'summary': 'Enhancements to the Customer Care - Repair helpdesk workflow',
     'author': 'Jinasena Agricultural Machinery (Pvt) Ltd.',
     'category': 'Helpdesk',
@@ -32,6 +32,7 @@
     # ORDER: ported.xml before field_hides.xml — the latter's xpaths
     # target fields that ported.xml adds to the composed arch.
     'data': [
+        'data/selections_f1.xml',
         # v249: MUST load before security/ir.model.access.csv so the
         # 11 Studio-created model xmlids resolve when the ACL CSV is
         # processed. Fresh installs don't need this (Odoo auto-pins
