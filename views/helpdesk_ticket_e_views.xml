@@ -1,6 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Fix-repair: Phase E - 3 views for helpdesk.ticket -->
-<odoo>
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Fix-repair: Phase E - 3 views for helpdesk.ticket --><odoo>
   <data>
     <record id="view_4735_odoo_studio_helpdesk_ticket_kanban_customization_e" model="ir.ui.view">
       <field name="name">Odoo Studio: helpdesk.ticket.kanban customization</field>
@@ -70,7 +69,7 @@
       <field name="mode">extension</field>
       <field name="arch" type="xml">
         <data>
-    <!-- STRIPPED malformed xpath comment block -->
+    <xpath expr="//form" position="inside"><field name="use_product_returns" invisible="1"/><field name="x_studio_cancelled" invisible="1"/><field name="x_studio_normal_repair_with_serial_no" invisible="1"/><field name="x_studio_normal_repair_without_serial_no" invisible="1"/><field name="x_studio_repair_serial_created" invisible="1"/><field name="x_studio_rug_repair" invisible="1"/><field name="x_studio_sn_updated" invisible="1"/><field name="x_studio_valid_return" invisible="1"/></xpath><!-- STRIPPED malformed xpath comment block -->
     
     <xpath expr="//header/button[@name='%(helpdesk_repair.action_repair_order_form)d']" position="attributes">
       <attribute name="invisible">(use_product_repairs == False) or ((pickings_count == 0) or (x_studio_cancelled == True))</attribute></xpath>
