@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fix-repair: Phase F5 - 14 server actions -->
+<odoo>
+  <record id="sa_f5_x_conditions_jin_company_id_in_conditions" model="ir.actions.server">
+    <field name="name">JIN - Company Id in Conditions</field>
+    <field name="model_id" search="[('model', '=', 'x_conditions')]"/>
+    <field name="state">code</field>
+    <field name="code"><![CDATA[company_id = env.context.get('allowed_company_ids', [env.user.company_id.id])[0]
+company = env['res.company'].browse(company_id)
+
+record['x_studio_company_id'] = company.id]]></field>
+    <field name="usage">base_automation</field>
+    <field name="binding_view_types">list,form</field>
+  </record>
+  <record id="sa_f5_x_diagnosis_areas_jin_company_id_in_diagnosis_areas" model="ir.actions.server">
+    <field name="name">JIN - Company Id in Diagnosis Areas</field>
+    <field name="model_id" search="[('model', '=', 'x_diagnosis_areas')]"/>
+    <field name="state">code</field>
+    <field name="code"><![CDATA[company_id = env.context.get('allowed_company_ids', [env.user.company_id.id])[0]
+company = env['res.company'].browse(company_id)
+
+record['x_studio_company_id'] = company.id]]></field>
+    <field name="usage">base_automation</field>
+    <field name="binding_view_types">list,form</field>
+  </record>
+  <record id="sa_f5_x_diagnosis_codes_jin_company_id_in_diagnosis_codes" model="ir.actions.server">
+    <field name="name">JIN - Company Id in Diagnosis Codes</field>
+    <field name="model_id" search="[('model', '=', 'x_diagnosis_codes')]"/>
+    <field name="state">code</field>
+    <field name="code"><![CDATA[company_id = env.context.get('allowed_company_ids', [env.user.company_id.id])[0]
+company = env['res.company'].browse(company_id)
+
+record['x_studio_company_id'] = company.id]]></field>
+    <field name="usage">base_automation</field>
+    <field name="binding_view_types">list,form</field>
+  </record>
+  <record id="sa_f5_x_resolutions_jin_company_id_in_resolutions" model="ir.actions.server">
+    <field name="name">JIN - Company Id in Resolutions</field>
+    <field name="model_id" search="[('model', '=', 'x_resolutions')]"/>
+    <field name="state">code</field>
+    <field name="code"><![CDATA[company_id = env.context.get('allowed_company_ids', [env.user.company_id.id])[0]
+company = env['res.company'].browse(company_id)
+
+record['x_studio_company_id'] = company.id]]></field>
+    <field name="usage">base_automation</field>
+    <field name="binding_view_types">list,form</field>
+  </record>
+  <record id="sa_f5_x_symptom_areas_jin_company_id_in_symptom_areas" model="ir.actions.server">
+    <field name="name">JIN - Company Id in Symptom Areas</field>
+    <field name="model_id" search="[('model', '=', 'x_symptom_areas')]"/>
+    <field name="state">code</field>
+    <field name="code"><![CDATA[company_id = env.context.get('allowed_company_ids', [env.user.company_id.id])[0]
+company = env['res.company'].browse(company_id)
+
+record['x_studio_company_id'] = company.id]]></field>
+    <field name="usage">base_automation</field>
+    <field name="binding_view_types">list,form</field>
+  </record>
+  <record id="sa_f5_x_symptom_codes_jin_company_id_in_symptom_codes" model="ir.actions.server">
+    <field name="name">JIN - Company Id in Symptom Codes</field>
+    <field name="model_id" search="[('model', '=', 'x_symptom_codes')]"/>
+    <field name="state">code</field>
+    <field name="code"><![CDATA[company_id = env.context.get('allowed_company_ids', [env.user.company_id.id])[0]
+company = env['res.company'].browse(company_id)
+
+record['x_studio_company_id'] = company.id]]></field>
+    <field name="usage">base_automation</field>
+    <field name="binding_view_types">list,form</field>
+  </record>
+  <record id="sa_f5_helpdesk_ticket_rr_auto_populate_repair_location" model="ir.actions.server">
+    <field name="name">RR - Auto Populate Repair Location</field>
+    <field name="model_id" search="[('model', '=', 'helpdesk.ticket')]"/>
+    <field name="state">code</field>
+    <field name="code"><![CDATA[# fix_repair:idempotent-v1
+record._repair_populate_repair_location()
+]]></field>
+    <field name="usage">base_automation</field>
+    <field name="binding_view_types">list,form</field>
+  </record>
+  <record id="sa_f5_helpdesk_ticket_rr_auto_select_product_for_rug_repairs" model="ir.actions.server">
+    <field name="name">RR - Auto Select Product for RUG Repairs</field>
+    <field name="model_id" search="[('model', '=', 'helpdesk.ticket')]"/>
+    <field name="state">code</field>
+    <field name="code"><![CDATA[# fix_repair:idempotent-v1
+record._repair_auto_select_product_for_rug()
+]]></field>
+    <field name="usage">base_automation</field>
+    <field name="binding_view_types">list,form</field>
+  </record>
+  <record id="sa_f5_helpdesk_ticket_rr_auto_select_product_for_rug_repairs_2" model="ir.actions.server">
+    <field name="name">RR - Auto Select Product for RUG Repairs-2</field>
+    <field name="model_id" search="[('model', '=', 'helpdesk.ticket')]"/>
+    <field name="state">code</field>
+    <field name="code"><![CDATA[# fix_repair:idempotent-v1
+record._repair_auto_select_product_for_rug_2()
+]]></field>
+    <field name="usage">base_automation</field>
+    <field name="binding_view_types">list,form</field>
+  </record>
+  <record id="sa_f5_helpdesk_ticket_rr_auto_select_product_for_rug_repairs_33" model="ir.actions.server">
+    <field name="name">RR - Auto Select Product for RUG Repairs-33</field>
+    <field name="model_id" search="[('model', '=', 'helpdesk.ticket')]"/>
+    <field name="state">code</field>
+    <field name="code"><![CDATA[# fix_repair:idempotent-v1
+record._repair_auto_select_product_for_rug_33()
+]]></field>
+    <field name="usage">base_automation</field>
+    <field name="binding_view_types">list,form</field>
+  </record>
+  <record id="sa_f5_helpdesk_ticket_rr_auto_select_product_for_rug_repairs_4" model="ir.actions.server">
+    <field name="name">RR - Auto Select Product for RUG Repairs-4</field>
+    <field name="model_id" search="[('model', '=', 'helpdesk.ticket')]"/>
+    <field name="state">code</field>
+    <field name="code"><![CDATA[# fix_repair:idempotent-v1
+record._repair_auto_select_product_for_rug_4()
+]]></field>
+    <field name="usage">base_automation</field>
+    <field name="binding_view_types">list,form</field>
+  </record>
+  <record id="sa_f5_repair_order_rr_notify_customer_in_ro_end_final" model="ir.actions.server">
+    <field name="name">RR - Notify Customer in RO End - Final</field>
+    <field name="model_id" search="[('model', '=', 'repair.order')]"/>
+    <field name="state">next_activity</field>
+    <field name="usage">base_automation</field>
+    <field name="binding_view_types">list,form</field>
+  </record>
+  <record id="sa_f5_helpdesk_ticket_rr_repair_seq_no" model="ir.actions.server">
+    <field name="name">RR - Repair Seq.No</field>
+    <field name="model_id" search="[('model', '=', 'helpdesk.ticket')]"/>
+    <field name="state">code</field>
+    <field name="code"><![CDATA[# fix_repair:idempotent-v1
+record._repair_seq_no_on_create_or_write()
+]]></field>
+    <field name="usage">base_automation</field>
+    <field name="binding_view_types">list,form</field>
+  </record>
+  <record id="sa_f5_helpdesk_ticket_rr_validate_cancelled_tickets" model="ir.actions.server">
+    <field name="name">RR - Validate Cancelled Tickets</field>
+    <field name="model_id" search="[('model', '=', 'helpdesk.ticket')]"/>
+    <field name="state">code</field>
+    <field name="code"><![CDATA[# fix_repair:idempotent-v1
+record._repair_validate_cancelled_on_unlink()
+]]></field>
+    <field name="usage">base_automation</field>
+    <field name="binding_view_types">list,form</field>
+  </record>
+</odoo>
