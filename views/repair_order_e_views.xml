@@ -1,6 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Fix-repair: Phase E - 2 views for repair.order -->
-<odoo>
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Fix-repair: Phase E - 2 views for repair.order --><odoo>
   <data>
     <record id="view_4014_odoo_studio_repair_form_customization_e" model="ir.ui.view">
       <field name="name">Odoo Studio: repair.form customization</field>
@@ -15,8 +14,7 @@
     <field name="x_studio_confirm_draft_quotation" string="Confirm Draft Quotation" force_save="True" readonly="1"/>
   </xpath>
   <xpath expr="//field[@name='product_packaging_id']" position="after">
-    <field name="price_unit" optional="show"/>
-  </xpath>
+    <!-- STRIPPED price_unit not on repair.order --></xpath>
 </data>
       </field>
     </record>

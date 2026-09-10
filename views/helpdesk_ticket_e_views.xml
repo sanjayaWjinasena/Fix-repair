@@ -70,9 +70,7 @@
       <field name="mode">extension</field>
       <field name="arch" type="xml">
         <data>
-    <!--xpath expr="//header/button[@name='%(helpdesk_repair.action_repair_order_form)d']" position="attributes">
-      <attribute name="attrs">{'invisible': [('pickings_count', '=', 0)]}</attribute> 
-    </xpath-->
+    <!-- STRIPPED malformed xpath comment block -->
     
     <xpath expr="//header/button[@name='%(helpdesk_repair.action_repair_order_form)d']" position="attributes">
       <attribute name="invisible">(use_product_repairs == False) or ((pickings_count == 0) or (x_studio_cancelled == True))</attribute></xpath>
@@ -81,24 +79,16 @@
      <attribute name="domain">[["partner_id","=",partner_id]]</attribute>
     </xpath>
     
-     <!--xpath expr="//header/button[@name='assign_ticket_to_self']" position="before">
-      <!-- STRIPPED action button aid=1980 unresolvable (had inline content) -->
-    </xpath-->
+     <!-- STRIPPED malformed xpath comment block -->
     
-    <!--xpath expr="//header/button[@name='1980']<!-- WARNING: xpath refs unresolvable action -->" position="after">
-      <!-- STRIPPED action button aid=1981 unresolvable (had inline content) -->
-    </xpath-->
+    <!-- STRIPPED malformed xpath comment block -->
     
-    <!--xpath expr="//button[@name='%(stock.act_stock_return_picking)d']" position="attributes">
-      <attribute name="attrs">{'invisible': ['|','|','|','|',('use_product_returns', '=', False),('x_studio_valid_return', '=', True),('ticket_type_id', '=', False),('x_studio_rug_repair', '!=', True),'&amp;',('x_studio_rug_repair', '=', True),('x_studio_rug_approved', '=', False)]}</attribute> 
-    </xpath-->
+    <!-- STRIPPED malformed xpath comment block -->
     
     <xpath expr="//button[@name='%(stock.act_stock_return_picking)d']" position="attributes">
       <attribute name="invisible">((x_studio_sn_updated == False) and (x_studio_normal_repair_without_serial_no == False)) or ((x_studio_rug_repair != True) or ((ticket_type_id == False) or ((x_studio_valid_return == True) or ((use_product_returns == False) or (x_studio_cancelled == True)))))</attribute></xpath>
     
-    <!--xpath expr="//button[@name='action_generate_fsm_task']" position="attributes">
-      <attribute name="attrs">{'invisible': ['|','|','|','|','|',('fsm_task_count', '>', 0),('use_fsm', '=', False),('x_studio_valid_return', '=', False),('x_studio_valid_confirm_return', '=', False),'&amp;',('x_studio_rug_repair', '=', True),('x_studio_rug_approved', '=', False),'&amp;',('x_studio_job_location', '=', 'Factory Repair'),('x_studio_receive_at_factory', '=', False)]}</attribute> 
-    </xpath-->
+    <!-- STRIPPED malformed xpath comment block -->
     
     <xpath expr="//button[@name='action_generate_fsm_task']" position="attributes">
       <attribute name="invisible">((x_studio_receive_at_factory == False) and (x_studio_job_location == 'Factory Repair')) or ((x_studio_valid_confirm_return == False) or ((x_studio_valid_return == False) or ((use_fsm == False) or ((fsm_task_count &gt; 0) or (x_studio_cancelled == True)))))</attribute></xpath>
@@ -107,13 +97,9 @@
       <attribute name="context">{'default_ticket_id': id, 'default_company_id': company_id, 'default_picking_id': x_studio_pick_id}</attribute>
     </xpath>
     
-    <!--xpath expr="//header/button[@name='assign_ticket_to_self']" position="after">
-      <button type="action" name="%(stock.act_stock_return_picking)d" groups="stock.group_stock_user" string="Return" attrs="{'invisible': ['|','|','|','|','|','|',('use_product_returns', '=', False),('ticket_type_id', '=', False),('x_studio_valid_return', '=', True),('x_studio_rug_repair', '=', True),('x_studio_normal_repair_with_serial_no', '=', True),('x_studio_normal_repair_without_serial_no', '=', False),'&amp;',('x_studio_normal_repair_without_serial_no', '=', True),('x_studio_repair_serial_created', '=', False)]}" context="{'default_ticket_id': id, 'default_company_id': company_id, 'default_location_id': x_studio_virtual_location_id, 'default_picking_id': x_studio_pick_id}"/>
-    </xpath-->
+    <!-- STRIPPED malformed xpath comment block -->
     
-    <!--xpath expr="//header/button[@name='%(stock.act_stock_return_picking)d'][2]" position="after">
-      <button type="action" name="%(stock.act_stock_return_picking)d" groups="stock.group_stock_user" string="Return" attrs="{'invisible': ['|','|','|','|','|',('use_product_returns', '=', False),('ticket_type_id', '=', False),('x_studio_valid_return', '=', True),('x_studio_rug_repair', '=', True),('x_studio_normal_repair_with_serial_no', '=', False),('x_studio_normal_repair_without_serial_no', '=', True)]}" context="{'default_ticket_id': id, 'default_company_id': company_id, 'default_picking_id': x_studio_pick_id}"/>
-    </xpath-->
+    <!-- STRIPPED malformed xpath comment block -->
     
     <xpath expr="//header/button[@name='assign_ticket_to_self']" position="before">
      <!-- STRIPPED action button aid=2159 unresolvable -->
@@ -135,9 +121,7 @@
       <!-- STRIPPED action button aid=1994 unresolvable -->
     </xpath>
     
-    <xpath expr="//header/button[@name='1994']<!-- WARNING: xpath refs unresolvable action -->" position="before">
-      <!-- STRIPPED action button aid=1993 unresolvable -->
-    </xpath>
+    <!-- STRIPPED xpath: numeric button ref unresolvable -->
     
     <xpath expr="//field[@name='stage_id']" position="attributes">
     <attribute name="options">{'clickable': False}</attribute>
@@ -147,49 +131,27 @@
       <!-- STRIPPED action button aid=2001 unresolvable -->
     </xpath>
     
-    <xpath expr="//header/button[@name='2001']<!-- WARNING: xpath refs unresolvable action -->" position="after">
-      <!-- STRIPPED action button aid=2002 unresolvable -->
-    </xpath>
+    <!-- STRIPPED xpath: numeric button ref unresolvable -->
     
-    <xpath expr="//header/button[@name='2002']<!-- WARNING: xpath refs unresolvable action -->" position="before">
-      <!-- STRIPPED action button aid=2007 unresolvable -->
-    </xpath>
+    <!-- STRIPPED xpath: numeric button ref unresolvable -->
     
-    <xpath expr="//header/button[@name='2007']<!-- WARNING: xpath refs unresolvable action -->" position="after">
-      <!-- STRIPPED action button aid=2006 unresolvable -->
-    </xpath>
+    <!-- STRIPPED xpath: numeric button ref unresolvable -->
     
-    <xpath expr="//header/button[@name='2006']<!-- WARNING: xpath refs unresolvable action -->" position="before">
-      <!-- STRIPPED action button aid=2220 unresolvable -->
-    </xpath>
+    <!-- STRIPPED xpath: numeric button ref unresolvable -->
     
-    <xpath expr="//header/button[@name='2220']<!-- WARNING: xpath refs unresolvable action -->" position="before">
-      <!-- STRIPPED action button aid=2221 unresolvable -->
-    </xpath>
+    <!-- STRIPPED xpath: numeric button ref unresolvable -->
     
-    <xpath expr="//header/button[@name='2221']<!-- WARNING: xpath refs unresolvable action -->" position="before">
-      <!-- STRIPPED action button aid=2343 unresolvable -->
-    </xpath>
+    <!-- STRIPPED xpath: numeric button ref unresolvable -->
     
-    <!--xpath expr="//header/button[@name='2221']<!-- WARNING: xpath refs unresolvable action -->" position="after">
-      <!-- STRIPPED action button aid=2269 unresolvable (had inline content) -->
-    </xpath>
+    <!-- STRIPPED malformed xpath comment block -->
     
-    <xpath expr="//header/button[@name='2269']<!-- WARNING: xpath refs unresolvable action -->" position="after">
-      <!-- STRIPPED action button aid=2308 unresolvable (had inline content) -->
-    </xpath>
+    <!-- STRIPPED xpath: numeric button ref unresolvable -->
     
-    <xpath expr="//header/button[@name='2308']<!-- WARNING: xpath refs unresolvable action -->" position="after">
-      <!-- STRIPPED action button aid=2309 unresolvable (had inline content) -->
-    </xpath>
+    <!-- STRIPPED xpath: numeric button ref unresolvable -->
     
-    <xpath expr="//header/button[@name='2309']<!-- WARNING: xpath refs unresolvable action -->" position="after">
-      <!-- STRIPPED action button aid=2310 unresolvable (had inline content) -->
-    </xpath>
+    <!-- STRIPPED xpath: numeric button ref unresolvable -->
     
-    <xpath expr="//header/button[@name='2310']<!-- WARNING: xpath refs unresolvable action -->" position="after">
-      <!-- STRIPPED action button aid=2311 unresolvable (had inline content) -->
-    </xpath-->
+    <!-- STRIPPED xpath: numeric button ref unresolvable -->
     
   </data>
       </field>
