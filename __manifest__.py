@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Jinasena : Module : Repair',
-    'version': '17.0.1.0.327',
+    'version': '17.0.1.0.328',
     'summary': 'Enhancements to the Customer Care - Repair helpdesk workflow',
     'author': 'Jinasena Agricultural Machinery (Pvt) Ltd.',
     'category': 'Helpdesk',
@@ -32,6 +32,7 @@
     # ORDER: ported.xml before field_hides.xml — the latter's xpaths
     # target fields that ported.xml adds to the composed arch.
     'data': [
+        'data/menus_f6.xml',
         'data/server_actions_f5.xml',
         'data/window_actions_f4.xml',
         # v249: MUST load before security/ir.model.access.csv so the

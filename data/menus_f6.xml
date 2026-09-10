@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fix-repair: Phase F6 - 15 menus -->
+<odoo>
+  <menuitem id="menu_f6_conditions" name="Conditions" parent="Fix-repair.menu_repair_diagnosis_root" action="Fix-repair.act_window_2209_conditions" sequence="0"/>
+  <menuitem id="menu_f6_warehouse" name="WareHouse" parent="BugFix-Stock.menu_1147_inventory_warehouse" action="BugFix-Stock.action_2468_warehouse" sequence="0"/>
+  <menuitem id="menu_f6_warehouse_1" name="Warehouse" parent="BugFix-Stock.menu_1148_inventory_setup" action="BugFix-Stock.action_2469_warehouse" sequence="0"/>
+  <menuitem id="menu_f6_symptom_areas" name="Symptom Areas" parent="Fix-repair.menu_repair_diagnosis_root" action="Fix-repair.act_window_2210_symptom_areas" sequence="1"/>
+  <menuitem id="menu_f6_symptom_codes" name="Symptom Codes" parent="Fix-repair.menu_repair_diagnosis_root" action="Fix-repair.act_window_2211_symptom_codes" sequence="2"/>
+  <menuitem id="menu_f6_diagnosis_areas" name="Diagnosis Areas" parent="Fix-repair.menu_repair_diagnosis_root" action="Fix-repair.act_window_2212_diagnosis_areas" sequence="3"/>
+  <menuitem id="menu_f6_repair_job_details" name="Repair Job Details" parent="helpdesk.helpdesk_ticket_report_menu_main" action="Fix-repair.act_window_2312_repair_job_details" sequence="3"/>
+  <menuitem id="menu_f6_diagnosis_codes" name="Diagnosis Codes" parent="Fix-repair.menu_repair_diagnosis_root" action="Fix-repair.action_x_diagnosis_codes" sequence="4"/>
+  <menuitem id="menu_f6_repair_reason" name="Repair Reason" parent="Fix-repair.menu_repair_diagnosis_root" action="Fix-repair.action_x_repair_reason" sequence="5"/>
+  <menuitem id="menu_f6_repair_reason_customer" name="Repair Reason - Customer" parent="Fix-repair.menu_repair_diagnosis_root" action="Fix-repair.act_window_2218_repair_reason_customer" sequence="6"/>
+  <menuitem id="menu_f6_repair_accounts" name="Repair Accounts" parent="helpdesk.helpdesk_menu_config" action="Fix-repair.act_window_2175_repair_accounts" sequence="7"/>
+  <menuitem id="menu_f6_repair_sub_reason" name="Repair Sub Reason" parent="Fix-repair.menu_repair_diagnosis_root" action="Fix-repair.act_window_2214_repair_sub_reason" sequence="7"/>
+  <menuitem id="menu_f6_resolutions" name="Resolutions" parent="Fix-repair.menu_repair_diagnosis_root" action="Fix-repair.act_window_2215_resolutions" sequence="8"/>
+  <menuitem id="menu_f6_repair_stages" name="Repair Stages" parent="Fix-repair.menu_repair_diagnosis_root" action="Fix-repair.action_x_repair_stages" sequence="9"/>
+  <menuitem id="menu_f6_repair_job_details_for_the_period_rug_only" name="Repair Job Details for the Period - RUG Only" parent="helpdesk.helpdesk_ticket_report_menu_main" action="Fix-repair.act_window_2234_repair_job_details_for_the_period_rug_only" sequence="3"/>
+</odoo>
