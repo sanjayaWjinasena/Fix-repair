@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fix-repair: Phase F4 - 3 window actions -->
+<odoo>
+  <record id="aw_f4_helpdesk_ticket_repair_job_details" model="ir.actions.act_window">
+    <field name="name">Repair Job Details</field>
+    <field name="res_model">helpdesk.ticket</field>
+    <field name="view_mode">kanban,tree,form,pivot,graph,activity</field>
+  </record>
+  <record id="aw_f4_helpdesk_ticket_repair_job_details_for_the_period_rug_only" model="ir.actions.act_window">
+    <field name="name">Repair Job Details for the Period - RUG Only</field>
+    <field name="res_model">helpdesk.ticket</field>
+    <field name="view_mode">kanban,tree,form,pivot,graph,activity</field>
+  </record>
+  <record id="aw_f4_repair_order_repair_order" model="ir.actions.act_window">
+    <field name="name">repair.order</field>
+    <field name="res_model">repair.order</field>
+    <field name="view_mode">kanban,tree,form,pivot,graph</field>
+  </record>
+</odoo>
