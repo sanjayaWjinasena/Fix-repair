@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fix-repair: Views final - 13 remaining views -->
+<odoo>
+  <data>
+    <record id="view_final_x_repair_accounts_odoo_studio_default_form_view_for_x_repair_accounts_customiz" model="ir.ui.view">
+      <field name="name">Odoo Studio: Default form view for x_repair_accounts customization</field>
+      <field name="model">x_repair_accounts</field>
+      <field name="type">form</field>
+      <field name="priority">99</field>
+      <field name="inherit_id" ref="Fix-repair.view_x_repair_accounts_form_4938"/>
+      <field name="mode">extension</field>
+      <field name="arch" type="xml">
+        <data>
+  <xpath expr="//form[1]" position="attributes">
+    <attribute name="create">true</attribute>
+  </xpath>
+  <xpath expr="//group[@name='studio_group_bf46f3_left']" position="attributes">
+    <attribute name="string">RUG Repair Accounts in Invoicing</attribute>
+  </xpath>
+  <xpath expr="//group[@name='studio_group_bf46f3_left']" position="inside">
+    <field name="x_studio_rug_account" string="RUG Account" required="1"/>
+  </xpath>
+  <xpath expr="//group[@name='studio_group_bf46f3_right']" position="inside">
+    <field name="x_studio_company_id" string="Company" force_save="True" readonly="1"/>
+  </xpath>
+</data>
+      </field>
+    </record>
+
+    <record id="view_final_x_conditions_odoo_studio_default_list_view_for_x_conditions_customization" model="ir.ui.view">
+      <field name="name">Odoo Studio: Default list view for x_conditions customization</field>
+      <field name="model">x_conditions</field>
+      <field name="type">tree</field>
+      <field name="priority">99</field>
+      <field name="inherit_id" ref="Fix-repair.view_4950_default_list_view_for_x_conditions_e"/>
+      <field name="mode">extension</field>
+      <field name="arch" type="xml">
+        <data>
+  <xpath expr="//tree[1]" position="attributes">
+    <attribute name="editable">bottom</attribute>
+  </xpath>
+  <xpath expr="//field[@name='x_studio_sequence']" position="attributes">
+    <attribute name="column_invisible">1</attribute></xpath>
+  <xpath expr="//field[@name='x_name']" position="attributes">
+    <attribute name="string">Condition</attribute>
+  </xpath>
+  <xpath expr="//field[@name='x_name']" position="after">
+    <field optional="show" name="x_studio_description" string="Description"/>
+    <field optional="show" name="x_studio_company_id" string="Company"/>
+  </xpath>
+</data>
+      </field>
+    </record>
+
+    <record id="view_final_x_diagnosis_areas_odoo_studio_default_list_view_for_x_diagnosis_areas_customiz" model="ir.ui.view">
+      <field name="name">Odoo Studio: Default list view for x_diagnosis_areas customization</field>
+      <field name="model">x_diagnosis_areas</field>
+      <field name="type">tree</field>
+      <field name="priority">99</field>
+      <field name="inherit_id" ref="Fix-repair.view_4964_default_list_view_for_x_diagnosis_areas_e"/>
+      <field name="mode">extension</field>
+      <field name="arch" type="xml">
+        <data>
+  <xpath expr="//tree[1]" position="attributes">
+    <attribute name="editable">bottom</attribute>
+  </xpath>
+  <xpath expr="//field[@name='x_studio_sequence']" position="attributes">
+    <attribute name="column_invisible">1</attribute></xpath>
+  <xpath expr="//field[@name='x_name']" position="attributes">
+    <attribute name="string">Diagnosis Area</attribute>
+  </xpath>
+  <xpath expr="//field[@name='x_name']" position="after">
+    <field optional="show" name="x_studio_description" string="Description"/>
+    <field optional="show" name="x_studio_company_id" string="Company"/>
+  </xpath>
+</data>
+      </field>
+    </record>
+
+    <record id="view_final_x_diagnosis_codes_odoo_studio_default_list_view_for_x_diagnosis_codes_customiz" model="ir.ui.view">
+      <field name="name">Odoo Studio: Default list view for x_diagnosis_codes customization</field>
+      <field name="model">x_diagnosis_codes</field>
+      <field name="type">tree</field>
+      <field name="priority">99</field>
+      <field name="inherit_id" ref="Fix-repair.view_4968_default_list_view_for_x_diagnosis_codes_e"/>
+      <field name="mode">extension</field>
+      <field name="arch" type="xml">
+        <data>
+  <xpath expr="//tree[1]" position="attributes">
+    <attribute name="editable">bottom</attribute>
+  </xpath>
+  <xpath expr="//field[@name='x_studio_sequence']" position="attributes">
+    <attribute name="column_invisible">1</attribute></xpath>
+  <xpath expr="//field[@name='x_name']" position="attributes">
+    <attribute name="string">Diagnosis Code</attribute>
+  </xpath>
+  <xpath expr="//field[@name='x_name']" position="after">
+    <field optional="show" name="x_studio_description" string="Description"/>
+    <field optional="show" name="x_studio_diagnosis_area_1" string="Diagnosis Area" options="{&quot;no_create&quot;:true}"/>
+    <field optional="show" name="x_studio_company_id" string="Company"/>
+  </xpath>
+</data>
+      </field>
+    </record>
+
+    <record id="view_final_x_repair_accounts_odoo_studio_default_list_view_for_x_repair_accounts_customiz" model="ir.ui.view">
+      <field name="name">Odoo Studio: Default list view for x_repair_accounts customization</field>
+      <field name="model">x_repair_accounts</field>
+      <field name="type">tree</field>
+      <field name="priority">99</field>
+      <field name="inherit_id" ref="Fix-repair.view_x_repair_accounts_tree_4937"/>
+      <field name="mode">extension</field>
+      <field name="arch" type="xml">
+        <data>
+  <xpath expr="//tree[1]" position="attributes">
+    <attribute name="create">true</attribute>
+    <attribute name="delete">true</attribute>
+    <attribute name="edit">true</attribute>
+  </xpath>
+  <xpath expr="//field[@name='x_name']" position="after">
+    <field name="id" optional="show"/>
+  </xpath>
+</data>
+      </field>
+    </record>
+
+    <record id="view_final_x_repair_reason_odoo_studio_default_list_view_for_x_repair_reason_customizat" model="ir.ui.view">
+      <field name="name">Odoo Studio: Default list view for x_repair_reason customization</field>
+      <field name="model">x_repair_reason</field>
+      <field name="type">tree</field>
+      <field name="priority">99</field>
+      <field name="inherit_id" ref="Fix-repair.view_x_repair_reason_tree_4612"/>
+      <field name="mode">extension</field>
+      <field name="arch" type="xml">
+        <data>
+  <xpath expr="//tree[1]" position="attributes">
+    <attribute name="editable">bottom</attribute>
+  </xpath>
+  <xpath expr="//field[@name='x_name']" position="attributes">
+    <attribute name="string">Repair Reason</attribute>
+  </xpath>
+  <xpath expr="//field[@name='x_name']" position="after">
+    <field optional="show" name="x_studio_company_id" string="Company"/>
+  </xpath>
+</data>
+      </field>
+    </record>
+
+    <record id="view_final_x_repair_reason_custom_odoo_studio_default_list_view_for_x_repair_reason_custom" model="ir.ui.view">
+      <field name="name">Odoo Studio: Default list view for x_repair_reason_custom customization</field>
+      <field name="model">x_repair_reason_custom</field>
+      <field name="type">tree</field>
+      <field name="priority">99</field>
+      <field name="inherit_id" ref="Fix-repair.view_x_repair_reason_custom_tree_4990"/>
+      <field name="mode">extension</field>
+      <field name="arch" type="xml">
+        <data>
+  <xpath expr="//tree[1]" position="attributes">
+    <attribute name="editable">bottom</attribute>
+  </xpath>
+  <xpath expr="//field[@name='x_studio_sequence']" position="attributes">
+    <attribute name="column_invisible">1</attribute></xpath>
+  <xpath expr="//field[@name='x_name']" position="attributes">
+    <attribute name="string">Repair Reason</attribute>
+  </xpath>
+  <xpath expr="//field[@name='x_name']" position="after">
+    <field optional="show" name="x_studio_company_id" string="Company"/>
+  </xpath>
+</data>
+      </field>
+    </record>
+
+    <record id="view_final_x_repair_stages_odoo_studio_default_list_view_for_x_repair_stages_customizat" model="ir.ui.view">
+      <field name="name">Odoo Studio: Default list view for x_repair_stages customization</field>
+      <field name="model">x_repair_stages</field>
+      <field name="type">tree</field>
+      <field name="priority">99</field>
+      <field name="inherit_id" ref="Fix-repair.view_x_repair_stages_tree_4981"/>
+      <field name="mode">extension</field>
+      <field name="arch" type="xml">
+        <data>
+  <xpath expr="//tree[1]" position="attributes">
+    <attribute name="editable">bottom</attribute>
+  </xpath>
+  <xpath expr="//field[@name='x_studio_sequence']" position="attributes">
+    <attribute name="column_invisible">1</attribute></xpath>
+  <xpath expr="//field[@name='x_name']" position="attributes">
+    <attribute name="string">Repair Stage</attribute>
+  </xpath>
+  <xpath expr="//field[@name='x_name']" position="after">
+    <field optional="show" name="x_studio_description" string="Description"/>
+    <field optional="show" name="x_studio_company_id" string="Company"/>
+  </xpath>
+</data>
+      </field>
+    </record>
+
+    <record id="view_final_x_repair_sub_reason_odoo_studio_default_list_view_for_x_repair_sub_reason_custo" model="ir.ui.view">
+      <field name="name">Odoo Studio: Default list view for x_repair_sub_reason customization</field>
+      <field name="model">x_repair_sub_reason</field>
+      <field name="type">tree</field>
+      <field name="priority">99</field>
+      <field name="inherit_id" ref="Fix-repair.view_x_repair_sub_reason_tree_4972"/>
+      <field name="mode">extension</field>
+      <field name="arch" type="xml">
+        <data>
+  <xpath expr="//tree[1]" position="attributes">
+    <attribute name="editable">bottom</attribute>
+  </xpath>
+  <xpath expr="//field[@name='x_name']" position="attributes">
+    <attribute name="string">Sub Reason Code</attribute>
+  </xpath>
+  <xpath expr="//field[@name='x_name']" position="after">
+    <field optional="show" name="x_studio_reason_code" string="Reason Code" options="{&quot;no_create&quot;:true}"/>
+    <field optional="show" name="x_studio_company_id" string="Company"/>
+  </xpath>
+</data>
+      </field>
+    </record>
+
+    <record id="view_final_x_resolutions_odoo_studio_default_list_view_for_x_resolutions_customizatio" model="ir.ui.view">
+      <field name="name">Odoo Studio: Default list view for x_resolutions customization</field>
+      <field name="model">x_resolutions</field>
+      <field name="type">tree</field>
+      <field name="priority">99</field>
+      <field name="inherit_id" ref="Fix-repair.view_4977_default_list_view_for_x_resolutions_e"/>
+      <field name="mode">extension</field>
+      <field name="arch" type="xml">
+        <data>
+  <xpath expr="//tree[1]" position="attributes">
+    <attribute name="editable">bottom</attribute>
+  </xpath>
+  <xpath expr="//field[@name='x_studio_sequence']" position="attributes">
+    <attribute name="column_invisible">1</attribute></xpath>
+  <xpath expr="//field[@name='x_name']" position="attributes">
+    <attribute name="string">Resolution</attribute>
+  </xpath>
+  <xpath expr="//field[@name='x_name']" position="after">
+    <field optional="show" name="x_studio_description" string="Description"/>
+    <field optional="show" name="x_studio_company_id" string="Company"/>
+  </xpath>
+</data>
+      </field>
+    </record>
+
+    <record id="view_final_x_symptom_areas_odoo_studio_default_list_view_for_x_symptom_areas_customizat" model="ir.ui.view">
+      <field name="name">Odoo Studio: Default list view for x_symptom_areas customization</field>
+      <field name="model">x_symptom_areas</field>
+      <field name="type">tree</field>
+      <field name="priority">99</field>
+      <field name="inherit_id" ref="Fix-repair.view_4954_default_list_view_for_x_symptom_areas_e"/>
+      <field name="mode">extension</field>
+      <field name="arch" type="xml">
+        <data>
+  <xpath expr="//tree[1]" position="attributes">
+    <attribute name="editable">bottom</attribute>
+  </xpath>
+  <xpath expr="//field[@name='x_studio_sequence']" position="attributes">
+    <attribute name="column_invisible">1</attribute></xpath>
+  <xpath expr="//field[@name='x_name']" position="attributes">
+    <attribute name="string">Symptom Area</attribute>
+  </xpath>
+  <xpath expr="//field[@name='x_name']" position="after">
+    <field optional="show" name="x_studio_description" string="Description"/>
+    <field optional="show" name="x_studio_company_id" string="Company"/>
+  </xpath>
+</data>
+      </field>
+    </record>
+
+    <record id="view_final_x_symptom_codes_odoo_studio_default_list_view_for_x_symptom_codes_customizat" model="ir.ui.view">
+      <field name="name">Odoo Studio: Default list view for x_symptom_codes customization</field>
+      <field name="model">x_symptom_codes</field>
+      <field name="type">tree</field>
+      <field name="priority">99</field>
+      <field name="inherit_id" ref="Fix-repair.view_4960_default_list_view_for_x_symptom_codes_e"/>
+      <field name="mode">extension</field>
+      <field name="arch" type="xml">
+        <data>
+  <xpath expr="//tree[1]" position="attributes">
+    <attribute name="editable">bottom</attribute>
+  </xpath>
+  <xpath expr="//field[@name='x_studio_sequence']" position="attributes">
+    <attribute name="column_invisible">1</attribute></xpath>
+  <xpath expr="//field[@name='x_name']" position="attributes">
+    <attribute name="string">Symptom Code</attribute>
+  </xpath>
+  <xpath expr="//field[@name='x_name']" position="after">
+    <field optional="show" name="x_studio_description" string="Description"/>
+    <field optional="show" name="x_studio_symptom_area" string="Symptom Area" options="{&quot;no_create&quot;:true}"/>
+    <field optional="show" name="x_studio_company_id" string="Company"/>
+  </xpath>
+</data>
+      </field>
+    </record>
+
+    <record id="view_final_x_task_diagnosis_odoo_studio_default_list_view_for_x_task_diagnosis_customiza" model="ir.ui.view">
+      <field name="name">Odoo Studio: Default list view for x_task_diagnosis customization</field>
+      <field name="model">x_task_diagnosis</field>
+      <field name="type">tree</field>
+      <field name="priority">99</field>
+      <field name="inherit_id" ref="Fix-repair.view_4985_default_list_view_for_x_task_diagnosis_e"/>
+      <field name="mode">extension</field>
+      <field name="arch" type="xml">
+        <data>
+  <xpath expr="//tree[1]" position="attributes">
+    <attribute name="editable">bottom</attribute>
+  </xpath>
+  <xpath expr="//field[@name='x_name']" position="after">
+    <field optional="show" name="x_studio_task_id" string="Task Id" column_invisible="1"/>
+  </xpath>
+</data>
+      </field>
+    </record>
+
+  </data>
+</odoo>
