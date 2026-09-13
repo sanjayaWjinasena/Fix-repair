@@ -107,7 +107,7 @@
       <field name="model">x_repair_accounts</field>
       <field name="type">tree</field>
       <field name="priority">99</field>
-      <field name="inherit_id" ref="Fix-repair.view_4938_default_form_view_for_x_repair_accounts_e"/>
+      <field name="inherit_id" ref="Fix-repair.view_4937_default_list_view_for_x_repair_accounts_e"/>
       <field name="mode">extension</field>
       <field name="arch" type="xml">
         <data>
@@ -128,7 +128,7 @@
       <field name="model">x_repair_reason</field>
       <field name="type">tree</field>
       <field name="priority">99</field>
-      <field name="inherit_id" ref="Fix-repair.view_4613_default_form_view_for_x_repair_reason_e"/>
+      <field name="inherit_id" ref="Fix-repair.view_4612_default_list_view_for_x_repair_reason_e"/>
       <field name="mode">extension</field>
       <field name="arch" type="xml">
         <data>
@@ -150,7 +150,7 @@
       <field name="model">x_repair_reason_custom</field>
       <field name="type">tree</field>
       <field name="priority">99</field>
-      <field name="inherit_id" ref="Fix-repair.view_4991_default_form_view_for_x_repair_reason_custom_e"/>
+      <field name="inherit_id" ref="Fix-repair.view_4990_default_list_view_for_x_repair_reason_custom_e"/>
       <field name="mode">extension</field>
       <field name="arch" type="xml">
         <data>
@@ -174,7 +174,7 @@
       <field name="model">x_repair_stages</field>
       <field name="type">tree</field>
       <field name="priority">99</field>
-      <field name="inherit_id" ref="Fix-repair.view_4982_default_form_view_for_x_repair_stages_e"/>
+      <field name="inherit_id" ref="Fix-repair.view_4981_default_list_view_for_x_repair_stages_e"/>
       <field name="mode">extension</field>
       <field name="arch" type="xml">
         <data>
@@ -199,7 +199,7 @@
       <field name="model">x_repair_sub_reason</field>
       <field name="type">tree</field>
       <field name="priority">99</field>
-      <field name="inherit_id" ref="Fix-repair.view_4973_default_form_view_for_x_repair_sub_reason_e"/>
+      <field name="inherit_id" ref="Fix-repair.view_4972_default_list_view_for_x_repair_sub_reason_e"/>
       <field name="mode">extension</field>
       <field name="arch" type="xml">
         <data>
