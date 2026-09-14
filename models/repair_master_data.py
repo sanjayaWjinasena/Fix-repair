@@ -188,7 +188,7 @@ class XConditions(models.Model):
     """Repair-condition catalogue. Referenced by
     x_task_diagnosis.x_studio_condition (m2o)."""
     _name = 'x_conditions'
-    _description = 'Repair Conditions'
+    _description = 'Conditions'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _rec_name = 'x_name'
     _order = 'x_studio_sequence, id'
