@@ -38,7 +38,7 @@
 
     <!-- Chunk 1a (v241) — 6 diagnosis catalogues -->
     <record id="model_x_conditions" model="ir.model">
-        <field name="name">Repair Conditions</field>
+        <field name="name">Conditions</field>
         <field name="model">x_conditions</field>
     </record>
     <record id="model_x_symptom_areas" model="ir.model">
