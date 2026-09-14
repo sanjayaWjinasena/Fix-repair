@@ -83,6 +83,7 @@
     <field name="model_id" ref="helpdesk.model_helpdesk_ticket"/>
     <field name="trigger">on_create_or_write</field>
     <field name="filter_domain">[["stage_id","=",1]]</field>
+    <field name="action_server_ids" eval="[(6, 0, [ref('Fix-repair.server_action_2558_user_location_validation_helpdesk')])]"/>
   </record>
 
   <record id="base_automation_302_jin_company_id_in_repair_reason" model="base.automation">

@@ -242,6 +242,18 @@ record._repair_auto_select_product_for_rug_33()
     ]]></field>
   </record>
 
+  <record id="server_action_2558_user_location_validation_helpdesk" model="ir.actions.server">
+    <field name="name">User Location Validation - Helpdesk</field>
+    <field name="model_id" ref="helpdesk.model_helpdesk_ticket"/>
+    <field name="state">code</field>
+    <field name="usage">base_automation</field>
+    <field name="code"><![CDATA[
+# fix_repair:idempotent-v1
+record._repair_studio_user_location_validation()
+
+    ]]></field>
+  </record>
+
   <record id="server_action_2656_jin_company_id_in_conditions" model="ir.actions.server">
     <field name="name">JIN - Company Id in Conditions</field>
     <field name="model_id" ref="Fix-repair.model_x_conditions"/>
