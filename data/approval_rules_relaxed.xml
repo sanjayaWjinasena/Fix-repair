@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fix-repair: Approval Rules relaxed - 1 -->
+<odoo noupdate="1">
+  <record id="ar_relaxed_helpdesk_ticket_reverse_transfer_user_types_internal_user_30" model="studio.approval.rule">
+    <field name="name">Helpdesk Ticket/Reverse Transfer (User types / Internal User) (30)</field>
+    <field name="model_id" search="[('model', '=', 'helpdesk.ticket')]"/>
+    <field name="action_id" ref="stock.act_stock_return_picking"/>
+    <field name="group_id" ref="base.group_user"/>
+  </record>
+</odoo>

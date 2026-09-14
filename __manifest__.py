@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Jinasena : Module : Repair',
-    'version': '17.0.1.0.332',
+    'version': '17.0.1.0.333',
     'summary': 'Enhancements to the Customer Care - Repair helpdesk workflow',
     'author': 'Jinasena Agricultural Machinery (Pvt) Ltd.',
     'category': 'Helpdesk',
@@ -32,6 +32,7 @@
     # ORDER: ported.xml before field_hides.xml — the latter's xpaths
     # target fields that ported.xml adds to the composed arch.
     'data': [
+        'data/approval_rules_relaxed.xml',
         'views/views_final.xml',
         'data/rules_f7.xml',
         'data/menus_f6.xml',
