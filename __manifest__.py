@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Jinasena : Module : Repair',
-    'version': '17.0.1.0.336',
+    'version': '17.0.1.0.337',
     'summary': 'Enhancements to the Customer Care - Repair helpdesk workflow',
     'author': 'Jinasena Agricultural Machinery (Pvt) Ltd.',
     'category': 'Helpdesk',
@@ -35,7 +35,6 @@
         'data/approval_rules_relaxed.xml',
         'views/views_final.xml',
         'data/rules_f7.xml',
-        'data/menus_f6.xml',
         'data/server_actions_f5.xml',
         'data/window_actions_f4.xml',
         # v249: MUST load before security/ir.model.access.csv so the
@@ -96,7 +95,6 @@
         'data/server_actions_v4.xml',
         'data/automations_v4.xml',
         'data/window_actions_v2.xml',
-        'data/menus_from_routing.xml',
         'data/mail_templates_from_routing.xml',
         'data/record_rules_gap.xml',
         'data/server_actions_gap.xml',
@@ -121,7 +119,9 @@
         'views/x_symptom_areas_e_views.xml',
         'views/x_symptom_codes_e_views.xml',
         'views/x_task_diagnosis_e_views.xml',
-    ],
+        'data/menus_f6.xml',
+        'data/menus_from_routing.xml',
+],
     'assets': {
         'web.assets_backend': [
             'Fix-repair/static/src/scss/task_toast_triggers.scss',
