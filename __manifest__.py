@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Jinasena : Module : Repair',
-    'version': '17.0.1.0.337',
+    'version': '17.0.1.0.338',
     'summary': 'Enhancements to the Customer Care - Repair helpdesk workflow',
     'author': 'Jinasena Agricultural Machinery (Pvt) Ltd.',
     'category': 'Helpdesk',
@@ -33,64 +33,32 @@
     # target fields that ported.xml adds to the composed arch.
     'data': [
         'data/approval_rules_relaxed.xml',
-        'views/views_final.xml',
         'data/rules_f7.xml',
         'data/server_actions_f5.xml',
         'data/window_actions_f4.xml',
-        # v249: MUST load before security/ir.model.access.csv so the
-        # 11 Studio-created model xmlids resolve when the ACL CSV is
-        # processed. Fresh installs don't need this (Odoo auto-pins
-        # newly-declared models) but existing Clear-DB upgrades do
-        # (models pre-existed as state='manual' Studio rows, never
-        # got a Fix-repair-owned ir.model.data pin auto-created).
         'data/ir_model_pins.xml',
-        'security/ir.model.access.csv',
         'data/fix_repair_data.xml',
+        'security/ir.model.access.csv',
         'data/repair_stages.xml',
         'data/repair_sequences.xml',
         'data/helpdesk_ticket_types.xml',
-        # v299: catalog views (form / tree / search + Studio inherit
-        # tree) for the 7 diagnosis-catalogue models. MUST load
-        # before repair_diagnosis_menus.xml so the actions that menu
-        # file creates already have primary views available on fresh
-        # install (Odoo would otherwise auto-generate a default tree
-        # that lacks the Studio inherit's editable="bottom" +
-        # Description / Area / Company extra columns).
         'views/repair_diagnosis_catalog_views.xml',
         'data/repair_diagnosis_menus.xml',
         'data/repair_diagnosis_seed.xml',
-        # v253: expose RR - Auto Create Repair Route in the Actions
-        # dropdown. Load after ACL CSV (server action has no ACL of
-        # its own but keeps ordering consistent) and before view files.
         'data/helpdesk_ticket_server_actions.xml',
-        # v265: expose RR - End Quick Repair (Tested OK button target)
-        # as a Python-declared ir.actions.server. MUST load before
-        # views/project_task_studio_ported.xml which references it via
-        # %(Fix-repair.action_repair_end_quick_repair)d.
         'data/project_task_server_actions.xml',
-        # v292: studio_ported.xml MUST load before helpdesk_ticket_views.xml.
-        # studio_ported.xml adds ghost-field anchors (invisible x_studio_*
-        # fields) so that helpdesk_ticket_studio_field_hides.xml xpaths can
-        # resolve on DBs where the Studio view does not include those fields.
-        # Without this ordering, the DB still holds the old ported view (no
-        # ghost fields) when helpdesk_ticket_views.xml triggers full view
-        # tree validation — causing a ParseError on the hide view's xpaths.
         'views/helpdesk_ticket_studio_ported.xml',
         'views/helpdesk_ticket_studio_field_hides.xml',
         'views/helpdesk_ticket_views.xml',
         'views/helpdesk_ticket_type_views.xml',
-        # v259: Repair Diagnosis tab on project.task form
         'views/project_task_studio_ported.xml',
-        # v267: Approve/Reject RUG direct-method buttons on sale.order
         'views/sale_order_studio_ported.xml',
-        # v269: repair-movement field placements on stock.picking
         'views/stock_picking_studio_ported.xml',
         'views/res_config_settings_views.xml',
         'views/sale_report_templates.xml',
         'views/helpdesk_stage_studio_ported.xml',
         'views/helpdesk_team_studio_ported.xml',
         'views/helpdesk_ticket_type_studio_ported.xml',
-        # v0.1.0.305 (Phase 3.3 backlog port):
         'data/record_rules.xml',
         'data/server_actions_v4.xml',
         'data/automations_v4.xml',
@@ -119,9 +87,10 @@
         'views/x_symptom_areas_e_views.xml',
         'views/x_symptom_codes_e_views.xml',
         'views/x_task_diagnosis_e_views.xml',
+        'views/views_final.xml',
         'data/menus_f6.xml',
         'data/menus_from_routing.xml',
-],
+    ],
     'assets': {
         'web.assets_backend': [
             'Fix-repair/static/src/scss/task_toast_triggers.scss',
