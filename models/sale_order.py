@@ -1032,6 +1032,15 @@ class SaleOrder(models.Model):
             # when Plan Intervention creates the task; the type readonly lock kicks
             # in from that moment. Non-repair SOs (Sales, Project) stay editable
             # until confirm.
+            #
+            # task_id is declared as optional="hidden" in Odoo's standard arch
+            # (industry_fsm_sale extension). Optional-hidden fields aren't loaded
+            # into the record cache by default, so the readonly modifier below
+            # crashes with "Name 'task_id' is not defined" when onchange fires
+            # (e.g. after selecting a customer). Force task_id to always load
+            # by removing the `optional` attribute from every existing arch decl.
+            for el in arch.xpath("//field[@name='task_id']"):
+                el.attrib.pop('optional', None)
             for el in arch.xpath("//field[@name='x_studio_quotation_type']"):
                 el.set('readonly',
                        "(task_id != False) or "
