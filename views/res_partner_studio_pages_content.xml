@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Injects the 10 Fix-repair-owned x_studio_* fields on res.partner into
+    the empty groups that BugFix-Sales's studio_ported_9_views.xml
+    (view "ported_view_2299_odoo_studio_res_partner_form_customizati")
+    already places on the Customer form:
+
+      * studio_page_L0Ae5 (Tax Registration)
+          studio_group_L0Ae5_left  → VAT registration fields
+          studio_group_L0Ae5_right → SVAT registration fields
+      * studio_page_SuozI (Customer Vendor Relation)
+          studio_group_SuozI_right → vendor_account + address
+      * studio_page_yhybZ (Bank Guarantee Details)
+          studio_group_yhybZ_left → mandatory + docs
+
+    BugFix-Sales's scaffold dropped these fields as "orphan: not on
+    res.partner" because the strip check ran at Sales load time when
+    Fix-repair's decls weren't in the registry yet. Now that we know the
+    fields exist (Fix-repair owns them, Fix-repair loads after Sales),
+    we populate the groups here.
+-->
+<odoo>
+  <record id="res_partner_form_fix_repair_field_content" model="ir.ui.view">
+    <field name="name">res.partner.form.fix.repair.field.content</field>
+    <field name="model">res.partner</field>
+    <field name="inherit_id" ref="BugFix-Sales.ported_view_2299_odoo_studio_res_partner_form_customizati"/>
+    <field name="priority">100</field>
+    <field name="arch" type="xml">
+      <xpath expr="//group[@name='studio_group_L0Ae5_left']" position="inside">
+        <field name="x_studio_vat_registration_status"/>
+        <field name="x_studio_vat_registration_number"/>
+        <field name="x_studio_vat_exempted_number"/>
+      </xpath>
+      <xpath expr="//group[@name='studio_group_L0Ae5_right']" position="inside">
+        <field name="x_studio_svat_registration_status"/>
+        <field name="x_studio_svat_registration_number"/>
+      </xpath>
+      <xpath expr="//group[@name='studio_group_SuozI_right']" position="inside">
+        <field name="x_studio_vendor_account"/>
+        <field name="x_studio_address"/>
+      </xpath>
+      <xpath expr="//group[@name='studio_group_yhybZ_left']" position="inside">
+        <field name="x_studio_mandatory_bank_guarantee"/>
+        <field name="x_studio_bank_guarantee_docs" filename="x_studio_bank_guarantee_docs_filename" widget="binary"/>
+        <field name="x_studio_bank_guarantee_docs_filename" invisible="1"/>
+      </xpath>
+    </field>
+  </record>
+</odoo>
