@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Hide product.template fields/pages/buttons present on Dev but absent
+    on CDB. All from standard Odoo modules that Dev has installed but CDB
+    doesn't (ebay_sale, sale_renting, product_avatax, product_base_unit,
+    pos_self_order, product_taxcloud, sale_ebay).
+
+    Functionality preserved (fields stay in DB); only UI is hidden.
+    Reversal: delete this view record.
+
+    Priority 200 so we override lower-priority addon inherits.
+    All 17 xpaths pre-flighted against Dev's composed arch (see task #115
+    audit). compare_list_price occurs at 2 arch positions — hitting both
+    via [1]/[2] positional predicates.
+-->
+<odoo>
+  <record id="view_product_template_form_hide_dev_extras" model="ir.ui.view">
+    <field name="name">product.template.form.hide.dev.extras</field>
+    <field name="model">product.template</field>
+    <field name="inherit_id" ref="product.product_template_form_view"/>
+    <field name="priority">200</field>
+    <field name="arch" type="xml">
+
+      <!-- Whole tabs -->
+      <xpath expr="//page[@name='ebay_sale']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//page[@name='pricing']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+
+      <!-- eBay header buttons -->
+      <xpath expr="//button[@name='push_product_ebay']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//button[@name='relist_product_ebay']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//button[@name='revise_product_ebay']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//button[@name='end_listing_product_ebay']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+
+      <!-- Smart buttons for modules CDB doesn't use -->
+      <xpath expr="//button[@name='action_view_rentals']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//button[@name='action_view_offers']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//button[@name='action_view_storage_category_capacity']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+
+      <!-- Individual fields -->
+      <xpath expr="//field[@name='base_unit_count']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='base_unit_id']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='base_unit_name']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='base_unit_price']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='avatax_category_id']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='description_self_order']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='tic_category_id']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+
+      <!-- compare_list_price appears at 2 arch positions - hit both. -->
+      <xpath expr="(//field[@name='compare_list_price'])[1]" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="(//field[@name='compare_list_price'])[2]" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+
+    </field>
+  </record>
+</odoo>
