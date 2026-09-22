@@ -85,6 +85,65 @@
         <attribute name="invisible">1</attribute>
       </xpath>
 
+      <!-- Slice 4.1: additional 14 fields still visible after v349
+           (all Dev-only modules that CDB doesn't use: intrastat,
+           email_template, pricer, product_add_mode, rental, self-order,
+           unspsc, subcontractor, optional_products, package_type). -->
+      <xpath expr="//field[@name='email_template_id']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='intrastat_origin_country_id']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='intrastat_supplementary_unit']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='intrastat_supplementary_unit_amount']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='is_subcontractor']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='optional_product_ids']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='package_type_id']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='pricer_store_id']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='pricer_tag_ids']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='self_order_available']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='unspsc_code_id']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+
+      <!-- Duplicate-instance fields (intrastat_code_id, product_add_mode,
+           rent_ok each occur at 2 arch positions). Hit both. -->
+      <xpath expr="(//field[@name='intrastat_code_id'])[1]" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="(//field[@name='intrastat_code_id'])[2]" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="(//field[@name='product_add_mode'])[1]" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="(//field[@name='product_add_mode'])[2]" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="(//field[@name='rent_ok'])[1]" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="(//field[@name='rent_ok'])[2]" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+
     </field>
   </record>
 </odoo>
