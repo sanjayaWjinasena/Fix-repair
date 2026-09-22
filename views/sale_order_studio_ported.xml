@@ -42,10 +42,20 @@
                 <field name="x_studio_rug_rejected" invisible="1"/>
                 <field name="x_studio_quotation_type" invisible="1"/>
                 <field name="x_repair_customer_pays" invisible="1"/>
+                <field name="x_repair_stock_ok" invisible="1"/>
             </xpath>
 
-            <!-- Place both buttons after action_confirm in the header. -->
+            <!-- Place three buttons after action_confirm in the header:
+                 Request RUG Approval (BugFix-Sales.server_action_1980),
+                 Approve RUG, Reject RUG. All three gated on repair type +
+                 non-customer-pays. Request button hidden once sent or
+                 resolved; Approve/Reject hidden until request is sent. -->
             <xpath expr="//button[@name='action_confirm'][last()]" position="after">
+                <button name="%(BugFix-Sales.server_action_1980_rr_request_rug_approval)d"
+                        type="action"
+                        string="Request RUG Approval"
+                        class="btn-primary"
+                        invisible="(x_studio_quotation_type != 'Repair') or (x_repair_customer_pays) or (state not in ['draft', 'sent']) or (x_studio_rug_request_sent == True) or (x_studio_rug_rejected == True) or (x_studio_rug_approved == True) or (not x_repair_stock_ok)"/>
                 <button name="action_approve_rug_direct"
                         type="object"
                         string="Approve RUG"
