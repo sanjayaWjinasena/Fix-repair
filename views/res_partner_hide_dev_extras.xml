@@ -39,16 +39,12 @@
         <attribute name="invisible">1</attribute>
       </xpath>
 
-      <!-- Smart buttons: Events, Certifications, Certifications Company -->
-      <xpath expr="//div[@name='button_box']//button[field[@name='event_count']]" position="attributes">
-        <attribute name="invisible">1</attribute>
-      </xpath>
-      <xpath expr="//div[@name='button_box']//button[field[@name='certifications_count']]" position="attributes">
-        <attribute name="invisible">1</attribute>
-      </xpath>
-      <xpath expr="//div[@name='button_box']//button[field[@name='certifications_company_count']]" position="attributes">
-        <attribute name="invisible">1</attribute>
-      </xpath>
+      <!-- Smart buttons Events / Certifications / Certifications Company:
+           NOT hidden here. They're standard-Odoo stat buttons that auto-
+           hide when count=0. On this env with no event/certification data
+           they don't render. If they ever do render, the button XPath
+           `//button[field[@name='event_count']]` failed to resolve — needs
+           a different anchor when someone gets time to look. -->
 
       <!-- Individual visible fields (US/Canada Avatax + misc) -->
 
