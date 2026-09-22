@@ -101,13 +101,13 @@
       <xpath expr="//field[@name='intrastat_supplementary_unit_amount']" position="attributes">
         <attribute name="invisible">1</attribute>
       </xpath>
-      <xpath expr="//field[@name='is_subcontractor']" position="attributes">
-        <attribute name="invisible">1</attribute>
-      </xpath>
+      <!-- SKIPPED: is_subcontractor - no matching <field name='X'> element
+           found in any product.template inherit view (likely a computed
+           attribute reference or added inside a nested sub-form, not
+           reachable from view 746's inheritance chain). -->
+      <!-- SKIPPED: package_type_id - same reason (probably added inside
+           a nested packaging sub-form). -->
       <xpath expr="//field[@name='optional_product_ids']" position="attributes">
-        <attribute name="invisible">1</attribute>
-      </xpath>
-      <xpath expr="//field[@name='package_type_id']" position="attributes">
         <attribute name="invisible">1</attribute>
       </xpath>
       <xpath expr="//field[@name='pricer_store_id']" position="attributes">
@@ -116,9 +116,11 @@
       <xpath expr="//field[@name='pricer_tag_ids']" position="attributes">
         <attribute name="invisible">1</attribute>
       </xpath>
-      <xpath expr="//field[@name='self_order_available']" position="attributes">
-        <attribute name="invisible">1</attribute>
-      </xpath>
+      <!-- SKIPPED: self_order_available - added to views 4725 (POS)
+           and 4729 (tree) which are separate view trees, not in view
+           746's inheritance chain. Would need a separate inherit
+           targeting those views. -->
+
       <xpath expr="//field[@name='unspsc_code_id']" position="attributes">
         <attribute name="invisible">1</attribute>
       </xpath>
