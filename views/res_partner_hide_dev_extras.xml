@@ -114,6 +114,32 @@
         <attribute name="invisible">1</attribute>
       </xpath>
 
+      <!-- Second-instance hides. Odoo view inheritance applies each
+           <xpath position="attributes"> to only the FIRST matching node,
+           so fields that appear twice in the composed arch need a [2]
+           positional predicate for the second instance. All these second
+           instances are conditionally hidden at runtime (city_id when not
+           country_enforce_cities, global_location_number when type!=delivery,
+           property_ups_carrier_account when not bill_my_account, second
+           action_view_certifications with is_company guard) so the visual
+           impact is nil today, but the audit still flags them until
+           unconditionally hidden. -->
+      <xpath expr="(//field[@name='account_peppol_verification_label'])[2]" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="(//field[@name='city_id'])[2]" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="(//field[@name='global_location_number'])[2]" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="(//field[@name='property_ups_carrier_account'])[2]" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="(//button[@name='action_view_certifications'])[2]" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+
     </field>
   </record>
 </odoo>
