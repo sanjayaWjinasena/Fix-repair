@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Hide 46 res.partner fields present on Dev but absent on CDB.
+
+    These fields all come from standard Odoo Enterprise modules that are
+    installed on Dev but not on CDB (membership, crm_partner_assign,
+    account_peppol, account_avatax, l10n_us_1099, event/certification
+    smart buttons, etc). We keep the fields on the DB (functionality
+    preserved) but hide them from the Customer form so it matches CDB
+    verbatim.
+
+    High priority (200) ensures our attribute overrides run AFTER all
+    lower-priority inherits from those addons have added the fields.
+
+    Reversal path: delete this view record to restore stock visibility.
+-->
+<odoo>
+  <record id="view_partner_form_hide_dev_extras" model="ir.ui.view">
+    <field name="name">res.partner.form.hide.dev.extras</field>
+    <field name="model">res.partner</field>
+    <field name="inherit_id" ref="base.view_partner_form"/>
+    <field name="priority">200</field>
+    <field name="arch" type="xml">
+
+      <!-- Entire tabs / groups / smart buttons (group-level hide) -->
+
+      <!-- Membership tab (from `membership` module) -->
+      <xpath expr="//page[@name='membership']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+
+      <!-- Partner assignment review group (from `crm_partner_assign`) -->
+      <xpath expr="//group[@name='group_partner_activation_review']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+
+      <!-- Electronic invoicing (Peppol / SEPA / bank_account_count) -->
+      <xpath expr="//group[@name='electronic_invoicing']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+
+      <!-- Smart buttons: Events, Certifications, Certifications Company -->
+      <xpath expr="//div[@name='button_box']//button[field[@name='event_count']]" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//div[@name='button_box']//button[field[@name='certifications_count']]" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//div[@name='button_box']//button[field[@name='certifications_company_count']]" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+
+      <!-- Individual visible fields (US/Canada Avatax + misc) -->
+
+      <xpath expr="//field[@name='avatax_unique_code']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='avalara_partner_code']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='avalara_exemption_id']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='box_1099_id']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='citizen_identification']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='ebay_id']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='global_location_number']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='account_sepa_lei']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+
+    </field>
+  </record>
+</odoo>
