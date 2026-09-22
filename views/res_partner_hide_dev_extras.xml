@@ -1,18 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Hide 46 res.partner fields present on Dev but absent on CDB.
+    Hide standard-Odoo res.partner fields that don't render on CDB.
 
-    These fields all come from standard Odoo Enterprise modules that are
-    installed on Dev but not on CDB (membership, crm_partner_assign,
-    account_peppol, account_avatax, l10n_us_1099, event/certification
-    smart buttons, etc). We keep the fields on the DB (functionality
-    preserved) but hide them from the Customer form so it matches CDB
-    verbatim.
+    Fields all come from modules Dev has but CDB doesn't (membership,
+    crm_partner_assign, account_avatax, l10n_us_1099, event, certifications,
+    account_sepa_direct_debit, base_vat, website_partner_tag, delivery_ups,
+    account_peppol_verification_label, etc). Functionality preserved in DB,
+    only UI hidden. Reversal: delete this view record.
 
-    High priority (200) ensures our attribute overrides run AFTER all
-    lower-priority inherits from those addons have added the fields.
+    High priority (200) so our attribute overrides run AFTER lower-priority
+    addon inherits that add these fields.
 
-    Reversal path: delete this view record to restore stock visibility.
+    Xpath choices were verified against Dev's composed arch via RPC (post-
+    v344 crash where `//button[field[@name='X']]` failed - stat buttons in
+    Odoo 17 use `<field>` as a direct child but xpath predicate needs full
+    element name).
+
+    NOT hidden here (CDB shows these):
+      * peppol_eas / peppol_endpoint / ubl_cii_format (from account_edi_ubl_cii)
+      * days_sales_outstanding, on_time_rate (standard partner metrics)
 -->
 <odoo>
   <record id="view_partner_form_hide_dev_extras" model="ir.ui.view">
@@ -22,7 +28,7 @@
     <field name="priority">200</field>
     <field name="arch" type="xml">
 
-      <!-- Entire tabs / groups / smart buttons (group-level hide) -->
+      <!-- Whole tabs / groups (CDB doesn't have these at all) -->
 
       <!-- Membership tab (from `membership` module) -->
       <xpath expr="//page[@name='membership']" position="attributes">
@@ -34,20 +40,38 @@
         <attribute name="invisible">1</attribute>
       </xpath>
 
-      <!-- Electronic invoicing (Peppol / SEPA / bank_account_count) -->
-      <xpath expr="//group[@name='electronic_invoicing']" position="attributes">
+      <!-- Smart buttons: Events, Certifications, SDD mandates.
+           Certifications button has 2 sibling copies (one for is_company,
+           one for not is_company) but Odoo dedupes by name so a single
+           attribute override on name='action_view_certifications' hits both. -->
+      <xpath expr="//button[@name='action_event_view']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//button[@name='action_view_certifications']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//button[@name='account_sepa_direct_debit.account_sepa_direct_debit_partner_mandates']" position="attributes">
         <attribute name="invisible">1</attribute>
       </xpath>
 
-      <!-- Smart buttons Events / Certifications / Certifications Company:
-           NOT hidden here. They're standard-Odoo stat buttons that auto-
-           hide when count=0. On this env with no event/certification data
-           they don't render. If they ever do render, the button XPath
-           `//button[field[@name='event_count']]` failed to resolve — needs
-           a different anchor when someone gets time to look. -->
+      <!-- Individual field hides. Some field names appear at multiple arch
+           locations (root + inside a group) — xpath //field[@name='X']
+           setting attributes hits both instances. -->
 
-      <!-- Individual visible fields (US/Canada Avatax + misc) -->
+      <!-- account_peppol_verification_label: only this peppol-related field
+           is CDB-absent. Others in the electronic_invoicing group (peppol_eas,
+           peppol_endpoint, ubl_cii_format) DO exist on CDB — keep visible. -->
+      <xpath expr="//field[@name='account_peppol_verification_label']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
 
+      <!-- account_sepa_lei sits in accounting_misc group (not
+           electronic_invoicing). Hide the field, keep the group. -->
+      <xpath expr="//field[@name='account_sepa_lei']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+
+      <!-- Avatax / avalara fields (US/Canada only on Dev, absent on CDB) -->
       <xpath expr="//field[@name='avatax_unique_code']" position="attributes">
         <attribute name="invisible">1</attribute>
       </xpath>
@@ -57,9 +81,13 @@
       <xpath expr="//field[@name='avalara_exemption_id']" position="attributes">
         <attribute name="invisible">1</attribute>
       </xpath>
+
+      <!-- l10n_us_1099 -->
       <xpath expr="//field[@name='box_1099_id']" position="attributes">
         <attribute name="invisible">1</attribute>
       </xpath>
+
+      <!-- Standard misc-group fields absent from CDB -->
       <xpath expr="//field[@name='citizen_identification']" position="attributes">
         <attribute name="invisible">1</attribute>
       </xpath>
@@ -69,7 +97,20 @@
       <xpath expr="//field[@name='global_location_number']" position="attributes">
         <attribute name="invisible">1</attribute>
       </xpath>
-      <xpath expr="//field[@name='account_sepa_lei']" position="attributes">
+      <xpath expr="//field[@name='website_tag_ids']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+
+      <!-- Root / address-level extras -->
+      <xpath expr="//field[@name='city_id']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='vies_valid']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+
+      <!-- Delivery / UPS -->
+      <xpath expr="//field[@name='property_ups_carrier_account']" position="attributes">
         <attribute name="invisible">1</attribute>
       </xpath>
 
