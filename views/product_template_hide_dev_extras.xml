@@ -104,12 +104,14 @@
       <!-- SKIPPED: is_subcontractor - lives in variant_seller_ids nested
            tree column (optional='hide'). Not visible by default; hidden
            behind Purchase-tab optional-columns menu. Low ROI to hide. -->
-      <!-- v353 (2026-09-24) — package_type_id lives in packaging_ids
-           nested tree on Inventory-tab packaging group. Xpath composed
-           arch confirms 1 unique match; direct field-name xpath works. -->
-      <xpath expr="//field[@name='package_type_id']" position="attributes">
-        <attribute name="invisible">1</attribute>
-      </xpath>
+      <!-- SKIPPED: package_type_id - lives in an embedded sub-tree view
+           inside the packaging_ids inline notebook page. RPC get_view()
+           surfaces it in the composed arch but our inherit on primary
+           view 746 (product.product_template_only_form_view) cannot
+           reach into the sub-tree (v353 attempt failed with "cannot be
+           located in parent view"). Fixing needs a separate inherit
+           targeting the sub-tree view directly (probably
+           stock.product_packaging_tree_view). Deferred. -->
       <xpath expr="//field[@name='optional_product_ids']" position="attributes">
         <attribute name="invisible">1</attribute>
       </xpath>
