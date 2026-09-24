@@ -101,12 +101,15 @@
       <xpath expr="//field[@name='intrastat_supplementary_unit_amount']" position="attributes">
         <attribute name="invisible">1</attribute>
       </xpath>
-      <!-- SKIPPED: is_subcontractor - no matching <field name='X'> element
-           found in any product.template inherit view (likely a computed
-           attribute reference or added inside a nested sub-form, not
-           reachable from view 746's inheritance chain). -->
-      <!-- SKIPPED: package_type_id - same reason (probably added inside
-           a nested packaging sub-form). -->
+      <!-- SKIPPED: is_subcontractor - lives in variant_seller_ids nested
+           tree column (optional='hide'). Not visible by default; hidden
+           behind Purchase-tab optional-columns menu. Low ROI to hide. -->
+      <!-- v353 (2026-09-24) — package_type_id lives in packaging_ids
+           nested tree on Inventory-tab packaging group. Xpath composed
+           arch confirms 1 unique match; direct field-name xpath works. -->
+      <xpath expr="//field[@name='package_type_id']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
       <xpath expr="//field[@name='optional_product_ids']" position="attributes">
         <attribute name="invisible">1</attribute>
       </xpath>
