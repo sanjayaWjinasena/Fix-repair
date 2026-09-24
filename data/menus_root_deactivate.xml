@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Deactivate Fix-repair-owned menus that duplicate CDB-matching twins. -->
+<odoo>
+  <data>
+    <!-- v352 Inventory-app cleanup: 'Inventory > Inventory Setup > Warehouse'
+         duplicated BugFix-Stock.menu_1149_warehouse. Both pointed at
+         BugFix-Stock.action_2469_warehouse (identical stock.warehouse
+         list/form). Fix-repair adds no repair-specific behaviour on top;
+         killing the dup, keeping BugFix-Stock's version. -->
+    <record id="menu_f6_warehouse_1" model="ir.ui.menu">
+      <field name="active" eval="False"/>
+    </record>
+  </data>
+</odoo>
