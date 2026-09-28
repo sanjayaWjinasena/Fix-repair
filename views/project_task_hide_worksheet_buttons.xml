@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Port of CDB view id 4730 (Odoo Studio: task.form.inherit).
+    Hides duplicate FSM worksheet buttons:
+      action_preview_worksheet[2]  → 'Sign Report' btn-secondary
+      action_send_report[2]        → 'Send Report' btn-secondary
+    Both are added by industry_fsm_report.view_task_form2_inherit at
+    priority 16 as duplicates of their btn-primary siblings; CDB hides
+    the secondary copies because display_sign_report_secondary and
+    display_send_report_primary can eval true simultaneously in some
+    project.task states, causing double buttons in the header.
+
+    v355 attempt inherited project.view_task_form2 at priority 200 and
+    crashed with 'cannot be located in parent view' — root cause:
+    industry_fsm.view_task_form2_inherit sits at priority 999, so an
+    ancestor-of-2446 inherit at priority 200 fires BEFORE the buttons
+    are injected. See [[feedback-composed-arch-vs-inherit-target]].
+
+    Correct fix: inherit the exact view that adds them
+    (industry_fsm_report.view_task_form2_inherit) so our xpaths merge
+    strictly after both copies are in the arch.
+-->
+<odoo>
+  <record id="view_project_task_form_4730" model="ir.ui.view">
+    <field name="name">Fix-repair.project.task.form.hide.worksheet.dup.buttons</field>
+    <field name="model">project.task</field>
+    <field name="inherit_id" ref="industry_fsm_report.view_task_form2_inherit"/>
+    <field name="priority">20</field>
+    <field name="arch" type="xml">
+
+      <xpath expr="//button[@name='action_preview_worksheet'][2]" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+
+      <xpath expr="//button[@name='action_send_report'][2]" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+
+    </field>
+  </record>
+</odoo>

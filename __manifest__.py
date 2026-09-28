@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Jinasena : Module : Repair',
-    'version': '17.0.1.0.356',
+    'version': '17.0.1.0.357',
     'summary': 'Enhancements to the Customer Care - Repair helpdesk workflow',
     'author': 'Jinasena Agricultural Machinery (Pvt) Ltd.',
     'category': 'Helpdesk',
@@ -10,7 +10,7 @@
     # x_studio_confirm_draft_quotation onto repair.order. Without this
     # dep the _inherit target isn't in the registry when Fix-repair
     # loads on a fresh install.
-    'depends': ['base_setup', 'helpdesk', 'helpdesk_fsm', 'repair', 'sale', 'sale_stock', 'industry_fsm_sale', 'industry_fsm_stock', 'BugFix-Sales', 'studio_usermodel_migration'],
+    'depends': ['base_setup', 'helpdesk', 'helpdesk_fsm', 'repair', 'sale', 'sale_stock', 'industry_fsm_sale', 'industry_fsm_stock', 'industry_fsm_report', 'BugFix-Sales', 'studio_usermodel_migration'],
     'post_init_hook': 'post_init_hook',
     # v292: added studio_usermodel_migration to depends.
     # helpdesk_ticket.py declares related fields (x_studio_source_location,
@@ -52,6 +52,7 @@
         'views/helpdesk_ticket_views.xml',
         'views/helpdesk_ticket_type_views.xml',
         'views/project_task_studio_ported.xml',
+        'views/project_task_hide_worksheet_buttons.xml',
         'views/sale_order_studio_ported.xml',
         'views/stock_picking_studio_ported.xml',
         'views/res_config_settings_views.xml',
