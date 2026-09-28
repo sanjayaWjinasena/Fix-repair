@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Port of CDB view id 4730 (Odoo Studio: task.form.inherit).
+    Hides duplicate FSM worksheet buttons: action_preview_worksheet[2]
+    and action_send_report[2]. CDB installed them via industry_fsm
+    Studio inherit; we replicate on Dev via priority-200 inherit on
+    the core project.task.form.
+
+    Pre-flighted on Dev 2026-09-28:
+      * action_preview_worksheet: 3 occurrences
+      * action_send_report: 2 occurrences
+    Both [2] xpaths resolve unambiguously.
+-->
+<odoo>
+  <record id="view_project_task_form_4730" model="ir.ui.view">
+    <field name="name">Fix-repair.project.task.form.hide.worksheet.dup.buttons</field>
+    <field name="model">project.task</field>
+    <field name="inherit_id" ref="project.view_task_form2"/>
+    <field name="priority">200</field>
+    <field name="arch" type="xml">
+
+      <xpath expr="//button[@name='action_preview_worksheet'][2]" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+
+      <xpath expr="//button[@name='action_send_report'][2]" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+
+    </field>
+  </record>
+</odoo>
