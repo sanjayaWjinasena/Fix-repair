@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Port of CDB view id 5011 (Odoo Studio: project.task.view.inherit).
+    Adds x_studio_cancelled to the invisible= expression of the
+    action_view_so "Sales Order" stat button, so cancelled repair
+    tasks don't advertise the linked SO.
+
+    Parent chain: sale_project.view_sale_project_inherit_form (priority
+    100) adds the button at project.view_task_form2. Our inherit uses
+    priority 110 so the attribute override merges strictly after the
+    button is in the arch.
+
+    Sentinel for x_studio_cancelled is already injected by
+    views/project_task_studio_ported.xml (Fix-repair v259+); the field
+    is a related=helpdesk_ticket_id.x_studio_cancelled Boolean declared
+    in models/project_task.py:272.
+-->
+<odoo>
+  <record id="view_project_task_form_5011" model="ir.ui.view">
+    <field name="name">Fix-repair.project.task.form.view_so_cancelled_guard</field>
+    <field name="model">project.task</field>
+    <field name="inherit_id" ref="sale_project.view_sale_project_inherit_form"/>
+    <field name="priority">110</field>
+    <field name="arch" type="xml">
+
+      <xpath expr="//button[@name='action_view_so']" position="attributes">
+        <attribute name="invisible">(sale_order_id == False) or (x_studio_cancelled == True)</attribute>
+      </xpath>
+
+    </field>
+  </record>
+</odoo>
