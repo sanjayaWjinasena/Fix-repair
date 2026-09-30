@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<!-- Fix-repair: 4 previously-DROPPED ir.default records now re-shippable (selection options ported since original drop) -->
+<!-- Fix-repair: 4 ir.default records ported from CDB. -->
 <odoo>
   <data noupdate="1">
 
@@ -8,8 +8,8 @@
       <field name="json_value">"None"</field>
     </record>
 
-    <record id="default_372_helpdesk_ticket_x_studio_quick_repair_status" model="ir.default">
-      <field name="field_id" ref="Fix-repair.field_helpdesk_ticket__x_studio_quick_repair_status"/>
+    <record id="default_361_helpdesk_ticket_x_studio_reopen_status" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_helpdesk_ticket__x_studio_reopen_status"/>
       <field name="json_value">"None"</field>
     </record>
 
@@ -18,8 +18,8 @@
       <field name="json_value">"None"</field>
     </record>
 
-    <record id="default_361_helpdesk_ticket_x_studio_reopen_status" model="ir.default">
-      <field name="field_id" ref="Fix-repair.field_helpdesk_ticket__x_studio_reopen_status"/>
+    <record id="default_372_helpdesk_ticket_x_studio_quick_repair_status" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_helpdesk_ticket__x_studio_quick_repair_status"/>
       <field name="json_value">"None"</field>
     </record>
   </data>
