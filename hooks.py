@@ -599,52 +599,7 @@ def assign_names_to_stale_new_tickets(env):
     )
 
 
-# --- Field selection seed data (ORM-only, no direct SQL) ---
-# All rows Studio populated in CDB but Odoo 17 doesn't recreate on install.
-# `state='base'` rows: options for Python-declared Selection fields that
-# Odoo would normally set at install but Studio-side sequence differs.
-# `related=` rows: audit-parity stubs — Odoo resolves at runtime from the
-# source field, so shipping these creates DB rows for audit match with zero
-# functional effect. (See feedback-python-only-fixes: prefer ORM over SQL.)
-# (model, field_name, value, display_name, sequence)
-_FIELD_SELECTIONS = [
-    ('helpdesk.ticket', 'x_studio_tracking', 'serial', 'By Unique Serial Number', 10),
-    ('helpdesk.ticket', 'x_studio_tracking', 'lot', 'By Lots', 1),
-    ('helpdesk.ticket', 'x_studio_tracking', 'none', 'No Tracking', 2),
-]
 
-
-def _seed_field_selections(env, entries):
-    """Idempotent ORM create of ir.model.fields.selection rows.
-    Skip if the field is absent or the (field, value) row already exists.
-    Per-row savepoint so a single failure doesn't abort the batch."""
-    Fld = env['ir.model.fields'].sudo()
-    Sel = env['ir.model.fields.selection'].sudo()
-    for model, fname, value, label, seq in entries:
-        fld = Fld.search(
-            [('model', '=', model), ('name', '=', fname)], limit=1,
-        )
-        if not fld:
-            _logger.info(
-                "Fix-repair: seed skip %s.%s (field absent).", model, fname,
-            )
-            continue
-        exists = Sel.search(
-            [('field_id', '=', fld.id), ('value', '=', value)], limit=1,
-        )
-        if exists:
-            continue
-        try:
-            with env.cr.savepoint():
-                Sel.create({
-                    'field_id': fld.id, 'value': value,
-                    'name': label, 'sequence': seq,
-                })
-        except Exception as e:
-            _logger.warning(
-                "Fix-repair: seed failed %s.%s=%r (%s).",
-                model, fname, value, e,
-            )
 
 def post_init_hook(env):
     """Odoo 17 post-install hook signature: (env)."""
@@ -659,4 +614,3 @@ def post_init_hook(env):
     activate_internal_picking_types(env)
     seed_repair_sequences_per_company(env)
     assign_names_to_stale_new_tickets(env)
-    _seed_field_selections(env, _FIELD_SELECTIONS)
