@@ -67,7 +67,7 @@ class XTaskDiagnosis(models.Model):
     x_studio_task_id = fields.Many2one(
         'project.task',
         string='Task',
-        ondelete='cascade',
+        ondelete='set null',
         index=True,
     )
 
