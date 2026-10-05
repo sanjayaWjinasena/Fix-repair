@@ -661,8 +661,86 @@ def _seed_field_selections(env, entries):
                 "Fix-repair: seed failed %s.%s (%s).", model, fname, e,
             )
 
+# Staging_Migration: seed data that must not be pushed onto a production copy.
+# Loaded here (fresh database) instead of from the manifest, because Odoo
+# writes every manifest record on install even when it already exists.
+_SEED_FILES = [
+    'data/repair_stages.xml',
+    'data/repair_sequences.xml',
+    'data/helpdesk_ticket_types.xml',
+    'data/repair_diagnosis_seed.xml',
+]
+
+
+def _is_real_data_env(env):
+    """Production copy: the Studio customizations are still installed."""
+    return bool(env['ir.module.module'].sudo().search_count([
+        ('name', '=', 'studio_customization'), ('state', '=', 'installed')]))
+
+
+def _load_seed_files(env):
+    from odoo.tools import convert_file
+    here = os.path.dirname(os.path.abspath(__file__))
+    for rel in _SEED_FILES:
+        convert_file(env, 'Fix-repair', rel, {}, mode='init', noupdate=True, kind='data',
+                     pathname=os.path.join(here, rel))
+
+
+def _adopt_seed_records(env):
+    """Real-data database: bind this module's seed xmlids to the matching
+    existing record when the match is unambiguous; write and create nothing.
+      helpdesk.ticket.type  unique name
+      helpdesk.stage        unique name (production has per-team duplicates:
+                            left unbound, nothing is created)
+      x_* catalogue models  the Clear-DB id in the xmlid suffix + same x_name
+    Sequences are never bound or created: production keeps its own
+    per-company repair.seq / repair.serial.seq."""
+    from lxml import etree
+    here = os.path.dirname(os.path.abspath(__file__))
+    IMD = env['ir.model.data'].sudo()
+    bound = skipped = 0
+    for rel in _SEED_FILES:
+        if rel.endswith('repair_sequences.xml'):
+            continue
+        for rec in etree.parse(os.path.join(here, rel)).iter('record'):
+            model, xmlid = rec.get('model'), rec.get('id')
+            if model not in env or IMD.search_count([('module', '=', 'Fix-repair'), ('name', '=', xmlid)]):
+                skipped += 1
+                continue
+            Model = env[model].sudo().with_context(active_test=False)
+            key = 'name' if model.startswith('helpdesk.') else 'x_name'
+            fld = rec.find("field[@name='%s']" % key)
+            value = fld.text.strip() if fld is not None and fld.text else None
+            hit = Model.browse()
+            if value:
+                hit = Model.search([(key, '=', value)], limit=2)
+                if len(hit) != 1 and model.startswith('x_'):
+                    suffix = xmlid.rsplit('_', 1)[-1]
+                    hit = Model.search([('id', '=', int(suffix)), (key, '=', value)]) if suffix.isdigit() else Model.browse()
+            if len(hit) != 1:
+                skipped += 1
+                continue
+            IMD.create({'module': 'Fix-repair', 'name': xmlid, 'model': model,
+                        'res_id': hit.id, 'noupdate': True})
+            bound += 1
+    _logger.info("Fix-repair: REAL-DATA database, adopted %d seed records, %d not bound/created",
+                 bound, skipped)
+
+
 def post_init_hook(env):
     """Odoo 17 post-install hook signature: (env)."""
+    if _is_real_data_env(env):
+        # Production copy (Staging_Migration rule): only code/structure.
+        # No stages attached, no settings switched, no locations / users /
+        # sequences / tickets touched.
+        strip_studio_xmlids_for_ported_fields(env)
+        load_post_init_view_files(env)
+        _adopt_seed_records(env)
+        _seed_field_selections(env, _FIELD_SELECTIONS)
+        from .models.studio_computes import recompute_stored_studio_computes
+        recompute_stored_studio_computes(env)
+        return
+    _load_seed_files(env)
     strip_studio_xmlids_for_ported_fields(env)
     load_post_init_view_files(env)
     attach_repair_stages_to_all_teams(env)

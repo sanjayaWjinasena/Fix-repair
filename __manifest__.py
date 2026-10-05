@@ -41,12 +41,12 @@
         'data/ir_model_pins.xml',
         'data/fix_repair_data.xml',
         'security/ir.model.access.csv',
-        'data/repair_stages.xml',
-        'data/repair_sequences.xml',
-        'data/helpdesk_ticket_types.xml',
+        # Staging_Migration: 'data/repair_stages.xml' loaded by post_init_hook (fresh DB only).
+        # Staging_Migration: 'data/repair_sequences.xml' loaded by post_init_hook (fresh DB only).
+        # Staging_Migration: 'data/helpdesk_ticket_types.xml' loaded by post_init_hook (fresh DB only).
         'views/repair_diagnosis_catalog_views.xml',
         'data/repair_diagnosis_menus.xml',
-        'data/repair_diagnosis_seed.xml',
+        # Staging_Migration: 'data/repair_diagnosis_seed.xml' loaded by post_init_hook (fresh DB only).
         'data/helpdesk_ticket_server_actions.xml',
         'data/project_task_server_actions.xml',
         'views/helpdesk_ticket_studio_ported.xml',
