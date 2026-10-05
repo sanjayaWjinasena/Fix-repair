@@ -34,6 +34,11 @@ class AccountMoveLine(models.Model):
             ], limit=1)
             if not field:
                 continue
+            # Staging_Migration: only Studio (manual) fields keep their
+            # compute in the database; once a repo declares the field in
+            # Python Odoo refuses this write.
+            if field.state != 'manual':
+                continue
             code = field.compute or ''
             if marker in code:
                 continue
