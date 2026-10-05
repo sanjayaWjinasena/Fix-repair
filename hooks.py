@@ -675,3 +675,6 @@ def post_init_hook(env):
     seed_repair_sequences_per_company(env)
     assign_names_to_stale_new_tickets(env)
     _seed_field_selections(env, _FIELD_SELECTIONS)
+    # v17.0.1.0.366: fill the now-computed sale.order check fields once.
+    from .models.studio_computes import recompute_stored_studio_computes
+    recompute_stored_studio_computes(env)
