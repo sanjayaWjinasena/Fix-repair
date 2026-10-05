@@ -35,6 +35,7 @@ from odoo import fields, models
 
 class XTaskDiagnosis(models.Model):
     _name = 'x_task_diagnosis'
+    _rec_name = 'x_name'  # Clear-DB Studio model: records are named by x_name
     _description = 'Task Diagnosis'
     # v304: mail.thread + mail.activity.mixin match the sister
     # repair-diagnosis catalog models in repair_master_data.py
