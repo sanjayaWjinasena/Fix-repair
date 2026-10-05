@@ -11,6 +11,8 @@
     # dep the _inherit target isn't in the registry when Fix-repair
     # loads on a fresh install.
     'depends': ['base_setup', 'helpdesk', 'helpdesk_fsm', 'repair', 'sale', 'sale_stock', 'industry_fsm_sale', 'industry_fsm_stock', 'industry_fsm_report', 'BugFix-Sales', 'studio_usermodel_migration'],
+    # Staging_Migration: adopt existing Studio models for the ir.model pins.
+    'pre_init_hook': 'pre_init_hook',
     'post_init_hook': 'post_init_hook',
     # v292: added studio_usermodel_migration to depends.
     # helpdesk_ticket.py declares related fields (x_studio_source_location,
