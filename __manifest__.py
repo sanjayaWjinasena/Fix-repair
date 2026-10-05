@@ -98,8 +98,12 @@
         'data/menus_root_deactivate.xml',
         'views/qweb_studio_ported.xml',
         'views/res_partner_studio_pages_content.xml',
-        'views/res_partner_hide_dev_extras.xml',
-        'views/product_template_hide_dev_extras.xml',
+        # Staging_Migration: 'views/res_partner_hide_dev_extras.xml' not loaded. It hides fields/buttons of apps
+        # the dev envs have and production does not; on production none of
+        # its xpaths match (verified on upgrade-testing-39209462), so it fails.
+        # Staging_Migration: 'views/product_template_hide_dev_extras.xml' not loaded. It hides fields/buttons of apps
+        # the dev envs have and production does not; on production none of
+        # its xpaths match (verified on upgrade-testing-39209462), so it fails.
     ],
     'assets': {
         'web.assets_backend': [
