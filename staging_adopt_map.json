@@ -1,0 +1,2442 @@
+{
+"access_1675_repair_reason_group_system": {
+"ir.model.access": [
+[
+1675,
+"2023-02-07 08:18:11"
+]
+]
+},
+"access_1676_repair_reason_group_user": {
+"ir.model.access": [
+[
+1676,
+"2023-02-07 08:18:11"
+]
+]
+},
+"access_1774_repair_accounts_group_system": {
+"ir.model.access": [
+[
+1774,
+"2023-05-04 01:14:29"
+]
+]
+},
+"access_1775_repair_accounts_group_user": {
+"ir.model.access": [
+[
+1775,
+"2023-05-04 01:14:29"
+]
+]
+},
+"access_1782_conditions_group_system": {
+"ir.model.access": [
+[
+1782,
+"2023-06-01 04:47:51"
+]
+]
+},
+"access_1783_conditions_group_user": {
+"ir.model.access": [
+[
+1783,
+"2023-06-01 04:47:51"
+]
+]
+},
+"access_1784_symptom_areas_group_system": {
+"ir.model.access": [
+[
+1784,
+"2023-06-01 04:53:33"
+]
+]
+},
+"access_1785_symptom_areas_group_user": {
+"ir.model.access": [
+[
+1785,
+"2023-06-01 04:53:33"
+]
+]
+},
+"access_1786_symptom_codes_group_system": {
+"ir.model.access": [
+[
+1786,
+"2023-06-01 04:57:20"
+]
+]
+},
+"access_1787_symptom_codes_group_user": {
+"ir.model.access": [
+[
+1787,
+"2023-06-01 04:57:20"
+]
+]
+},
+"access_1788_diagnosis_areas_group_system": {
+"ir.model.access": [
+[
+1788,
+"2023-06-01 05:03:17"
+]
+]
+},
+"access_1789_diagnosis_areas_group_user": {
+"ir.model.access": [
+[
+1789,
+"2023-06-01 05:03:17"
+]
+]
+},
+"access_1790_diagnosis_codes_group_system": {
+"ir.model.access": [
+[
+1790,
+"2023-06-01 05:07:07"
+]
+]
+},
+"access_1791_diagnosis_codes_group_user": {
+"ir.model.access": [
+[
+1791,
+"2023-06-01 05:07:07"
+]
+]
+},
+"access_1792_repair_sub_reason_group_system": {
+"ir.model.access": [
+[
+1792,
+"2023-06-01 05:15:13"
+]
+]
+},
+"access_1793_repair_sub_reason_group_user": {
+"ir.model.access": [
+[
+1793,
+"2023-06-01 05:15:13"
+]
+]
+},
+"access_1794_resolutions_group_system": {
+"ir.model.access": [
+[
+1794,
+"2023-06-01 05:22:10"
+]
+]
+},
+"access_1795_resolutions_group_user": {
+"ir.model.access": [
+[
+1795,
+"2023-06-01 05:22:10"
+]
+]
+},
+"access_1796_repair_stages_group_system": {
+"ir.model.access": [
+[
+1796,
+"2023-06-01 05:28:22"
+]
+]
+},
+"access_1797_repair_stages_group_user": {
+"ir.model.access": [
+[
+1797,
+"2023-06-01 05:28:22"
+]
+]
+},
+"access_1798_task_diagnosis_group_system": {
+"ir.model.access": [
+[
+1798,
+"2023-06-01 05:40:18"
+]
+]
+},
+"access_1799_task_diagnosis_group_user": {
+"ir.model.access": [
+[
+1799,
+"2023-06-01 05:40:18"
+]
+]
+},
+"access_1800_repair_reason___customer_group_system": {
+"ir.model.access": [
+[
+1800,
+"2023-06-06 10:18:07"
+]
+]
+},
+"access_1801_repair_reason___customer_group_user": {
+"ir.model.access": [
+[
+1801,
+"2023-06-06 10:18:07"
+]
+]
+},
+"access_5707_repair_user": {
+"ir.model.access": [
+[
+5707,
+"2023-11-27 04:27:47"
+]
+]
+},
+"access_5708_repair_tags_user": {
+"ir.model.access": [
+[
+5708,
+"2023-11-27 04:27:47"
+]
+]
+},
+"access_6051_helpdesk_tag": {
+"ir.model.access": [
+[
+6051,
+"2023-12-06 05:51:23"
+]
+]
+},
+"access_6052_helpdesk_sla": {
+"ir.model.access": [
+[
+6052,
+"2023-12-06 05:51:23"
+]
+]
+},
+"access_6053_helpdesk_sla_status": {
+"ir.model.access": [
+[
+6053,
+"2023-12-06 05:51:23"
+]
+]
+},
+"access_6054_helpdesk_stage": {
+"ir.model.access": [
+[
+6054,
+"2023-12-06 05:51:23"
+]
+]
+},
+"access_6056_helpdesk_ticket_type_user": {
+"ir.model.access": [
+[
+6056,
+"2023-12-06 05:51:23"
+]
+]
+},
+"access_6057_helpdesk_ticket_report_analysis_user": {
+"ir.model.access": [
+[
+6057,
+"2023-12-06 05:51:23"
+]
+]
+},
+"access_6066_helpdesk_tag": {
+"ir.model.access": [
+[
+6066,
+"2023-12-06 06:07:17"
+]
+]
+},
+"access_6067_helpdesk_sla": {
+"ir.model.access": [
+[
+6067,
+"2023-12-06 06:07:17"
+]
+]
+},
+"access_6068_helpdesk_sla_status": {
+"ir.model.access": [
+[
+6068,
+"2023-12-06 06:07:17"
+]
+]
+},
+"access_6069_helpdesk_stage": {
+"ir.model.access": [
+[
+6069,
+"2023-12-06 06:07:17"
+]
+]
+},
+"access_6071_helpdesk_ticket_type_user": {
+"ir.model.access": [
+[
+6071,
+"2023-12-06 06:07:17"
+]
+]
+},
+"access_6072_helpdesk_ticket_report_analysis_user": {
+"ir.model.access": [
+[
+6072,
+"2023-12-06 06:07:17"
+]
+]
+},
+"access_6137_helpdesk_tag": {
+"ir.model.access": [
+[
+6137,
+"2023-12-14 07:54:11"
+]
+]
+},
+"access_6138_helpdesk_sla": {
+"ir.model.access": [
+[
+6138,
+"2023-12-14 07:54:11"
+]
+]
+},
+"access_6139_helpdesk_sla_status": {
+"ir.model.access": [
+[
+6139,
+"2023-12-14 07:54:11"
+]
+]
+},
+"access_6140_helpdesk_stage": {
+"ir.model.access": [
+[
+6140,
+"2023-12-14 07:54:11"
+]
+]
+},
+"access_6142_helpdesk_ticket_type_user": {
+"ir.model.access": [
+[
+6142,
+"2023-12-14 07:54:11"
+]
+]
+},
+"access_6143_helpdesk_ticket_report_analysis_user": {
+"ir.model.access": [
+[
+6143,
+"2023-12-14 07:54:11"
+]
+]
+},
+"access_6442_repair_user": {
+"ir.model.access": [
+[
+6442,
+"2024-02-13 08:22:17"
+]
+]
+},
+"access_6443_repair_tags_user": {
+"ir.model.access": [
+[
+6443,
+"2024-02-13 08:22:17"
+]
+]
+},
+"access_6556_repair_user": {
+"ir.model.access": [
+[
+6556,
+"2024-02-14 09:10:51"
+]
+]
+},
+"access_6557_repair_tags_user": {
+"ir.model.access": [
+[
+6557,
+"2024-02-14 09:10:51"
+]
+]
+},
+"access_6836_stock_warehouse_user": {
+"ir.model.access": [
+[
+6836,
+"2024-03-20 06:21:14"
+]
+]
+},
+"access_6911_stock_warehouse": {
+"ir.model.access": [
+[
+6911,
+"2024-04-10 14:15:26"
+]
+]
+},
+"access_7319_repair_oreder": {
+"ir.model.access": [
+[
+7319,
+"2024-10-09 04:28:56"
+]
+]
+},
+"access_8642_access_helpdesk_team_rohana_read": {
+"ir.model.access": [
+[
+8642,
+"2026-05-20 02:54:10"
+]
+]
+},
+"access_8643_access_helpdesk_ticket_type_rohana_read": {
+"ir.model.access": [
+[
+8643,
+"2026-05-20 02:54:10"
+]
+]
+},
+"access_8700_access_stock_warehouse_rohana_read": {
+"ir.model.access": [
+[
+8700,
+"2026-05-20 02:54:10"
+]
+]
+},
+"act_window_1802_success_rate_analysis": {
+"ir.actions.act_window": [
+[
+1802,
+"2022-11-02 04:54:47"
+]
+]
+},
+"act_window_1975_repair_reason": {
+"ir.actions.act_window": [
+[
+1975,
+"2023-02-07 08:18:11"
+]
+]
+},
+"act_window_2175_repair_accounts": {
+"ir.actions.act_window": [
+[
+2175,
+"2023-05-04 01:14:29"
+]
+]
+},
+"act_window_2209_conditions": {
+"ir.actions.act_window": [
+[
+2209,
+"2023-06-01 04:47:51"
+]
+]
+},
+"act_window_2210_symptom_areas": {
+"ir.actions.act_window": [
+[
+2210,
+"2023-06-01 04:53:33"
+]
+]
+},
+"act_window_2211_symptom_codes": {
+"ir.actions.act_window": [
+[
+2211,
+"2023-06-01 04:57:20"
+]
+]
+},
+"act_window_2212_diagnosis_areas": {
+"ir.actions.act_window": [
+[
+2212,
+"2023-06-01 05:03:17"
+]
+]
+},
+"act_window_2213_diagnosis_codes": {
+"ir.actions.act_window": [
+[
+2213,
+"2023-06-01 05:07:07"
+]
+]
+},
+"act_window_2214_repair_sub_reason": {
+"ir.actions.act_window": [
+[
+2214,
+"2023-06-01 05:15:13"
+]
+]
+},
+"act_window_2215_resolutions": {
+"ir.actions.act_window": [
+[
+2215,
+"2023-06-01 05:22:10"
+]
+]
+},
+"act_window_2216_repair_stages": {
+"ir.actions.act_window": [
+[
+2216,
+"2023-06-01 05:28:22"
+]
+]
+},
+"act_window_2217_task_diagnosis": {
+"ir.actions.act_window": [
+[
+2217,
+"2023-06-01 05:40:18"
+]
+]
+},
+"act_window_2218_repair_reason_customer": {
+"ir.actions.act_window": [
+[
+2218,
+"2023-06-06 10:18:07"
+]
+]
+},
+"act_window_2234_repair_job_details_for_the_period_rug_only": {
+"ir.actions.act_window": [
+[
+2234,
+"2023-06-15 15:47:57"
+]
+]
+},
+"act_window_2239_customer_letter_report": {
+"ir.actions.act_window": [
+[
+2239,
+"2023-06-22 04:22:36"
+]
+]
+},
+"act_window_2312_repair_job_details": {
+"ir.actions.act_window": [
+[
+2312,
+"2023-08-02 16:49:43"
+]
+]
+},
+"act_window_2468_warehouse": {
+"ir.actions.act_window": [
+[
+2468,
+"2024-01-11 08:43:34"
+]
+]
+},
+"act_window_2469_warehouse": {
+"ir.actions.act_window": [
+[
+2469,
+"2024-01-12 09:50:05"
+]
+]
+},
+"act_window_2807_repair_order": {
+"ir.actions.act_window": [
+[
+2807,
+"2024-10-09 04:11:59"
+]
+]
+},
+"act_window_2876_helpdesk_team_helpdesk_team": {
+"ir.actions.act_window": [
+[
+2876,
+"2024-11-07 02:43:18"
+]
+]
+},
+"action_repair_auto_create_route": {
+"ir.actions.server": [
+[
+1993,
+"2023-02-08 06:33:46"
+]
+]
+},
+"action_repair_end_quick_repair": {
+"ir.actions.server": [
+[
+2316,
+"2023-08-09 06:34:18"
+]
+]
+},
+"action_x_conditions": {
+"ir.actions.act_window": [
+[
+2209,
+"2023-06-01 04:47:51"
+]
+]
+},
+"action_x_diagnosis_areas": {
+"ir.actions.act_window": [
+[
+2212,
+"2023-06-01 05:03:17"
+]
+]
+},
+"action_x_diagnosis_codes": {
+"ir.actions.act_window": [
+[
+2213,
+"2023-06-01 05:07:07"
+]
+]
+},
+"action_x_repair_reason": {
+"ir.actions.act_window": [
+[
+1975,
+"2023-02-07 08:18:11"
+]
+]
+},
+"action_x_repair_reason_custom": {
+"ir.actions.act_window": [
+[
+2218,
+"2023-06-06 10:18:07"
+]
+]
+},
+"action_x_repair_stages": {
+"ir.actions.act_window": [
+[
+2216,
+"2023-06-01 05:28:22"
+]
+]
+},
+"action_x_repair_sub_reason": {
+"ir.actions.act_window": [
+[
+2214,
+"2023-06-01 05:15:13"
+]
+]
+},
+"action_x_symptom_codes": {
+"ir.actions.act_window": [
+[
+2211,
+"2023-06-01 04:57:20"
+]
+]
+},
+"base_automation_149_rr_notify_customer_in_ro_end_final": {
+"base.automation": [
+[
+149,
+"2022-11-03 03:14:00"
+]
+]
+},
+"base_automation_171_jin_helpdesk_repair_seq_no": {
+"base.automation": [
+[
+171,
+"2023-02-07 10:18:52"
+]
+]
+},
+"base_automation_172_rr_auto_select_product_for_rug_repairs": {
+"base.automation": [
+[
+172,
+"2023-02-08 06:25:24"
+]
+]
+},
+"base_automation_173_rr_auto_select_product_for_rug_repairs_2": {
+"base.automation": [
+[
+173,
+"2023-02-08 06:28:00"
+]
+]
+},
+"base_automation_175_rr_auto_select_product_for_rug_repairs_4": {
+"base.automation": [
+[
+175,
+"2023-02-08 06:32:19"
+]
+]
+},
+"base_automation_178_rr_auto_populate_repair_location": {
+"base.automation": [
+[
+178,
+"2023-02-08 06:45:49"
+]
+]
+},
+"base_automation_201_rr_validate_cancelled_tickets": {
+"base.automation": [
+[
+201,
+"2023-06-07 09:29:09"
+]
+]
+},
+"base_automation_240_slowness_test": {
+"base.automation": [
+[
+240,
+"2023-10-12 09:17:22"
+]
+]
+},
+"base_automation_243_rr_auto_select_product_for_rug_repairs_33": {
+"base.automation": [
+[
+243,
+"2023-12-18 14:12:52"
+]
+]
+},
+"base_automation_250_super_user_validate": {
+"base.automation": [
+[
+250,
+"2024-05-03 07:52:32"
+]
+]
+},
+"base_automation_252_user_location_validation_helpdesk": {
+"base.automation": [
+[
+252,
+"2024-05-16 04:16:42"
+]
+]
+},
+"base_automation_293_jin_company_id_in_conditions": {
+"base.automation": [
+[
+293,
+"2024-07-17 10:40:37"
+]
+]
+},
+"base_automation_294_jin_company_id_in_symptom_areas": {
+"base.automation": [
+[
+294,
+"2024-07-17 10:49:31"
+]
+]
+},
+"base_automation_295_jin_company_id_in_symptom_codes": {
+"base.automation": [
+[
+295,
+"2024-07-17 10:52:30"
+]
+]
+},
+"base_automation_300_jin_company_id_in_diagnosis_areas": {
+"base.automation": [
+[
+300,
+"2024-07-17 10:57:51"
+]
+]
+},
+"base_automation_301_jin_company_id_in_diagnosis_codes": {
+"base.automation": [
+[
+301,
+"2024-07-17 11:00:48"
+]
+]
+},
+"base_automation_302_jin_company_id_in_repair_reason": {
+"base.automation": [
+[
+302,
+"2024-07-17 11:03:44"
+]
+]
+},
+"base_automation_303_jin_company_id_in_repair_reason_customer": {
+"base.automation": [
+[
+303,
+"2024-07-17 11:06:04"
+]
+]
+},
+"base_automation_304_jin_company_id_in_repair_sub_reason": {
+"base.automation": [
+[
+304,
+"2024-07-17 11:08:31"
+]
+]
+},
+"base_automation_305_jin_company_id_in_resolutions": {
+"base.automation": [
+[
+305,
+"2024-07-17 11:10:40"
+]
+]
+},
+"base_automation_306_jin_company_id_in_repair_stages": {
+"base.automation": [
+[
+306,
+"2024-07-17 11:13:57"
+]
+]
+},
+"base_automation_329_jin_company_id_in_helpdesk_stage": {
+"base.automation": [
+[
+329,
+"2024-08-08 01:38:39"
+]
+]
+},
+"base_automation_331_jin_company_id_in_repair_accounts": {
+"base.automation": [
+[
+331,
+"2024-09-12 00:59:01"
+]
+]
+},
+"default_298_helpdesk_ticket_x_studio_pick_id": {
+"ir.default": [
+[
+298,
+"2023-02-07 05:57:13"
+]
+]
+},
+"default_299_x_repair_reason_x_active": {
+"ir.default": [
+[
+299,
+"2023-02-07 08:18:11"
+]
+]
+},
+"default_300_x_repair_reason_x_studio_sequence": {
+"ir.default": [
+[
+300,
+"2023-02-07 08:18:11"
+]
+]
+},
+"default_301_helpdesk_ticket_name": {
+"ir.default": [
+[
+301,
+"2023-02-07 10:23:19"
+]
+]
+},
+"default_328_x_repair_accounts_x_active": {
+"ir.default": [
+[
+328,
+"2023-05-04 01:14:29"
+]
+]
+},
+"default_329_x_repair_accounts_x_studio_sequence": {
+"ir.default": [
+[
+329,
+"2023-05-04 01:14:29"
+]
+]
+},
+"default_332_x_conditions_x_active": {
+"ir.default": [
+[
+332,
+"2023-06-01 04:47:51"
+]
+]
+},
+"default_333_x_conditions_x_studio_sequence": {
+"ir.default": [
+[
+333,
+"2023-06-01 04:47:51"
+]
+]
+},
+"default_334_x_symptom_areas_x_active": {
+"ir.default": [
+[
+334,
+"2023-06-01 04:53:33"
+]
+]
+},
+"default_335_x_symptom_areas_x_studio_sequence": {
+"ir.default": [
+[
+335,
+"2023-06-01 04:53:33"
+]
+]
+},
+"default_336_x_symptom_codes_x_active": {
+"ir.default": [
+[
+336,
+"2023-06-01 04:57:20"
+]
+]
+},
+"default_337_x_symptom_codes_x_studio_sequence": {
+"ir.default": [
+[
+337,
+"2023-06-01 04:57:20"
+]
+]
+},
+"default_338_x_diagnosis_areas_x_active": {
+"ir.default": [
+[
+338,
+"2023-06-01 05:03:17"
+]
+]
+},
+"default_339_x_diagnosis_areas_x_studio_sequence": {
+"ir.default": [
+[
+339,
+"2023-06-01 05:03:17"
+]
+]
+},
+"default_340_x_diagnosis_codes_x_active": {
+"ir.default": [
+[
+340,
+"2023-06-01 05:07:07"
+]
+]
+},
+"default_341_x_diagnosis_codes_x_studio_sequence": {
+"ir.default": [
+[
+341,
+"2023-06-01 05:07:07"
+]
+]
+},
+"default_343_x_repair_sub_reason_x_active": {
+"ir.default": [
+[
+343,
+"2023-06-01 05:15:13"
+]
+]
+},
+"default_344_x_repair_sub_reason_x_studio_sequence": {
+"ir.default": [
+[
+344,
+"2023-06-01 05:15:13"
+]
+]
+},
+"default_349_x_resolutions_x_active": {
+"ir.default": [
+[
+349,
+"2023-06-01 05:22:10"
+]
+]
+},
+"default_350_x_resolutions_x_studio_sequence": {
+"ir.default": [
+[
+350,
+"2023-06-01 05:22:10"
+]
+]
+},
+"default_353_x_repair_stages_x_active": {
+"ir.default": [
+[
+353,
+"2023-06-01 05:28:22"
+]
+]
+},
+"default_354_x_repair_stages_x_studio_sequence": {
+"ir.default": [
+[
+354,
+"2023-06-01 05:28:22"
+]
+]
+},
+"default_355_x_task_diagnosis_x_active": {
+"ir.default": [
+[
+355,
+"2023-06-01 05:40:18"
+]
+]
+},
+"default_356_x_task_diagnosis_x_studio_sequence": {
+"ir.default": [
+[
+356,
+"2023-06-01 05:40:18"
+]
+]
+},
+"default_357_x_repair_reason_custom_x_active": {
+"ir.default": [
+[
+357,
+"2023-06-06 10:18:07"
+]
+]
+},
+"default_358_x_repair_reason_custom_x_studio_sequence": {
+"ir.default": [
+[
+358,
+"2023-06-06 10:18:07"
+]
+]
+},
+"default_360_helpdesk_ticket_x_studio_cancel_status": {
+"ir.default": [
+[
+360,
+"2023-06-07 17:16:19"
+]
+]
+},
+"default_361_helpdesk_ticket_x_studio_reopen_status": {
+"ir.default": [
+[
+361,
+"2023-06-07 17:18:02"
+]
+]
+},
+"default_368_helpdesk_ticket_x_studio_re_estimate_status": {
+"ir.default": [
+[
+368,
+"2023-06-28 10:54:58"
+]
+]
+},
+"default_369_helpdesk_ticket_x_studio_re_estimate_count": {
+"ir.default": [
+[
+369,
+"2023-06-28 10:55:22"
+]
+]
+},
+"default_372_helpdesk_ticket_x_studio_quick_repair_status": {
+"ir.default": [
+[
+372,
+"2023-08-09 08:09:56"
+]
+]
+},
+"fix_repair_document_intro_conclusion": {
+"ir.ui.view": [
+[
+9558,
+"2026-07-09 08:13:02"
+]
+]
+},
+"helpdesk_team_kanban_no_menu": {
+"ir.ui.view": [
+[
+9572,
+"2026-07-28 07:59:20"
+]
+]
+},
+"helpdesk_ticket_form_assign_to_me": {
+"ir.ui.view": [
+[
+9542,
+"2026-05-28 06:51:34"
+]
+]
+},
+"helpdesk_ticket_form_hide_fields": {
+"ir.ui.view": [
+[
+9563,
+"2026-07-21 05:21:51"
+]
+]
+},
+"helpdesk_ticket_form_statusbar_readonly": {
+"ir.ui.view": [
+[
+9567,
+"2026-07-23 06:03:14"
+]
+]
+},
+"helpdesk_ticket_kanban_no_drag": {
+"ir.ui.view": [
+[
+9568,
+"2026-07-23 10:52:34"
+]
+]
+},
+"mail_template_56_repair_customer_letter": {
+"mail.template": [
+[
+56,
+"2023-07-06 03:51:25"
+]
+]
+},
+"mail_template_59_repair_customer_letter_2": {
+"mail.template": [
+[
+59,
+"2023-07-10 14:18:08"
+]
+]
+},
+"mail_template_60_rr_customer_repair_letter_test": {
+"mail.template": [
+[
+60,
+"2023-07-11 09:04:09"
+]
+]
+},
+"mail_template_63_rr_customer_repair_letter_test2": {
+"mail.template": [
+[
+63,
+"2023-07-24 01:35:18"
+]
+]
+},
+"mail_template_64_rr_customer_repair_letter_test3": {
+"mail.template": [
+[
+64,
+"2023-08-01 10:50:16"
+]
+]
+},
+"mail_template_66_repair_final_notice": {
+"mail.template": [
+[
+66,
+"2023-08-02 03:21:37"
+]
+]
+},
+"mail_template_67_repair_final_notice_estimated": {
+"mail.template": [
+[
+67,
+"2023-08-02 05:34:11"
+]
+]
+},
+"mail_template_69_repair_final_notice_scrappage": {
+"mail.template": [
+[
+69,
+"2023-08-02 08:25:58"
+]
+]
+},
+"mail_template_70_repair_reminding_letter": {
+"mail.template": [
+[
+70,
+"2023-08-02 08:45:08"
+]
+]
+},
+"mail_template_71_rr_customer_repair_letter_test4": {
+"mail.template": [
+[
+71,
+"2023-08-03 03:00:58"
+]
+]
+},
+"menu_1054_repair_accounts": {
+"ir.ui.menu": [
+[
+1054,
+"2023-05-04 01:14:29"
+]
+]
+},
+"menu_f6_repair_accounts": {
+"ir.ui.menu": [
+[
+1054,
+"2023-05-04 01:14:29"
+]
+]
+},
+"menu_f6_repair_job_details": {
+"ir.ui.menu": [
+[
+1087,
+"2023-08-02 16:49:43"
+]
+]
+},
+"menu_f6_repair_job_details_for_the_period_rug_only": {
+"ir.ui.menu": [
+[
+1076,
+"2023-06-15 15:47:57"
+]
+]
+},
+"menu_repair_diagnosis_conditions": {
+"ir.ui.menu": [
+[
+1062,
+"2023-06-01 04:47:51"
+]
+]
+},
+"menu_repair_diagnosis_diagnosis_areas": {
+"ir.ui.menu": [
+[
+1065,
+"2023-06-01 05:03:17"
+]
+]
+},
+"menu_repair_diagnosis_diagnosis_codes": {
+"ir.ui.menu": [
+[
+1066,
+"2023-06-01 05:07:07"
+]
+]
+},
+"menu_repair_diagnosis_repair_reason": {
+"ir.ui.menu": [
+[
+977,
+"2023-02-07 08:18:11"
+]
+]
+},
+"menu_repair_diagnosis_repair_reason_custom": {
+"ir.ui.menu": [
+[
+1071,
+"2023-06-06 10:18:07"
+]
+]
+},
+"menu_repair_diagnosis_repair_stages": {
+"ir.ui.menu": [
+[
+1069,
+"2023-06-01 05:28:22"
+]
+]
+},
+"menu_repair_diagnosis_repair_sub_reason": {
+"ir.ui.menu": [
+[
+1067,
+"2023-06-01 05:15:13"
+]
+]
+},
+"menu_repair_diagnosis_resolutions": {
+"ir.ui.menu": [
+[
+1068,
+"2023-06-01 05:22:10"
+]
+]
+},
+"menu_repair_diagnosis_symptom_areas": {
+"ir.ui.menu": [
+[
+1063,
+"2023-06-01 04:53:33"
+]
+]
+},
+"menu_repair_diagnosis_symptom_codes": {
+"ir.ui.menu": [
+[
+1064,
+"2023-06-01 04:57:20"
+]
+]
+},
+"ported_odoo_studio_helpdesk_28046b65_e20c_4a5e_8a99_12fc2676bd8f": {
+"ir.ui.view": [
+[
+8292,
+"2025-05-14 08:11:28"
+]
+]
+},
+"ported_view_helpdesk_ticket_form_4012": {
+"ir.ui.view": [
+[
+4012,
+"2022-11-02 09:22:27"
+]
+]
+},
+"res_config_settings_view_form_fix_repair": {
+"ir.ui.view": [
+[
+9545,
+"2026-06-24 04:44:29"
+]
+]
+},
+"rule_21_user_rule": {
+"ir.rule": [
+[
+21,
+"2021-02-03 05:30:53"
+]
+]
+},
+"rule_223_repair_order_multi_company": {
+"ir.rule": [
+[
+223,
+"2021-02-05 07:46:29"
+]
+]
+},
+"rule_360_helpdesk_administrator": {
+"ir.rule": [
+[
+360,
+"2022-11-02 04:54:47"
+]
+]
+},
+"rule_362_helpdesk_user": {
+"ir.rule": [
+[
+362,
+"2022-11-02 04:54:47"
+]
+]
+},
+"rule_365_team_multi_company": {
+"ir.rule": [
+[
+365,
+"2022-11-02 04:54:47"
+]
+]
+},
+"rule_366_sla_multi_company": {
+"ir.rule": [
+[
+366,
+"2022-11-02 04:54:47"
+]
+]
+},
+"rule_395_helpdesk_ticket_report_multi_company": {
+"ir.rule": [
+[
+395,
+"2023-02-02 11:27:25"
+]
+]
+},
+"rule_396_helpdesk_ticket_report_helpdesk_ticket_user": {
+"ir.rule": [
+[
+396,
+"2023-02-02 11:27:25"
+]
+]
+},
+"rule_552_jin_multi_company_conditions": {
+"ir.rule": [
+[
+552,
+"2024-07-17 10:41:43"
+]
+]
+},
+"rule_553_jin_multi_company_symptom_areas": {
+"ir.rule": [
+[
+553,
+"2024-07-17 10:50:14"
+]
+]
+},
+"rule_554_jin_multi_company_symptom_codes": {
+"ir.rule": [
+[
+554,
+"2024-07-17 10:53:08"
+]
+]
+},
+"rule_555_jin_multi_company_diagnosis_areas": {
+"ir.rule": [
+[
+555,
+"2024-07-17 10:58:50"
+]
+]
+},
+"rule_556_jin_multi_company_diagnosis_codes": {
+"ir.rule": [
+[
+556,
+"2024-07-17 11:01:33"
+]
+]
+},
+"rule_557_jin_multi_company_repair_reason": {
+"ir.rule": [
+[
+557,
+"2024-07-17 11:04:17"
+]
+]
+},
+"rule_558_jin_multi_company_repair_reason_customer": {
+"ir.rule": [
+[
+558,
+"2024-07-17 11:06:39"
+]
+]
+},
+"rule_559_jin_multi_company_repair_sub_reason": {
+"ir.rule": [
+[
+559,
+"2024-07-17 11:09:04"
+]
+]
+},
+"rule_560_jin_multi_company_resolutions": {
+"ir.rule": [
+[
+560,
+"2024-07-17 11:11:37"
+]
+]
+},
+"rule_561_jin_multi_company_repair_stages": {
+"ir.rule": [
+[
+561,
+"2024-07-17 11:14:40"
+]
+]
+},
+"rule_616_jin_multi_company_helpdesk_stage": {
+"ir.rule": [
+[
+616,
+"2024-08-08 01:41:45"
+]
+]
+},
+"rule_626_jin_multi_company_repair_accounts": {
+"ir.rule": [
+[
+626,
+"2024-09-12 01:02:06"
+]
+]
+},
+"rule_679_helpdesk_ticket_report_helpdesk_ticket_administrator": {
+"ir.rule": [
+[
+679,
+"2025-03-18 10:04:15"
+]
+]
+},
+"rule_695_public_user_published_helpdesk_team": {
+"ir.rule": [
+[
+695,
+"2025-03-18 10:06:19"
+]
+]
+},
+"rule_921_stock_data_warehouse": {
+"ir.rule": [
+[
+921,
+"2026-01-20 11:18:23"
+]
+]
+},
+"sa_f5_helpdesk_ticket_rr_auto_populate_repair_location": {
+"ir.actions.server": [
+[
+2000,
+"2023-02-08 06:45:49"
+]
+]
+},
+"sa_f5_helpdesk_ticket_rr_auto_select_product_for_rug_repairs": {
+"ir.actions.server": [
+[
+1989,
+"2023-02-08 06:25:24"
+]
+]
+},
+"sa_f5_helpdesk_ticket_rr_auto_select_product_for_rug_repairs_2": {
+"ir.actions.server": [
+[
+1990,
+"2023-02-08 06:28:00"
+]
+]
+},
+"sa_f5_helpdesk_ticket_rr_auto_select_product_for_rug_repairs_33": {
+"ir.actions.server": [
+[
+2451,
+"2023-12-18 14:12:52"
+]
+]
+},
+"sa_f5_helpdesk_ticket_rr_auto_select_product_for_rug_repairs_4": {
+"ir.actions.server": [
+[
+1992,
+"2023-02-08 06:32:19"
+]
+]
+},
+"sa_f5_helpdesk_ticket_rr_repair_seq_no": {
+"ir.actions.server": [
+[
+1976,
+"2023-02-07 10:18:52"
+]
+]
+},
+"sa_f5_helpdesk_ticket_rr_validate_cancelled_tickets": {
+"ir.actions.server": [
+[
+2222,
+"2023-06-07 09:29:09"
+]
+]
+},
+"sa_f5_repair_order_rr_notify_customer_in_ro_end_final": {
+"ir.actions.server": [
+[
+1817,
+"2022-11-03 03:14:00"
+]
+]
+},
+"sa_f5_x_conditions_jin_company_id_in_conditions": {
+"ir.actions.server": [
+[
+2656,
+"2024-07-17 10:40:37"
+]
+]
+},
+"sa_f5_x_diagnosis_areas_jin_company_id_in_diagnosis_areas": {
+"ir.actions.server": [
+[
+2664,
+"2024-07-17 10:57:51"
+]
+]
+},
+"sa_f5_x_diagnosis_codes_jin_company_id_in_diagnosis_codes": {
+"ir.actions.server": [
+[
+2665,
+"2024-07-17 11:00:48"
+]
+]
+},
+"sa_f5_x_resolutions_jin_company_id_in_resolutions": {
+"ir.actions.server": [
+[
+2669,
+"2024-07-17 11:10:40"
+]
+]
+},
+"sa_f5_x_symptom_areas_jin_company_id_in_symptom_areas": {
+"ir.actions.server": [
+[
+2658,
+"2024-07-17 10:49:31"
+]
+]
+},
+"sa_f5_x_symptom_codes_jin_company_id_in_symptom_codes": {
+"ir.actions.server": [
+[
+2659,
+"2024-07-17 10:52:30"
+]
+]
+},
+"server_action_1814_rr_add_draft_quotation_confirm_button": {
+"ir.actions.server": [
+[
+1814,
+"2022-11-03 00:36:27"
+]
+]
+},
+"server_action_1817_rr_notify_customer_in_ro_end_final": {
+"ir.actions.server": [
+[
+1817,
+"2022-11-03 03:14:00"
+]
+]
+},
+"server_action_1820_rr_notify_customer_in_ro_end_final_2": {
+"ir.actions.server": [
+[
+1820,
+"2022-11-03 04:11:51"
+]
+]
+},
+"server_action_1976_rr_repair_seq_no": {
+"ir.actions.server": [
+[
+1976,
+"2023-02-07 10:18:52"
+]
+]
+},
+"server_action_1979_rr_update_so_in_ro": {
+"ir.actions.server": [
+[
+1979,
+"2023-02-07 14:10:17"
+]
+]
+},
+"server_action_1989_rr_auto_select_product_for_rug_repairs": {
+"ir.actions.server": [
+[
+1989,
+"2023-02-08 06:25:24"
+]
+]
+},
+"server_action_1990_rr_auto_select_product_for_rug_repairs_2": {
+"ir.actions.server": [
+[
+1990,
+"2023-02-08 06:28:00"
+]
+]
+},
+"server_action_1992_rr_auto_select_product_for_rug_repairs_4": {
+"ir.actions.server": [
+[
+1992,
+"2023-02-08 06:32:19"
+]
+]
+},
+"server_action_1994_rr_auto_create_repair_serial_nos": {
+"ir.actions.server": [
+[
+1994,
+"2023-02-08 06:34:48"
+]
+]
+},
+"server_action_1998_rr_update_rug_approval_in_pipeline": {
+"ir.actions.server": [
+[
+1998,
+"2023-02-08 06:41:45"
+]
+]
+},
+"server_action_2000_rr_auto_populate_repair_location": {
+"ir.actions.server": [
+[
+2000,
+"2023-02-08 06:45:49"
+]
+]
+},
+"server_action_2001_rr_send_to_factory": {
+"ir.actions.server": [
+[
+2001,
+"2023-02-08 06:53:21"
+]
+]
+},
+"server_action_2002_rr_receive_at_factory": {
+"ir.actions.server": [
+[
+2002,
+"2023-02-08 06:54:19"
+]
+]
+},
+"server_action_2006_rr_receive_at_sales_centre": {
+"ir.actions.server": [
+[
+2006,
+"2023-02-08 06:58:41"
+]
+]
+},
+"server_action_2007_rr_send_to_sales_centre": {
+"ir.actions.server": [
+[
+2007,
+"2023-02-08 06:59:34"
+]
+]
+},
+"server_action_2159_rr_change_repair_type_to_rug": {
+"ir.actions.server": [
+[
+2159,
+"2023-04-25 06:49:55"
+]
+]
+},
+"server_action_2220_rr_cancel_repair": {
+"ir.actions.server": [
+[
+2220,
+"2023-06-07 08:23:57"
+]
+]
+},
+"server_action_2221_rr_reopen_repair": {
+"ir.actions.server": [
+[
+2221,
+"2023-06-07 09:10:46"
+]
+]
+},
+"server_action_2222_rr_validate_cancelled_tickets": {
+"ir.actions.server": [
+[
+2222,
+"2023-06-07 09:29:09"
+]
+]
+},
+"server_action_2343_rr_cancel_repair_2": {
+"ir.actions.server": [
+[
+2343,
+"2023-08-23 07:05:32"
+]
+]
+},
+"server_action_2450_rr_rr_auto_select_product_for_rug_repairs_22": {
+"ir.actions.server": [
+[
+2450,
+"2023-12-18 08:09:29"
+]
+]
+},
+"server_action_2451_rr_auto_select_product_for_rug_repairs_33": {
+"ir.actions.server": [
+[
+2451,
+"2023-12-18 14:12:52"
+]
+]
+},
+"server_action_2544_super_user_validate": {
+"ir.actions.server": [
+[
+2544,
+"2024-05-03 07:52:32"
+]
+]
+},
+"server_action_2558_user_location_validation_helpdesk": {
+"ir.actions.server": [
+[
+2558,
+"2024-05-16 04:16:42"
+]
+]
+},
+"server_action_2656_jin_company_id_in_conditions": {
+"ir.actions.server": [
+[
+2656,
+"2024-07-17 10:40:37"
+]
+]
+},
+"server_action_2658_jin_company_id_in_symptom_areas": {
+"ir.actions.server": [
+[
+2658,
+"2024-07-17 10:49:31"
+]
+]
+},
+"server_action_2659_jin_company_id_in_symptom_codes": {
+"ir.actions.server": [
+[
+2659,
+"2024-07-17 10:52:30"
+]
+]
+},
+"server_action_2664_jin_company_id_in_diagnosis_areas": {
+"ir.actions.server": [
+[
+2664,
+"2024-07-17 10:57:51"
+]
+]
+},
+"server_action_2665_jin_company_id_in_diagnosis_codes": {
+"ir.actions.server": [
+[
+2665,
+"2024-07-17 11:00:48"
+]
+]
+},
+"server_action_2666_jin_company_id_in_repair_reason": {
+"ir.actions.server": [
+[
+2666,
+"2024-07-17 11:03:44"
+]
+]
+},
+"server_action_2667_jin_company_id_in_repair_reason_customer": {
+"ir.actions.server": [
+[
+2667,
+"2024-07-17 11:06:04"
+]
+]
+},
+"server_action_2668_jin_company_id_in_repair_sub_reason": {
+"ir.actions.server": [
+[
+2668,
+"2024-07-17 11:08:31"
+]
+]
+},
+"server_action_2669_jin_company_id_in_resolutions": {
+"ir.actions.server": [
+[
+2669,
+"2024-07-17 11:10:40"
+]
+]
+},
+"server_action_2670_jin_company_id_in_repair_stages": {
+"ir.actions.server": [
+[
+2670,
+"2024-07-17 11:13:57"
+]
+]
+},
+"server_action_2760_jin_company_id_in_helpdesk_stage": {
+"ir.actions.server": [
+[
+2760,
+"2024-08-08 01:38:39"
+]
+]
+},
+"server_action_2790_jin_company_id_in_repair_accounts": {
+"ir.actions.server": [
+[
+2790,
+"2024-09-12 00:59:01"
+]
+]
+},
+"view_2391_odoo_studio_res_users_tree_customization_e": {
+"ir.ui.view": [
+[
+2391,
+"2021-06-16 06:12:24"
+]
+]
+},
+"view_4013_odoo_studio_helpdesk_ticket_form_button_e": {
+"ir.ui.view": [
+[
+4013,
+"2022-11-02 10:27:35"
+]
+]
+},
+"view_4014_odoo_studio_repair_form_customization_e": {
+"ir.ui.view": [
+[
+4014,
+"2022-11-03 00:38:44"
+]
+]
+},
+"view_4015_odoo_studio_repair_form_customization_button_e": {
+"ir.ui.view": [
+[
+4015,
+"2022-11-03 00:46:37"
+]
+]
+},
+"view_4610_odoo_studio_helpdesk_ticket_type_tree_customization_e": {
+"ir.ui.view": [
+[
+4610,
+"2023-02-06 08:13:41"
+]
+]
+},
+"view_4611_odoo_studio_helpdesk_stages_tree_customization_e": {
+"ir.ui.view": [
+[
+4611,
+"2023-02-06 08:17:07"
+]
+]
+},
+"view_4612_default_list_view_for_x_repair_reason_e": {
+"ir.ui.view": [
+[
+4612,
+"2023-02-07 08:18:11"
+]
+]
+},
+"view_4613_default_form_view_for_x_repair_reason_e": {
+"ir.ui.view": [
+[
+4613,
+"2023-02-07 08:18:11"
+]
+]
+},
+"view_4614_default_search_view_for_x_repair_reason_e": {
+"ir.ui.view": [
+[
+4614,
+"2023-02-07 08:18:11"
+]
+]
+},
+"view_4735_odoo_studio_helpdesk_ticket_kanban_customization_e": {
+"ir.ui.view": [
+[
+4735,
+"2023-02-08 11:56:49"
+]
+]
+},
+"view_4937_default_list_view_for_x_repair_accounts_e": {
+"ir.ui.view": [
+[
+4937,
+"2023-05-04 01:14:29"
+]
+]
+},
+"view_4938_default_form_view_for_x_repair_accounts_e": {
+"ir.ui.view": [
+[
+4938,
+"2023-05-04 01:14:29"
+]
+]
+},
+"view_4939_default_search_view_for_x_repair_accounts_e": {
+"ir.ui.view": [
+[
+4939,
+"2023-05-04 01:14:29"
+]
+]
+},
+"view_4950_default_list_view_for_x_conditions_e": {
+"ir.ui.view": [
+[
+4950,
+"2023-06-01 04:47:51"
+]
+]
+},
+"view_4951_default_form_view_for_x_conditions_e": {
+"ir.ui.view": [
+[
+4951,
+"2023-06-01 04:47:51"
+]
+]
+},
+"view_4952_default_search_view_for_x_conditions_e": {
+"ir.ui.view": [
+[
+4952,
+"2023-06-01 04:47:51"
+]
+]
+},
+"view_4954_default_list_view_for_x_symptom_areas_e": {
+"ir.ui.view": [
+[
+4954,
+"2023-06-01 04:53:33"
+]
+]
+},
+"view_4955_default_form_view_for_x_symptom_areas_e": {
+"ir.ui.view": [
+[
+4955,
+"2023-06-01 04:53:33"
+]
+]
+},
+"view_4956_default_search_view_for_x_symptom_areas_e": {
+"ir.ui.view": [
+[
+4956,
+"2023-06-01 04:53:33"
+]
+]
+},
+"view_4960_default_list_view_for_x_symptom_codes_e": {
+"ir.ui.view": [
+[
+4960,
+"2023-06-01 04:57:20"
+]
+]
+},
+"view_4961_default_form_view_for_x_symptom_codes_e": {
+"ir.ui.view": [
+[
+4961,
+"2023-06-01 04:57:20"
+]
+]
+},
+"view_4962_default_search_view_for_x_symptom_codes_e": {
+"ir.ui.view": [
+[
+4962,
+"2023-06-01 04:57:20"
+]
+]
+},
+"view_4964_default_list_view_for_x_diagnosis_areas_e": {
+"ir.ui.view": [
+[
+4964,
+"2023-06-01 05:03:17"
+]
+]
+},
+"view_4965_default_form_view_for_x_diagnosis_areas_e": {
+"ir.ui.view": [
+[
+4965,
+"2023-06-01 05:03:17"
+]
+]
+},
+"view_4966_default_search_view_for_x_diagnosis_areas_e": {
+"ir.ui.view": [
+[
+4966,
+"2023-06-01 05:03:17"
+]
+]
+},
+"view_4968_default_list_view_for_x_diagnosis_codes_e": {
+"ir.ui.view": [
+[
+4968,
+"2023-06-01 05:07:07"
+]
+]
+},
+"view_4969_default_form_view_for_x_diagnosis_codes_e": {
+"ir.ui.view": [
+[
+4969,
+"2023-06-01 05:07:07"
+]
+]
+},
+"view_4970_default_search_view_for_x_diagnosis_codes_e": {
+"ir.ui.view": [
+[
+4970,
+"2023-06-01 05:07:07"
+]
+]
+},
+"view_4972_default_list_view_for_x_repair_sub_reason_e": {
+"ir.ui.view": [
+[
+4972,
+"2023-06-01 05:15:13"
+]
+]
+},
+"view_4973_default_form_view_for_x_repair_sub_reason_e": {
+"ir.ui.view": [
+[
+4973,
+"2023-06-01 05:15:13"
+]
+]
+},
+"view_4974_default_search_view_for_x_repair_sub_reason_e": {
+"ir.ui.view": [
+[
+4974,
+"2023-06-01 05:15:13"
+]
+]
+},
+"view_4977_default_list_view_for_x_resolutions_e": {
+"ir.ui.view": [
+[
+4977,
+"2023-06-01 05:22:10"
+]
+]
+},
+"view_4978_default_form_view_for_x_resolutions_e": {
+"ir.ui.view": [
+[
+4978,
+"2023-06-01 05:22:10"
+]
+]
+},
+"view_4979_default_search_view_for_x_resolutions_e": {
+"ir.ui.view": [
+[
+4979,
+"2023-06-01 05:22:10"
+]
+]
+},
+"view_4981_default_list_view_for_x_repair_stages_e": {
+"ir.ui.view": [
+[
+4981,
+"2023-06-01 05:28:22"
+]
+]
+},
+"view_4982_default_form_view_for_x_repair_stages_e": {
+"ir.ui.view": [
+[
+4982,
+"2023-06-01 05:28:22"
+]
+]
+},
+"view_4983_default_search_view_for_x_repair_stages_e": {
+"ir.ui.view": [
+[
+4983,
+"2023-06-01 05:28:22"
+]
+]
+},
+"view_4985_default_list_view_for_x_task_diagnosis_e": {
+"ir.ui.view": [
+[
+4985,
+"2023-06-01 05:40:18"
+]
+]
+},
+"view_4986_default_form_view_for_x_task_diagnosis_e": {
+"ir.ui.view": [
+[
+4986,
+"2023-06-01 05:40:18"
+]
+]
+},
+"view_4987_default_search_view_for_x_task_diagnosis_e": {
+"ir.ui.view": [
+[
+4987,
+"2023-06-01 05:40:18"
+]
+]
+},
+"view_4990_default_list_view_for_x_repair_reason_custom_e": {
+"ir.ui.view": [
+[
+4990,
+"2023-06-06 10:18:07"
+]
+]
+},
+"view_4991_default_form_view_for_x_repair_reason_custom_e": {
+"ir.ui.view": [
+[
+4991,
+"2023-06-06 10:18:07"
+]
+]
+},
+"view_4992_default_search_view_for_x_repair_reason_custom_e": {
+"ir.ui.view": [
+[
+4992,
+"2023-06-06 10:18:07"
+]
+]
+},
+"view_5027_odoo_studio_helpdesk_ticket_tree_customization_e": {
+"ir.ui.view": [
+[
+5027,
+"2023-06-15 16:02:59"
+]
+]
+},
+"view_5484_odoo_studio_stock_warehouse_customization_e": {
+"ir.ui.view": [
+[
+5484,
+"2024-04-25 01:48:18"
+]
+]
+},
+"view_5964_odoo_studio_helpdesk_stage_form_customization_e": {
+"ir.ui.view": [
+[
+5964,
+"2024-08-08 01:25:13"
+]
+]
+},
+"view_final_x_conditions_odoo_studio_default_list_view_for_x_conditions_customization": {
+"ir.ui.view": [
+[
+4953,
+"2023-06-01 04:49:29"
+]
+]
+},
+"view_final_x_diagnosis_areas_odoo_studio_default_list_view_for_x_diagnosis_areas_customiz": {
+"ir.ui.view": [
+[
+4967,
+"2023-06-01 05:04:20"
+]
+]
+},
+"view_final_x_diagnosis_codes_odoo_studio_default_list_view_for_x_diagnosis_codes_customiz": {
+"ir.ui.view": [
+[
+4971,
+"2023-06-01 05:08:13"
+]
+]
+},
+"view_final_x_repair_accounts_odoo_studio_default_form_view_for_x_repair_accounts_customiz": {
+"ir.ui.view": [
+[
+4941,
+"2023-05-04 01:17:30"
+]
+]
+},
+"view_final_x_repair_accounts_odoo_studio_default_list_view_for_x_repair_accounts_customiz": {
+"ir.ui.view": [
+[
+4940,
+"2023-05-04 01:15:51"
+]
+]
+},
+"view_final_x_repair_reason_custom_odoo_studio_default_list_view_for_x_repair_reason_custom": {
+"ir.ui.view": [
+[
+4993,
+"2023-06-06 10:19:16"
+]
+]
+},
+"view_final_x_repair_reason_odoo_studio_default_list_view_for_x_repair_reason_customizat": {
+"ir.ui.view": [
+[
+4615,
+"2023-02-07 08:19:35"
+]
+]
+},
+"view_final_x_repair_stages_odoo_studio_default_list_view_for_x_repair_stages_customizat": {
+"ir.ui.view": [
+[
+4984,
+"2023-06-01 05:30:49"
+]
+]
+},
+"view_final_x_repair_sub_reason_odoo_studio_default_list_view_for_x_repair_sub_reason_custo": {
+"ir.ui.view": [
+[
+4976,
+"2023-06-01 05:17:43"
+]
+]
+},
+"view_final_x_resolutions_odoo_studio_default_list_view_for_x_resolutions_customizatio": {
+"ir.ui.view": [
+[
+4980,
+"2023-06-01 05:24:12"
+]
+]
+},
+"view_final_x_symptom_areas_odoo_studio_default_list_view_for_x_symptom_areas_customizat": {
+"ir.ui.view": [
+[
+4959,
+"2023-06-01 04:54:47"
+]
+]
+},
+"view_final_x_symptom_codes_odoo_studio_default_list_view_for_x_symptom_codes_customizat": {
+"ir.ui.view": [
+[
+4963,
+"2023-06-01 04:58:38"
+]
+]
+},
+"view_final_x_task_diagnosis_odoo_studio_default_list_view_for_x_task_diagnosis_customiza": {
+"ir.ui.view": [
+[
+4988,
+"2023-06-01 05:41:32"
+]
+]
+},
+"view_project_task_form_4730": {
+"ir.ui.view": [
+[
+4730,
+"2023-02-08 09:53:49"
+]
+]
+},
+"view_project_task_form_5011": {
+"ir.ui.view": [
+[
+5011,
+"2023-06-08 03:05:39"
+]
+]
+}
+}
