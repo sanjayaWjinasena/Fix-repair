@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Jinasena : Module : Repair',
-    'version': '17.0.1.0.367',
+    'version': '17.0.1.0.368',
     'summary': 'Enhancements to the Customer Care - Repair helpdesk workflow',
     'author': 'Jinasena Agricultural Machinery (Pvt) Ltd.',
     'category': 'Helpdesk',
@@ -41,6 +41,7 @@
         'data/ir_model_pins.xml',
         'data/fix_repair_data.xml',
         'security/ir.model.access.csv',
+        'security/removed_handmade_access_rights.xml',
         # Staging_Migration: 'data/repair_stages.xml' loaded by post_init_hook (fresh DB only).
         # Staging_Migration: 'data/repair_sequences.xml' loaded by post_init_hook (fresh DB only).
         # Staging_Migration: 'data/helpdesk_ticket_types.xml' loaded by post_init_hook (fresh DB only).

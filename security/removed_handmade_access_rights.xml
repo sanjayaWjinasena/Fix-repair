@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fix-repair: access rights removed on 2026-10-06. They were entered by hand on production (Settings > Technical > Access Rights), which makes them environment data, not repo functionality; the port had also dropped their group, so they applied to every user. Kept here, commented out, so any of them can be brought back. Nothing in this file is loaded. -->
+<odoo>
+<!-- REMOVED access_6067_helpdesk_sla (1000): hand-made on production (hand-made (no id)); the port had dropped its group so it applied to every user. Production restricts it to group "Helpdesk / Jin - Repair - Full Rights". Uncomment (and set the group) to bring it back. -->
+  <!--
+  <record id="access_6067_helpdesk_sla" model="ir.model.access">
+    <field name="name">helpdesk.sla</field>
+    <field name="model_id" ref="helpdesk.model_helpdesk_sla"/>
+    <field name="group_id" ref="BugFix-Studio-Misc.group_g_helpdesk_jin_repair_full_rights"/>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="False"/>
+    <field name="perm_create" eval="False"/>
+    <field name="perm_unlink" eval="False"/>
+  </record>
+  -->
+<!-- REMOVED access_6052_helpdesk_sla (1000): hand-made on production (hand-made (no id)); the port had dropped its group so it applied to every user. Production restricts it to group "Helpdesk / Jin - Repair - Minimum Rights". Uncomment (and set the group) to bring it back. -->
+  <!--
+  <record id="access_6052_helpdesk_sla" model="ir.model.access">
+    <field name="name">helpdesk.sla</field>
+    <field name="model_id" ref="helpdesk.model_helpdesk_sla"/>
+    <field name="group_id" ref="BugFix-Studio-Misc.group_g_helpdesk_jin_repair_minimum_rights"/>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="False"/>
+    <field name="perm_create" eval="False"/>
+    <field name="perm_unlink" eval="False"/>
+  </record>
+  -->
+<!-- REMOVED access_6138_helpdesk_sla (1000): hand-made on production (hand-made (no id)); the port had dropped its group so it applied to every user. Production restricts it to group "Helpdesk / Jin - Repair - Ticket Creater". Uncomment (and set the group) to bring it back. -->
+  <!--
+  <record id="access_6138_helpdesk_sla" model="ir.model.access">
+    <field name="name">helpdesk.sla</field>
+    <field name="model_id" ref="helpdesk.model_helpdesk_sla"/>
+    <field name="group_id" ref="BugFix-Studio-Misc.group_g_helpdesk_jin_repair_ticket_creater"/>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="False"/>
+    <field name="perm_create" eval="False"/>
+    <field name="perm_unlink" eval="False"/>
+  </record>
+  -->
+<!-- REMOVED access_6068_helpdesk_sla_status (1000): hand-made on production (hand-made (no id)); the port had dropped its group so it applied to every user. Production restricts it to group "Helpdesk / Jin - Repair - Full Rights". Uncomment (and set the group) to bring it back. -->
+  <!--
+  <record id="access_6068_helpdesk_sla_status" model="ir.model.access">
+    <field name="name">helpdesk.sla.status</field>
+    <field name="model_id" ref="helpdesk.model_helpdesk_sla_status"/>
+    <field name="group_id" ref="BugFix-Studio-Misc.group_g_helpdesk_jin_repair_full_rights"/>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="False"/>
+    <field name="perm_create" eval="False"/>
+    <field name="perm_unlink" eval="False"/>
+  </record>
+  -->
+<!-- REMOVED access_6053_helpdesk_sla_status (1000): hand-made on production (hand-made (no id)); the port had dropped its group so it applied to every user. Production restricts it to group "Helpdesk / Jin - Repair - Minimum Rights". Uncomment (and set the group) to bring it back. -->
+  <!--
+  <record id="access_6053_helpdesk_sla_status" model="ir.model.access">
+    <field name="name">helpdesk.sla.status</field>
+    <field name="model_id" ref="helpdesk.model_helpdesk_sla_status"/>
+    <field name="group_id" ref="BugFix-Studio-Misc.group_g_helpdesk_jin_repair_minimum_rights"/>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="False"/>
+    <field name="perm_create" eval="False"/>
+    <field name="perm_unlink" eval="False"/>
+  </record>
+  -->
+<!-- REMOVED access_6139_helpdesk_sla_status (1000): hand-made on production (hand-made (no id)); the port had dropped its group so it applied to every user. Production restricts it to group "Helpdesk / Jin - Repair - Ticket Creater". Uncomment (and set the group) to bring it back. -->
+  <!--
+  <record id="access_6139_helpdesk_sla_status" model="ir.model.access">
+    <field name="name">helpdesk.sla.status</field>
+    <field name="model_id" ref="helpdesk.model_helpdesk_sla_status"/>
+    <field name="group_id" ref="BugFix-Studio-Misc.group_g_helpdesk_jin_repair_ticket_creater"/>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="False"/>
+    <field name="perm_create" eval="False"/>
+    <field name="perm_unlink" eval="False"/>
+  </record>
+  -->
+<!-- REMOVED access_6069_helpdesk_stage (1000): hand-made on production (hand-made (no id)); the port had dropped its group so it applied to every user. Production restricts it to group "Helpdesk / Jin - Repair - Full Rights". Uncomment (and set the group) to bring it back. -->
+  <!--
+  <record id="access_6069_helpdesk_stage" model="ir.model.access">
+    <field name="name">helpdesk.stage</field>
+    <field name="model_id" ref="Fix-repair.model_helpdesk_stage"/>
+    <field name="group_id" ref="BugFix-Studio-Misc.group_g_helpdesk_jin_repair_full_rights"/>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="False"/>
+    <field name="perm_create" eval="False"/>
+    <field name="perm_unlink" eval="False"/>
+  </record>
+  -->
+<!-- REMOVED access_6054_helpdesk_stage (1000): hand-made on production (hand-made (no id)); the port had dropped its group so it applied to every user. Production restricts it to group "Helpdesk / Jin - Repair - Minimum Rights". Uncomment (and set the group) to bring it back. -->
+  <!--
+  <record id="access_6054_helpdesk_stage" model="ir.model.access">
+    <field name="name">helpdesk.stage</field>
+    <field name="model_id" ref="Fix-repair.model_helpdesk_stage"/>
+    <field name="group_id" ref="BugFix-Studio-Misc.group_g_helpdesk_jin_repair_minimum_rights"/>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="False"/>
+    <field name="perm_create" eval="False"/>
+    <field name="perm_unlink" eval="False"/>
+  </record>
+  -->
+<!-- REMOVED access_6140_helpdesk_stage (1000): hand-made on production (hand-made (no id)); the port had dropped its group so it applied to every user. Production restricts it to group "Helpdesk / Jin - Repair - Ticket Creater". Uncomment (and set the group) to bring it back. -->
+  <!--
+  <record id="access_6140_helpdesk_stage" model="ir.model.access">
+    <field name="name">helpdesk.stage</field>
+    <field name="model_id" ref="Fix-repair.model_helpdesk_stage"/>
+    <field name="group_id" ref="BugFix-Studio-Misc.group_g_helpdesk_jin_repair_ticket_creater"/>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="False"/>
+    <field name="perm_create" eval="False"/>
+    <field name="perm_unlink" eval="False"/>
+  </record>
+  -->
+<!-- REMOVED access_6066_helpdesk_tag (1000): hand-made on production (hand-made (no id)); the port had dropped its group so it applied to every user. Production restricts it to group "Helpdesk / Jin - Repair - Full Rights". Uncomment (and set the group) to bring it back. -->
+  <!--
+  <record id="access_6066_helpdesk_tag" model="ir.model.access">
+    <field name="name">helpdesk.tag</field>
+    <field name="model_id" ref="helpdesk.model_helpdesk_tag"/>
+    <field name="group_id" ref="BugFix-Studio-Misc.group_g_helpdesk_jin_repair_full_rights"/>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="False"/>
+    <field name="perm_create" eval="False"/>
+    <field name="perm_unlink" eval="False"/>
+  </record>
+  -->
+<!-- REMOVED access_6051_helpdesk_tag (1000): hand-made on production (hand-made (no id)); the port had dropped its group so it applied to every user. Production restricts it to group "Helpdesk / Jin - Repair - Minimum Rights". Uncomment (and set the group) to bring it back. -->
+  <!--
+  <record id="access_6051_helpdesk_tag" model="ir.model.access">
+    <field name="name">helpdesk.tag</field>
+    <field name="model_id" ref="helpdesk.model_helpdesk_tag"/>
+    <field name="group_id" ref="BugFix-Studio-Misc.group_g_helpdesk_jin_repair_minimum_rights"/>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="False"/>
+    <field name="perm_create" eval="False"/>
+    <field name="perm_unlink" eval="False"/>
+  </record>
+  -->
+<!-- REMOVED access_6137_helpdesk_tag (1111): hand-made on production (hand-made (no id)); the port had dropped its group so it applied to every user. Production restricts it to group "Helpdesk / Jin - Repair - Ticket Creater". Uncomment (and set the group) to bring it back. -->
+  <!--
+  <record id="access_6137_helpdesk_tag" model="ir.model.access">
+    <field name="name">helpdesk.tag</field>
+    <field name="model_id" ref="helpdesk.model_helpdesk_tag"/>
+    <field name="group_id" ref="BugFix-Studio-Misc.group_g_helpdesk_jin_repair_ticket_creater"/>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="True"/>
+    <field name="perm_create" eval="True"/>
+    <field name="perm_unlink" eval="True"/>
+  </record>
+  -->
+<!-- REMOVED access_8642_access_helpdesk_team_rohana_read (1000): hand-made on production (hand-made (no id)); the port had dropped its group so it applied to every user. Production restricts it to group "Rohana". Uncomment (and set the group) to bring it back. -->
+  <!--
+  <record id="access_8642_access_helpdesk_team_rohana_read" model="ir.model.access">
+    <field name="name">access_helpdesk_team_rohana_read</field>
+    <field name="model_id" ref="helpdesk.model_helpdesk_team"/>
+    <field name="group_id" ref="SET_GROUP"/>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="False"/>
+    <field name="perm_create" eval="False"/>
+    <field name="perm_unlink" eval="False"/>
+  </record>
+  -->
+<!-- REMOVED access_6072_helpdesk_ticket_report_analysis_user (1000): hand-made on production (hand-made (no id)); the port had dropped its group so it applied to every user. Production restricts it to group "Helpdesk / Jin - Repair - Full Rights". Uncomment (and set the group) to bring it back. -->
+  <!--
+  <record id="access_6072_helpdesk_ticket_report_analysis_user" model="ir.model.access">
+    <field name="name">helpdesk.ticket.report.analysis.user</field>
+    <field name="model_id" ref="helpdesk.model_helpdesk_ticket_report_analysis"/>
+    <field name="group_id" ref="BugFix-Studio-Misc.group_g_helpdesk_jin_repair_full_rights"/>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="False"/>
+    <field name="perm_create" eval="False"/>
+    <field name="perm_unlink" eval="False"/>
+  </record>
+  -->
+<!-- REMOVED access_6057_helpdesk_ticket_report_analysis_user (1000): hand-made on production (hand-made (no id)); the port had dropped its group so it applied to every user. Production restricts it to group "Helpdesk / Jin - Repair - Minimum Rights". Uncomment (and set the group) to bring it back. -->
+  <!--
+  <record id="access_6057_helpdesk_ticket_report_analysis_user" model="ir.model.access">
+    <field name="name">helpdesk.ticket.report.analysis.user</field>
+    <field name="model_id" ref="helpdesk.model_helpdesk_ticket_report_analysis"/>
+    <field name="group_id" ref="BugFix-Studio-Misc.group_g_helpdesk_jin_repair_minimum_rights"/>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="False"/>
+    <field name="perm_create" eval="False"/>
+    <field name="perm_unlink" eval="False"/>
+  </record>
+  -->
+<!-- REMOVED access_6143_helpdesk_ticket_report_analysis_user (1000): hand-made on production (hand-made (no id)); the port had dropped its group so it applied to every user. Production restricts it to group "Helpdesk / Jin - Repair - Ticket Creater". Uncomment (and set the group) to bring it back. -->
+  <!--
+  <record id="access_6143_helpdesk_ticket_report_analysis_user" model="ir.model.access">
+    <field name="name">helpdesk.ticket.report.analysis.user</field>
+    <field name="model_id" ref="helpdesk.model_helpdesk_ticket_report_analysis"/>
+    <field name="group_id" ref="BugFix-Studio-Misc.group_g_helpdesk_jin_repair_ticket_creater"/>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="False"/>
+    <field name="perm_create" eval="False"/>
+    <field name="perm_unlink" eval="False"/>
+  </record>
+  -->
+<!-- REMOVED access_6071_helpdesk_ticket_type_user (1000): hand-made on production (hand-made (no id)); the port had dropped its group so it applied to every user. Production restricts it to group "Helpdesk / Jin - Repair - Full Rights". Uncomment (and set the group) to bring it back. -->
+  <!--
+  <record id="access_6071_helpdesk_ticket_type_user" model="ir.model.access">
+    <field name="name">helpdesk.ticket.type.user</field>
+    <field name="model_id" ref="Fix-repair.model_helpdesk_ticket_type"/>
+    <field name="group_id" ref="BugFix-Studio-Misc.group_g_helpdesk_jin_repair_full_rights"/>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="False"/>
+    <field name="perm_create" eval="False"/>
+    <field name="perm_unlink" eval="False"/>
+  </record>
+  -->
+<!-- REMOVED access_6056_helpdesk_ticket_type_user (1000): hand-made on production (hand-made (no id)); the port had dropped its group so it applied to every user. Production restricts it to group "Helpdesk / Jin - Repair - Minimum Rights". Uncomment (and set the group) to bring it back. -->
+  <!--
+  <record id="access_6056_helpdesk_ticket_type_user" model="ir.model.access">
+    <field name="name">helpdesk.ticket.type.user</field>
+    <field name="model_id" ref="Fix-repair.model_helpdesk_ticket_type"/>
+    <field name="group_id" ref="BugFix-Studio-Misc.group_g_helpdesk_jin_repair_minimum_rights"/>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="False"/>
+    <field name="perm_create" eval="False"/>
+    <field name="perm_unlink" eval="False"/>
+  </record>
+  -->
+<!-- REMOVED access_6142_helpdesk_ticket_type_user (1000): hand-made on production (hand-made (no id)); the port had dropped its group so it applied to every user. Production restricts it to group "Helpdesk / Jin - Repair - Ticket Creater". Uncomment (and set the group) to bring it back. -->
+  <!--
+  <record id="access_6142_helpdesk_ticket_type_user" model="ir.model.access">
+    <field name="name">helpdesk.ticket.type.user</field>
+    <field name="model_id" ref="Fix-repair.model_helpdesk_ticket_type"/>
+    <field name="group_id" ref="BugFix-Studio-Misc.group_g_helpdesk_jin_repair_ticket_creater"/>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="False"/>
+    <field name="perm_create" eval="False"/>
+    <field name="perm_unlink" eval="False"/>
+  </record>
+  -->
+<!-- REMOVED access_8643_access_helpdesk_ticket_type_rohana_read (1000): hand-made on production (hand-made (no id)); the port had dropped its group so it applied to every user. Production restricts it to group "Rohana". Uncomment (and set the group) to bring it back. -->
+  <!--
+  <record id="access_8643_access_helpdesk_ticket_type_rohana_read" model="ir.model.access">
+    <field name="name">access_helpdesk_ticket_type_rohana_read</field>
+    <field name="model_id" ref="Fix-repair.model_helpdesk_ticket_type"/>
+    <field name="group_id" ref="SET_GROUP"/>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="False"/>
+    <field name="perm_create" eval="False"/>
+    <field name="perm_unlink" eval="False"/>
+  </record>
+  -->
+<!-- REMOVED access_6556_repair_user (1000): hand-made on production (hand-made (no id)); the port had dropped its group so it applied to every user. Production restricts it to group "Manufacturing / Jin - Manufacturing - MO Operator". Uncomment (and set the group) to bring it back. -->
+  <!--
+  <record id="access_6556_repair_user" model="ir.model.access">
+    <field name="name">Repair user</field>
+    <field name="model_id" ref="Fix-repair.model_repair_order"/>
+    <field name="group_id" ref="BugFix-Studio-Misc.group_g_manufacturing_jin_manufacturing_mo_operator"/>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="False"/>
+    <field name="perm_create" eval="False"/>
+    <field name="perm_unlink" eval="False"/>
+  </record>
+  -->
+<!-- REMOVED access_6442_repair_user (1000): hand-made on production (hand-made (no id)); the port had dropped its group so it applied to every user. Production restricts it to group "Manufacturing / Jin - Manufacturing - Production Orders Dismantler". Uncomment (and set the group) to bring it back. -->
+  <!--
+  <record id="access_6442_repair_user" model="ir.model.access">
+    <field name="name">Repair user</field>
+    <field name="model_id" ref="Fix-repair.model_repair_order"/>
+    <field name="group_id" ref="BugFix-Studio-Misc.group_g_manufacturing_jin_manufacturing_production_orders_dismantler"/>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="False"/>
+    <field name="perm_create" eval="False"/>
+    <field name="perm_unlink" eval="False"/>
+  </record>
+  -->
+<!-- REMOVED access_5707_repair_user (1000): hand-made on production (hand-made (no id)); the port had dropped its group so it applied to every user. Production restricts it to group "Manufacturing / Jin - Manufacturing - Those with only view Rights". Uncomment (and set the group) to bring it back. -->
+  <!--
+  <record id="access_5707_repair_user" model="ir.model.access">
+    <field name="name">Repair user</field>
+    <field name="model_id" ref="Fix-repair.model_repair_order"/>
+    <field name="group_id" ref="BugFix-Studio-Misc.group_g_manufacturing_jin_manufacturing_those_with_only_view_rights"/>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="False"/>
+    <field name="perm_create" eval="False"/>
+    <field name="perm_unlink" eval="False"/>
+  </record>
+  -->
+<!-- REMOVED access_7319_repair_oreder (1111): hand-made on production (hand-made (no id)); the port had dropped its group so it applied to every user. Production restricts it to group "Helpdesk / Jin - Repair - Full Rights". Uncomment (and set the group) to bring it back. -->
+  <!--
+  <record id="access_7319_repair_oreder" model="ir.model.access">
+    <field name="name">Repair Oreder</field>
+    <field name="model_id" ref="Fix-repair.model_repair_order"/>
+    <field name="group_id" ref="BugFix-Studio-Misc.group_g_helpdesk_jin_repair_full_rights"/>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="True"/>
+    <field name="perm_create" eval="True"/>
+    <field name="perm_unlink" eval="True"/>
+  </record>
+  -->
+<!-- REMOVED access_6557_repair_tags_user (1000): hand-made on production (hand-made (no id)); the port had dropped its group so it applied to every user. Production restricts it to group "Manufacturing / Jin - Manufacturing - MO Operator". Uncomment (and set the group) to bring it back. -->
+  <!--
+  <record id="access_6557_repair_tags_user" model="ir.model.access">
+    <field name="name">Repair Tags user</field>
+    <field name="model_id" ref="repair.model_repair_tags"/>
+    <field name="group_id" ref="BugFix-Studio-Misc.group_g_manufacturing_jin_manufacturing_mo_operator"/>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="False"/>
+    <field name="perm_create" eval="False"/>
+    <field name="perm_unlink" eval="False"/>
+  </record>
+  -->
+<!-- REMOVED access_6443_repair_tags_user (1000): hand-made on production (hand-made (no id)); the port had dropped its group so it applied to every user. Production restricts it to group "Manufacturing / Jin - Manufacturing - Production Orders Dismantler". Uncomment (and set the group) to bring it back. -->
+  <!--
+  <record id="access_6443_repair_tags_user" model="ir.model.access">
+    <field name="name">Repair Tags user</field>
+    <field name="model_id" ref="repair.model_repair_tags"/>
+    <field name="group_id" ref="BugFix-Studio-Misc.group_g_manufacturing_jin_manufacturing_production_orders_dismantler"/>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="False"/>
+    <field name="perm_create" eval="False"/>
+    <field name="perm_unlink" eval="False"/>
+  </record>
+  -->
+<!-- REMOVED access_5708_repair_tags_user (1000): hand-made on production (hand-made (no id)); the port had dropped its group so it applied to every user. Production restricts it to group "Manufacturing / Jin - Manufacturing - Those with only view Rights". Uncomment (and set the group) to bring it back. -->
+  <!--
+  <record id="access_5708_repair_tags_user" model="ir.model.access">
+    <field name="name">Repair Tags user</field>
+    <field name="model_id" ref="repair.model_repair_tags"/>
+    <field name="group_id" ref="BugFix-Studio-Misc.group_g_manufacturing_jin_manufacturing_those_with_only_view_rights"/>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="False"/>
+    <field name="perm_create" eval="False"/>
+    <field name="perm_unlink" eval="False"/>
+  </record>
+  -->
+<!-- REMOVED access_6911_stock_warehouse (1000): hand-made on production (hand-made (no id)); the port had dropped its group so it applied to every user. Production restricts it to group "Purchase / # Jin - PO Invoicing & Payment - Inventory Credit". Uncomment (and set the group) to bring it back. -->
+  <!--
+  <record id="access_6911_stock_warehouse" model="ir.model.access">
+    <field name="name">stock.warehouse</field>
+    <field name="model_id" ref="Fix-repair.model_stock_warehouse"/>
+    <field name="group_id" ref="BugFix-Studio-Misc.group_g_purchase_jin_po_invoicing_payment_inventory_credit"/>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="False"/>
+    <field name="perm_create" eval="False"/>
+    <field name="perm_unlink" eval="False"/>
+  </record>
+  -->
+<!-- REMOVED access_6836_stock_warehouse_user (1000): hand-made on production (hand-made (no id)); the port had dropped its group so it applied to every user. Production restricts it to group "Sales / Jin - Sales - View Only". Uncomment (and set the group) to bring it back. -->
+  <!--
+  <record id="access_6836_stock_warehouse_user" model="ir.model.access">
+    <field name="name">stock.warehouse.user</field>
+    <field name="model_id" ref="Fix-repair.model_stock_warehouse"/>
+    <field name="group_id" ref="BugFix-Studio-Misc.group_g_sales_jin_sales_view_only"/>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="False"/>
+    <field name="perm_create" eval="False"/>
+    <field name="perm_unlink" eval="False"/>
+  </record>
+  -->
+<!-- REMOVED access_8700_access_stock_warehouse_rohana_read (1000): hand-made on production (hand-made (no id)); the port had dropped its group so it applied to every user. Production restricts it to group "Rohana". Uncomment (and set the group) to bring it back. -->
+  <!--
+  <record id="access_8700_access_stock_warehouse_rohana_read" model="ir.model.access">
+    <field name="name">access_stock_warehouse_rohana_read</field>
+    <field name="model_id" ref="Fix-repair.model_stock_warehouse"/>
+    <field name="group_id" ref="SET_GROUP"/>
+    <field name="perm_read" eval="True"/>
+    <field name="perm_write" eval="False"/>
+    <field name="perm_create" eval="False"/>
+    <field name="perm_unlink" eval="False"/>
+  </record>
+  -->
+</odoo>
