@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- NOT LOADED since Fix-repair v368: replaced by models/hide_dev_extras.py (_get_view), which hides
+     these elements only when present. Kept for reference; do not re-add to the manifest. -->
 <!--
     Hide product.template fields/pages/buttons present on Dev but absent
     on CDB. All from standard Odoo modules that Dev has installed but CDB
