@@ -262,6 +262,90 @@ This is the core of the module: a helpdesk ticket represents one repair job. Abo
 record._repair_seq_no_on_create_or_write()
 ```
   </details>
+- **Execute Code** (`server_action_1989_rr_auto_select_product_for_rug_repairs`, type `code`)
+  - Function: Fills the ticket's sale order, picking, product and lot from the customer delivery of its serial number. Used by the automation of the same name.
+  - Depends on: `model helpdesk.ticket` (helpdesk)
+  - Used by: `automation Fix-repair.base_automation_172_rr_auto_select_product_for_rug_repairs`
+  <details><summary>code (3 lines)</summary>
+
+```python
+
+# fix_repair:idempotent-v1
+record._repair_auto_select_product_for_rug()
+```
+  </details>
+- **Execute Code** (`server_action_1990_rr_auto_select_product_for_rug_repairs_2`, type `code`)
+  - Function: Fills sale order, picking, product and lot from the serial's customer delivery, without the company filter. Used by the automation 'RR - Auto Select Product for RUG Repairs-2'.
+  - Depends on: `model helpdesk.ticket` (helpdesk)
+  - Used by: `automation Fix-repair.base_automation_173_rr_auto_select_product_for_rug_repairs_2`
+  <details><summary>code (3 lines)</summary>
+
+```python
+
+# fix_repair:idempotent-v1
+record._repair_auto_select_product_for_rug_2()
+```
+  </details>
+- **Execute Code** (`server_action_1992_rr_auto_select_product_for_rug_repairs_4`, type `code`)
+  - Function: When a ticket type is set, clears the ticket's sale order, pickings, product, lot and serial number. Used by automation 'RR - Auto Select Product for RUG Repairs-4'.
+  - Depends on: `model helpdesk.ticket` (helpdesk)
+  - Used by: `automation Fix-repair.base_automation_175_rr_auto_select_product_for_rug_repairs_4`
+  <details><summary>code (3 lines)</summary>
+
+```python
+
+# fix_repair:idempotent-v1
+record._repair_auto_select_product_for_rug_4()
+```
+  </details>
+- **Execute Code** (`server_action_2000_rr_auto_populate_repair_location`, type `code`)
+  - Function: Copies the ticket's Return Receipt Location into its Repair Location. Used by the automation 'RR - Auto Populate Repair Location'.
+  - Depends on: `model helpdesk.ticket` (helpdesk)
+  - Used by: `automation Fix-repair.base_automation_178_rr_auto_populate_repair_location`
+  <details><summary>code (3 lines)</summary>
+
+```python
+
+# fix_repair:idempotent-v1
+record._repair_populate_repair_location()
+```
+  </details>
+- **Execute Code** (`server_action_2222_rr_validate_cancelled_tickets`, type `code`)
+  - Function: Blocks deletion of cancelled tickets. Used by the automation 'RR - Validate Cancelled Tickets' (archived after migration).
+  - Depends on: `model helpdesk.ticket` (helpdesk)
+  - Used by: `automation Fix-repair.base_automation_201_rr_validate_cancelled_tickets`
+  <details><summary>code (3 lines)</summary>
+
+```python
+
+# fix_repair:idempotent-v1
+record._repair_validate_cancelled_on_unlink()
+```
+  </details>
+- **Execute Code** (`server_action_2451_rr_auto_select_product_for_rug_repairs_33`, type `code`)
+  - Function: Clears the ticket's sale order, pickings, product, lot and SN Updated flag. Used by automation 'RR - Auto Select Product for RUG Repairs-33'.
+  - Depends on: `model helpdesk.ticket` (helpdesk)
+  - Used by: `automation Fix-repair.base_automation_243_rr_auto_select_product_for_rug_repairs_33`
+  <details><summary>code (3 lines)</summary>
+
+```python
+
+# fix_repair:idempotent-v1
+record._repair_auto_select_product_for_rug_33()
+```
+  </details>
+- **Execute Code** (`server_action_2558_user_location_validation_helpdesk`, type `code`)
+  - Function: Checks the user may work with the ticket's Return Receipt Location; raises an error listing the user's permitted locations otherwise. Used by automation 'User Location Validation - Helpdesk'.
+  - Depends on: `model helpdesk.ticket` (helpdesk)
+  - Used by: `automation Fix-repair.base_automation_252_user_location_validation_helpdesk`
+  <details><summary>code (3 lines)</summary>
+
+```python
+
+# fix_repair:idempotent-v1
+record._repair_studio_user_location_validation()
+```
+  </details>
 - **RR - Auto Create Repair Route** (`action_repair_auto_create_route`, type `code`)
   - Function: Creates the repair route for the ticket: checks the user's virtual/source locations (per company) and creates a done stock picking with its move and move line.
   - Depends on: `model helpdesk.ticket` (helpdesk)
@@ -299,18 +383,6 @@ record._repair_studio_auto_create_repair_serial_nos()
 record._repair_populate_repair_location()
 ```
   </details>
-- **RR - Auto Populate Repair Location** (`server_action_2000_rr_auto_populate_repair_location`, type `code`)
-  - Function: Copies the ticket's Return Receipt Location into its Repair Location. Used by the automation 'RR - Auto Populate Repair Location'.
-  - Depends on: `model helpdesk.ticket` (helpdesk)
-  - Used by: `automation Fix-repair.base_automation_178_rr_auto_populate_repair_location`
-  <details><summary>code (3 lines)</summary>
-
-```python
-
-# fix_repair:idempotent-v1
-record._repair_populate_repair_location()
-```
-  </details>
 - **RR - Auto Select Product for RUG Repairs** (`sa_f5_helpdesk_ticket_rr_auto_select_product_for_rug_repairs`, type `code`)
   - Function: When the ticket has a serial number, finds the delivery that shipped that serial to a customer and fills the ticket's sale order, picking, product and lot from it.
   - Depends on: `model helpdesk.ticket` (helpdesk)
@@ -318,18 +390,6 @@ record._repair_populate_repair_location()
   <details><summary>code (2 lines)</summary>
 
 ```python
-# fix_repair:idempotent-v1
-record._repair_auto_select_product_for_rug()
-```
-  </details>
-- **RR - Auto Select Product for RUG Repairs** (`server_action_1989_rr_auto_select_product_for_rug_repairs`, type `code`)
-  - Function: Fills the ticket's sale order, picking, product and lot from the customer delivery of its serial number. Used by the automation of the same name.
-  - Depends on: `model helpdesk.ticket` (helpdesk)
-  - Used by: `automation Fix-repair.base_automation_172_rr_auto_select_product_for_rug_repairs`
-  <details><summary>code (3 lines)</summary>
-
-```python
-
 # fix_repair:idempotent-v1
 record._repair_auto_select_product_for_rug()
 ```
@@ -345,18 +405,6 @@ record._repair_auto_select_product_for_rug()
 record._repair_auto_select_product_for_rug_2()
 ```
   </details>
-- **RR - Auto Select Product for RUG Repairs-2** (`server_action_1990_rr_auto_select_product_for_rug_repairs_2`, type `code`)
-  - Function: Fills sale order, picking, product and lot from the serial's customer delivery, without the company filter. Used by the automation 'RR - Auto Select Product for RUG Repairs-2'.
-  - Depends on: `model helpdesk.ticket` (helpdesk)
-  - Used by: `automation Fix-repair.base_automation_173_rr_auto_select_product_for_rug_repairs_2`
-  <details><summary>code (3 lines)</summary>
-
-```python
-
-# fix_repair:idempotent-v1
-record._repair_auto_select_product_for_rug_2()
-```
-  </details>
 - **RR - Auto Select Product for RUG Repairs-33** (`sa_f5_helpdesk_ticket_rr_auto_select_product_for_rug_repairs_33`, type `code`)
   - Function: Clears the ticket's sale order, pickings, product, lot and SN Updated flag.
   - Depends on: `model helpdesk.ticket` (helpdesk)
@@ -368,18 +416,6 @@ record._repair_auto_select_product_for_rug_2()
 record._repair_auto_select_product_for_rug_33()
 ```
   </details>
-- **RR - Auto Select Product for RUG Repairs-33** (`server_action_2451_rr_auto_select_product_for_rug_repairs_33`, type `code`)
-  - Function: Clears the ticket's sale order, pickings, product, lot and SN Updated flag. Used by automation 'RR - Auto Select Product for RUG Repairs-33'.
-  - Depends on: `model helpdesk.ticket` (helpdesk)
-  - Used by: `automation Fix-repair.base_automation_243_rr_auto_select_product_for_rug_repairs_33`
-  <details><summary>code (3 lines)</summary>
-
-```python
-
-# fix_repair:idempotent-v1
-record._repair_auto_select_product_for_rug_33()
-```
-  </details>
 - **RR - Auto Select Product for RUG Repairs-4** (`sa_f5_helpdesk_ticket_rr_auto_select_product_for_rug_repairs_4`, type `code`)
   - Function: When a ticket type is set, clears the ticket's sale order, pickings, product, lot and serial number.
   - Depends on: `model helpdesk.ticket` (helpdesk)
@@ -387,18 +423,6 @@ record._repair_auto_select_product_for_rug_33()
   <details><summary>code (2 lines)</summary>
 
 ```python
-# fix_repair:idempotent-v1
-record._repair_auto_select_product_for_rug_4()
-```
-  </details>
-- **RR - Auto Select Product for RUG Repairs-4** (`server_action_1992_rr_auto_select_product_for_rug_repairs_4`, type `code`)
-  - Function: When a ticket type is set, clears the ticket's sale order, pickings, product, lot and serial number. Used by automation 'RR - Auto Select Product for RUG Repairs-4'.
-  - Depends on: `model helpdesk.ticket` (helpdesk)
-  - Used by: `automation Fix-repair.base_automation_175_rr_auto_select_product_for_rug_repairs_4`
-  <details><summary>code (3 lines)</summary>
-
-```python
-
 # fix_repair:idempotent-v1
 record._repair_auto_select_product_for_rug_4()
 ```
@@ -545,43 +569,19 @@ record._repair_studio_update_rug_approval_in_pipeline()
 record._repair_validate_cancelled_on_unlink()
 ```
   </details>
-- **RR - Validate Cancelled Tickets** (`server_action_2222_rr_validate_cancelled_tickets`, type `code`)
-  - Function: Blocks deletion of cancelled tickets. Used by the automation 'RR - Validate Cancelled Tickets' (archived after migration).
-  - Depends on: `model helpdesk.ticket` (helpdesk)
-  - Used by: `automation Fix-repair.base_automation_201_rr_validate_cancelled_tickets`
-  <details><summary>code (3 lines)</summary>
-
-```python
-
-# fix_repair:idempotent-v1
-record._repair_validate_cancelled_on_unlink()
-```
-  </details>
-- **User Location Validation - Helpdesk** (`server_action_2558_user_location_validation_helpdesk`, type `code`)
-  - Function: Checks the user may work with the ticket's Return Receipt Location; raises an error listing the user's permitted locations otherwise. Used by automation 'User Location Validation - Helpdesk'.
-  - Depends on: `model helpdesk.ticket` (helpdesk)
-  - Used by: `automation Fix-repair.base_automation_252_user_location_validation_helpdesk`
-  <details><summary>code (3 lines)</summary>
-
-```python
-
-# fix_repair:idempotent-v1
-record._repair_studio_user_location_validation()
-```
-  </details>
 **Automations (9):**
 
 | Name | Record name | State | Function | Depends on | Used by |
 |---|---|---|---|---|---|
 | JIN-Helpdesk(Repair) Seq.No | `base_automation_171_jin_helpdesk_repair_seq_no` | archived | When a record is created or updated on Helpdesk Ticket, runs _Execute Code_. **Archived — does not run.** | `model helpdesk.ticket` (helpdesk)<br>`server action Fix-repair.server_action_1976_rr_repair_seq_no` |  |
-| RR - Auto Populate Repair Location | `base_automation_178_rr_auto_populate_repair_location` | archived | When a watched field changes in the form on Helpdesk Ticket, runs _RR - Auto Populate Repair Location_. **Archived — does not run.** | `model helpdesk.ticket` (helpdesk)<br>`server action Fix-repair.server_action_2000_rr_auto_populate_repair_location` |  |
-| RR - Auto Select Product for RUG Repairs | `base_automation_172_rr_auto_select_product_for_rug_repairs` | archived | When a watched field changes in the form on Helpdesk Ticket, runs _RR - Auto Select Product for RUG Repairs_. **Archived — does not run.** | `model helpdesk.ticket` (helpdesk)<br>`server action Fix-repair.server_action_1989_rr_auto_select_product_for_rug_repairs` |  |
-| RR - Auto Select Product for RUG Repairs-2 | `base_automation_173_rr_auto_select_product_for_rug_repairs_2` | archived | When a record is updated on Helpdesk Ticket and `[]`, runs _RR - Auto Select Product for RUG Repairs-2_. **Archived — does not run.** | `model helpdesk.ticket` (helpdesk)<br>`server action Fix-repair.server_action_1990_rr_auto_select_product_for_rug_repairs_2` |  |
-| RR - Auto Select Product for RUG Repairs-33 | `base_automation_243_rr_auto_select_product_for_rug_repairs_33` | archived | When a watched field changes in the form on Helpdesk Ticket and `[]`, runs _RR - Auto Select Product for RUG Repairs-33_. **Archived — does not run.** | `model helpdesk.ticket` (helpdesk)<br>`server action Fix-repair.server_action_2451_rr_auto_select_product_for_rug_repairs_33` |  |
-| RR - Auto Select Product for RUG Repairs-4 | `base_automation_175_rr_auto_select_product_for_rug_repairs_4` | archived | When a watched field changes in the form on Helpdesk Ticket, runs _RR - Auto Select Product for RUG Repairs-4_. **Archived — does not run.** | `model helpdesk.ticket` (helpdesk)<br>`server action Fix-repair.server_action_1992_rr_auto_select_product_for_rug_repairs_4` |  |
-| RR - Validate Cancelled Tickets | `base_automation_201_rr_validate_cancelled_tickets` | archived | When a record is deleted on Helpdesk Ticket and `[["x_studio_cancelled","=",True]]`, runs _RR - Validate Cancelled Tickets_. **Archived — does not run.** | `helpdesk.ticket.x_studio_cancelled`<br>`model helpdesk.ticket` (helpdesk)<br>`server action Fix-repair.server_action_2222_rr_validate_cancelled_tickets` |  |
+| RR - Auto Populate Repair Location | `base_automation_178_rr_auto_populate_repair_location` | archived | When a watched field changes in the form on Helpdesk Ticket, runs _Execute Code_. **Archived — does not run.** | `model helpdesk.ticket` (helpdesk)<br>`server action Fix-repair.server_action_2000_rr_auto_populate_repair_location` |  |
+| RR - Auto Select Product for RUG Repairs | `base_automation_172_rr_auto_select_product_for_rug_repairs` | archived | When a watched field changes in the form on Helpdesk Ticket, runs _Execute Code_. **Archived — does not run.** | `model helpdesk.ticket` (helpdesk)<br>`server action Fix-repair.server_action_1989_rr_auto_select_product_for_rug_repairs` |  |
+| RR - Auto Select Product for RUG Repairs-2 | `base_automation_173_rr_auto_select_product_for_rug_repairs_2` | archived | When a record is updated on Helpdesk Ticket and `[]`, runs _Execute Code_. **Archived — does not run.** | `model helpdesk.ticket` (helpdesk)<br>`server action Fix-repair.server_action_1990_rr_auto_select_product_for_rug_repairs_2` |  |
+| RR - Auto Select Product for RUG Repairs-33 | `base_automation_243_rr_auto_select_product_for_rug_repairs_33` | archived | When a watched field changes in the form on Helpdesk Ticket and `[]`, runs _Execute Code_. **Archived — does not run.** | `model helpdesk.ticket` (helpdesk)<br>`server action Fix-repair.server_action_2451_rr_auto_select_product_for_rug_repairs_33` |  |
+| RR - Auto Select Product for RUG Repairs-4 | `base_automation_175_rr_auto_select_product_for_rug_repairs_4` | archived | When a watched field changes in the form on Helpdesk Ticket, runs _Execute Code_. **Archived — does not run.** | `model helpdesk.ticket` (helpdesk)<br>`server action Fix-repair.server_action_1992_rr_auto_select_product_for_rug_repairs_4` |  |
+| RR - Validate Cancelled Tickets | `base_automation_201_rr_validate_cancelled_tickets` | archived | When a record is deleted on Helpdesk Ticket and `[["x_studio_cancelled","=",True]]`, runs _Execute Code_. **Archived — does not run.** | `helpdesk.ticket.x_studio_cancelled`<br>`model helpdesk.ticket` (helpdesk)<br>`server action Fix-repair.server_action_2222_rr_validate_cancelled_tickets` |  |
 | Slowness - Test | `base_automation_240_slowness_test` | archived | When a record is created or updated on Helpdesk Ticket and `["&",["team_id","=",1],["ticket_type_id","!=",False]]`, runs nothing (no action linked). **Archived — does not run.** | `helpdesk.ticket.team_id` (helpdesk)<br>`helpdesk.ticket.ticket_type_id` (helpdesk)<br>`model helpdesk.ticket` (helpdesk) |  |
-| User Location Validation - Helpdesk | `base_automation_252_user_location_validation_helpdesk` | archived | When a record is created or updated on Helpdesk Ticket and `[["stage_id","=",1]]`, runs _User Location Validation - Helpdesk_. **Archived — does not run.** | `helpdesk.ticket.stage_id` (helpdesk)<br>`model helpdesk.ticket` (helpdesk)<br>`server action Fix-repair.server_action_2558_user_location_validation_helpdesk` |  |
+| User Location Validation - Helpdesk | `base_automation_252_user_location_validation_helpdesk` | archived | When a record is created or updated on Helpdesk Ticket and `[["stage_id","=",1]]`, runs _Execute Code_. **Archived — does not run.** | `helpdesk.ticket.stage_id` (helpdesk)<br>`model helpdesk.ticket` (helpdesk)<br>`server action Fix-repair.server_action_2558_user_location_validation_helpdesk` |  |
 
 **Approval rules (1):**
 
