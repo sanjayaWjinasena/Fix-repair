@@ -7,7 +7,7 @@
          customer-pays logic now reads the x_repair_customer_pays flag
          directly. Idempotent — subsequent runs find no NUW records
          and no NUW selection value. -->
-    <function model="sale.order" name="_migrate_nuw_to_customer_pays_flag"/>
+    <!-- upgrade-testing: writes data, not run on this branch: <function model="sale.order" name="_migrate_nuw_to_customer_pays_flag"/> -->
 
     <!-- Complete Cluster 1 (RUG) Studio-to-Python migration: flip
          ir.model.fields.state from 'manual' to 'base' on the seven
@@ -220,7 +220,7 @@
          'Create Advance Payment' action creates payments on those
          journals. Idempotent: skips journals that already have a
          method line. -->
-    <function model="sale.order" name="_seed_advance_payment_method_lines"/>
+    <!-- upgrade-testing: writes data, not run on this branch: <function model="sale.order" name="_seed_advance_payment_method_lines"/> -->
 
     <!-- Rewrite four Studio server actions on sale.order that fire on every
          write and unconditionally call record.write(...). Guarded versions
@@ -273,16 +273,16 @@
          only sets when ir.config_parameter for that company is empty,
          so manual overrides via Settings → Technical → System Parameters
          survive subsequent upgrades. -->
-    <function model="stock.warehouse" name="_seed_factory_repair_locations"/>
+    <!-- upgrade-testing: writes data, not run on this branch: <function model="stock.warehouse" name="_seed_factory_repair_locations"/> -->
 
     <!-- Add a child 'Intransit' (usage='transit') location under every
          non-intransit warehouse on every company, so we get the
          <CODE>/Intransit convention (e.g. PW-JM/Intransit, BR-AM/Intransit).
          Idempotent: skipped when the child already exists. -->
-    <function model="stock.warehouse" name="_seed_intransit_locations"/>
+    <!-- upgrade-testing: writes data, not run on this branch: <function model="stock.warehouse" name="_seed_intransit_locations"/> -->
 
     <!-- Add a child 'Repair' (usage='repair') location under every
          non-intransit warehouse on every company, mirroring the
          Intransit seeding above. Idempotent. -->
-    <function model="stock.warehouse" name="_seed_repair_locations"/>
+    <!-- upgrade-testing: writes data, not run on this branch: <function model="stock.warehouse" name="_seed_repair_locations"/> -->
 </odoo>

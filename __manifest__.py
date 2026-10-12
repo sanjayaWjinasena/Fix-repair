@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 {
+    # upgrade-testing branch: data files below are commented out - this branch installs functions only, no data is seeded.
     'name': 'Jinasena : Module : Repair',
     'version': '17.0.1.0.368',
     'summary': 'Enhancements to the Customer Care - Repair helpdesk workflow',
@@ -40,12 +41,12 @@
         'data/fix_repair_data.xml',
         'security/ir.model.access.csv',
         'security/removed_handmade_access_rights.xml',
-        'data/repair_stages.xml',
-        'data/repair_sequences.xml',
-        'data/helpdesk_ticket_types.xml',
+        # 'data/repair_stages.xml',  # upgrade-testing: data, not shipped
+        # 'data/repair_sequences.xml',  # upgrade-testing: data, not shipped
+        # 'data/helpdesk_ticket_types.xml',  # upgrade-testing: data, not shipped
         'views/repair_diagnosis_catalog_views.xml',
         'data/repair_diagnosis_menus.xml',
-        'data/repair_diagnosis_seed.xml',
+        # 'data/repair_diagnosis_seed.xml',  # upgrade-testing: data, not shipped
         'data/helpdesk_ticket_server_actions.xml',
         'data/project_task_server_actions.xml',
         'views/helpdesk_ticket_studio_ported.xml',
@@ -71,8 +72,8 @@
         'data/server_actions_gap.xml',
         'data/automations_gap.xml',
         'data/window_actions_gap.xml',
-        'data/ir_defaults_gap.xml',
-        'data/ir_defaults_unblocked.xml',
+        # 'data/ir_defaults_gap.xml',  # upgrade-testing: data, not shipped
+        # 'data/ir_defaults_unblocked.xml',  # upgrade-testing: data, not shipped
         'views/helpdesk_stage_e_views.xml',
         'views/helpdesk_ticket_e_views.xml',
         'views/helpdesk_ticket_type_e_views.xml',

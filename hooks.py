@@ -661,10 +661,18 @@ def _seed_field_selections(env, entries):
                 "Fix-repair: seed failed %s.%s (%s).", model, fname, e,
             )
 
+# upgrade-testing branch: this branch installs functions only onto an existing database.
+# Steps that write or seed business/config data are skipped while SEED_DATA is False.
+SEED_DATA = False
+
+
 def post_init_hook(env):
     """Odoo 17 post-install hook signature: (env)."""
     strip_studio_xmlids_for_ported_fields(env)
     load_post_init_view_files(env)
+    _seed_field_selections(env, _FIELD_SELECTIONS)
+    if not SEED_DATA:
+        return
     attach_repair_stages_to_all_teams(env)
     seed_default_stock_location_users(env)
     enable_product_returns_on_all_teams(env)
@@ -674,7 +682,6 @@ def post_init_hook(env):
     activate_internal_picking_types(env)
     seed_repair_sequences_per_company(env)
     assign_names_to_stale_new_tickets(env)
-    _seed_field_selections(env, _FIELD_SELECTIONS)
     # v17.0.1.0.366: fill the now-computed sale.order check fields once.
     from .models.studio_computes import recompute_stored_studio_computes
     recompute_stored_studio_computes(env)
