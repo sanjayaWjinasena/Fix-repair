@@ -72,8 +72,8 @@
         'data/server_actions_gap.xml',
         'data/automations_gap.xml',
         'data/window_actions_gap.xml',
-        # 'data/ir_defaults_gap.xml',  # upgrade-testing: data, not shipped
-        # 'data/ir_defaults_unblocked.xml',  # upgrade-testing: data, not shipped
+        'data/ir_defaults_gap.xml',  # upgrade-testing: form defaults shipped; record-specific ones commented inside
+        'data/ir_defaults_unblocked.xml',  # upgrade-testing: form defaults shipped; record-specific ones commented inside
         'views/helpdesk_stage_e_views.xml',
         'views/helpdesk_ticket_e_views.xml',
         'views/helpdesk_ticket_type_e_views.xml',
