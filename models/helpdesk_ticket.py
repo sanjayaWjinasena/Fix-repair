@@ -2805,6 +2805,10 @@ class HelpdeskTicket(models.Model):
             [('name', 'ilike', 'Under Warranty - RUG')], limit=1
         )
         if rug_type:
+            # sudo() lets users without access to the ticket type set it,
+            # but only on tickets they are themselves allowed to edit.
+            self.check_access_rights('write')
+            self.check_access_rule('write')
             self.sudo().write({'ticket_type_id': rug_type.id})
 
     # ── Button actions ─ Without Serial No flow ──────────────────────────────
@@ -2816,6 +2820,10 @@ class HelpdeskTicket(models.Model):
         # No "already exists" guard — clicking again creates a fresh lot
         # and re-points the ticket to it, so the user can change the
         # serial after the fact.
+        # The lot is created with sudo() for users without inventory
+        # rights, so first confirm the user may edit this ticket.
+        self.check_access_rights('write')
+        self.check_access_rule('write')
         lot = self.env['stock.lot'].sudo().create({
             'name': self.name,
             'product_id': self.product_id.id,
