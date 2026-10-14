@@ -3,7 +3,7 @@ import datetime
 import json
 
 from lxml import etree
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
 
@@ -1583,7 +1583,7 @@ class HelpdeskTicket(models.Model):
         # Positional replacement is the fix.
         wizard = (
             self.env['stock.return.picking']
-                .with_context(ctx)
+                .with_context(ctx)  # pylint: disable=context-overridden
                 .create({})
         )
         # create_returns() is the standard public button handler. It
@@ -1635,7 +1635,7 @@ class HelpdeskTicket(models.Model):
         # kwargs form would re-introduce the popped keys via merge).
         wizard = (
             self.env['stock.return.picking']
-                .with_context(ctx)
+                .with_context(ctx)  # pylint: disable=context-overridden
                 .create({})
         )
         return wizard.create_returns()
@@ -2589,7 +2589,7 @@ class HelpdeskTicket(models.Model):
                     tx_group, 'group',
                     string='Repair Transfer Details (Sales Centre)',
                 )
-                for fname, label in (
+                for fname, _label in (
                     ('x_studio_s_shipped_date', 'Shipped Date'),
                     ('x_studio_s_shipped_by', 'Shipped By'),
                     ('x_studio_s_received_date', 'Received Date'),
@@ -2605,7 +2605,7 @@ class HelpdeskTicket(models.Model):
                     tx_group, 'group',
                     string='Repair Transfer Details (Factory)',
                 )
-                for fname, label in (
+                for fname, _label in (
                     ('x_studio_f_shipped_date', 'Shipped Date'),
                     ('x_studio_f_shipped_by', 'Shipped By'),
                     ('x_studio_f_received_date', 'Received Date'),
@@ -3554,7 +3554,6 @@ class HelpdeskTicket(models.Model):
                     raise UserError(
                         'Source Location must be setup for Current Logged in User.'
                     )
-                virtual_loc = record.x_studio_virtual_location.id
                 source_loc = record.x_studio_source_location.id
             else:
                 if not record.x_studio_virtual_location_1:
@@ -3565,7 +3564,6 @@ class HelpdeskTicket(models.Model):
                     raise UserError(
                         'Source Location must be setup for Current Logged in User.'
                     )
-                virtual_loc = record.x_studio_virtual_location_1.id
                 source_loc = record.x_studio_source_location_1.id
 
             record.x_studio_repair_serial_created = True
@@ -4365,7 +4363,7 @@ class HelpdeskTicket(models.Model):
         # occurrences whose tail is in our migrated set (so we don't
         # accidentally break references to Studio templates outside
         # the repair scope).
-        for tail, template, _sk, _fk in migrated:
+        for _tail, template, _sk, _fk in migrated:
             arch = template.arch_db or ''
             new_arch = arch
             for other_tail in migrated_tails:
@@ -4585,7 +4583,6 @@ class HelpdeskTicket(models.Model):
                     raise UserError(
                         'Source Location must be setup for Current Logged in User.'
                     )
-                virtual_loc = record.x_studio_virtual_location.id
                 source_loc = record.x_studio_source_location.id
             else:
                 if not record.x_studio_virtual_location_1:
@@ -4596,7 +4593,6 @@ class HelpdeskTicket(models.Model):
                     raise UserError(
                         'Source Location must be setup for Current Logged in User.'
                     )
-                virtual_loc = record.x_studio_virtual_location_1.id
                 source_loc = record.x_studio_source_location_1.id
 
             seq = self.env['ir.sequence'].with_context(

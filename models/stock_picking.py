@@ -358,7 +358,7 @@ class StockPicking(models.Model):
                         if so_amount > inv_amount:
                             valid = True
                     else:
-                        for inv in tso.invoice_ids:
+                        if tso.invoice_ids:
                             inv_found = True
                         if inv_found:
                             valid = False

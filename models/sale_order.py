@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 import json
+import logging
 
 from lxml import etree
 from markupsafe import Markup, escape
 from odoo import api, fields, models
 from odoo.exceptions import UserError
 from odoo.http import request
+
+_logger = logging.getLogger(__name__)
 
 
 class SaleOrder(models.Model):
@@ -434,16 +437,20 @@ class SaleOrder(models.Model):
             if field.related == 'amount_total':
                 continue  # already converted
             try:
-                field.write({
-                    'related': 'amount_total',
-                    'compute': False,
-                    'store': False,
-                    'readonly': True,
-                })
+                with self.env.cr.savepoint():
+                    field.write({
+                        'related': 'amount_total',
+                        'compute': False,
+                        'store': False,
+                        'readonly': True,
+                    })
             except Exception:
                 # If the model's cache prevents the switch mid-runtime,
-                # skip silently — will retry on next upgrade.
-                pass
+                # skip — will retry on next upgrade.
+                _logger.warning(
+                    "Could not convert %s to a related field; will retry "
+                    "on next upgrade.", name, exc_info=True,
+                )
 
     @api.model
     def _optimize_slow_write_automations(self):
@@ -465,8 +472,6 @@ class SaleOrder(models.Model):
 
         # account.move.line and account.move actions to patch too — bundled
         # here so a single upgrade sweep covers everything.
-        aml_marker_source = "SRM - Auto Populate Report Type in Account Move Lines"
-
         patches = [
             {
                 # SRM - Auto Populate Report Type in Account Move Lines
