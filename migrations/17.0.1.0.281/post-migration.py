@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """v281 upgrade — bug fix on v280 install failure.
 
 v280's x_studio_rug_confirmed was declared as
@@ -20,7 +19,7 @@ studio_migrations. Store=True preserved so search domains work.
 Also softened the write() override to fall back to invoice_origin
 lookup when x_studio_sale_id isn't declared.
 """
-from odoo import api, SUPERUSER_ID
+from odoo import SUPERUSER_ID, api
 
 
 def migrate(cr, version):

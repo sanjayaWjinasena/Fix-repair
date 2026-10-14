@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """repair.order Studio-field port (v299).
 
 Clear-DB has a single Studio-created `x_studio_confirm_draft_quotation`

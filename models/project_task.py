@@ -1,9 +1,10 @@
-# -*- coding: utf-8 -*-
 import datetime
 
 from lxml import etree
+
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
+
 from odoo.addons.industry_fsm_sale.models.project_task import Task as FsmSaleTask
 
 

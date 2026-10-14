@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """v282 upgrade -- port Studio automation 174 'RR - Auto Select Product
 for RUG Repairs-3' as a stock.return.picking create/write override on
 Fix-repair.

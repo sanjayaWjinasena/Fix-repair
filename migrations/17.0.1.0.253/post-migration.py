@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """v253 upgrade migration — seed the two per-user repair location
 fields on every internal user that has them unset.
 
@@ -17,7 +16,7 @@ currently False.
 import importlib.util
 import os
 
-from odoo import api, SUPERUSER_ID
+from odoo import SUPERUSER_ID, api
 from odoo.modules.module import get_module_path
 
 

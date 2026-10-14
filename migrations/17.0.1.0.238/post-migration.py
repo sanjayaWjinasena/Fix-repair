@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 """Upgrade path for v238 — re-runs load_post_init_view_files with
 the new sentinel guard so previously-failed loads get a clean skip
 on DBs where Studio's hardcoded action IDs don't exist."""
 import importlib.util
 import os
 
-from odoo import api, SUPERUSER_ID
+from odoo import SUPERUSER_ID, api
 from odoo.modules.module import get_module_path
 
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """One-shot upgrade cleanup for v237.
 
 Same load-post-init-view-files call as the v236 migration, needed
@@ -12,7 +11,7 @@ by external ID and creates missing ones.
 import importlib.util
 import os
 
-from odoo import api, SUPERUSER_ID
+from odoo import SUPERUSER_ID, api
 from odoo.modules.module import get_module_path
 
 

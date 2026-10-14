@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """v284 upgrade -- port Studio automation 241 / server action 2427
 (RR - Validate Payment %) as an onchange handler on account.payment.
 

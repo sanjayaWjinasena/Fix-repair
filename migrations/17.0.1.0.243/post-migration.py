@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """v243 post-migration — attach the 12 newly-seeded repair-pipeline
 helpdesk.stage records to every existing helpdesk.team so they show
 up on ticket statusbars. The stages themselves are created by
@@ -12,7 +11,7 @@ aren't already in the stage's team_ids m2m.
 import importlib.util
 import os
 
-from odoo import api, SUPERUSER_ID
+from odoo import SUPERUSER_ID, api
 from odoo.modules.module import get_module_path
 
 

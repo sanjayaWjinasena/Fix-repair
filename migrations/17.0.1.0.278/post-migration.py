@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """v278 upgrade — bug fix on v277's _fix_repair_auto_generate_quotation_type.
 
 v277's helper searched task.sale_order_id but missed the reverse direction
@@ -7,7 +6,7 @@ v278 checks the direct link first, then falls back to the search.
 
 Re-runs the (now correct) back-fill on SOs still without a quotation type.
 """
-from odoo import api, SUPERUSER_ID
+from odoo import SUPERUSER_ID, api
 
 
 def migrate(cr, version):

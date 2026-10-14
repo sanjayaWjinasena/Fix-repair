@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """v296 post-migration — per-company repair sequence seed + backfill.
 
 Fixes two symptoms on Clear-DB-style multi-company installs:

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """v265 upgrade migration — enable project extras (Task Dependencies,
 Recurring Tasks, Ratings) so the 3 native buttons on project.task
 form become visible on standalone, matching Clear-DB.
@@ -6,7 +5,7 @@ form become visible on standalone, matching Clear-DB.
 import importlib.util
 import os
 
-from odoo import api, SUPERUSER_ID
+from odoo import SUPERUSER_ID, api
 from odoo.modules.module import get_module_path
 
 

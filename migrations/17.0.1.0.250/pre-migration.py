@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """v250 pre-migration — force-create ir.model.data pins for the 11
 Studio-created models Fix-repair owns.
 

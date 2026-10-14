@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """One-shot upgrade cleanup for v225.
 
 post_init_hook only fires on install, never on upgrade. The 12
@@ -10,7 +9,7 @@ function — idempotent, safe to leave in place.
 import importlib.util
 import os
 
-from odoo import api, SUPERUSER_ID
+from odoo import SUPERUSER_ID, api
 from odoo.modules.module import get_module_path
 
 

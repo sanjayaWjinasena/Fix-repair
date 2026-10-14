@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """v287 upgrade -- fix account.move.x_studio_rug_confirmed compute
 reactivity to sale.order side flips.
 
@@ -21,7 +20,7 @@ x_studio_rug_confirmed stayed False (had been captured False at
 create time). Junk-then-restore of invoice_origin was the temporary
 workaround.
 """
-from odoo import api, SUPERUSER_ID
+from odoo import SUPERUSER_ID, api
 
 
 def migrate(cr, version):

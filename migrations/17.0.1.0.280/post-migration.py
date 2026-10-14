@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """v280 upgrade — port Studio automation 215 'RR - Validate RUG in
 Customer Invoice' + declare x_studio_rug_confirmed and
 x_studio_rug_acc_updated on account.move.

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """v251 upgrade migration — seed admin user into default WH stock
 locations for the Return Receipt Location dropdown.
 
@@ -12,7 +11,7 @@ so re-runs are no-ops.
 import importlib.util
 import os
 
-from odoo import api, SUPERUSER_ID
+from odoo import SUPERUSER_ID, api
 from odoo.modules.module import get_module_path
 
 

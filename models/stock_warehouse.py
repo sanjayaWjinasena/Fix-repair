@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
 from odoo import api, models
-
 
 # Known per-company defaults for the Factory Repair Location. The first
 # entry whose name fragment appears (case-insensitive) in company.name

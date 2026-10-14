@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Fix-repair v17.0.1.0.363: seed ir.model.fields.selection rows via
 Odoo's own _update_selection helper (framework API, not cr.execute).
 
@@ -7,7 +6,7 @@ version-upgrade path (post_init_hook covers fresh install).
 """
 import logging
 
-from odoo import api, SUPERUSER_ID
+from odoo import SUPERUSER_ID, api
 
 _logger = logging.getLogger(__name__)
 

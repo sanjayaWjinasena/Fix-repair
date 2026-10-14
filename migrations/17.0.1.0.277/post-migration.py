@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """v277 upgrade — port Studio automation 176 'RR - Auto Generate
 Quotation Type for Repair SOs' as sale.order create/write override.
 
@@ -7,7 +6,7 @@ that IS FSM-task-linked to a repair helpdesk ticket (or a repair
 project once Group C ships) but doesn't have the flag set — matches
 what the Studio automation would have done historically.
 """
-from odoo import api, SUPERUSER_ID
+from odoo import SUPERUSER_ID, api
 
 
 def migrate(cr, version):

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Post-install cleanup hook for Fix-repair.
 
 Once the 12 res.partner x_studio_* fields ported in v225 have Python

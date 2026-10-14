@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Upgrade path for v239 — v238's sentinel was too loose
 (browse(195).exists() returned True on stand-alone because some
 unrelated action happened to have id=195). v239 fixes the sentinel
@@ -7,7 +6,7 @@ corrected guard."""
 import importlib.util
 import os
 
-from odoo import api, SUPERUSER_ID
+from odoo import SUPERUSER_ID, api
 from odoo.modules.module import get_module_path
 
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Make the Studio-ported check fields calculate again (v17.0.1.0.366).
 
 On Clear-DB / production these 15 fields are Studio COMPUTED fields

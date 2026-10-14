@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 {
     # upgrade-testing branch: data files below are commented out - this branch installs functions only, no data is seeded.
     'name': 'Jinasena : Module : Repair',

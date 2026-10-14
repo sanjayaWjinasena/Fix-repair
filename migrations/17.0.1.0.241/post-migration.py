@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """v241 post-migration — extends the shared master-data migration
 helper to cover the 6 new catalogue models added in Chunk 1a
 (x_conditions, x_diagnosis_areas, x_diagnosis_codes, x_symptom_areas,
@@ -15,7 +14,7 @@ On Clear-DB (production, if ever upgraded): existing rows in the
 studio_customization to Fix-repair. Same pattern as the earlier
 5-model repair-master-data cluster.
 """
-from odoo import api, SUPERUSER_ID
+from odoo import SUPERUSER_ID, api
 
 
 def migrate(cr, version):

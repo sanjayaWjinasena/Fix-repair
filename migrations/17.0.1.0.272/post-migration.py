@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """v272 upgrade migration — activate any dormant internal
 stock.picking.type records so the repair-flow _create_repair_transfer
 helper stops silently no-op'ing (only the initial Return was
@@ -10,7 +9,7 @@ active=True).
 import importlib.util
 import os
 
-from odoo import api, SUPERUSER_ID
+from odoo import SUPERUSER_ID, api
 from odoo.modules.module import get_module_path
 
 

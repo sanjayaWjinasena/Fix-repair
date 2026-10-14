@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """sale.order.line repair-flow overrides.
 
 v279: port of Studio automation 193 / server action 2144

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """v288 upgrade -- narrow v286's RUG-invoice settle guard so background
 writes (v287's SO -> invoice compute propagation) don't trip it.
 

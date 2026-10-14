@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """v254 upgrade migration — flag each warehouse's Stock location as
 x_studio_repair_return_location=True so the RR - Auto Create Repair
 Route delegate can resolve its stock.picking.type search.
@@ -13,7 +12,7 @@ is currently False.
 import importlib.util
 import os
 
-from odoo import api, SUPERUSER_ID
+from odoo import SUPERUSER_ID, api
 from odoo.modules.module import get_module_path
 
 

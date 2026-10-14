@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """res.partner Studio-field port into Fix-repair.
 
 Twelve x_studio_* fields on res.partner that were still Studio-only after

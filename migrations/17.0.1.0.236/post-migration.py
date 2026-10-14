@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """One-shot upgrade cleanup for v236.
 
 post_init_hook only fires on install, never on upgrade. Fix-repair is
@@ -15,7 +14,7 @@ missing ones.
 import importlib.util
 import os
 
-from odoo import api, SUPERUSER_ID
+from odoo import SUPERUSER_ID, api
 from odoo.modules.module import get_module_path
 
 

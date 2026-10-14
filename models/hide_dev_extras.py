@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Hide fields/buttons of apps Jinasena doesn't use on the product and contact forms.
 
 Replaces views/product_template_hide_dev_extras.xml and

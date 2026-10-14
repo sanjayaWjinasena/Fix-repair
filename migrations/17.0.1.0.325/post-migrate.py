@@ -2,6 +2,7 @@
 Odoo 17: `name` column is JSONB (translation) - must be JSON-encoded, not plain str."""
 import json
 
+
 def migrate(cr, version):
     if not version:
         return

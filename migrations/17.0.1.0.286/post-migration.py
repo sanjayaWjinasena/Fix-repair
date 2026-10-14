@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """v286 upgrade -- Odoo-17 gap in RUG-invoice validation port.
 
 Same pattern as v285's fix for the Track Lock Status trio: Studio

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """v283 upgrade -- port Studio automations 202 + 203 + 204 (RR - Track
 Lock Status trio) as create/write overrides on sale.order and an
 onchange handler on sale.order.line.
@@ -14,7 +13,7 @@ locked-but-not-unlocked SOs is intentionally NOT run -- those may
 legitimately be in the process of being re-estimated and touching them
 would race the user's own edits.
 """
-from odoo import api, SUPERUSER_ID
+from odoo import SUPERUSER_ID, api
 
 
 def migrate(cr, version):

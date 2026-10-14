@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Minimal Python declaration of the Studio-created x_task_diagnosis
 catalogue model.
 

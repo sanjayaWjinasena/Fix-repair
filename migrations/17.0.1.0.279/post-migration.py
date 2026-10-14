@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """v279 upgrade — port Studio automation 193 'RR - Sales Price For
 RUG Items' as a sale.order.line create/write override on Fix-repair.
 
@@ -10,7 +9,7 @@ product_template_id is falsy.
 Requires BugFix-Sales v43 for x_studio_price_unit_original on
 sale.order.line.
 """
-from odoo import api, SUPERUSER_ID
+from odoo import SUPERUSER_ID, api
 
 
 def migrate(cr, version):

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """res.users Studio field declarations moved to
 `studio_usermodel_migration` (v0.0.7). This file retains only the
 `_migrate_studio_res_users_cluster_to_base` one-shot migration method

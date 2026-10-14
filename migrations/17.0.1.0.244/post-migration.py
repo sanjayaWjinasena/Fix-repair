@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """v244 post-migration — no-op on upgrade path.
 
 v244 moved helpdesk_ticket_studio_ported.xml + _studio_field_hides.xml

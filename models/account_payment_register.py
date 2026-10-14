@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from odoo import _, models
 from odoo.exceptions import UserError
 
@@ -185,4 +184,4 @@ class AccountPaymentRegister(models.TransientModel):
 
     @staticmethod
     def _format_money(value):
-        return '{:,.2f}'.format(value)
+        return f'{value:,.2f}'

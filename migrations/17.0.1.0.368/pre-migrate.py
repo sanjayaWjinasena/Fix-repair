@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """v17.0.1.0.368: remove the hard-xpath "hide dev extras" views.
 
 They are replaced by _get_view overrides (BugFix-Stock and Fix-repair
@@ -10,7 +9,7 @@ Fix-repair's two views are removed here too. ORM only.
 """
 import logging
 
-from odoo import api, SUPERUSER_ID
+from odoo import SUPERUSER_ID, api
 
 _logger = logging.getLogger(__name__)
 

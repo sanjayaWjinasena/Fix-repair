@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """v276 upgrade — close the last repair-scope Studio field gaps.
 
 Adds Python declarations for:

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """v252 upgrade migration — force use_product_returns=True on every
 helpdesk.team so the Return button surfaces on repair tickets.
 
@@ -13,7 +12,7 @@ is currently False.
 import importlib.util
 import os
 
-from odoo import api, SUPERUSER_ID
+from odoo import SUPERUSER_ID, api
 from odoo.modules.module import get_module_path
 
 

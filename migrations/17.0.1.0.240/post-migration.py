@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 """Upgrade path for v240 — v239's sentinel had a jsonb cast bug.
 Re-runs the loader now that hooks.py is fixed."""
 import importlib.util
 import os
 
-from odoo import api, SUPERUSER_ID
+from odoo import SUPERUSER_ID, api
 from odoo.modules.module import get_module_path
 
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """v285 upgrade -- Odoo-17 fix for the Track Lock Status port from v283.
 
 Studio automations 202 + 203 both used `state == 'done'` as their gate.
@@ -22,7 +21,7 @@ lock fields align with the native locked field.
 Clear-DB reference is left unchanged (bug on Clear-DB, fixed only in
 Fix-repair's port).
 """
-from odoo import api, SUPERUSER_ID
+from odoo import SUPERUSER_ID, api
 
 
 def migrate(cr, version):

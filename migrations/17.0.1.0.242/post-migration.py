@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """v242 post-migration — re-runs the post-init view loader with the
 sanitised ported.xml (view #4013 removed, //button[@name='195']
 xpath stripped from #4012). Existing DBs get the sanitised arch
@@ -8,7 +7,7 @@ place by external ID.
 import importlib.util
 import os
 
-from odoo import api, SUPERUSER_ID
+from odoo import SUPERUSER_ID, api
 from odoo.modules.module import get_module_path
 
 

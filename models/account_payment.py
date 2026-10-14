@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """account.payment repair-flow overrides.
 
 v284: port of Studio automation 241 / server action 2427
