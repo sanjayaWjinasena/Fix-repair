@@ -2,7 +2,7 @@
 import datetime
 
 from lxml import etree
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 from odoo.addons.industry_fsm_sale.models.project_task import Task as FsmSaleTask
 
@@ -579,8 +579,8 @@ class ProjectTask(models.Model):
             if not record.id:
                 continue
             raise UserError(
-                'Atleast one repair diagnosis line must be specified '
-                'for the selected task.'
+                _('Atleast one repair diagnosis line must be specified '
+                'for the selected task.')
             )
 
     def _repair_studio_image_validation(self):
@@ -590,8 +590,8 @@ class ProjectTask(models.Model):
             if not record.id:
                 continue
             raise UserError(
-                'Atleast one repair image should be uploaded for the '
-                'selected task.'
+                _('Atleast one repair image should be uploaded for the '
+                'selected task.')
             )
 
     def _repair_studio_validate_diagnosis_lines(self):
@@ -602,7 +602,7 @@ class ProjectTask(models.Model):
             if not record.helpdesk_ticket_id:
                 continue
             if not record.x_studio_valid_diagnosis:
-                raise UserError('Repair diagnosis must be specified.')
+                raise UserError(_('Repair diagnosis must be specified.'))
 
     def _fsm_create_sale_order(self):
         """Delegate to industry_fsm_sale's implementation, skipping industry_fsm_stock."""

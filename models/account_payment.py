@@ -34,7 +34,7 @@ account.payment (declared in BugFix-Sales v45). Company advance %
 lives on res.company.x_studio_advance_payment_ (BugFix-Sales v22
 config-cutover proxy).
 """
-from odoo import api, models
+from odoo import _, api, models
 from odoo.exceptions import UserError
 
 
@@ -80,5 +80,5 @@ class AccountPayment(models.Model):
             projected = round(payment.amount + sum_posted, 2)
             if threshold > projected:
                 raise UserError(
-                    'Payment is not within the minimum percentage.'
+                    _('Payment is not within the minimum percentage.')
                 )

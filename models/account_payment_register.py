@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import models
+from odoo import _, models
 from odoo.exceptions import UserError
 
 
@@ -164,21 +164,19 @@ class AccountPaymentRegister(models.TransientModel):
                     projected = round(already_paid + wizard.amount, 2)
                     if projected < threshold:
                         currency = order.currency_id.symbol or ''
-                        raise UserError(
-                            "Advance Payment should be at least %s%% of "
-                            "the sale order total (%s %s). This payment "
-                            "brings the total paid on %s to %s %s, which "
-                            "is below the required minimum. Please "
-                            "increase the payment amount."
-                            % (
-                                self._format_pct(pct),
-                                currency,
-                                self._format_money(threshold),
-                                invoice.name,
-                                currency,
-                                self._format_money(projected),
-                            )
-                        )
+                        raise UserError(_(
+                            "Advance Payment should be at least %(pct)s%% of "
+                            "the sale order total (%(currency)s %(threshold)s). "
+                            "This payment brings the total paid on %(invoice)s "
+                            "to %(currency)s %(projected)s, which is below the "
+                            "required minimum. Please increase the payment "
+                            "amount.",
+                            pct=self._format_pct(pct),
+                            currency=currency,
+                            threshold=self._format_money(threshold),
+                            invoice=invoice.name,
+                            projected=self._format_money(projected),
+                        ))
 
     @staticmethod
     def _format_pct(value):

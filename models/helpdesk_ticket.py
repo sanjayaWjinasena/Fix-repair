@@ -2812,7 +2812,7 @@ class HelpdeskTicket(models.Model):
     def action_create_repair_serial(self):
         self.ensure_one()
         if not self.product_id:
-            raise UserError("Select a product before creating a serial number.")
+            raise UserError(_("Select a product before creating a serial number."))
         # No "already exists" guard — clicking again creates a fresh lot
         # and re-points the ticket to it, so the user can change the
         # serial after the fact.
@@ -3085,11 +3085,12 @@ class HelpdeskTicket(models.Model):
             return False
         anchor = self._get_factory_repair_location()
         if not anchor or not anchor.warehouse_id:
-            raise UserError(
+            raise UserError(_(
                 "Factory Repair Location is not configured for company "
-                f"'{self.company_id.name}'. Set it in "
-                "Settings → Fix Repair → Factory Repair Location."
-            )
+                "'%(company)s'. Set it in "
+                "Settings → Fix Repair → Factory Repair Location.",
+                company=self.company_id.name,
+            ))
         wh = anchor.warehouse_id
         dest_loc = wh._ensure_intransit_location()
         if not dest_loc or src_loc == dest_loc:
@@ -3322,7 +3323,7 @@ class HelpdeskTicket(models.Model):
         """
         for record in self:
             if record.x_studio_cancelled:
-                raise UserError('Cancelled tickets can not be deleted.')
+                raise UserError(_('Cancelled tickets can not be deleted.'))
 
     def _repair_auto_select_product_for_rug(self):
         """Replaces server action id 1989 (automation 172
@@ -3410,7 +3411,7 @@ class HelpdeskTicket(models.Model):
             ], limit=1)
             if not factory_location:
                 raise UserError(
-                    "Setup Repair Factory Location in stock locations to proceed."
+                    _("Setup Repair Factory Location in stock locations to proceed.")
                 )
             now = datetime.datetime.now()
             record.write({
@@ -3494,7 +3495,7 @@ class HelpdeskTicket(models.Model):
             )[0]
             company = self.env['res.company'].browse(company_id)
             if not record.x_studio_cancel_reason:
-                raise UserError('Cancel reason must be specified.')
+                raise UserError(_('Cancel reason must be specified.'))
             record.write({
                 'x_studio_cancelled_stage_id': record.stage_id.id,
                 'stage_id': 4 if company.id == 1 else 23,
@@ -3548,21 +3549,21 @@ class HelpdeskTicket(models.Model):
             if company.id == 1:
                 if not record.x_studio_virtual_location:
                     raise UserError(
-                        'Virtual Location must be setup for Current Logged in User.'
+                        _('Virtual Location must be setup for Current Logged in User.')
                     )
                 if not record.x_studio_source_location:
                     raise UserError(
-                        'Source Location must be setup for Current Logged in User.'
+                        _('Source Location must be setup for Current Logged in User.')
                     )
                 source_loc = record.x_studio_source_location.id
             else:
                 if not record.x_studio_virtual_location_1:
                     raise UserError(
-                        'Virtual Location must be setup for Current Logged in User.'
+                        _('Virtual Location must be setup for Current Logged in User.')
                     )
                 if not record.x_studio_source_location_1:
                     raise UserError(
-                        'Source Location must be setup for Current Logged in User.'
+                        _('Source Location must be setup for Current Logged in User.')
                     )
                 source_loc = record.x_studio_source_location_1.id
 
@@ -3580,7 +3581,7 @@ class HelpdeskTicket(models.Model):
                 ('company_id', '=', company.id),
             ], limit=1)
             if not opt_type:
-                raise UserError('The selected return receipt location is not correct.')
+                raise UserError(_('The selected return receipt location is not correct.'))
 
             prod_move = self.env['stock.picking'].create({
                 'x_studio_created_from_help_ticket': record.id,
@@ -3651,7 +3652,7 @@ class HelpdeskTicket(models.Model):
         for record in self:
             if record.stage_id.id != 13:
                 raise UserError(
-                    'The repaired item should be handed over to customer to send the report.'
+                    _('The repaired item should be handed over to customer to send the report.')
                 )
             template = self.env['mail.template'].search([
                 ('id', '=', template_id),
@@ -3795,7 +3796,7 @@ class HelpdeskTicket(models.Model):
             )[0]
             company = self.env['res.company'].browse(company_id)
             if not record.x_studio_cancel_reason:
-                raise UserError('Cancel reason must be specified.')
+                raise UserError(_('Cancel reason must be specified.'))
             now = datetime.datetime.now()
             record.write({
                 'x_studio_repair_complete_stage_updated': True,
@@ -3815,7 +3816,7 @@ class HelpdeskTicket(models.Model):
         ticket_type_id to 1 (the RUG type)."""
         for record in self:
             if not record.x_studio_warranty_card:
-                raise UserError('Warranty Card Document must be Uploaded!')
+                raise UserError(_('Warranty Card Document must be Uploaded!'))
             for sos in record.fsm_task_ids:
                 so = self.env['sale.order'].search([
                     ('id', '=', sos.sale_order_id.id),
@@ -3848,18 +3849,24 @@ class HelpdeskTicket(models.Model):
                     locations = ''
                     for locs in loc:
                         locations += str(locs.complete_name + '\n')
-                    raise UserError(
-                        'The current logged-in user does not have access to below listed warehouse.'
-                        + '\n\n' + 'Repair Location:' + '\n' + warehouse
-                        + '\n\n' + 'Only the below listed stock warehouses are permitted for the current logged-in user for repair module.'
-                        + '\n\n' + locations
-                    )
+                    raise UserError(_(
+                        "The current logged-in user does not have access to "
+                        "below listed warehouse.\n\nRepair Location:\n"
+                        "%(warehouse)s\n\nOnly the below listed stock "
+                        "warehouses are permitted for the current logged-in "
+                        "user for repair module.\n\n%(locations)s",
+                        warehouse=warehouse,
+                        locations=locations,
+                    ))
                 else:
-                    raise UserError(
-                        'The current logged-in user does not have access to below listed warehouse.'
-                        + '\n\n' + 'Repair Location:' + '\n' + warehouse
-                        + '\n\n' + 'There are no permitted stock warehouses set up for the current logged-in user for repair module.'
-                    )
+                    raise UserError(_(
+                        "The current logged-in user does not have access to "
+                        "below listed warehouse.\n\nRepair Location:\n"
+                        "%(warehouse)s\n\nThere are no permitted stock "
+                        "warehouses set up for the current logged-in user "
+                        "for repair module.",
+                        warehouse=warehouse,
+                    ))
 
     def _repair_studio_update_rug_approval_in_pipeline(self):
         """Studio server action id 1998 native port. Originally
@@ -4577,21 +4584,21 @@ class HelpdeskTicket(models.Model):
             if company.id == 1:
                 if not record.x_studio_virtual_location:
                     raise UserError(
-                        'Virtual Location must be setup for Current Logged in User.'
+                        _('Virtual Location must be setup for Current Logged in User.')
                     )
                 if not record.x_studio_source_location:
                     raise UserError(
-                        'Source Location must be setup for Current Logged in User.'
+                        _('Source Location must be setup for Current Logged in User.')
                     )
                 source_loc = record.x_studio_source_location.id
             else:
                 if not record.x_studio_virtual_location_1:
                     raise UserError(
-                        'Virtual Location must be setup for Current Logged in User.'
+                        _('Virtual Location must be setup for Current Logged in User.')
                     )
                 if not record.x_studio_source_location_1:
                     raise UserError(
-                        'Source Location must be setup for Current Logged in User.'
+                        _('Source Location must be setup for Current Logged in User.')
                     )
                 source_loc = record.x_studio_source_location_1.id
 
@@ -4621,7 +4628,7 @@ class HelpdeskTicket(models.Model):
                 ('company_id', '=', company.id),
             ], limit=1)
             if not opt_type:
-                raise UserError('The selected return receipt location is not correct.')
+                raise UserError(_('The selected return receipt location is not correct.'))
 
             prod_move = self.env['stock.picking'].create({
                 'x_studio_created_from_help_ticket': record.id,

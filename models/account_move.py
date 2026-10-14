@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from lxml import etree
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
 
@@ -224,10 +224,11 @@ class AccountMove(models.Model):
                 [('x_studio_company_id', '=', move.company_id.id)], limit=1
             )
             if not config or not config.x_studio_rug_account:
-                raise UserError(
-                    f"No RUG account configured for company '{move.company_id.name}'. "
-                    "Please set it up in Repair Accounts."
-                )
+                raise UserError(_(
+                    "No RUG account configured for company '%(company)s'. "
+                    "Please set it up in Repair Accounts.",
+                    company=move.company_id.name,
+                ))
             rug_account = config.x_studio_rug_account
             product_lines = move.invoice_line_ids.filtered(
                 lambda l: l.display_type not in ('line_section', 'line_note')
@@ -308,11 +309,12 @@ class AccountMove(models.Model):
                     [('name', '=', move.invoice_origin)], limit=1
                 )
             if not so or not so.locked:
-                raise UserError(
-                    "Cannot settle RUG invoice %s -- the linked sale "
+                raise UserError(_(
+                    "Cannot settle RUG invoice %(invoice)s -- the linked sale "
                     "order must be locked (equivalent to the pre-Odoo-17 "
-                    "'done' state)." % (move.name,)
-                )
+                    "'done' state).",
+                    invoice=move.name,
+                ))
             move._rug_auto_settle()
         return res
 
@@ -361,10 +363,11 @@ class AccountMove(models.Model):
             limit=1,
         )
         if not journal:
-            raise UserError(
-                f"No miscellaneous (type='general') journal found for "
-                f"'{self.company_id.name}'. Cannot auto-settle the RUG invoice."
-            )
+            raise UserError(_(
+                "No miscellaneous (type='general') journal found for "
+                "'%(company)s'. Cannot auto-settle the RUG invoice.",
+                company=self.company_id.name,
+            ))
 
         amount = sum(receivable_lines.mapped('debit')) - sum(receivable_lines.mapped('credit'))
         if amount <= 0:

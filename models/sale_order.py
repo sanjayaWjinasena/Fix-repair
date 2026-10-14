@@ -4,7 +4,7 @@ import logging
 
 from lxml import etree
 from markupsafe import Markup, escape
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 from odoo.http import request
 
@@ -218,10 +218,11 @@ class SaleOrder(models.Model):
                 )
         if not details:
             return
-        raise UserError(
-            f"Not enough stock at {source_names}:\n\n"
-            + "\n".join(details)
-        )
+        raise UserError(_(
+            "Not enough stock at %(sources)s:\n\n%(details)s",
+            sources=source_names,
+            details="\n".join(details),
+        ))
 
     def action_re_estimate(self):
         """Reset this SO for re-estimation and move the linked helpdesk
@@ -1528,7 +1529,7 @@ class SaleOrder(models.Model):
         invoices = self._create_invoices()
         if not invoices:
             raise UserError(
-                "Nothing to invoice on this sale order."
+                _("Nothing to invoice on this sale order.")
             )
         return {
             'name': 'Customer Invoice',
@@ -1564,18 +1565,18 @@ class SaleOrder(models.Model):
         self.ensure_one()
         if not (self.x_repair_customer_pays or self.x_studio_rug_rejected):
             raise UserError(
-                "Full-amount invoicing is only available on non-RUG "
-                "(customer-pays or Reject-RUG) repair sale orders."
+                _("Full-amount invoicing is only available on non-RUG "
+                "(customer-pays or Reject-RUG) repair sale orders.")
             )
         if self.state != 'sale':
-            raise UserError("The sale order must be confirmed first.")
+            raise UserError(_("The sale order must be confirmed first."))
         existing = self.invoice_ids.filtered(lambda i: i.state != 'cancel')
         if existing:
-            raise UserError(
-                "An invoice already exists for this sale order (%s). "
-                "Cancel it first or use the existing invoice."
-                % existing[0].name
-            )
+            raise UserError(_(
+                "An invoice already exists for this sale order (%(invoice)s). "
+                "Cancel it first or use the existing invoice.",
+                invoice=existing[0].name,
+            ))
 
         invoice_vals = self._prepare_invoice()
         invoice_line_cmds = []
@@ -1600,8 +1601,8 @@ class SaleOrder(models.Model):
 
         if not invoice_line_cmds:
             raise UserError(
-                "Nothing to invoice on this sale order — no non-"
-                "downpayment lines with a positive ordered quantity."
+                _("Nothing to invoice on this sale order — no non-"
+                "downpayment lines with a positive ordered quantity.")
             )
 
         invoice_vals['invoice_line_ids'] = invoice_line_cmds
@@ -1651,9 +1652,9 @@ class SaleOrder(models.Model):
         )
         if done_outgoing:
             raise UserError(
-                "Cannot re-estimate: a delivery has already been validated "
+                _("Cannot re-estimate: a delivery has already been validated "
                 "on this Sales Order. Re-estimate is only allowed before the "
-                "first delivery."
+                "first delivery.")
             )
 
         # Force the SO back to 'draft' WITHOUT cancelling the procurement

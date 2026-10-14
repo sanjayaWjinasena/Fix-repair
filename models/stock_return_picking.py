@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
 
@@ -354,8 +354,8 @@ class StockReturnPicking(models.TransientModel):
                 continue
             if wizard.location_id.id != suggested.id:
                 raise UserError(
-                    "Return Location should be equal to Suggested "
-                    "Return Location."
+                    _("Return Location should be equal to Suggested "
+                    "Return Location.")
                 )
 
     @api.model_create_multi

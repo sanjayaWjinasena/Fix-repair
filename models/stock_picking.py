@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from lxml import etree
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
 
@@ -158,14 +158,14 @@ class StockPicking(models.Model):
         """
         blocked = self.filtered(lambda p: p.nuw_block_validate)
         if blocked:
-            raise UserError(
+            raise UserError(_(
                 "Cannot validate delivery: the customer-pays repair "
                 "invoice on the linked sale order has no payment yet. "
                 "Register at least a partial payment on the invoice "
                 "before validating the delivery.\n\n"
-                "Affected pickings:\n"
-                + "\n".join("  • %s" % p.name for p in blocked)
-            )
+                "Affected pickings:\n%(pickings)s",
+                pickings="\n".join("  • %s" % p.name for p in blocked),
+            ))
         return super().button_validate()
 
     def _get_view(self, view_id=None, view_type='form', **options):
