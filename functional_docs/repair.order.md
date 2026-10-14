@@ -29,7 +29,6 @@ Adds one checkbox, Confirm Draft Quotation (`x_studio_confirm_draft_quotation`),
   <details><summary>code (11 lines)</summary>
 
 ```python
-
 # Available variables:
 #  - env: Odoo Environment on which the action is triggered
 #  - model: Odoo Model of the record on which the action is triggered; is a void recordset
@@ -50,7 +49,7 @@ Adds one checkbox, Confirm Draft Quotation (`x_studio_confirm_draft_quotation`),
 
 ```python
 if record.id:
-  record['x_studio_confirm_draft_quotation'] = True
+    record["x_studio_confirm_draft_quotation"] = True
 ```
   </details>
 - **RR - Notify Customer in RO End - Final** (`sa_f5_repair_order_rr_notify_customer_in_ro_end_final`, type `next_activity`)
@@ -81,25 +80,24 @@ if record.id:
   <details><summary>code (19 lines)</summary>
 
 ```python
+mail_pool = env["mail.mail"]
 
-mail_pool = env['mail.mail']
+values = {}
 
-values={}
+values.update({"subject": "Repair Complete Confirmation"})
 
-values.update({'subject': 'Repair Complete Confirmation'})
+values.update({"email_to": "janitharc@gmail.com"})
 
-values.update({'email_to': 'janitharc@gmail.com'})
+values.update({"body_html": "Repair Complete Confirmation"})
 
-values.update({'body_html': 'Repair Complete Confirmation' })
-
-values.update({'body': 'Repair Complete Confirmation' })
+values.update({"body": "Repair Complete Confirmation"})
 
 msg_id = mail_pool.create(values)
 
 # And then call send function of the mail.mail,
 
 if msg_id:
-  mail_pool.send([msg_id])
+    mail_pool.send([msg_id])
 ```
   </details>
 - **RR - Update SO in RO** (`server_action_1979_rr_update_so_in_ro`, type `code`)
@@ -110,7 +108,7 @@ if msg_id:
 
 ```python
 if record.ticket_id.id:
-  record['sale_order_id'] = record.ticket_id.sale_order_id.id
+    record["sale_order_id"] = record.ticket_id.sale_order_id.id
 ```
   </details>
 **Automations (1):**

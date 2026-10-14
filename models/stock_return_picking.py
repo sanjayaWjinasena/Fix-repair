@@ -3,7 +3,7 @@ from odoo.exceptions import UserError
 
 
 class StockReturnPicking(models.TransientModel):
-    _inherit = 'stock.return.picking'
+    _inherit = "stock.return.picking"
 
     # v256: Studio fields ported verbatim from Clear-DB. Read by
     # _compute_moves_locations below (company-1 branch reads
@@ -11,27 +11,27 @@ class StockReturnPicking(models.TransientModel):
     # _1 variant). Declared as base state so standalone has them.
     # Clear-DB keeps them state='manual' owned by studio_customization.
     x_studio_suggested_location_id = fields.Many2one(
-        'stock.location',
-        string='Suggested Location',
-        ondelete='set null',
+        "stock.location",
+        string="Suggested Location",
+        ondelete="set null",
     )
     x_studio_suggested_location_id_1 = fields.Many2one(
-        'stock.location',
-        string='Suggested Location (Company 2)',
-        ondelete='set null',
+        "stock.location",
+        string="Suggested Location (Company 2)",
+        ondelete="set null",
     )
     # v256: three Studio boolean flags on the return wizard —
     # ticket-type filters copied by Clear-DB workflows into the
     # wizard's default context. No Fix-repair Python reads them
     # today, but declaring here keeps parity with Clear-DB's schema.
     x_studio_repair_normal_with_serial_no = fields.Boolean(
-        string='Repair – Normal with Serial No',
+        string="Repair – Normal with Serial No",
     )
     x_studio_repair_normal_without_serial_no = fields.Boolean(
-        string='Repair – Normal without Serial No',
+        string="Repair – Normal without Serial No",
     )
     x_studio_repair_rug = fields.Boolean(
-        string='Repair – RUG',
+        string="Repair – RUG",
     )
 
     # Marker written to a phantom's `origin` field so we can find (and
@@ -40,7 +40,7 @@ class StockReturnPicking(models.TransientModel):
     # x_studio_helpdesk_ticket_id because that field surfaces on the
     # ticket's Delivery smart button — we deliberately keep the phantom
     # invisible to end users.
-    _FIX_REPAIR_PHANTOM_MARKER = 'fix_repair:return-phantom'
+    _FIX_REPAIR_PHANTOM_MARKER = "fix_repair:return-phantom"
 
     @api.model
     def _next_warehouse_ret_name(self, warehouse):
@@ -49,22 +49,35 @@ class StockReturnPicking(models.TransientModel):
         if not warehouse or not warehouse.code:
             return False
         ret_prefix = f"{warehouse.code}/RET/"
-        seq = self.env['ir.sequence'].sudo().search([
-            ('prefix', '=', ret_prefix),
-            '|',
-            ('company_id', '=', warehouse.company_id.id),
-            ('company_id', '=', False),
-        ], limit=1)
+        seq = (
+            self.env["ir.sequence"]
+            .sudo()
+            .search(
+                [
+                    ("prefix", "=", ret_prefix),
+                    "|",
+                    ("company_id", "=", warehouse.company_id.id),
+                    ("company_id", "=", False),
+                ],
+                limit=1,
+            )
+        )
         if not seq:
-            seq = self.env['ir.sequence'].sudo().create({
-                'name': f"{warehouse.name} Sequence return",
-                'prefix': ret_prefix,
-                'padding': 5,
-                'number_increment': 1,
-                'number_next': 1,
-                'implementation': 'standard',
-                'company_id': warehouse.company_id.id,
-            })
+            seq = (
+                self.env["ir.sequence"]
+                .sudo()
+                .create(
+                    {
+                        "name": f"{warehouse.name} Sequence return",
+                        "prefix": ret_prefix,
+                        "padding": 5,
+                        "number_increment": 1,
+                        "number_next": 1,
+                        "implementation": "standard",
+                        "company_id": warehouse.company_id.id,
+                    }
+                )
+            )
         return seq.next_by_id()
 
     @api.model
@@ -77,32 +90,47 @@ class StockReturnPicking(models.TransientModel):
         if not warehouse or not warehouse.code:
             return False
         phan_prefix = f"{warehouse.code}/PHAN/"
-        seq = self.env['ir.sequence'].sudo().search([
-            ('prefix', '=', phan_prefix),
-            '|',
-            ('company_id', '=', warehouse.company_id.id),
-            ('company_id', '=', False),
-        ], limit=1)
+        seq = (
+            self.env["ir.sequence"]
+            .sudo()
+            .search(
+                [
+                    ("prefix", "=", phan_prefix),
+                    "|",
+                    ("company_id", "=", warehouse.company_id.id),
+                    ("company_id", "=", False),
+                ],
+                limit=1,
+            )
+        )
         if not seq:
-            seq = self.env['ir.sequence'].sudo().create({
-                'name': f"{warehouse.name} Sequence phantom",
-                'prefix': phan_prefix,
-                'padding': 5,
-                'number_increment': 1,
-                'number_next': 1,
-                'implementation': 'standard',
-                'company_id': warehouse.company_id.id,
-            })
+            seq = (
+                self.env["ir.sequence"]
+                .sudo()
+                .create(
+                    {
+                        "name": f"{warehouse.name} Sequence phantom",
+                        "prefix": phan_prefix,
+                        "padding": 5,
+                        "number_increment": 1,
+                        "number_next": 1,
+                        "implementation": "standard",
+                        "company_id": warehouse.company_id.id,
+                    }
+                )
+            )
         return seq.next_by_id()
 
     @api.model
     def default_get(self, fields_list):
         defaults = super().default_get(fields_list)
-        ticket_id = defaults.get('ticket_id') or self.env.context.get('default_ticket_id')
-        if not ticket_id or defaults.get('picking_id'):
+        ticket_id = defaults.get("ticket_id") or self.env.context.get(
+            "default_ticket_id"
+        )
+        if not ticket_id or defaults.get("picking_id"):
             return defaults
 
-        ticket = self.env['helpdesk.ticket'].browse(ticket_id)
+        ticket = self.env["helpdesk.ticket"].browse(ticket_id)
         serial = ticket.x_studio_serial_no
         product = ticket.product_id or (serial and serial.product_id)
         if not (serial and product):
@@ -118,22 +146,24 @@ class StockReturnPicking(models.TransientModel):
         # phantom until it's actually reversed by _create_returns; only
         # after that (or after the serial changes) does the next open
         # build a new one.
-        marker = (
-            f'{self._FIX_REPAIR_PHANTOM_MARKER}:ticket:{ticket.id}'
-            f':lot:{serial.id}'
+        marker = f"{self._FIX_REPAIR_PHANTOM_MARKER}:ticket:{ticket.id}:lot:{serial.id}"
+        Picking = self.env["stock.picking"].sudo()
+        existing = Picking.search(
+            [
+                ("origin", "=", marker),
+                ("state", "=", "done"),
+            ],
+            limit=1,
         )
-        Picking = self.env['stock.picking'].sudo()
-        existing = Picking.search([
-            ('origin', '=', marker),
-            ('state', '=', 'done'),
-        ], limit=1)
         if existing:
-            already_reversed = Picking.search_count([
-                ('return_id', '=', existing.id),
-                ('state', '!=', 'cancel'),
-            ])
+            already_reversed = Picking.search_count(
+                [
+                    ("return_id", "=", existing.id),
+                    ("state", "!=", "cancel"),
+                ]
+            )
             if not already_reversed:
-                defaults['picking_id'] = existing.id
+                defaults["picking_id"] = existing.id
                 return defaults
 
         # ALWAYS synthesise the "Delivery to Return" — for every ticket
@@ -144,16 +174,19 @@ class StockReturnPicking(models.TransientModel):
         # all these movements; project_task._bind_ticket_pickings_to_so
         # re-points them once that SO exists.
         repair_loc = (
-            ticket.x_studio_virtual_location_1
-            or ticket.x_studio_virtual_location
+            ticket.x_studio_virtual_location_1 or ticket.x_studio_virtual_location
         )
         if not repair_loc:
-            warehouse = self.env['stock.warehouse'].sudo().search(
-                [('company_id', '=', ticket.company_id.id)], limit=1
+            warehouse = (
+                self.env["stock.warehouse"]
+                .sudo()
+                .search([("company_id", "=", ticket.company_id.id)], limit=1)
             )
             repair_loc = warehouse.lot_stock_id if warehouse else False
-        cust_loc = self.env['stock.location'].sudo().search(
-            [('usage', '=', 'customer')], limit=1
+        cust_loc = (
+            self.env["stock.location"]
+            .sudo()
+            .search([("usage", "=", "customer")], limit=1)
         )
         # Pick an outgoing type from the RRL warehouse when we have one.
         # Otherwise the phantom (and every RET reversed off it) inherits
@@ -166,26 +199,43 @@ class StockReturnPicking(models.TransientModel):
         rrl = ticket.x_studio_return_receipt_location
         target_warehouse = rrl.warehouse_id if rrl else False
         pt_domain = [
-            ('code', '=', 'outgoing'),
-            ('company_id', '=', ticket.company_id.id),
+            ("code", "=", "outgoing"),
+            ("company_id", "=", ticket.company_id.id),
         ]
         pick_type_out = False
         if target_warehouse:
-            pick_type_out = self.env['stock.picking.type'].sudo().search(
-                pt_domain + [
-                    ('warehouse_id', '=', target_warehouse.id),
-                    ('sequence_code', '=', 'OUT'),
-                ], limit=1,
+            pick_type_out = (
+                self.env["stock.picking.type"]
+                .sudo()
+                .search(
+                    pt_domain
+                    + [
+                        ("warehouse_id", "=", target_warehouse.id),
+                        ("sequence_code", "=", "OUT"),
+                    ],
+                    limit=1,
+                )
             )
             if not pick_type_out:
-                pick_type_out = self.env['stock.picking.type'].sudo().search(
-                    pt_domain + [('warehouse_id', '=', target_warehouse.id)],
-                    order='sequence asc', limit=1,
+                pick_type_out = (
+                    self.env["stock.picking.type"]
+                    .sudo()
+                    .search(
+                        pt_domain + [("warehouse_id", "=", target_warehouse.id)],
+                        order="sequence asc",
+                        limit=1,
+                    )
                 )
         if not pick_type_out:
             # Fallback: any outgoing type in the company (previous behavior)
-            pick_type_out = self.env['stock.picking.type'].sudo().search(
-                pt_domain, order='sequence asc', limit=1,
+            pick_type_out = (
+                self.env["stock.picking.type"]
+                .sudo()
+                .search(
+                    pt_domain,
+                    order="sequence asc",
+                    limit=1,
+                )
             )
         if not (repair_loc and cust_loc and pick_type_out):
             return defaults
@@ -199,40 +249,54 @@ class StockReturnPicking(models.TransientModel):
         # `origin` marker lets us find the phantom for reuse without
         # surfacing it anywhere the user can see it. The real return
         # picking gets stamped in _create_returns below.
-        fake_picking = self.env['stock.picking'].sudo().create({
-            'partner_id': ticket.partner_id.id,
-            'picking_type_id': pick_type_out.id,
-            'location_id': repair_loc.id,
-            'location_dest_id': cust_loc.id,
-            'company_id': ticket.company_id.id,
-            'date_done': now,
-            'origin': marker,
-        })
-        fake_move = self.env['stock.move'].sudo().create({
-            'name': product.display_name,
-            'product_id': product.id,
-            'product_uom_qty': 1.0,
-            'product_uom': product.uom_id.id,
-            'location_id': repair_loc.id,
-            'location_dest_id': cust_loc.id,
-            'picking_id': fake_picking.id,
-            'company_id': ticket.company_id.id,
-            'date': now,
-        })
-        self.env['stock.move.line'].sudo().create({
-            'picking_id': fake_picking.id,
-            'move_id': fake_move.id,
-            'product_id': product.id,
-            'product_uom_id': product.uom_id.id,
-            'lot_id': serial.id,
-            'qty_done': 1.0,
-            'location_id': repair_loc.id,
-            'location_dest_id': cust_loc.id,
-            'company_id': ticket.company_id.id,
-        })
+        fake_picking = (
+            self.env["stock.picking"]
+            .sudo()
+            .create(
+                {
+                    "partner_id": ticket.partner_id.id,
+                    "picking_type_id": pick_type_out.id,
+                    "location_id": repair_loc.id,
+                    "location_dest_id": cust_loc.id,
+                    "company_id": ticket.company_id.id,
+                    "date_done": now,
+                    "origin": marker,
+                }
+            )
+        )
+        fake_move = (
+            self.env["stock.move"]
+            .sudo()
+            .create(
+                {
+                    "name": product.display_name,
+                    "product_id": product.id,
+                    "product_uom_qty": 1.0,
+                    "product_uom": product.uom_id.id,
+                    "location_id": repair_loc.id,
+                    "location_dest_id": cust_loc.id,
+                    "picking_id": fake_picking.id,
+                    "company_id": ticket.company_id.id,
+                    "date": now,
+                }
+            )
+        )
+        self.env["stock.move.line"].sudo().create(
+            {
+                "picking_id": fake_picking.id,
+                "move_id": fake_move.id,
+                "product_id": product.id,
+                "product_uom_id": product.uom_id.id,
+                "lot_id": serial.id,
+                "qty_done": 1.0,
+                "location_id": repair_loc.id,
+                "location_dest_id": cust_loc.id,
+                "company_id": ticket.company_id.id,
+            }
+        )
         # Force state to done AFTER linking so _compute_state stays done.
-        fake_move.sudo().write({'state': 'done'})
-        fake_picking.sudo().write({'state': 'done'})
+        fake_move.sudo().write({"state": "done"})
+        fake_picking.sudo().write({"state": "done"})
 
         # Rename to the ticket's Return-Receipt-Location warehouse PHAN
         # sequence so phantoms are visually distinguishable from real
@@ -241,31 +305,38 @@ class StockReturnPicking(models.TransientModel):
         # Operation Type stay in sync.
         phan_name = self._next_warehouse_phan_name(target_warehouse)
         if phan_name:
-            fake_picking.sudo().write({'name': phan_name})
+            fake_picking.sudo().write({"name": phan_name})
 
-        defaults['picking_id'] = fake_picking.id
+        defaults["picking_id"] = fake_picking.id
         return defaults
 
-    def _get_view(self, view_id=None, view_type='form', **options):
+    def _get_view(self, view_id=None, view_type="form", **options):
         arch, view = super()._get_view(view_id, view_type, **options)
-        if view_type == 'form':
+        if view_type == "form":
             ctx = self.env.context
-            ticket_id = ctx.get('default_ticket_id')
-            picking_id_ctx = ctx.get('default_picking_id')
+            ticket_id = ctx.get("default_ticket_id")
+            picking_id_ctx = ctx.get("default_picking_id")
 
             # Detect whether the wizard is opened from a repair ticket. The
             # Return button passes default_ticket_id directly; the Dispatch
             # button passes only default_picking_id, so we follow the picking
             # back to its ticket (via picking_ids m2m or x_studio_pick_id).
-            related_ticket = self.env['helpdesk.ticket']
+            related_ticket = self.env["helpdesk.ticket"]
             if ticket_id:
-                related_ticket = self.env['helpdesk.ticket'].sudo().browse(ticket_id)
+                related_ticket = self.env["helpdesk.ticket"].sudo().browse(ticket_id)
             elif picking_id_ctx:
-                related_ticket = self.env['helpdesk.ticket'].sudo().search([
-                    '|',
-                    ('picking_ids', 'in', [picking_id_ctx]),
-                    ('x_studio_pick_id', '=', picking_id_ctx),
-                ], limit=1)
+                related_ticket = (
+                    self.env["helpdesk.ticket"]
+                    .sudo()
+                    .search(
+                        [
+                            "|",
+                            ("picking_ids", "in", [picking_id_ctx]),
+                            ("x_studio_pick_id", "=", picking_id_ctx),
+                        ],
+                        limit=1,
+                    )
+                )
             is_repair = bool(related_ticket and related_ticket.exists())
 
             if is_repair:
@@ -275,36 +346,37 @@ class StockReturnPicking(models.TransientModel):
                 # them, so hide entirely. Their values continue to flow into
                 # _create_returns as before.
                 for field in arch.xpath("//field[@name='sale_order_id']"):
-                    field.set('invisible', '1')
+                    field.set("invisible", "1")
                 for field in arch.xpath("//field[@name='picking_id']"):
-                    field.set('invisible', '1')
+                    field.set("invisible", "1")
                 # The standard arch wraps both fields in a <group
                 # invisible="not ticket_id">. For a repair context ticket_id
                 # is truthy, so without overriding the group it would render
                 # with just the section header. Force the whole group
                 # invisible so nothing of that block appears.
                 for grp in arch.xpath("//group[@invisible='not ticket_id']"):
-                    grp.set('invisible', '1')
+                    grp.set("invisible", "1")
             else:
                 # Non-repair callers keep the standard sale_order domain.
                 for field in arch.xpath("//field[@name='sale_order_id']"):
-                    field.set('domain',
+                    field.set(
+                        "domain",
                         "[('partner_id', 'child_of', partner_id), "
                         "('state', 'in', ['sale', 'done'])] "
                         "if partner_id else "
-                        "[('state', 'in', ['sale', 'done'])]"
+                        "[('state', 'in', ['sale', 'done'])]",
                     )
 
             # Hide the Studio-added duplicate Return button (action 1997) —
             # the standard create_returns button already handles the flow.
             for btn in arch.xpath("//button[@name='1997']"):
-                btn.set('invisible', '1')
+                btn.set("invisible", "1")
 
             # Hide the To Refund column — forced False in _create_returns anyway.
             for refund_field in arch.xpath(
                 "//field[@name='product_return_moves']//field[@name='to_refund']"
             ):
-                refund_field.set('column_invisible', '1')
+                refund_field.set("column_invisible", "1")
 
         return arch, view
 
@@ -324,12 +396,13 @@ class StockReturnPicking(models.TransientModel):
         for wizard in self:
             if not wizard.ticket_id:
                 continue
-            if not (wizard.x_studio_repair_rug
-                    or wizard.x_studio_repair_normal_with_serial_no):
+            if not (
+                wizard.x_studio_repair_rug
+                or wizard.x_studio_repair_normal_with_serial_no
+            ):
                 continue
             active_company_id = (
-                self.env.context.get('allowed_company_ids',
-                                     [self.env.company.id])
+                self.env.context.get("allowed_company_ids", [self.env.company.id])
                 or [self.env.company.id]
             )[0]
             # Symmetric with automation 174 and _compute_moves_locations:
@@ -345,16 +418,22 @@ class StockReturnPicking(models.TransientModel):
             # Match automation 174's own re-search: only enforce when the
             # ticket belongs to the active company. A ticket in company X
             # opened under company Y falls through without validation.
-            ticket = self.env['helpdesk.ticket'].sudo().search([
-                ('id', '=', wizard.ticket_id.id),
-                ('company_id', '=', active_company_id),
-            ], limit=1)
+            ticket = (
+                self.env["helpdesk.ticket"]
+                .sudo()
+                .search(
+                    [
+                        ("id", "=", wizard.ticket_id.id),
+                        ("company_id", "=", active_company_id),
+                    ],
+                    limit=1,
+                )
+            )
             if not ticket:
                 continue
             if wizard.location_id.id != suggested.id:
                 raise UserError(
-                    _("Return Location should be equal to Suggested "
-                    "Return Location.")
+                    _("Return Location should be equal to Suggested Return Location.")
                 )
 
     @api.model_create_multi
@@ -375,17 +454,18 @@ class StockReturnPicking(models.TransientModel):
         # line quantity edits from downstream computes) don't re-run
         # the check for no benefit.
         watched = {
-            'location_id', 'ticket_id',
-            'x_studio_repair_rug',
-            'x_studio_repair_normal_with_serial_no',
-            'x_studio_suggested_location_id',
-            'x_studio_suggested_location_id_1',
+            "location_id",
+            "ticket_id",
+            "x_studio_repair_rug",
+            "x_studio_repair_normal_with_serial_no",
+            "x_studio_suggested_location_id",
+            "x_studio_suggested_location_id_1",
         }
         if watched & set(vals or ()):
             self._fix_repair_validate_return_location()
         return res
 
-    @api.depends('picking_id', 'ticket_id')
+    @api.depends("picking_id", "ticket_id")
     def _compute_moves_locations(self):
         super()._compute_moves_locations()
         # Gate the whole override on wizard.ticket_id being set. That
@@ -405,8 +485,7 @@ class StockReturnPicking(models.TransientModel):
         # symmetric: we only massage location_id when the automation
         # would also be watching.
         active_company_id = (
-            self.env.context.get('allowed_company_ids',
-                                 [self.env.company.id])
+            self.env.context.get("allowed_company_ids", [self.env.company.id])
             or [self.env.company.id]
         )[0]
         for wizard in self:
@@ -420,8 +499,7 @@ class StockReturnPicking(models.TransientModel):
             # company's per-company variant.
             if active_company_id == 1:
                 suggested = (
-                    wizard.x_studio_suggested_location_id
-                    or wizard.original_location_id
+                    wizard.x_studio_suggested_location_id or wizard.original_location_id
                 )
             else:
                 suggested = (
@@ -444,16 +522,23 @@ class StockReturnPicking(models.TransientModel):
         # via the picking we're reversing.
         ticket = self.ticket_id
         if not ticket and self.picking_id:
-            ticket = self.env['helpdesk.ticket'].sudo().search([
-                '|',
-                ('picking_ids', 'in', self.picking_id.ids),
-                ('x_studio_pick_id', '=', self.picking_id.id),
-            ], limit=1)
+            ticket = (
+                self.env["helpdesk.ticket"]
+                .sudo()
+                .search(
+                    [
+                        "|",
+                        ("picking_ids", "in", self.picking_id.ids),
+                        ("x_studio_pick_id", "=", self.picking_id.id),
+                    ],
+                    limit=1,
+                )
+            )
 
         if self.ticket_id:
-            self.product_return_moves.write({'quantity': 1})
+            self.product_return_moves.write({"quantity": 1})
         new_picking_id, pick_type_id = super()._create_returns()
-        new_picking = self.env['stock.picking'].browse(new_picking_id)
+        new_picking = self.env["stock.picking"].browse(new_picking_id)
 
         # Rename the new picking to <WH_CODE>/RET/xxxxx based on the
         # ticket's Return Receipt Location warehouse — applies to BOTH
@@ -462,12 +547,12 @@ class StockReturnPicking(models.TransientModel):
         # stamp the ticket on the picking via the Studio link so we can
         # find every ticket-related picking deterministically later.
         if ticket:
-            new_picking.sudo().write({'x_studio_helpdesk_ticket_id': ticket.id})
+            new_picking.sudo().write({"x_studio_helpdesk_ticket_id": ticket.id})
             if ticket.x_studio_return_receipt_location:
                 loc = ticket.x_studio_return_receipt_location
                 ret_name = self._next_warehouse_ret_name(loc.warehouse_id)
                 if ret_name:
-                    new_picking.sudo().write({'name': ret_name})
+                    new_picking.sudo().write({"name": ret_name})
 
         if self.ticket_id:
             # Record this collection picking on the ticket so the later
@@ -476,29 +561,33 @@ class StockReturnPicking(models.TransientModel):
             # action_received_at_sales_centre when that fires, but Centre
             # Repair skips that step — without this write, Centre Repair
             # Dispatch would launch the wizard with no picking_id.
-            self.ticket_id.sudo().write({'x_studio_pick_id': new_picking_id})
+            self.ticket_id.sudo().write({"x_studio_pick_id": new_picking_id})
 
-            new_picking.move_ids.write({
-                'to_refund': False,
-                'sale_line_id': False,
-            })
+            new_picking.move_ids.write(
+                {
+                    "to_refund": False,
+                    "sale_line_id": False,
+                }
+            )
             serial = self.ticket_id.x_studio_serial_no
             if serial:
                 if new_picking.move_line_ids:
-                    new_picking.move_line_ids.write({'lot_id': serial.id})
+                    new_picking.move_line_ids.write({"lot_id": serial.id})
                 else:
                     # Incoming picking — move_lines not auto-created until the
                     # user validates. Pre-create them with the serial so the
                     # user just needs to click Validate.
                     for move in new_picking.move_ids:
-                        self.env['stock.move.line'].sudo().create({
-                            'picking_id': new_picking.id,
-                            'move_id': move.id,
-                            'product_id': move.product_id.id,
-                            'product_uom_id': move.product_uom.id,
-                            'lot_id': serial.id,
-                            'location_id': move.location_id.id,
-                            'location_dest_id': move.location_dest_id.id,
-                            'company_id': new_picking.company_id.id,
-                        })
+                        self.env["stock.move.line"].sudo().create(
+                            {
+                                "picking_id": new_picking.id,
+                                "move_id": move.id,
+                                "product_id": move.product_id.id,
+                                "product_uom_id": move.product_uom.id,
+                                "lot_id": serial.id,
+                                "location_id": move.location_id.id,
+                                "location_dest_id": move.location_dest_id.id,
+                                "company_id": new_picking.company_id.id,
+                            }
+                        )
         return new_picking_id, pick_type_id

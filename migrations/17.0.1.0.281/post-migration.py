@@ -19,6 +19,7 @@ studio_migrations. Store=True preserved so search domains work.
 Also softened the write() override to fall back to invoice_origin
 lookup when x_studio_sale_id isn't declared.
 """
+
 from odoo import SUPERUSER_ID, api
 
 
@@ -28,7 +29,7 @@ def migrate(cr, version):
     env = api.Environment(cr, SUPERUSER_ID, {})
     # Force-recompute the new field on every existing invoice so
     # the stored column is populated correctly.
-    moves = env['account.move'].sudo().search([('invoice_origin', '!=', False)])
+    moves = env["account.move"].sudo().search([("invoice_origin", "!=", False)])
     if moves:
-        moves.invalidate_recordset(['x_studio_rug_confirmed'])
+        moves.invalidate_recordset(["x_studio_rug_confirmed"])
         moves._compute_x_studio_rug_confirmed()

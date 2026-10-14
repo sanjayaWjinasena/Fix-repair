@@ -11,6 +11,7 @@ so upgrade paths pick up the view records too. Idempotent: convert_file
 in mode='init' updates existing records by external ID and creates
 missing ones.
 """
+
 import importlib.util
 import os
 
@@ -23,9 +24,10 @@ def migrate(cr, version):
         # Fresh install path — post_init_hook handles it.
         return
 
-    hooks_path = os.path.join(get_module_path('Fix-repair'), 'hooks.py')
+    hooks_path = os.path.join(get_module_path("Fix-repair"), "hooks.py")
     spec = importlib.util.spec_from_file_location(
-        'fix_repair_hooks', hooks_path,
+        "fix_repair_hooks",
+        hooks_path,
     )
     hooks = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(hooks)

@@ -33,14 +33,15 @@ account.payment (declared in BugFix-Sales v45). Company advance %
 lives on res.company.x_studio_advance_payment_ (BugFix-Sales v22
 config-cutover proxy).
 """
+
 from odoo import _, api, models
 from odoo.exceptions import UserError
 
 
 class AccountPayment(models.Model):
-    _inherit = 'account.payment'
+    _inherit = "account.payment"
 
-    @api.onchange('amount', 'x_studio_sales_order', 'x_studio_quotation_type', 'state')
+    @api.onchange("amount", "x_studio_sales_order", "x_studio_quotation_type", "state")
     def _fix_repair_onchange_validate_advance_pct(self):
         """Studio automation 241 port. Block the form-editing user
         when the draft payment they're building on a Repair SO would
@@ -57,27 +58,31 @@ class AccountPayment(models.Model):
         method only raises UserError; no writes back.
         """
         for payment in self:
-            if payment.state != 'draft':
+            if payment.state != "draft":
                 continue
-            if payment.x_studio_quotation_type != 'Repair':
+            if payment.x_studio_quotation_type != "Repair":
                 continue
             so = payment.x_studio_sales_order
             if not so:
                 continue
             company = payment.company_id
-            pct = getattr(company, 'x_studio_advance_payment_', 0.0) or 0.0
+            pct = getattr(company, "x_studio_advance_payment_", 0.0) or 0.0
             if pct <= 0:
                 continue
             # Sum every already-posted payment against this same SO.
-            posted = self.env['account.payment'].sudo().search([
-                ('x_studio_sales_order', '=', so.id),
-                ('state', '=', 'posted'),
-                ('id', '!=', payment.id or 0),
-            ])
-            sum_posted = sum(posted.mapped('amount'))
+            posted = (
+                self.env["account.payment"]
+                .sudo()
+                .search(
+                    [
+                        ("x_studio_sales_order", "=", so.id),
+                        ("state", "=", "posted"),
+                        ("id", "!=", payment.id or 0),
+                    ]
+                )
+            )
+            sum_posted = sum(posted.mapped("amount"))
             threshold = round(so.amount_total * (pct / 100.0), 2)
             projected = round(payment.amount + sum_posted, 2)
             if threshold > projected:
-                raise UserError(
-                    _('Payment is not within the minimum percentage.')
-                )
+                raise UserError(_("Payment is not within the minimum percentage."))

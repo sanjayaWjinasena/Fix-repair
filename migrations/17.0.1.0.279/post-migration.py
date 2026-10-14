@@ -9,6 +9,7 @@ product_template_id is falsy.
 Requires BugFix-Sales v43 for x_studio_price_unit_original on
 sale.order.line.
 """
+
 from odoo import SUPERUSER_ID, api
 
 
@@ -16,10 +17,12 @@ def migrate(cr, version):
     if not version:
         return
     env = api.Environment(cr, SUPERUSER_ID, {})
-    Line = env['sale.order.line'].sudo()
-    candidates = Line.search([
-        ('order_id.x_studio_quotation_type', '=', 'Repair'),
-        ('order_id.x_studio_rug_confirmed', '=', True),
-    ])
+    Line = env["sale.order.line"].sudo()
+    candidates = Line.search(
+        [
+            ("order_id.x_studio_quotation_type", "=", "Repair"),
+            ("order_id.x_studio_rug_confirmed", "=", True),
+        ]
+    )
     if candidates:
         candidates._fix_repair_maybe_reprice_rug_line()

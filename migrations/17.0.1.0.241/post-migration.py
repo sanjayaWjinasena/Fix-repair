@@ -14,6 +14,7 @@ On Clear-DB (production, if ever upgraded): existing rows in the
 studio_customization to Fix-repair. Same pattern as the earlier
 5-model repair-master-data cluster.
 """
+
 from odoo import SUPERUSER_ID, api
 
 
@@ -21,5 +22,7 @@ def migrate(cr, version):
     if not version:
         return
     env = api.Environment(cr, SUPERUSER_ID, {})
-    if 'x_repair_master_data.migration' in env:
-        env['x_repair_master_data.migration']._migrate_studio_repair_master_data_to_base()
+    if "x_repair_master_data.migration" in env:
+        env[
+            "x_repair_master_data.migration"
+        ]._migrate_studio_repair_master_data_to_base()

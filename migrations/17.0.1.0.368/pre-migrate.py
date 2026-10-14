@@ -7,6 +7,7 @@ any view of this upgrade is validated, otherwise validation of a sibling
 inherit view hits the same error. BugFix-Stock upgrades before Fix-repair, so
 Fix-repair's two views are removed here too. ORM only.
 """
+
 import logging
 
 from odoo import SUPERUSER_ID, api
@@ -14,9 +15,9 @@ from odoo import SUPERUSER_ID, api
 _logger = logging.getLogger(__name__)
 
 BROKEN_VIEWS = (
-    'BugFix-Stock.view_stock_picking_form_hide_dev_extras',
-    'Fix-repair.view_product_template_form_hide_dev_extras',
-    'Fix-repair.view_partner_form_hide_dev_extras',
+    "BugFix-Stock.view_stock_picking_form_hide_dev_extras",
+    "Fix-repair.view_product_template_form_hide_dev_extras",
+    "Fix-repair.view_partner_form_hide_dev_extras",
 )
 
 

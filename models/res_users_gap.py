@@ -2,7 +2,7 @@ from odoo import models
 
 
 class ResUsersGap(models.Model):
-    _inherit = 'res.users'
+    _inherit = "res.users"
 
     # STRIPPED x_studio_binary_field_0lxfw: related field chain not resolvable on target
     # STRIPPED x_studio_binary_field_0lxfw_filename: related field chain not resolvable on target

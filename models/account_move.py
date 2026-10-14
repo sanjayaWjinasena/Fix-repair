@@ -10,7 +10,8 @@ class AccountMoveLine(models.Model):
     Studio compute code so safe_eval overhead per compute becomes
     negligible; actual work runs at native Python speed.
     """
-    _inherit = 'account.move.line'
+
+    _inherit = "account.move.line"
 
     def _fix_repair_compute_credit_limit_2(self):
         for rec in self:
@@ -18,35 +19,40 @@ class AccountMoveLine(models.Model):
 
     @api.model
     def _delegate_studio_computes_to_native(self):
-        IrField = self.env['ir.model.fields'].sudo()
+        IrField = self.env["ir.model.fields"].sudo()
         # Reuse the sale.order marker constant
-        marker = self.env['sale.order']._FIX_REPAIR_IDEMPOTENCE_MARKER
+        marker = self.env["sale.order"]._FIX_REPAIR_IDEMPOTENCE_MARKER
 
         delegations = [
-            ('x_studio_credit_limit_2',
-             'credit_limit',
-             'self._fix_repair_compute_credit_limit_2()'),
+            (
+                "x_studio_credit_limit_2",
+                "credit_limit",
+                "self._fix_repair_compute_credit_limit_2()",
+            ),
         ]
         for name, guard_substring, call in delegations:
-            field = IrField.search([
-                ('model', '=', 'account.move.line'),
-                ('name', '=', name),
-            ], limit=1)
+            field = IrField.search(
+                [
+                    ("model", "=", "account.move.line"),
+                    ("name", "=", name),
+                ],
+                limit=1,
+            )
             if not field:
                 continue
-            code = field.compute or ''
+            code = field.compute or ""
             if marker in code:
                 continue
             if guard_substring not in code:
                 continue
-            field.write({'compute': f"{marker}\n{call}\n"})
+            field.write({"compute": f"{marker}\n{call}\n"})
 
 
 class AccountMove(models.Model):
-    _inherit = 'account.move'
+    _inherit = "account.move"
 
-    is_rug_invoice = fields.Boolean(compute='_compute_is_rug_invoice')
-    is_rug_account_set = fields.Boolean(compute='_compute_is_rug_account_set')
+    is_rug_invoice = fields.Boolean(compute="_compute_is_rug_invoice")
+    is_rug_account_set = fields.Boolean(compute="_compute_is_rug_account_set")
 
     # v280 — Studio field ports required by the 'RR - Validate RUG in
     # Customer Invoice' automation port. Both live on account.move on
@@ -61,24 +67,27 @@ class AccountMove(models.Model):
     #   at load time when the source field isn't yet registered.
     #   Compute is stored so search domains work.
     x_studio_rug_confirmed = fields.Boolean(
-        string='RUG Confirmed',
-        compute='_compute_x_studio_rug_confirmed',
+        string="RUG Confirmed",
+        compute="_compute_x_studio_rug_confirmed",
         store=True,
         readonly=True,
     )
 
-    @api.depends('invoice_origin', 'move_type')
+    @api.depends("invoice_origin", "move_type")
     def _compute_x_studio_rug_confirmed(self):
         for move in self:
             if not move.invoice_origin:
                 move.x_studio_rug_confirmed = False
                 continue
-            so = self.env['sale.order'].sudo().search(
-                [('name', '=', move.invoice_origin)], limit=1
+            so = (
+                self.env["sale.order"]
+                .sudo()
+                .search([("name", "=", move.invoice_origin)], limit=1)
             )
             move.x_studio_rug_confirmed = bool(
-                so and getattr(so, 'x_studio_rug_confirmed', False)
+                so and getattr(so, "x_studio_rug_confirmed", False)
             )
+
     # x_studio_rug_acc_updated: True once the salesperson has clicked
     # the 'Change to RUG Account' button on the invoice. Fix-repair's
     # action_change_to_rug_account (below) sets this to True after
@@ -86,17 +95,19 @@ class AccountMove(models.Model):
     # automation 215 uses it (along with rug_confirmed) as the gate
     # for firing the auto-settlement on write.
     x_studio_rug_acc_updated = fields.Boolean(
-        string='RUG Account Updated',
+        string="RUG Account Updated",
     )
 
-    @api.depends('invoice_origin', 'move_type')
+    @api.depends("invoice_origin", "move_type")
     def _compute_is_rug_invoice(self):
         for move in self:
-            if move.move_type != 'out_invoice' or not move.invoice_origin:
+            if move.move_type != "out_invoice" or not move.invoice_origin:
                 move.is_rug_invoice = False
                 continue
-            so = self.env['sale.order'].sudo().search(
-                [('name', '=', move.invoice_origin)], limit=1
+            so = (
+                self.env["sale.order"]
+                .sudo()
+                .search([("name", "=", move.invoice_origin)], limit=1)
             )
             # RUG-invoice treatment only applies to WARRANTY repairs:
             # quotation_type == 'Repair', NOT customer-pays (formerly the
@@ -106,24 +117,26 @@ class AccountMove(models.Model):
             # "Change to RUG Account" button stays hidden, and
             # _rug_auto_settle is a no-op on action_post.
             move.is_rug_invoice = (
-                so.x_studio_quotation_type == 'Repair'
+                so.x_studio_quotation_type == "Repair"
                 and not so.x_repair_customer_pays
                 and not so.x_studio_rug_rejected
             )
 
-    @api.depends('invoice_line_ids.account_id', 'company_id')
+    @api.depends("invoice_line_ids.account_id", "company_id")
     def _compute_is_rug_account_set(self):
         """True when every product line on this invoice already uses the
         company's configured RUG account. Used to hide the 'Change to
         RUG Account' button once it has been clicked (or the lines were
         created on that account already)."""
         for move in self:
-            config = self.env['x_repair_accounts'].sudo().search(
-                [('x_studio_company_id', '=', move.company_id.id)], limit=1
+            config = (
+                self.env["x_repair_accounts"]
+                .sudo()
+                .search([("x_studio_company_id", "=", move.company_id.id)], limit=1)
             )
             rug_account = config.x_studio_rug_account if config else False
             product_lines = move.invoice_line_ids.filtered(
-                lambda l: l.display_type not in ('line_section', 'line_note')
+                lambda l: l.display_type not in ("line_section", "line_note")
             )
             move.is_rug_account_set = bool(
                 rug_account
@@ -131,24 +144,26 @@ class AccountMove(models.Model):
                 and all(l.account_id == rug_account for l in product_lines)
             )
 
-    def _get_view(self, view_id=None, view_type='form', **options):
+    def _get_view(self, view_id=None, view_type="form", **options):
         arch, view = super()._get_view(view_id, view_type, **options)
-        if view_type == 'form':
-            for sheet in arch.xpath('//sheet'):
-                for fname in ('is_rug_invoice', 'is_rug_account_set'):
-                    fld = etree.Element('field')
-                    fld.set('name', fname)
-                    fld.set('invisible', '1')
+        if view_type == "form":
+            for sheet in arch.xpath("//sheet"):
+                for fname in ("is_rug_invoice", "is_rug_account_set"):
+                    fld = etree.Element("field")
+                    fld.set("name", fname)
+                    fld.set("invisible", "1")
                     sheet.insert(0, fld)
                 break
-            for header in arch.xpath('//header'):
-                btn = etree.Element('button')
-                btn.set('name', 'action_change_to_rug_account')
-                btn.set('string', 'Change to RUG Account')
-                btn.set('type', 'object')
-                btn.set('class', 'btn-secondary')
-                btn.set('invisible',
-                        'not is_rug_invoice or state != "draft" or is_rug_account_set')
+            for header in arch.xpath("//header"):
+                btn = etree.Element("button")
+                btn.set("name", "action_change_to_rug_account")
+                btn.set("string", "Change to RUG Account")
+                btn.set("type", "object")
+                btn.set("class", "btn-secondary")
+                btn.set(
+                    "invisible",
+                    'not is_rug_invoice or state != "draft" or is_rug_account_set',
+                )
                 header.insert(0, btn)
                 break
 
@@ -167,9 +182,9 @@ class AccountMove(models.Model):
             # auto-settle via _rug_auto_settle() on post, so no manual
             # Register Payment is needed.
             for btn in arch.xpath("//button[@name='action_register_payment']"):
-                existing = btn.get('invisible', '')
+                existing = btn.get("invisible", "")
                 extra = "is_rug_invoice"
-                btn.set('invisible', f"({existing}) or {extra}" if existing else extra)
+                btn.set("invisible", f"({existing}) or {extra}" if existing else extra)
 
             # Post (Confirm) button on RUG invoices: hide until the
             # lines have been reassigned to the RUG account. The
@@ -185,9 +200,9 @@ class AccountMove(models.Model):
             # is_rug_invoice AND not is_rug_account_set → hide Post.
             # Non-RUG invoices are unaffected.
             for btn in arch.xpath("//button[@name='action_post']"):
-                existing = btn.get('invisible', '')
+                existing = btn.get("invisible", "")
                 extra = "(is_rug_invoice and not is_rug_account_set)"
-                btn.set('invisible', f"({existing}) or {extra}" if existing else extra)
+                btn.set("invisible", f"({existing}) or {extra}" if existing else extra)
 
             # Fields-disable branch: freeze the invoice form once it
             # is Confirmed (state='posted'). Odoo core respects
@@ -206,34 +221,37 @@ class AccountMove(models.Model):
             # line_ids one2many, chatter, etc.). Those subrecords
             # are on account.move.line / other models; Odoo's own
             # line readonly rules apply to them.
-            for field_el in arch.xpath(
-                    "//sheet//field[not(ancestor::field)]"):
-                if field_el.get('invisible') == '1':
+            for field_el in arch.xpath("//sheet//field[not(ancestor::field)]"):
+                if field_el.get("invisible") == "1":
                     continue
-                existing = field_el.get('readonly', '')
+                existing = field_el.get("readonly", "")
                 extra = "state == 'posted'"
                 field_el.set(
-                    'readonly',
+                    "readonly",
                     f"({existing}) or ({extra})" if existing else extra,
                 )
         return arch, view
 
     def action_change_to_rug_account(self):
         for move in self:
-            config = self.env['x_repair_accounts'].sudo().search(
-                [('x_studio_company_id', '=', move.company_id.id)], limit=1
+            config = (
+                self.env["x_repair_accounts"]
+                .sudo()
+                .search([("x_studio_company_id", "=", move.company_id.id)], limit=1)
             )
             if not config or not config.x_studio_rug_account:
-                raise UserError(_(
-                    "No RUG account configured for company '%(company)s'. "
-                    "Please set it up in Repair Accounts.",
-                    company=move.company_id.name,
-                ))
+                raise UserError(
+                    _(
+                        "No RUG account configured for company '%(company)s'. "
+                        "Please set it up in Repair Accounts.",
+                        company=move.company_id.name,
+                    )
+                )
             rug_account = config.x_studio_rug_account
             product_lines = move.invoice_line_ids.filtered(
-                lambda l: l.display_type not in ('line_section', 'line_note')
+                lambda l: l.display_type not in ("line_section", "line_note")
             )
-            product_lines.write({'account_id': rug_account.id})
+            product_lines.write({"account_id": rug_account.id})
             # v280 — mirror Studio's rug_acc_updated flag so automation
             # 215's port (write() override below) can gate on the same
             # signal it did on Clear-DB.
@@ -242,9 +260,11 @@ class AccountMove(models.Model):
     def action_post(self):
         res = super().action_post()
         for move in self:
-            if (move.move_type == 'out_invoice'
-                    and move.is_rug_invoice
-                    and move.state == 'posted'):
+            if (
+                move.move_type == "out_invoice"
+                and move.is_rug_invoice
+                and move.state == "posted"
+            ):
                 move._rug_auto_settle()
         return res
 
@@ -283,16 +303,16 @@ class AccountMove(models.Model):
         # writes. Studio's automation only fires meaningfully when the
         # user (or an upstream automation) sets rug_acc_updated=True on
         # a posted RUG invoice. Match that intent precisely.
-        if vals.get('x_studio_rug_acc_updated') is not True:
+        if vals.get("x_studio_rug_acc_updated") is not True:
             return res
         for move in self:
-            if move.state != 'posted':
+            if move.state != "posted":
                 continue
             if not (move.x_studio_rug_confirmed and move.x_studio_rug_acc_updated):
                 continue
-            if move.move_type != 'out_invoice':
+            if move.move_type != "out_invoice":
                 continue
-            if move.payment_state not in ('not_paid', 'partial'):
+            if move.payment_state not in ("not_paid", "partial"):
                 continue  # already settled — nothing to do
             # Studio's guard: linked SO must be in done state. Odoo 17
             # removed sale.order.state='done' -- the native lock
@@ -302,19 +322,23 @@ class AccountMove(models.Model):
             # studio_migrations) when present; fall back to
             # invoice_origin lookup for envs without studio_migrations.
             so = False
-            if hasattr(move, 'x_studio_sale_id') and move.x_studio_sale_id:
+            if hasattr(move, "x_studio_sale_id") and move.x_studio_sale_id:
                 so = move.x_studio_sale_id
             elif move.invoice_origin:
-                so = self.env['sale.order'].sudo().search(
-                    [('name', '=', move.invoice_origin)], limit=1
+                so = (
+                    self.env["sale.order"]
+                    .sudo()
+                    .search([("name", "=", move.invoice_origin)], limit=1)
                 )
             if not so or not so.locked:
-                raise UserError(_(
-                    "Cannot settle RUG invoice %(invoice)s -- the linked sale "
-                    "order must be locked (equivalent to the pre-Odoo-17 "
-                    "'done' state).",
-                    invoice=move.name,
-                ))
+                raise UserError(
+                    _(
+                        "Cannot settle RUG invoice %(invoice)s -- the linked sale "
+                        "order must be locked (equivalent to the pre-Odoo-17 "
+                        "'done' state).",
+                        invoice=move.name,
+                    )
+                )
             move._rug_auto_settle()
         return res
 
@@ -333,19 +357,23 @@ class AccountMove(models.Model):
             'Change to RUG Account' wasn't clicked before post)
         """
         self.ensure_one()
-        if self.payment_state in ('paid', 'partial', 'reversed'):
+        if self.payment_state in ("paid", "partial", "reversed"):
             return
 
         receivable_lines = self.line_ids.filtered(
-            lambda l: l.account_id.account_type == 'asset_receivable'
-            and not l.reconciled
-            and (l.debit or l.credit)
+            lambda l: (
+                l.account_id.account_type == "asset_receivable"
+                and not l.reconciled
+                and (l.debit or l.credit)
+            )
         )
         if not receivable_lines:
             return
 
-        config = self.env['x_repair_accounts'].sudo().search(
-            [('x_studio_company_id', '=', self.company_id.id)], limit=1
+        config = (
+            self.env["x_repair_accounts"]
+            .sudo()
+            .search([("x_studio_company_id", "=", self.company_id.id)], limit=1)
         )
         if not config or not config.x_studio_rug_account:
             return
@@ -357,46 +385,67 @@ class AccountMove(models.Model):
         if not invoice_rug_lines:
             return
 
-        journal = self.env['account.journal'].sudo().search(
-            [('type', '=', 'general'),
-             ('company_id', '=', self.company_id.id)],
-            limit=1,
+        journal = (
+            self.env["account.journal"]
+            .sudo()
+            .search(
+                [("type", "=", "general"), ("company_id", "=", self.company_id.id)],
+                limit=1,
+            )
         )
         if not journal:
-            raise UserError(_(
-                "No miscellaneous (type='general') journal found for "
-                "'%(company)s'. Cannot auto-settle the RUG invoice.",
-                company=self.company_id.name,
-            ))
+            raise UserError(
+                _(
+                    "No miscellaneous (type='general') journal found for "
+                    "'%(company)s'. Cannot auto-settle the RUG invoice.",
+                    company=self.company_id.name,
+                )
+            )
 
-        amount = sum(receivable_lines.mapped('debit')) - sum(receivable_lines.mapped('credit'))
+        amount = sum(receivable_lines.mapped("debit")) - sum(
+            receivable_lines.mapped("credit")
+        )
         if amount <= 0:
             return
 
         receivable_account = receivable_lines[0].account_id
-        clearing = self.env['account.move'].sudo().create({
-            'journal_id': journal.id,
-            'company_id': self.company_id.id,
-            'partner_id': self.partner_id.id,
-            'date': self.invoice_date or fields.Date.context_today(self),
-            'ref': f'RUG settlement — {self.name}',
-            'line_ids': [
-                (0, 0, {
-                    'account_id': rug_account.id,
-                    'partner_id': self.partner_id.id,
-                    'debit': amount,
-                    'credit': 0,
-                    'name': f'RUG settlement — {self.name}',
-                }),
-                (0, 0, {
-                    'account_id': receivable_account.id,
-                    'partner_id': self.partner_id.id,
-                    'debit': 0,
-                    'credit': amount,
-                    'name': f'RUG settlement — {self.name}',
-                }),
-            ],
-        })
+        clearing = (
+            self.env["account.move"]
+            .sudo()
+            .create(
+                {
+                    "journal_id": journal.id,
+                    "company_id": self.company_id.id,
+                    "partner_id": self.partner_id.id,
+                    "date": self.invoice_date or fields.Date.context_today(self),
+                    "ref": f"RUG settlement — {self.name}",
+                    "line_ids": [
+                        (
+                            0,
+                            0,
+                            {
+                                "account_id": rug_account.id,
+                                "partner_id": self.partner_id.id,
+                                "debit": amount,
+                                "credit": 0,
+                                "name": f"RUG settlement — {self.name}",
+                            },
+                        ),
+                        (
+                            0,
+                            0,
+                            {
+                                "account_id": receivable_account.id,
+                                "partner_id": self.partner_id.id,
+                                "debit": 0,
+                                "credit": amount,
+                                "name": f"RUG settlement — {self.name}",
+                            },
+                        ),
+                    ],
+                }
+            )
+        )
         clearing.action_post()
 
         # Reconcile Debtors: invoice DR ↔ clearing CR → invoice goes 'paid'

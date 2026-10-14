@@ -29,13 +29,14 @@ from Clear-DB ir.model.fields (state='manual', modules=
 'studio_customization') so Fix-repair now owns them state='base'
 on both environments.
 """
+
 from odoo import fields, models
 
 
 class XTaskDiagnosis(models.Model):
-    _name = 'x_task_diagnosis'
-    _rec_name = 'x_name'  # Clear-DB Studio model: records are named by x_name
-    _description = 'Task Diagnosis'
+    _name = "x_task_diagnosis"
+    _rec_name = "x_name"  # Clear-DB Studio model: records are named by x_name
+    _description = "Task Diagnosis"
     # v304: mail.thread + mail.activity.mixin match the sister
     # repair-diagnosis catalog models in repair_master_data.py
     # (x_conditions / x_diagnosis_codes / etc.) and match Clear-DB
@@ -43,8 +44,8 @@ class XTaskDiagnosis(models.Model):
     # (ported in v299 as repair_diagnosis_catalog_views.xml) fails
     # view validation with "Field 'message_follower_ids' does not
     # exist in model 'x_task_diagnosis'".
-    _inherit = ['mail.thread', 'mail.activity.mixin']
-    _order = 'x_studio_sequence, id'
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _order = "x_studio_sequence, id"
 
     # Odoo requires a _rec_name field. Studio uses x_name by convention
     # on all custom models; declared here so search-by-name UI still
@@ -53,52 +54,70 @@ class XTaskDiagnosis(models.Model):
     # diagnosis rows carry x_name=False (empty). Match verbatim so the
     # tree-editable Repair Diagnosis tab can save rows without the UI
     # exposing an x_name input (Studio hides it via column_invisible).
-    x_name = fields.Char(string='Name')
+    x_name = fields.Char(string="Name")
 
     # v276: standard Odoo active pattern — mirrors Clear-DB's Studio
     # x_active. Diagnosis rows can be soft-deleted from catalogues
     # without cascading through project.task history.
-    x_active = fields.Boolean(string='Active', default=True)
+    x_active = fields.Boolean(string="Active", default=True)
 
     # The back-reference project.task.x_studio_diagnosis_ids traverses
     # into on load-time setup_nonrelated. Must exist as a real Python
     # field for Fix-repair to install cleanly.
     x_studio_task_id = fields.Many2one(
-        'project.task',
-        string='Task',
-        ondelete='set null',
+        "project.task",
+        string="Task",
+        ondelete="set null",
         index=True,
     )
 
     # v259: catalogue m2os matching Clear-DB schema. All targets are
     # already Python-declared (Chunk 1a v241 for the 6 diagnosis
     # catalogues, v227 for the 3 repair-master ones).
-    x_studio_sequence = fields.Integer(string='Sequence', default=10)
-    x_studio_description = fields.Char(string='Description')
+    x_studio_sequence = fields.Integer(string="Sequence", default=10)
+    x_studio_description = fields.Char(string="Description")
     x_studio_condition = fields.Many2one(
-        'x_conditions', string='Condition', ondelete='set null',
+        "x_conditions",
+        string="Condition",
+        ondelete="set null",
     )
     x_studio_symptom_area = fields.Many2one(
-        'x_symptom_areas', string='Symptom Area', ondelete='set null',
+        "x_symptom_areas",
+        string="Symptom Area",
+        ondelete="set null",
     )
     x_studio_symptom_code = fields.Many2one(
-        'x_symptom_codes', string='Symptom Code', ondelete='set null',
+        "x_symptom_codes",
+        string="Symptom Code",
+        ondelete="set null",
     )
     x_studio_diagnosis_area = fields.Many2one(
-        'x_diagnosis_areas', string='Diagnosis Area', ondelete='set null',
+        "x_diagnosis_areas",
+        string="Diagnosis Area",
+        ondelete="set null",
     )
     x_studio_diagnosis_code = fields.Many2one(
-        'x_diagnosis_codes', string='Diagnosis Code', ondelete='set null',
+        "x_diagnosis_codes",
+        string="Diagnosis Code",
+        ondelete="set null",
     )
     x_studio_reason = fields.Many2one(
-        'x_repair_reason', string='Reason', ondelete='set null',
+        "x_repair_reason",
+        string="Reason",
+        ondelete="set null",
     )
     x_studio_sub_reason = fields.Many2one(
-        'x_repair_sub_reason', string='Sub Reason', ondelete='set null',
+        "x_repair_sub_reason",
+        string="Sub Reason",
+        ondelete="set null",
     )
     x_studio_resolution = fields.Many2one(
-        'x_resolutions', string='Resolution', ondelete='set null',
+        "x_resolutions",
+        string="Resolution",
+        ondelete="set null",
     )
     x_studio_repair_stage = fields.Many2one(
-        'x_repair_stages', string='Repair Stage', ondelete='set null',
+        "x_repair_stages",
+        string="Repair Stage",
+        ondelete="set null",
     )

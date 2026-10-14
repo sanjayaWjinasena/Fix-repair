@@ -2,11 +2,11 @@ from odoo import fields, models
 
 
 class StockLocation(models.Model):
-    _inherit = 'stock.location'
+    _inherit = "stock.location"
 
     usage = fields.Selection(
-        selection_add=[('repair', 'Repair')],
-        ondelete={'repair': 'set default'},
+        selection_add=[("repair", "Repair")],
+        ondelete={"repair": "set default"},
     )
 
     # v246 — port of the 8 Studio-manual x_studio_* fields on
@@ -23,46 +23,46 @@ class StockLocation(models.Model):
 
     # Flags: mark a stock.location for a specific repair-flow role
     x_studio_finished_good_location = fields.Boolean(
-        string='Finished Good Location',
+        string="Finished Good Location",
     )
     x_studio_repair_factory_location = fields.Boolean(
-        string='Repair Factory Location',
+        string="Repair Factory Location",
     )
     x_studio_repair_return_location = fields.Boolean(
-        string='Repair Return Location',
+        string="Repair Return Location",
     )
     x_studio_temp_location = fields.Boolean(
-        string='Temp Location',
+        string="Temp Location",
     )
 
     # Chained locations used by the repair-flow picking routing
     x_studio_return_receipt_location = fields.Many2one(
-        'stock.location',
-        string='Return Receipt Location',
-        ondelete='set null',
+        "stock.location",
+        string="Return Receipt Location",
+        ondelete="set null",
     )
     x_studio_return_sequence = fields.Many2one(
-        'ir.sequence',
-        string='Return Sequence',
-        ondelete='set null',
+        "ir.sequence",
+        string="Return Sequence",
+        ondelete="set null",
     )
 
     # User-scope m2m — Fix-repair's helpdesk_ticket._get_view and
     # stock_picking domain filters read these via
     # ('x_studio_users_stock_location', 'in', user_id) / ilike self._uid.
     x_studio_users_stock_location = fields.Many2many(
-        'res.users',
-        relation='stock_location_users_stock_location_rel',
-        column1='location_id',
-        column2='user_id',
-        string='Users (Stock Location)',
+        "res.users",
+        relation="stock_location_users_stock_location_rel",
+        column1="location_id",
+        column2="user_id",
+        string="Users (Stock Location)",
     )
     x_studio_users_internal_transfer = fields.Many2many(
-        'res.users',
-        relation='stock_location_users_internal_transfer_rel',
-        column1='location_id',
-        column2='user_id',
-        string='Users (Internal Transfer)',
+        "res.users",
+        relation="stock_location_users_internal_transfer_rel",
+        column1="location_id",
+        column2="user_id",
+        string="Users (Internal Transfer)",
     )
 
     # v276: third Studio-generated m2m to res.users. Cryptic name kept
@@ -73,9 +73,9 @@ class StockLocation(models.Model):
     # declared so install-time view validation and future Studio arch
     # ports (Clear-DB upgrade) resolve cleanly.
     x_studio_many2many_field_7kpUe = fields.Many2many(
-        'res.users',
-        relation='stock_location_users_scope_7kpue_rel',
-        column1='location_id',
-        column2='user_id',
-        string='Users (Scope 7kpUe)',
+        "res.users",
+        relation="stock_location_users_scope_7kpue_rel",
+        column1="location_id",
+        column2="user_id",
+        string="Users (Scope 7kpUe)",
     )

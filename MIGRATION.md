@@ -404,16 +404,16 @@ The 5 custom Studio models are now Python-owned via
 
 ```python
 class XRepairAccounts(models.Model):
-    _name = 'x_repair_accounts'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
-    x_studio_company_id = fields.Many2one('res.company')
+    _name = "x_repair_accounts"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    x_studio_company_id = fields.Many2one("res.company")
     x_studio_sequence = fields.Integer()
 
     def _jin_set_company_id(self):
         for record in self:
             if not record.x_studio_company_id:
                 company_id = self.env.context.get(
-                    'allowed_company_ids', [self.env.user.company_id.id]
+                    "allowed_company_ids", [self.env.user.company_id.id]
                 )[0]
                 record.x_studio_company_id = company_id
 
@@ -576,27 +576,29 @@ The 11 fields:
 Two computes ported to `@api.depends` methods on `project.task`:
 
 ```python
-@api.depends('x_studio_diagnosis_ids')
+@api.depends("x_studio_diagnosis_ids")
 def _compute_x_studio_valid_diagnosis(self):
     for rec in self:
         rec.x_studio_valid_diagnosis = bool(rec.x_studio_diagnosis_ids)
 
-@api.depends('sale_order_id', 'sale_order_id.state')
+
+@api.depends("sale_order_id", "sale_order_id.state")
 def _compute_x_studio_incomplete_delivery_available(self):
-    Picking = self.env['stock.picking']
+    Picking = self.env["stock.picking"]
     for rec in self:
         valid = False
         so = rec.sale_order_id
-        if so and so.state != 'cancel':
+        if so and so.state != "cancel":
             open_delivery = Picking.search(
-                [('sale_id', '=', so.id), ('state', '!=', 'done')],
+                [("sale_id", "=", so.id), ("state", "!=", "done")],
                 limit=1,
             )
             if open_delivery:
-                valid = open_delivery.state != 'cancel'
+                valid = open_delivery.state != "cancel"
             else:
                 any_delivery = Picking.search(
-                    [('sale_id', '=', so.id)], limit=1,
+                    [("sale_id", "=", so.id)],
+                    limit=1,
                 )
                 valid = not any_delivery
         rec.x_studio_incomplete_delivery_available = valid
@@ -936,9 +938,10 @@ Two classes of state transition are blocked by Odoo's ORM:
 - `ir.model.state`: `manual → base` is protected by
   `@api.constrains('state')`. Solved with:
   ```python
-  self.env.cr.execute("UPDATE ir_model SET state = 'base' WHERE id IN %s",
-                      (tuple(rows.ids),))
-  rows.invalidate_recordset(['state'])
+  self.env.cr.execute(
+      "UPDATE ir_model SET state = 'base' WHERE id IN %s", (tuple(rows.ids),)
+  )
+  rows.invalidate_recordset(["state"])
   ```
 
 - `ir.model.fields.state`: same constraint on some field configurations
@@ -955,7 +958,7 @@ self.env.cr.execute(
     "UPDATE ir_ui_view SET arch_db = %s::jsonb WHERE id = %s",
     (json.dumps({lang: clean_arch for lang in existing_langs}), view.id),
 )
-view.invalidate_recordset(['arch_db'])
+view.invalidate_recordset(["arch_db"])
 ```
 
 `arch_db` is jsonb — the payload must be a JSON string with per-language

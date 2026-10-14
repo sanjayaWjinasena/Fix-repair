@@ -7,23 +7,24 @@ class XRepairAccounts(models.Model):
     warranty-repair invoice. 2 rows on staging today (one per
     company).
     """
-    _name = 'x_repair_accounts'
-    _description = 'Repair Accounts'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
-    _rec_name = 'x_name'
-    _order = 'x_studio_sequence, id'
 
-    x_active = fields.Boolean(string='Active', default=True)
-    x_name = fields.Char(string='Name')
-    x_studio_company_id = fields.Many2one('res.company', string='Company')
-    x_studio_rug_account = fields.Many2one('account.account', string='RUG Account')
-    x_studio_sequence = fields.Integer(string='Sequence')
+    _name = "x_repair_accounts"
+    _description = "Repair Accounts"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _rec_name = "x_name"
+    _order = "x_studio_sequence, id"
+
+    x_active = fields.Boolean(string="Active", default=True)
+    x_name = fields.Char(string="Name")
+    x_studio_company_id = fields.Many2one("res.company", string="Company")
+    x_studio_rug_account = fields.Many2one("account.account", string="RUG Account")
+    x_studio_sequence = fields.Integer(string="Sequence")
 
     def _jin_set_company_id(self):
         """Studio server action id 2790 native port."""
         for record in self:
             company_id = self.env.context.get(
-                'allowed_company_ids', [self.env.user.company_id.id]
+                "allowed_company_ids", [self.env.user.company_id.id]
             )[0]
             record.x_studio_company_id = company_id
 
@@ -40,23 +41,24 @@ class XRepairReason(models.Model):
     project.task's x_studio_repair_reason M2M and by
     x_repair_sub_reason's x_studio_reason_code M2o.
     """
-    _name = 'x_repair_reason'
-    _description = 'Repair Reason'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
-    _rec_name = 'x_name'
-    _order = 'x_studio_sequence, id'
 
-    x_active = fields.Boolean(string='Active', default=True)
-    x_color = fields.Integer(string='Color')
-    x_name = fields.Char(string='Repair Reason')
-    x_studio_company_id = fields.Many2one('res.company', string='Company')
-    x_studio_sequence = fields.Integer(string='Sequence')
+    _name = "x_repair_reason"
+    _description = "Repair Reason"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _rec_name = "x_name"
+    _order = "x_studio_sequence, id"
+
+    x_active = fields.Boolean(string="Active", default=True)
+    x_color = fields.Integer(string="Color")
+    x_name = fields.Char(string="Repair Reason")
+    x_studio_company_id = fields.Many2one("res.company", string="Company")
+    x_studio_sequence = fields.Integer(string="Sequence")
 
     def _jin_set_company_id(self):
         """Studio server action id 2666 native port."""
         for record in self:
             company_id = self.env.context.get(
-                'allowed_company_ids', [self.env.user.company_id.id]
+                "allowed_company_ids", [self.env.user.company_id.id]
             )[0]
             record.x_studio_company_id = company_id
 
@@ -73,23 +75,24 @@ class XRepairReasonCustom(models.Model):
     helpdesk.ticket's x_studio_repair_reason M2M. Parallel to
     x_repair_reason but presented to end customers.
     """
-    _name = 'x_repair_reason_custom'
-    _description = 'Repair Reason - Customer'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
-    _rec_name = 'x_name'
-    _order = 'x_studio_sequence, id'
 
-    x_active = fields.Boolean(string='Active', default=True)
-    x_color = fields.Integer(string='Color')
-    x_name = fields.Char(string='Repair Reason')
-    x_studio_company_id = fields.Many2one('res.company', string='Company')
-    x_studio_sequence = fields.Integer(string='Sequence')
+    _name = "x_repair_reason_custom"
+    _description = "Repair Reason - Customer"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _rec_name = "x_name"
+    _order = "x_studio_sequence, id"
+
+    x_active = fields.Boolean(string="Active", default=True)
+    x_color = fields.Integer(string="Color")
+    x_name = fields.Char(string="Repair Reason")
+    x_studio_company_id = fields.Many2one("res.company", string="Company")
+    x_studio_sequence = fields.Integer(string="Sequence")
 
     def _jin_set_company_id(self):
         """Studio server action id 2667 native port."""
         for record in self:
             company_id = self.env.context.get(
-                'allowed_company_ids', [self.env.user.company_id.id]
+                "allowed_company_ids", [self.env.user.company_id.id]
             )[0]
             record.x_studio_company_id = company_id
 
@@ -106,23 +109,24 @@ class XRepairStages(models.Model):
     native helpdesk.stage). Standalone master data, no direct
     references from other migrated models.
     """
-    _name = 'x_repair_stages'
-    _description = 'Repair Stages'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
-    _rec_name = 'x_name'
-    _order = 'x_studio_sequence, id'
 
-    x_active = fields.Boolean(string='Active', default=True)
-    x_name = fields.Char(string='Repair Stage')
-    x_studio_company_id = fields.Many2one('res.company', string='Company')
-    x_studio_description = fields.Char(string='Description')
-    x_studio_sequence = fields.Integer(string='Sequence')
+    _name = "x_repair_stages"
+    _description = "Repair Stages"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _rec_name = "x_name"
+    _order = "x_studio_sequence, id"
+
+    x_active = fields.Boolean(string="Active", default=True)
+    x_name = fields.Char(string="Repair Stage")
+    x_studio_company_id = fields.Many2one("res.company", string="Company")
+    x_studio_description = fields.Char(string="Description")
+    x_studio_sequence = fields.Integer(string="Sequence")
 
     def _jin_set_company_id(self):
         """Studio server action id 2670 native port."""
         for record in self:
             company_id = self.env.context.get(
-                'allowed_company_ids', [self.env.user.company_id.id]
+                "allowed_company_ids", [self.env.user.company_id.id]
             )[0]
             record.x_studio_company_id = company_id
 
@@ -138,26 +142,27 @@ class XRepairSubReason(models.Model):
     """Sub-reasons under a repair reason. Each row links to a
     parent x_repair_reason via x_studio_reason_code.
     """
-    _name = 'x_repair_sub_reason'
-    _description = 'Repair Sub Reason'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
-    _rec_name = 'x_name'
-    _order = 'x_studio_sequence, id'
 
-    x_active = fields.Boolean(string='Active', default=True)
-    x_name = fields.Char(string='Sub Reason Code')
-    x_studio_company_id = fields.Many2one('res.company', string='Company')
+    _name = "x_repair_sub_reason"
+    _description = "Repair Sub Reason"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _rec_name = "x_name"
+    _order = "x_studio_sequence, id"
+
+    x_active = fields.Boolean(string="Active", default=True)
+    x_name = fields.Char(string="Sub Reason Code")
+    x_studio_company_id = fields.Many2one("res.company", string="Company")
     x_studio_reason_code = fields.Many2one(
-        'x_repair_reason',
-        string='Reason Code',
+        "x_repair_reason",
+        string="Reason Code",
     )
-    x_studio_sequence = fields.Integer(string='Sequence')
+    x_studio_sequence = fields.Integer(string="Sequence")
 
     def _jin_set_company_id(self):
         """Studio server action id 2668 native port."""
         for record in self:
             company_id = self.env.context.get(
-                'allowed_company_ids', [self.env.user.company_id.id]
+                "allowed_company_ids", [self.env.user.company_id.id]
             )[0]
             record.x_studio_company_id = company_id
 
@@ -186,107 +191,113 @@ class XRepairSubReason(models.Model):
 class XConditions(models.Model):
     """Repair-condition catalogue. Referenced by
     x_task_diagnosis.x_studio_condition (m2o)."""
-    _name = 'x_conditions'
-    _description = 'Conditions'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
-    _rec_name = 'x_name'
-    _order = 'x_studio_sequence, id'
 
-    x_active = fields.Boolean(string='Active', default=True)
-    x_name = fields.Char(string='Condition')
-    x_studio_description = fields.Char(string='Description')
-    x_studio_sequence = fields.Integer(string='Sequence')
-    x_studio_company_id = fields.Many2one('res.company', string='Company')
+    _name = "x_conditions"
+    _description = "Conditions"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _rec_name = "x_name"
+    _order = "x_studio_sequence, id"
+
+    x_active = fields.Boolean(string="Active", default=True)
+    x_name = fields.Char(string="Condition")
+    x_studio_description = fields.Char(string="Description")
+    x_studio_sequence = fields.Integer(string="Sequence")
+    x_studio_company_id = fields.Many2one("res.company", string="Company")
 
 
 class XDiagnosisAreas(models.Model):
     """Diagnosis-area catalogue. Referenced by
     x_task_diagnosis.x_studio_diagnosis_area (m2o) and by
     x_diagnosis_codes.x_studio_diagnosis_area_1."""
-    _name = 'x_diagnosis_areas'
-    _description = 'Diagnosis Areas'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
-    _rec_name = 'x_name'
-    _order = 'x_studio_sequence, id'
 
-    x_active = fields.Boolean(string='Active', default=True)
-    x_name = fields.Char(string='Diagnosis Area')
-    x_studio_description = fields.Char(string='Description')
-    x_studio_sequence = fields.Integer(string='Sequence')
-    x_studio_company_id = fields.Many2one('res.company', string='Company')
+    _name = "x_diagnosis_areas"
+    _description = "Diagnosis Areas"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _rec_name = "x_name"
+    _order = "x_studio_sequence, id"
+
+    x_active = fields.Boolean(string="Active", default=True)
+    x_name = fields.Char(string="Diagnosis Area")
+    x_studio_description = fields.Char(string="Description")
+    x_studio_sequence = fields.Integer(string="Sequence")
+    x_studio_company_id = fields.Many2one("res.company", string="Company")
 
 
 class XDiagnosisCodes(models.Model):
     """Diagnosis-code catalogue. Each code belongs to one area.
     Referenced by x_task_diagnosis.x_studio_diagnosis_code (m2o)."""
-    _name = 'x_diagnosis_codes'
-    _description = 'Diagnosis Codes'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
-    _rec_name = 'x_name'
-    _order = 'x_studio_sequence, id'
 
-    x_active = fields.Boolean(string='Active', default=True)
-    x_name = fields.Char(string='Diagnosis Code')
-    x_studio_description = fields.Char(string='Description')
-    x_studio_sequence = fields.Integer(string='Sequence')
+    _name = "x_diagnosis_codes"
+    _description = "Diagnosis Codes"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _rec_name = "x_name"
+    _order = "x_studio_sequence, id"
+
+    x_active = fields.Boolean(string="Active", default=True)
+    x_name = fields.Char(string="Diagnosis Code")
+    x_studio_description = fields.Char(string="Description")
+    x_studio_sequence = fields.Integer(string="Sequence")
     x_studio_diagnosis_area_1 = fields.Many2one(
-        'x_diagnosis_areas',
-        string='Diagnosis Area',
+        "x_diagnosis_areas",
+        string="Diagnosis Area",
     )
-    x_studio_company_id = fields.Many2one('res.company', string='Company')
+    x_studio_company_id = fields.Many2one("res.company", string="Company")
 
 
 class XSymptomAreas(models.Model):
     """Symptom-area catalogue. Referenced by
     x_task_diagnosis.x_studio_symptom_area (m2o) and by
     x_symptom_codes.x_studio_symptom_area."""
-    _name = 'x_symptom_areas'
-    _description = 'Symptom Areas'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
-    _rec_name = 'x_name'
-    _order = 'x_studio_sequence, id'
 
-    x_active = fields.Boolean(string='Active', default=True)
-    x_name = fields.Char(string='Symptom Area')
-    x_studio_description = fields.Char(string='Description')
-    x_studio_sequence = fields.Integer(string='Sequence')
-    x_studio_company_id = fields.Many2one('res.company', string='Company')
+    _name = "x_symptom_areas"
+    _description = "Symptom Areas"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _rec_name = "x_name"
+    _order = "x_studio_sequence, id"
+
+    x_active = fields.Boolean(string="Active", default=True)
+    x_name = fields.Char(string="Symptom Area")
+    x_studio_description = fields.Char(string="Description")
+    x_studio_sequence = fields.Integer(string="Sequence")
+    x_studio_company_id = fields.Many2one("res.company", string="Company")
 
 
 class XSymptomCodes(models.Model):
     """Symptom-code catalogue. Each code belongs to one area.
     Referenced by x_task_diagnosis.x_studio_symptom_code (m2o)."""
-    _name = 'x_symptom_codes'
-    _description = 'Symptom Codes'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
-    _rec_name = 'x_name'
-    _order = 'x_studio_sequence, id'
 
-    x_active = fields.Boolean(string='Active', default=True)
-    x_name = fields.Char(string='Symptom Code')
-    x_studio_description = fields.Char(string='Description')
-    x_studio_sequence = fields.Integer(string='Sequence')
+    _name = "x_symptom_codes"
+    _description = "Symptom Codes"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _rec_name = "x_name"
+    _order = "x_studio_sequence, id"
+
+    x_active = fields.Boolean(string="Active", default=True)
+    x_name = fields.Char(string="Symptom Code")
+    x_studio_description = fields.Char(string="Description")
+    x_studio_sequence = fields.Integer(string="Sequence")
     x_studio_symptom_area = fields.Many2one(
-        'x_symptom_areas',
-        string='Symptom Area',
+        "x_symptom_areas",
+        string="Symptom Area",
     )
-    x_studio_company_id = fields.Many2one('res.company', string='Company')
+    x_studio_company_id = fields.Many2one("res.company", string="Company")
 
 
 class XResolutions(models.Model):
     """Resolution catalogue. Referenced by
     x_task_diagnosis.x_studio_resolution (m2o)."""
-    _name = 'x_resolutions'
-    _description = 'Resolutions'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
-    _rec_name = 'x_name'
-    _order = 'x_studio_sequence, id'
 
-    x_active = fields.Boolean(string='Active', default=True)
-    x_name = fields.Char(string='Resolution')
-    x_studio_description = fields.Char(string='Description')
-    x_studio_sequence = fields.Integer(string='Sequence')
-    x_studio_company_id = fields.Many2one('res.company', string='Company')
+    _name = "x_resolutions"
+    _description = "Resolutions"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _rec_name = "x_name"
+    _order = "x_studio_sequence, id"
+
+    x_active = fields.Boolean(string="Active", default=True)
+    x_name = fields.Char(string="Resolution")
+    x_studio_description = fields.Char(string="Description")
+    x_studio_sequence = fields.Integer(string="Sequence")
+    x_studio_company_id = fields.Many2one("res.company", string="Company")
 
 
 class _RepairMasterDataMigration(models.AbstractModel):
@@ -299,28 +310,29 @@ class _RepairMasterDataMigration(models.AbstractModel):
 
     Idempotent. DB tables and existing data preserved.
     """
-    _name = 'x_repair_master_data.migration'
-    _description = 'Repair Master Data — Studio→Python migration helper'
+
+    _name = "x_repair_master_data.migration"
+    _description = "Repair Master Data — Studio→Python migration helper"
 
     @api.model
     def _migrate_studio_repair_master_data_to_base(self):
         model_names = [
-            'x_repair_accounts',
-            'x_repair_reason',
-            'x_repair_reason_custom',
-            'x_repair_stages',
-            'x_repair_sub_reason',
+            "x_repair_accounts",
+            "x_repair_reason",
+            "x_repair_reason_custom",
+            "x_repair_stages",
+            "x_repair_sub_reason",
             # v241 chunk 1a additions
-            'x_conditions',
-            'x_diagnosis_areas',
-            'x_diagnosis_codes',
-            'x_symptom_areas',
-            'x_symptom_codes',
-            'x_resolutions',
+            "x_conditions",
+            "x_diagnosis_areas",
+            "x_diagnosis_codes",
+            "x_symptom_areas",
+            "x_symptom_codes",
+            "x_resolutions",
         ]
-        Model = self.env['ir.model'].sudo()
-        Field = self.env['ir.model.fields'].sudo()
-        ModelData = self.env['ir.model.data'].sudo()
+        Model = self.env["ir.model"].sudo()
+        Field = self.env["ir.model.fields"].sudo()
+        ModelData = self.env["ir.model.data"].sudo()
 
         # 1. Model rows: state='manual' → 'base'.
         # ir.model.write() blocks 'state' via a hard UserError
@@ -329,14 +341,14 @@ class _RepairMasterDataMigration(models.AbstractModel):
         # touch the state column on rows we own, and the Python
         # classes are already registered — the flip just aligns the
         # metadata with the actual runtime state.
-        model_rows = Model.search([('model', 'in', model_names)])
-        manual_models = model_rows.filtered(lambda m: m.state == 'manual')
+        model_rows = Model.search([("model", "in", model_names)])
+        manual_models = model_rows.filtered(lambda m: m.state == "manual")
         if manual_models:
             self.env.cr.execute(
                 "UPDATE ir_model SET state = 'base' WHERE id IN %s",
                 (tuple(manual_models.ids),),
             )
-            manual_models.invalidate_recordset(['state'])
+            manual_models.invalidate_recordset(["state"])
 
         # 2. All fields on those models: state='manual' → 'base'.
         # Previous cluster migrations used ir.model.fields.write for
@@ -351,29 +363,33 @@ class _RepairMasterDataMigration(models.AbstractModel):
         #   KeyError: 'x_repair_reason_custom'
         # Same raw-SQL workaround as for ir.model — direct UPDATE
         # bypasses the descendants traversal and the registry lookup.
-        field_rows = Field.search([('model', 'in', model_names)])
-        manual_fields = field_rows.filtered(lambda f: f.state == 'manual')
+        field_rows = Field.search([("model", "in", model_names)])
+        manual_fields = field_rows.filtered(lambda f: f.state == "manual")
         if manual_fields:
             self.env.cr.execute(
                 "UPDATE ir_model_fields SET state = 'base' WHERE id IN %s",
                 (tuple(manual_fields.ids),),
             )
-            manual_fields.invalidate_recordset(['state'])
+            manual_fields.invalidate_recordset(["state"])
 
         # 3. Drop studio_customization pins on both layers.
-        studio_model_pins = ModelData.search([
-            ('model', '=', 'ir.model'),
-            ('res_id', 'in', model_rows.ids),
-            ('module', '=', 'studio_customization'),
-        ])
+        studio_model_pins = ModelData.search(
+            [
+                ("model", "=", "ir.model"),
+                ("res_id", "in", model_rows.ids),
+                ("module", "=", "studio_customization"),
+            ]
+        )
         if studio_model_pins:
             studio_model_pins.unlink()
 
-        studio_field_pins = ModelData.search([
-            ('model', '=', 'ir.model.fields'),
-            ('res_id', 'in', field_rows.ids),
-            ('module', '=', 'studio_customization'),
-        ])
+        studio_field_pins = ModelData.search(
+            [
+                ("model", "=", "ir.model.fields"),
+                ("res_id", "in", field_rows.ids),
+                ("module", "=", "studio_customization"),
+            ]
+        )
         if studio_field_pins:
             studio_field_pins.unlink()
 
@@ -388,31 +404,41 @@ class _RepairMasterDataMigration(models.AbstractModel):
         #   ir.model row       → 'model_' + model.replace('.', '_')
         #   ir.model.fields    → 'field_' + model.replace('.', '_') + '__' + name
         for model_row in model_rows:
-            xmlid = 'model_' + model_row.model.replace('.', '_')
-            existing = ModelData.search([
-                ('module', '=', 'Fix-repair'),
-                ('name', '=', xmlid),
-            ], limit=1)
+            xmlid = "model_" + model_row.model.replace(".", "_")
+            existing = ModelData.search(
+                [
+                    ("module", "=", "Fix-repair"),
+                    ("name", "=", xmlid),
+                ],
+                limit=1,
+            )
             if not existing:
-                ModelData.create({
-                    'module': 'Fix-repair',
-                    'name': xmlid,
-                    'model': 'ir.model',
-                    'res_id': model_row.id,
-                    'noupdate': True,
-                })
+                ModelData.create(
+                    {
+                        "module": "Fix-repair",
+                        "name": xmlid,
+                        "model": "ir.model",
+                        "res_id": model_row.id,
+                        "noupdate": True,
+                    }
+                )
 
         for field_row in field_rows:
-            xmlid = 'field_' + field_row.model.replace('.', '_') + '__' + field_row.name
-            existing = ModelData.search([
-                ('module', '=', 'Fix-repair'),
-                ('name', '=', xmlid),
-            ], limit=1)
+            xmlid = "field_" + field_row.model.replace(".", "_") + "__" + field_row.name
+            existing = ModelData.search(
+                [
+                    ("module", "=", "Fix-repair"),
+                    ("name", "=", xmlid),
+                ],
+                limit=1,
+            )
             if not existing:
-                ModelData.create({
-                    'module': 'Fix-repair',
-                    'name': xmlid,
-                    'model': 'ir.model.fields',
-                    'res_id': field_row.id,
-                    'noupdate': True,
-                })
+                ModelData.create(
+                    {
+                        "module": "Fix-repair",
+                        "name": xmlid,
+                        "model": "ir.model.fields",
+                        "res_id": field_row.id,
+                        "noupdate": True,
+                    }
+                )

@@ -18,19 +18,20 @@ means already-pinned rows are left alone. On stand-alone, all pins
 already exist from module install; this migration no-ops. On
 Clear-DB, missing pins get created and ACL CSV loads successfully.
 """
+
 _MODELS = [
-    'x_conditions',
-    'x_symptom_areas',
-    'x_symptom_codes',
-    'x_diagnosis_areas',
-    'x_diagnosis_codes',
-    'x_resolutions',
-    'x_repair_accounts',
-    'x_repair_reason',
-    'x_repair_reason_custom',
-    'x_repair_stages',
-    'x_repair_sub_reason',
-    'x_task_diagnosis',
+    "x_conditions",
+    "x_symptom_areas",
+    "x_symptom_codes",
+    "x_diagnosis_areas",
+    "x_diagnosis_codes",
+    "x_resolutions",
+    "x_repair_accounts",
+    "x_repair_reason",
+    "x_repair_reason_custom",
+    "x_repair_stages",
+    "x_repair_sub_reason",
+    "x_task_diagnosis",
 ]
 
 
@@ -53,7 +54,7 @@ def migrate(cr, version):
             # create the pin automatically. Nothing to do here.
             continue
         model_id = row[0]
-        xmlid_name = 'model_' + model_name
+        xmlid_name = "model_" + model_name
 
         cr.execute(
             """

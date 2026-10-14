@@ -20,6 +20,7 @@ x_studio_rug_confirmed stayed False (had been captured False at
 create time). Junk-then-restore of invoice_origin was the temporary
 workaround.
 """
+
 from odoo import SUPERUSER_ID, api
 
 
@@ -27,9 +28,15 @@ def migrate(cr, version):
     if not version:
         return
     env = api.Environment(cr, SUPERUSER_ID, {})
-    moves = env['account.move'].sudo().search([
-        ('invoice_origin', '!=', False),
-        ('move_type', '=', 'out_invoice'),
-    ])
+    moves = (
+        env["account.move"]
+        .sudo()
+        .search(
+            [
+                ("invoice_origin", "!=", False),
+                ("move_type", "=", "out_invoice"),
+            ]
+        )
+    )
     if moves:
         moves._compute_x_studio_rug_confirmed()

@@ -11,12 +11,13 @@ declaring it here in Python takes ownership and the eventual migration
 step to unlink the studio_customization pin can follow the same
 pattern as the other repair.* clusters (see MIGRATION.md v145).
 """
+
 from odoo import fields, models
 
 
 class RepairOrder(models.Model):
-    _inherit = 'repair.order'
+    _inherit = "repair.order"
 
     x_studio_confirm_draft_quotation = fields.Boolean(
-        string='Confirm Draft Quotation',
+        string="Confirm Draft Quotation",
     )

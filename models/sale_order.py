@@ -12,11 +12,13 @@ _logger = logging.getLogger(__name__)
 
 
 class SaleOrder(models.Model):
-    _inherit = 'sale.order'
+    _inherit = "sale.order"
 
     # Mirrors the linked helpdesk ticket's repair_stage_state for use in view
     # expressions (e.g. gating Create Invoice on Repair Completed for RUG SOs).
-    ticket_repair_stage_state = fields.Char(compute='_compute_ticket_repair_stage_state')
+    ticket_repair_stage_state = fields.Char(
+        compute="_compute_ticket_repair_stage_state"
+    )
 
     # Backwards-compatible alias for tax_totals. The Studio-modified
     # sale.report_saleorder_document arch on this instance was migrated
@@ -31,12 +33,14 @@ class SaleOrder(models.Model):
     # arch in Studio, expose the JSON-serialized string form under the
     # old name. json.dumps() returns a str; json.loads() in the
     # template then round-trips it back to a dict.
-    tax_totals_json = fields.Char(compute='_compute_tax_totals_json')
+    tax_totals_json = fields.Char(compute="_compute_tax_totals_json")
 
-    @api.depends('tax_totals')
+    @api.depends("tax_totals")
     def _compute_tax_totals_json(self):
         for order in self:
-            order.tax_totals_json = json.dumps(order.tax_totals) if order.tax_totals else '{}'
+            order.tax_totals_json = (
+                json.dumps(order.tax_totals) if order.tax_totals else "{}"
+            )
 
     # True once the customer has signed the quotation on the portal preview.
     # Used as the gate for the backend Confirm button on NUW / Reject-RUG
@@ -45,18 +49,20 @@ class SaleOrder(models.Model):
     # standard signed_on field doesn't survive injection into our form arch,
     # but this custom field, which we declare and own, does.
     x_customer_signed = fields.Boolean(
-        compute='_compute_x_customer_signed',
+        compute="_compute_x_customer_signed",
     )
 
     def _compute_ticket_repair_stage_state(self):
         for order in self:
-            task = order.sudo().task_id or self.env['project.task'].sudo().search(
-                [('sale_order_id', '=', order.id)], limit=1
+            task = order.sudo().task_id or self.env["project.task"].sudo().search(
+                [("sale_order_id", "=", order.id)], limit=1
             )
             ticket = task.helpdesk_ticket_id if task else None
-            order.ticket_repair_stage_state = (ticket.repair_stage_state or '') if ticket else ''
+            order.ticket_repair_stage_state = (
+                (ticket.repair_stage_state or "") if ticket else ""
+            )
 
-    @api.depends('signed_on', 'signed_by', 'signature')
+    @api.depends("signed_on", "signed_by", "signature")
     def _compute_x_customer_signed(self):
         for order in self:
             order.x_customer_signed = bool(
@@ -66,20 +72,25 @@ class SaleOrder(models.Model):
     # True when this SO can be re-estimated: customer has signed AND no
     # outgoing delivery on it is validated yet. Powers the Re-estimate
     # button on the SO form.
-    can_re_estimate = fields.Boolean(compute='_compute_can_re_estimate')
+    can_re_estimate = fields.Boolean(compute="_compute_can_re_estimate")
 
-    @api.depends('state', 'signed_on', 'signed_by', 'picking_ids.state',
-                 'picking_ids.picking_type_id.code')
+    @api.depends(
+        "state",
+        "signed_on",
+        "signed_by",
+        "picking_ids.state",
+        "picking_ids.picking_type_id.code",
+    )
     def _compute_can_re_estimate(self):
         for order in self:
-            if order.state == 'cancel':
+            if order.state == "cancel":
                 order.can_re_estimate = False
                 continue
             if not (order.signed_on or order.signed_by):
                 order.can_re_estimate = False
                 continue
             any_outgoing_done = any(
-                p.state == 'done' and p.picking_type_id.code == 'outgoing'
+                p.state == "done" and p.picking_type_id.code == "outgoing"
                 for p in order.picking_ids
             )
             order.can_re_estimate = not any_outgoing_done
@@ -99,7 +110,7 @@ class SaleOrder(models.Model):
     # Non-repair SOs and configs without a resolvable source default to
     # "OK" so the gate never applies outside the repair workflow.
     x_repair_stock_ok = fields.Boolean(
-        compute='_compute_x_repair_stock_ok',
+        compute="_compute_x_repair_stock_ok",
     )
 
     # True when this repair is not covered by warranty (customer pays from
@@ -117,12 +128,12 @@ class SaleOrder(models.Model):
     # state universally read as
     #    order.x_repair_customer_pays or order.x_studio_rug_rejected
     x_repair_customer_pays = fields.Boolean(
-        string='Not Under Warranty',
+        string="Not Under Warranty",
         default=False,
         help="True when this repair is not covered by warranty and the "
-             "customer must pay from the start. Independent of the RUG "
-             "rejection flag (which fires when a warranty repair falls "
-             "through to customer-pays after the RUG cycle).",
+        "customer must pay from the start. Independent of the RUG "
+        "rejection flag (which fires when a warranty repair falls "
+        "through to customer-pays after the RUG cycle).",
     )
 
     def _get_repair_stock_source_locations(self):
@@ -131,17 +142,17 @@ class SaleOrder(models.Model):
         pool feeding the factory). Empty recordset means 'skip the gate'
         — non-repair or unresolvable config."""
         self.ensure_one()
-        task = self.sudo().task_id or self.env['project.task'].sudo().search(
-            [('sale_order_id', '=', self.id)], limit=1
+        task = self.sudo().task_id or self.env["project.task"].sudo().search(
+            [("sale_order_id", "=", self.id)], limit=1
         )
         ticket = task.helpdesk_ticket_id if task else False
-        Location = self.env['stock.location']
+        Location = self.env["stock.location"]
         if not ticket:
             return Location
         job = ticket.x_studio_job_location
-        if job == 'Factory Repair':
-            key = f'fix_repair.factory_repair_location.{self.company_id.id}'
-            raw = self.env['ir.config_parameter'].sudo().get_param(key)
+        if job == "Factory Repair":
+            key = f"fix_repair.factory_repair_location.{self.company_id.id}"
+            raw = self.env["ir.config_parameter"].sudo().get_param(key)
             if not raw:
                 return Location
             try:
@@ -159,14 +170,19 @@ class SaleOrder(models.Model):
             factory_wh = factory_loc.warehouse_id
             resupply = factory_wh.resupply_wh_ids
             if resupply:
-                return resupply.mapped('lot_stock_id')
+                return resupply.mapped("lot_stock_id")
             return factory_loc
-        if job == 'Centre Repair':
+        if job == "Centre Repair":
             return ticket.x_studio_repair_location or Location
         return Location
 
-    @api.depends('order_line', 'order_line.product_id',
-                 'order_line.product_uom_qty', 'company_id', 'state')
+    @api.depends(
+        "order_line",
+        "order_line.product_id",
+        "order_line.product_uom_qty",
+        "company_id",
+        "state",
+    )
     def _compute_x_repair_stock_ok(self):
         for order in self:
             locations = order._get_repair_stock_source_locations()
@@ -175,8 +191,8 @@ class SaleOrder(models.Model):
                 continue
             short = False
             for line in order.order_line.filtered(
-                    lambda l: l.product_id.type == 'product'
-                              and not l.display_type):
+                lambda l: l.product_id.type == "product" and not l.display_type
+            ):
                 need = line.product_uom_qty or 0
                 if need <= 0:
                     continue
@@ -199,10 +215,11 @@ class SaleOrder(models.Model):
         locations = self._get_repair_stock_source_locations()
         if not locations:
             return
-        source_names = ', '.join(locations.mapped('display_name'))
+        source_names = ", ".join(locations.mapped("display_name"))
         details = []
         for line in self.order_line.filtered(
-                lambda l: l.product_id.type == 'product' and not l.display_type):
+            lambda l: l.product_id.type == "product" and not l.display_type
+        ):
             need = line.product_uom_qty or 0
             if need <= 0:
                 continue
@@ -218,11 +235,13 @@ class SaleOrder(models.Model):
                 )
         if not details:
             return
-        raise UserError(_(
-            "Not enough stock at %(sources)s:\n\n%(details)s",
-            sources=source_names,
-            details="\n".join(details),
-        ))
+        raise UserError(
+            _(
+                "Not enough stock at %(sources)s:\n\n%(details)s",
+                sources=source_names,
+                details="\n".join(details),
+            )
+        )
 
     def action_re_estimate(self):
         """Reset this SO for re-estimation and move the linked helpdesk
@@ -230,12 +249,12 @@ class SaleOrder(models.Model):
         so the button can live on either side."""
         for order in self:
             order._re_estimate_reset()
-            task = order.sudo().task_id or self.env['project.task'].sudo().search(
-                [('sale_order_id', '=', order.id)], limit=1
+            task = order.sudo().task_id or self.env["project.task"].sudo().search(
+                [("sale_order_id", "=", order.id)], limit=1
             )
             ticket = task.helpdesk_ticket_id if task else None
             if ticket:
-                ticket._move_to_stage('Diagnosis')
+                ticket._move_to_stage("Diagnosis")
 
     # Marker embedded in every Studio server action we've rewritten with
     # idempotence guards. Presence of the marker in `code` means the
@@ -263,10 +282,10 @@ class SaleOrder(models.Model):
     def _fix_repair_compute_over_credit(self):
         for rec in self:
             result = False
-            if rec.partner_id.id and rec.x_studio_order_payment_method == 'Credit':
+            if rec.partner_id.id and rec.x_studio_order_payment_method == "Credit":
                 pi = rec.partner_invoice_id
                 amt = rec.amount_total
-                if rec.x_studio_quotation_type == 'Repair':
+                if rec.x_studio_quotation_type == "Repair":
                     amt = amt * 0.5
                 result = (pi.credit + amt) > pi.credit_limit
             rec.x_studio_over_credit = result
@@ -274,7 +293,7 @@ class SaleOrder(models.Model):
     def _fix_repair_compute_over_credit_amount(self):
         for rec in self:
             result = 0
-            if rec.partner_id.id and rec.x_studio_order_payment_method == 'Credit':
+            if rec.partner_id.id and rec.x_studio_order_payment_method == "Credit":
                 pi = rec.partner_invoice_id
                 result = (pi.credit + rec.amount_total) - pi.credit_limit
             rec.x_studio_over_credit_amount = result
@@ -283,41 +302,54 @@ class SaleOrder(models.Model):
         today = fields.Date.context_today(self)
         for rec in self:
             result = False
-            if rec.partner_id.id and rec.x_studio_order_payment_method == 'Credit' \
-                    and rec.x_studio_valid_bank_guarantee:
+            if (
+                rec.partner_id.id
+                and rec.x_studio_order_payment_method == "Credit"
+                and rec.x_studio_valid_bank_guarantee
+            ):
                 pi = rec.partner_invoice_id
                 expiry = pi.x_studio_expiry_date
                 if expiry and expiry < today:
                     result = True
                 else:
-                    result = (pi.credit + rec.amount_total) > (pi.x_studio_bank_guarantee_amount or 0)
+                    result = (pi.credit + rec.amount_total) > (
+                        pi.x_studio_bank_guarantee_amount or 0
+                    )
             rec.x_studio_over_bank_guarantee = result
 
     def _fix_repair_compute_over_bank_guarantee_amount(self):
         for rec in self:
             result = 0
-            if rec.partner_id.id and rec.x_studio_order_payment_method == 'Credit' \
-                    and rec.x_studio_valid_bank_guarantee:
+            if (
+                rec.partner_id.id
+                and rec.x_studio_order_payment_method == "Credit"
+                and rec.x_studio_valid_bank_guarantee
+            ):
                 pi = rec.partner_invoice_id
-                result = (pi.credit + rec.amount_total) - (pi.x_studio_bank_guarantee_amount or 0)
+                result = (pi.credit + rec.amount_total) - (
+                    pi.x_studio_bank_guarantee_amount or 0
+                )
             rec.x_studio_over_bank_guarantee_amount = result
 
     def _fix_repair_compute_guarantee_status(self):
         today = fields.Date.context_today(self)
         for rec in self:
             result = False
-            if rec.x_studio_order_payment_method == 'Credit' and rec.x_studio_valid_bank_guarantee:
+            if (
+                rec.x_studio_order_payment_method == "Credit"
+                and rec.x_studio_valid_bank_guarantee
+            ):
                 expiry = rec.partner_id.x_studio_expiry_date
                 if expiry and expiry < today:
-                    result = 'Bank Guarantee has Expired'
+                    result = "Bank Guarantee has Expired"
                 else:
-                    result = 'Valid Bank Guarantee'
+                    result = "Valid Bank Guarantee"
             rec.x_studio_guarantee_status = result
 
     def _fix_repair_compute_overdue(self):
         for rec in self:
             result = False
-            if rec.partner_id.id and rec.x_studio_order_payment_method == 'Credit':
+            if rec.partner_id.id and rec.x_studio_order_payment_method == "Credit":
                 # partner_invoice_id.total_overdue is Odoo core — cost is
                 # inherited but unavoidable for correct behaviour.
                 result = rec.partner_invoice_id.total_overdue > 0.00
@@ -334,33 +366,60 @@ class SaleOrder(models.Model):
 
         Idempotent via the shared '# fix_repair:idempotent-v1' marker.
         """
-        IrField = self.env['ir.model.fields'].sudo()
+        IrField = self.env["ir.model.fields"].sudo()
         marker = self._FIX_REPAIR_IDEMPOTENCE_MARKER
 
         # Map: (field_name, expected_substring_in_original, delegating_snippet)
         delegations = [
-            ('x_studio_over_commission',    'x_studio_over_commission',      'self._fix_repair_compute_over_commission()'),
-            ('x_studio_over_credit',        'partner_invoice_id.credit',     'self._fix_repair_compute_over_credit()'),
-            ('x_studio_over_credit_amount', 'credit_limit',                  'self._fix_repair_compute_over_credit_amount()'),
-            ('x_studio_over_bank_guarantee','x_studio_bank_guarantee_amount','self._fix_repair_compute_over_bank_guarantee()'),
-            ('x_studio_over_bank_guarantee_amount','x_studio_bank_guarantee_amount','self._fix_repair_compute_over_bank_guarantee_amount()'),
-            ('x_studio_guarantee_status',   'Valid Bank Guarantee',          'self._fix_repair_compute_guarantee_status()'),
-            ('x_studio_overdue',            'total_overdue',                 'self._fix_repair_compute_overdue()'),
+            (
+                "x_studio_over_commission",
+                "x_studio_over_commission",
+                "self._fix_repair_compute_over_commission()",
+            ),
+            (
+                "x_studio_over_credit",
+                "partner_invoice_id.credit",
+                "self._fix_repair_compute_over_credit()",
+            ),
+            (
+                "x_studio_over_credit_amount",
+                "credit_limit",
+                "self._fix_repair_compute_over_credit_amount()",
+            ),
+            (
+                "x_studio_over_bank_guarantee",
+                "x_studio_bank_guarantee_amount",
+                "self._fix_repair_compute_over_bank_guarantee()",
+            ),
+            (
+                "x_studio_over_bank_guarantee_amount",
+                "x_studio_bank_guarantee_amount",
+                "self._fix_repair_compute_over_bank_guarantee_amount()",
+            ),
+            (
+                "x_studio_guarantee_status",
+                "Valid Bank Guarantee",
+                "self._fix_repair_compute_guarantee_status()",
+            ),
+            ("x_studio_overdue", "total_overdue", "self._fix_repair_compute_overdue()"),
         ]
 
         for name, guard_substring, call in delegations:
-            field = IrField.search([
-                ('model', '=', 'sale.order'),
-                ('name', '=', name),
-            ], limit=1)
+            field = IrField.search(
+                [
+                    ("model", "=", "sale.order"),
+                    ("name", "=", name),
+                ],
+                limit=1,
+            )
             if not field:
                 continue
-            code = field.compute or ''
+            code = field.compute or ""
             if marker in code:
                 continue  # already delegated
             if guard_substring not in code:
                 continue  # someone changed it — leave alone
-            field.write({'compute': f"{marker}\n{call}\n"})
+            field.write({"compute": f"{marker}\n{call}\n"})
 
     @api.model
     def _restrict_notify_transfer_completion_automation(self):
@@ -383,11 +442,14 @@ class SaleOrder(models.Model):
         original state). If someone edits the filter manually, we
         leave it alone.
         """
-        Auto = self.env['base.automation'].sudo()
-        auto = Auto.search([
-            ('model_name', '=', 'stock.picking'),
-            ('name', '=', 'PROJ - Notify Transfer Completion'),
-        ], limit=1)
+        Auto = self.env["base.automation"].sudo()
+        auto = Auto.search(
+            [
+                ("model_name", "=", "stock.picking"),
+                ("name", "=", "PROJ - Notify Transfer Completion"),
+            ],
+            limit=1,
+        )
         if not auto:
             return
         # Skip if someone already narrowed the filter
@@ -398,10 +460,12 @@ class SaleOrder(models.Model):
             "('state', '=', 'done')]"
         )
         target_filter_pre_domain = "[('state', '!=', 'done')]"
-        auto.write({
-            'filter_domain': target_filter_domain,
-            'filter_pre_domain': target_filter_pre_domain,
-        })
+        auto.write(
+            {
+                "filter_domain": target_filter_domain,
+                "filter_pre_domain": target_filter_pre_domain,
+            }
+        )
 
     @api.model
     def _optimize_slow_studio_computes(self):
@@ -415,42 +479,49 @@ class SaleOrder(models.Model):
         the redundant pattern we can safely replace. Manual Studio edits
         (any change to the compute code) preserve the field as-is.
         """
-        IrField = self.env['ir.model.fields'].sudo()
+        IrField = self.env["ir.model.fields"].sudo()
 
         # Redundant computes that just return record.amount_total.
         # Replace with related='amount_total' — Odoo handles the
         # traversal natively (no safe_eval per fire).
         redundant_amount_total_computes = [
-            'x_studio_current_tot_amount',
-            'x_studio_current_tot_amount_1',
+            "x_studio_current_tot_amount",
+            "x_studio_current_tot_amount_1",
         ]
         for name in redundant_amount_total_computes:
-            field = IrField.search([
-                ('model', '=', 'sale.order'),
-                ('name', '=', name),
-            ], limit=1)
+            field = IrField.search(
+                [
+                    ("model", "=", "sale.order"),
+                    ("name", "=", name),
+                ],
+                limit=1,
+            )
             if not field:
                 continue
             # Only rewrite if the compute is the known redundant pattern
-            code = (field.compute or '').strip()
-            if 'record.amount_total' not in code:
+            code = (field.compute or "").strip()
+            if "record.amount_total" not in code:
                 continue  # someone changed it — leave alone
-            if field.related == 'amount_total':
+            if field.related == "amount_total":
                 continue  # already converted
             try:
                 with self.env.cr.savepoint():
-                    field.write({
-                        'related': 'amount_total',
-                        'compute': False,
-                        'store': False,
-                        'readonly': True,
-                    })
+                    field.write(
+                        {
+                            "related": "amount_total",
+                            "compute": False,
+                            "store": False,
+                            "readonly": True,
+                        }
+                    )
             except Exception:
                 # If the model's cache prevents the switch mid-runtime,
                 # skip — will retry on next upgrade.
                 _logger.warning(
                     "Could not convert %s to a related field; will retry "
-                    "on next upgrade.", name, exc_info=True,
+                    "on next upgrade.",
+                    name,
+                    exc_info=True,
                 )
 
     @api.model
@@ -468,7 +539,7 @@ class SaleOrder(models.Model):
         already contains the marker, the patch is skipped so manual
         Studio edits are preserved on subsequent upgrades.
         """
-        Server = self.env['ir.actions.server'].sudo()
+        Server = self.env["ir.actions.server"].sudo()
         marker = self._FIX_REPAIR_IDEMPOTENCE_MARKER
 
         # account.move.line and account.move actions to patch too — bundled
@@ -477,12 +548,12 @@ class SaleOrder(models.Model):
             {
                 # SRM - Auto Populate Report Type in Account Move Lines
                 # (fires on every AML write — 10-15× per invoice)
-                'search': [
-                    ('model_id.model', '=', 'account.move.line'),
-                    ('code', 'like', "x_sales_report_type"),
-                    ('code', 'like', "account_internal_group"),
+                "search": [
+                    ("model_id.model", "=", "account.move.line"),
+                    ("code", "like", "x_sales_report_type"),
+                    ("code", "like", "account_internal_group"),
                 ],
-                'new_code': (
+                "new_code": (
                     marker + "\n"
                     "if record.account_internal_group == 'income' "
                     "and not record.x_studio_sales_report_type:\n"
@@ -497,12 +568,12 @@ class SaleOrder(models.Model):
                 # SRM - Update Sales Order - Customer Invoice
                 # (fires once per account.move create — cheap, but the
                 # unconditional write still triggers downstream computes)
-                'search': [
-                    ('model_id.model', '=', 'account.move'),
-                    ('code', 'like', "x_studio_sale_id"),
-                    ('code', 'like', "invoice_origin"),
+                "search": [
+                    ("model_id.model", "=", "account.move"),
+                    ("code", "like", "x_studio_sale_id"),
+                    ("code", "like", "invoice_origin"),
                 ],
-                'new_code': (
+                "new_code": (
                     marker + "\n"
                     "if record.invoice_origin and not record.x_studio_sale_id:\n"
                     "  sale = env['sale.order'].sudo().search(\n"
@@ -513,13 +584,13 @@ class SaleOrder(models.Model):
             },
             {
                 # RR - Track Lock Status  (fires on every sale.order write)
-                'search': [
-                    ('model_id.model', '=', 'sale.order'),
-                    ('code', 'like', "x_studio_re_estimate_count"),
-                    ('code', 'like', "x_studio_locked"),
-                    ('code', 'like', "state == 'done'"),
+                "search": [
+                    ("model_id.model", "=", "sale.order"),
+                    ("code", "like", "x_studio_re_estimate_count"),
+                    ("code", "like", "x_studio_locked"),
+                    ("code", "like", "state == 'done'"),
                 ],
-                'new_code': (
+                "new_code": (
                     marker + "\n"
                     "if record.x_studio_quotation_type == 'Repair' and record.state == 'done':\n"
                     "  re_line = env['sale.order.line'].sudo().search(\n"
@@ -538,12 +609,12 @@ class SaleOrder(models.Model):
             },
             {
                 # RR - Track Lock Status - 2  (fires on every sale.order write)
-                'search': [
-                    ('model_id.model', '=', 'sale.order'),
-                    ('code', 'like', "x_studio_locked == True"),
-                    ('code', 'like', "state == 'sale'"),
+                "search": [
+                    ("model_id.model", "=", "sale.order"),
+                    ("code", "like", "x_studio_locked == True"),
+                    ("code", "like", "state == 'sale'"),
                 ],
-                'new_code': (
+                "new_code": (
                     marker + "\n"
                     "if (record.x_studio_quotation_type == 'Repair'\n"
                     "    and record.state == 'sale'\n"
@@ -553,13 +624,13 @@ class SaleOrder(models.Model):
             },
             {
                 # Update Analytic Tag Parameters - Sales Order - User
-                'search': [
-                    ('model_id.model', '=', 'sale.order'),
-                    ('code', 'like', "account.analytic.distribution.model"),
-                    ('code', 'like', "x_studio_account_mandatory"),
-                    ('code', 'like', "create_uid"),
+                "search": [
+                    ("model_id.model", "=", "sale.order"),
+                    ("code", "like", "account.analytic.distribution.model"),
+                    ("code", "like", "x_studio_account_mandatory"),
+                    ("code", "like", "create_uid"),
                 ],
-                'new_code': (
+                "new_code": (
                     marker + "\n"
                     "if record.create_uid:\n"
                     "  tag_rule = env['account.analytic.distribution.model'].sudo().search(\n"
@@ -571,12 +642,12 @@ class SaleOrder(models.Model):
             },
             {
                 # Project Sales Order Seq.No - 3  (fires on every sale.order write)
-                'search': [
-                    ('model_id.model', '=', 'sale.order'),
-                    ('code', 'like', "replace('_PRJ'"),
-                    ('code', 'like', "x_studio_quotation_type"),
+                "search": [
+                    ("model_id.model", "=", "sale.order"),
+                    ("code", "like", "replace('_PRJ'"),
+                    ("code", "like", "x_studio_quotation_type"),
                 ],
-                'new_code': (
+                "new_code": (
                     marker + "\n"
                     "if record.id:\n"
                     "  original_name = (record.name or '').replace('_PRJ', '')\n"
@@ -590,10 +661,10 @@ class SaleOrder(models.Model):
         ]
 
         for p in patches:
-            for action in Server.search(p['search']):
-                if marker in (action.code or ''):
+            for action in Server.search(p["search"]):
+                if marker in (action.code or ""):
                     continue
-                action.write({'code': p['new_code']})
+                action.write({"code": p["new_code"]})
 
     @api.model
     def _seed_advance_payment_method_lines(self):
@@ -626,17 +697,22 @@ class SaleOrder(models.Model):
           - Skips silently when the Outstanding Receipts account
             cannot be located for a company (logged in server logs)
         """
-        Journal = self.env['account.journal'].sudo()
-        MethodLine = self.env['account.payment.method.line'].sudo()
-        Account = self.env['account.account'].sudo()
+        Journal = self.env["account.journal"].sudo()
+        MethodLine = self.env["account.payment.method.line"].sudo()
+        Account = self.env["account.account"].sudo()
         # Manual is the built-in fallback payment method — always
         # usable for advance payments.
-        manual = self.env.ref('account.account_payment_method_manual_in',
-                              raise_if_not_found=False)
+        manual = self.env.ref(
+            "account.account_payment_method_manual_in", raise_if_not_found=False
+        )
         if not manual:
-            manual = self.env['account.payment.method'].sudo().search(
-                [('code', '=', 'manual'), ('payment_type', '=', 'inbound')],
-                limit=1,
+            manual = (
+                self.env["account.payment.method"]
+                .sudo()
+                .search(
+                    [("code", "=", "manual"), ("payment_type", "=", "inbound")],
+                    limit=1,
+                )
             )
         if not manual:
             return
@@ -649,33 +725,40 @@ class SaleOrder(models.Model):
         def _outstanding_receipts(company):
             if company.id in outstanding_by_company:
                 return outstanding_by_company[company.id]
-            acc = Account.search([
-                ('company_id', '=', company.id),
-                ('account_type', '=', 'asset_current'),
-                ('reconcile', '=', True),
-                ('name', '=ilike', 'Outstanding Receipts'),
-            ], limit=1)
+            acc = Account.search(
+                [
+                    ("company_id", "=", company.id),
+                    ("account_type", "=", "asset_current"),
+                    ("reconcile", "=", True),
+                    ("name", "=ilike", "Outstanding Receipts"),
+                ],
+                limit=1,
+            )
             outstanding_by_company[company.id] = acc
             return acc
 
-        for name in ('Advance Payment', 'Advance Payment - Repairs'):
-            for journal in Journal.search([('name', '=', name)]):
+        for name in ("Advance Payment", "Advance Payment - Repairs"):
+            for journal in Journal.search([("name", "=", name)]):
                 outstanding = _outstanding_receipts(journal.company_id)
                 existing = journal.inbound_payment_method_line_ids
                 if not existing:
-                    MethodLine.create({
-                        'payment_method_id': manual.id,
-                        'journal_id': journal.id,
-                        'name': 'Manual',
-                        'payment_account_id': outstanding.id if outstanding else False,
-                    })
+                    MethodLine.create(
+                        {
+                            "payment_method_id": manual.id,
+                            "journal_id": journal.id,
+                            "name": "Manual",
+                            "payment_account_id": outstanding.id
+                            if outstanding
+                            else False,
+                        }
+                    )
                     continue
                 # Backfill existing method lines that lack an
                 # outstanding account
                 if outstanding:
                     to_backfill = existing.filtered(lambda l: not l.payment_account_id)
                     if to_backfill:
-                        to_backfill.write({'payment_account_id': outstanding.id})
+                        to_backfill.write({"payment_account_id": outstanding.id})
 
     @api.model
     def _fix_advance_payment_project_field(self):
@@ -690,16 +773,25 @@ class SaleOrder(models.Model):
         Handles both space variants Studio may write (with or without space
         after the colon).
         """
-        action = self.env['ir.actions.server'].sudo().search([
-            ('model_id.model', '=', 'sale.order'),
-            ('code', 'like', "x_studio_project_no_1"),
-            ('code', 'like', "account.payment"),
-        ], limit=1)
+        action = (
+            self.env["ir.actions.server"]
+            .sudo()
+            .search(
+                [
+                    ("model_id.model", "=", "sale.order"),
+                    ("code", "like", "x_studio_project_no_1"),
+                    ("code", "like", "account.payment"),
+                ],
+                limit=1,
+            )
+        )
         if not action:
             return
-        new = ("'x_studio_project_no_1': "
-               "record.x_studio_project_no.id if record.x_studio_project_no else False,")
-        code = action.code or ''
+        new = (
+            "'x_studio_project_no_1': "
+            "record.x_studio_project_no.id if record.x_studio_project_no else False,"
+        )
+        code = action.code or ""
         # Studio may write the dict with or without a space after the colon
         for old in (
             "'x_studio_project_no_1':record.id,",
@@ -721,7 +813,7 @@ class SaleOrder(models.Model):
         if pm_old in code:
             code = code.replace(pm_old, pm_new)
 
-        action.write({'code': code})
+        action.write({"code": code})
 
     @api.model
     def _migrate_nuw_to_customer_pays_flag(self):
@@ -757,80 +849,102 @@ class SaleOrder(models.Model):
         # quotation_type='Repair' first, then flip the flag — the order
         # doesn't matter for correctness since both values are stored,
         # but doing them in one write() is atomic.
-        nuw_orders = self.sudo().search([
-            ('x_studio_quotation_type', '=', 'Not Under Warranty'),
-        ])
+        nuw_orders = self.sudo().search(
+            [
+                ("x_studio_quotation_type", "=", "Not Under Warranty"),
+            ]
+        )
         if nuw_orders:
-            nuw_orders.write({
-                'x_studio_quotation_type': 'Repair',
-                'x_repair_customer_pays': True,
-            })
+            nuw_orders.write(
+                {
+                    "x_studio_quotation_type": "Repair",
+                    "x_repair_customer_pays": True,
+                }
+            )
 
         # Step 2: drop the 'Not Under Warranty' selection value so the
         # dropdown no longer offers it. We locate the field row on
         # sale.order first (there's also x_studio_quotation_type on
         # other models like project.task via Studio) and only delete
         # its selection child.
-        field = self.env['ir.model.fields'].sudo().search([
-            ('model', '=', 'sale.order'),
-            ('name', '=', 'x_studio_quotation_type'),
-        ], limit=1)
+        field = (
+            self.env["ir.model.fields"]
+            .sudo()
+            .search(
+                [
+                    ("model", "=", "sale.order"),
+                    ("name", "=", "x_studio_quotation_type"),
+                ],
+                limit=1,
+            )
+        )
         if field:
-            nuw_selection = self.env['ir.model.fields.selection'].sudo().search([
-                ('field_id', '=', field.id),
-                ('value', '=', 'Not Under Warranty'),
-            ], limit=1)
+            nuw_selection = (
+                self.env["ir.model.fields.selection"]
+                .sudo()
+                .search(
+                    [
+                        ("field_id", "=", field.id),
+                        ("value", "=", "Not Under Warranty"),
+                    ],
+                    limit=1,
+                )
+            )
             if nuw_selection:
                 nuw_selection.unlink()
 
     @api.model
-    def _get_view(self, view_id=None, view_type='form', **options):
+    def _get_view(self, view_id=None, view_type="form", **options):
         arch, view = super()._get_view(view_id, view_type, **options)
-        if view_type == 'form':
+        if view_type == "form":
             # Inject our custom helper fields so button expressions can read
             # them. We use x_customer_signed (computed from signed_on /
             # signed_by / signature) instead of signed_on directly, because
             # the standard signed_on field somehow doesn't survive
             # Studio's view post-processing — but our own fields do.
             for sheet in arch.xpath("//sheet"):
-                for fname in ('ticket_repair_stage_state', 'x_customer_signed',
-                              'can_re_estimate', 'x_repair_stock_ok',
-                              'x_repair_customer_pays',
-                              # v263: x_studio_quotation_type is read by our
-                              # OR-merged invisible expressions below
-                              # (repair_expr). On standalone the base sale.order
-                              # arch doesn't happen to render this field, so OWL
-                              # can't evaluate the expression at render time
-                              # without a sentinel.
-                              'x_studio_quotation_type',
-                              # v264: Confirm-button invisible expression reads
-                              # both RUG flags plus is_subscription. Base arch
-                              # doesn't fetch them without sentinels on standalone.
-                              'x_studio_rug_confirmed',
-                              'x_studio_rug_rejected',
-                              'is_subscription',
-                              'x_studio_order_payment_method',
-                              'x_studio_over_credit',
-                              'x_studio_credit_limit_approved',
-                              'x_studio_overdue',
-                              'x_studio_overdue_approved',
-                              'x_studio_valid_order_lines',
-                              'x_studio_expired',
-                              'x_studio_over_commission',
-                              'x_studio_over_commission_approved',
-                              'x_studio_margin_exceed',
-                              'x_studio_margin_approved',
-                              'x_studio_over_bank_guarantee',
-                              'x_studio_bank_guarantee_approved',
-                              'x_studio_proj_budget_status',
-                              'x_studio_budget_created',
-                              'x_studio_inventory_short',
-                              'x_studio_price_not_confirmed',
-                              'x_studio_new_item_from_project'):
+                for fname in (
+                    "ticket_repair_stage_state",
+                    "x_customer_signed",
+                    "can_re_estimate",
+                    "x_repair_stock_ok",
+                    "x_repair_customer_pays",
+                    # v263: x_studio_quotation_type is read by our
+                    # OR-merged invisible expressions below
+                    # (repair_expr). On standalone the base sale.order
+                    # arch doesn't happen to render this field, so OWL
+                    # can't evaluate the expression at render time
+                    # without a sentinel.
+                    "x_studio_quotation_type",
+                    # v264: Confirm-button invisible expression reads
+                    # both RUG flags plus is_subscription. Base arch
+                    # doesn't fetch them without sentinels on standalone.
+                    "x_studio_rug_confirmed",
+                    "x_studio_rug_rejected",
+                    "is_subscription",
+                    "x_studio_order_payment_method",
+                    "x_studio_over_credit",
+                    "x_studio_credit_limit_approved",
+                    "x_studio_overdue",
+                    "x_studio_overdue_approved",
+                    "x_studio_valid_order_lines",
+                    "x_studio_expired",
+                    "x_studio_over_commission",
+                    "x_studio_over_commission_approved",
+                    "x_studio_margin_exceed",
+                    "x_studio_margin_approved",
+                    "x_studio_over_bank_guarantee",
+                    "x_studio_bank_guarantee_approved",
+                    "x_studio_proj_budget_status",
+                    "x_studio_budget_created",
+                    "x_studio_inventory_short",
+                    "x_studio_price_not_confirmed",
+                    "x_studio_new_item_from_project",
+                ):
                     if not arch.xpath(f"//field[@name='{fname}']"):
-                        fld = etree.Element('field')
-                        fld.set('name', fname)
-                        fld.set('invisible', '1')
+                        fld = etree.Element("field")
+                        fld.set("name", fname)
+                        fld.set("invisible", "1")
                         sheet.insert(0, fld)
                 break
 
@@ -851,32 +965,31 @@ class SaleOrder(models.Model):
             # so a naïve .set() drops earlier hides silently.
             repair_expr = "x_studio_quotation_type == 'Repair'"
             for fname in (
-                'sale_order_template_id',               # Quotation Template
-                'x_studio_sales_order_validity',        # Sales Order Validity
-                'x_studio_service_item_available',      # Service Item Available
-                'x_studio_main_project_no',             # Main Project No
-                'x_studio_re_estimate_request_count',   # Re-estimate Request Count (bool)
-                'x_studio_re_estimate_request_count_1', # Re-estimate Request Count (int)
-                'x_studio_re_estimate_count',           # Re-estimate Count
-                'plan_id',                              # Recurring Plan
-                'x_studio_expired',                     # Expired
+                "sale_order_template_id",  # Quotation Template
+                "x_studio_sales_order_validity",  # Sales Order Validity
+                "x_studio_service_item_available",  # Service Item Available
+                "x_studio_main_project_no",  # Main Project No
+                "x_studio_re_estimate_request_count",  # Re-estimate Request Count (bool)
+                "x_studio_re_estimate_request_count_1",  # Re-estimate Request Count (int)
+                "x_studio_re_estimate_count",  # Re-estimate Count
+                "plan_id",  # Recurring Plan
+                "x_studio_expired",  # Expired
             ):
                 # Responsive SO header renders <label for="fname"/> in a
                 # separate cell from the <field name="fname"/>. Hiding
                 # only the field leaves the label dangling. Include both.
-                elements = (
-                    arch.xpath(f"//field[@name='{fname}']")
-                    + arch.xpath(f"//label[@for='{fname}']")
+                elements = arch.xpath(f"//field[@name='{fname}']") + arch.xpath(
+                    f"//label[@for='{fname}']"
                 )
                 for el in elements:
-                    existing = el.get('invisible', '')
-                    if existing and existing not in ('0', 'False'):
+                    existing = el.get("invisible", "")
+                    if existing and existing not in ("0", "False"):
                         el.set(
-                            'invisible',
+                            "invisible",
                             f"({existing}) or ({repair_expr})",
                         )
                     else:
-                        el.set('invisible', repair_expr)
+                        el.set("invisible", repair_expr)
 
             # Document Introduction / Conclusion (from BugFix-Sales): hide
             # ONLY on Repair sale orders. Sales / Project quotations still
@@ -884,20 +997,19 @@ class SaleOrder(models.Model):
             # for those flows. Conditional invisible instead of "1" so the
             # visibility flips automatically when x_studio_quotation_type
             # changes. Same label + field pair treatment.
-            for fname in ('bugfix_sales_intro_id', 'bugfix_sales_conclusion_id'):
-                elements = (
-                    arch.xpath(f"//field[@name='{fname}']")
-                    + arch.xpath(f"//label[@for='{fname}']")
+            for fname in ("bugfix_sales_intro_id", "bugfix_sales_conclusion_id"):
+                elements = arch.xpath(f"//field[@name='{fname}']") + arch.xpath(
+                    f"//label[@for='{fname}']"
                 )
                 for el in elements:
-                    existing = el.get('invisible', '')
-                    if existing and existing not in ('0', 'False'):
+                    existing = el.get("invisible", "")
+                    if existing and existing not in ("0", "False"):
                         el.set(
-                            'invisible',
+                            "invisible",
                             f"({existing}) or ({repair_expr})",
                         )
                     else:
-                        el.set('invisible', repair_expr)
+                        el.set("invisible", repair_expr)
 
             # Strip ghost Studio fields whose ir.model.fields row exists
             # but whose model registration is broken. Studio created two
@@ -908,8 +1020,10 @@ class SaleOrder(models.Model):
             # arch crashes the client (owl "field is undefined"). Until
             # the ghost rows are cleaned up in Studio, drop them from
             # arch here so the form renders.
-            for ghost in ('x_studio_current_tot_amount',
-                          'x_studio_current_tot_amount_1'):
+            for ghost in (
+                "x_studio_current_tot_amount",
+                "x_studio_current_tot_amount_1",
+            ):
                 for el in arch.xpath(f"//field[@name='{ghost}']"):
                     parent = el.getparent()
                     if parent is not None:
@@ -931,18 +1045,19 @@ class SaleOrder(models.Model):
             for header in arch.xpath("//header"):
                 if arch.xpath("//button[@name='action_re_estimate']"):
                     break
-                re_est = etree.Element('button')
-                re_est.set('name', 'action_re_estimate')
-                re_est.set('string', 'Re-estimate')
-                re_est.set('type', 'object')
-                re_est.set('class', 'btn-secondary')
-                re_est.set('confirm',
+                re_est = etree.Element("button")
+                re_est.set("name", "action_re_estimate")
+                re_est.set("string", "Re-estimate")
+                re_est.set("type", "object")
+                re_est.set("class", "btn-secondary")
+                re_est.set(
+                    "confirm",
                     "Re-estimate this Sales Order? It will be reset to draft, "
                     "the customer's signature cleared, and the RUG approval "
                     "cycle restarted. The linked helpdesk ticket will move "
-                    "back to Diagnosis.")
-                re_est.set('invisible',
-                    "not can_re_estimate or invoice_count > 0")
+                    "back to Diagnosis.",
+                )
+                re_est.set("invisible", "not can_re_estimate or invoice_count > 0")
                 header.insert(0, re_est)
                 break
 
@@ -955,10 +1070,10 @@ class SaleOrder(models.Model):
             # SO state can revert. Non-invoiced Sales SOs still see
             # Unlock in the header when they're 'done'.
             for btn in arch.xpath("//button[@name='action_unlock']"):
-                existing = btn.get('invisible', '')
-                extra = 'invoice_count > 0'
+                existing = btn.get("invisible", "")
+                extra = "invoice_count > 0"
                 btn.set(
-                    'invisible',
+                    "invisible",
                     f"({existing}) or ({extra})" if existing else extra,
                 )
 
@@ -989,13 +1104,14 @@ class SaleOrder(models.Model):
                 # replaces the default action= wizard call
                 # (action_view_sale_advance_payment_inv) with a plain
                 # object-method call, so no down-payment prompt.
-                btn.set('name', 'action_repair_create_invoice')
-                btn.set('type', 'object')
+                btn.set("name", "action_repair_create_invoice")
+                btn.set("type", "object")
                 # The default context passes
                 #   default_advance_payment_method='delivered'
                 # into the wizard — no longer relevant.
-                btn.attrib.pop('context', None)
-                btn.set('invisible',
+                btn.attrib.pop("context", None)
+                btn.set(
+                    "invisible",
                     # Universal gates
                     "is_subscription or state != 'sale' "
                     # Hide once at least one non-cancelled invoice
@@ -1017,21 +1133,22 @@ class SaleOrder(models.Model):
                     # RUG-approved / non-Repair: keep standard Odoo
                     # gate — only visible when something is invoiceable
                     "or (not (x_repair_customer_pays or x_studio_rug_rejected) "
-                    "    and invoice_status not in ('to invoice', 'upselling'))"
+                    "    and invoice_status not in ('to invoice', 'upselling'))",
                 )
 
             for btn in arch.xpath("//button[@id='create_invoice_percentage']"):
                 # Hide the percentage down-payment variant on every
                 # Repair SO. Non-Repair SOs keep the standard gate.
-                btn.set('invisible',
+                btn.set(
+                    "invisible",
                     "is_subscription or state != 'sale' "
                     "or invoice_status != 'no' "
-                    "or x_studio_quotation_type == 'Repair'"
+                    "or x_studio_quotation_type == 'Repair'",
                 )
 
             # Order Payment Type: editable in draft/sent for all customers
             for el in arch.xpath("//field[@name='x_studio_order_payment_method']"):
-                el.set('readonly', "state in ('cancel', 'done', 'sale')")
+                el.set("readonly", "state in ('cancel', 'done', 'sale')")
 
             # Quotation Type: editable in draft/sent until an FSM task is linked.
             # Repair SOs are auto-set to 'Repair' by project_task._sync_repair_flags
@@ -1046,11 +1163,11 @@ class SaleOrder(models.Model):
             # (e.g. after selecting a customer). Force task_id to always load
             # by removing the `optional` attribute from every existing arch decl.
             for el in arch.xpath("//field[@name='task_id']"):
-                el.attrib.pop('optional', None)
+                el.attrib.pop("optional", None)
             for el in arch.xpath("//field[@name='x_studio_quotation_type']"):
-                el.set('readonly',
-                       "(task_id != False) or "
-                       "(state not in ['draft', 'sent'])")
+                el.set(
+                    "readonly", "(task_id != False) or (state not in ['draft', 'sent'])"
+                )
 
             # RUG Request button: only on WARRANTY Repair quotations, before
             # request is sent. Customer-pays repairs (formerly 'Not Under
@@ -1068,7 +1185,7 @@ class SaleOrder(models.Model):
                 "(not x_repair_stock_ok)"
             )
             for btn in arch.xpath("//button[@name='1980']"):
-                btn.set('invisible', rug_req_invisible)
+                btn.set("invisible", rug_req_invisible)
 
             # Approve/Reject RUG buttons: only on WARRANTY Repair quotations,
             # after request is sent. Same customer-pays guard as above — if a
@@ -1084,9 +1201,9 @@ class SaleOrder(models.Model):
             )
             # Approve: rewire to our method so it confirms the SO directly (no send wizard)
             for btn in arch.xpath("//button[@name='1981']"):
-                btn.set('invisible', rug_approve_invisible)
-                btn.set('type', 'object')
-                btn.set('name', 'action_approve_rug_direct')
+                btn.set("invisible", rug_approve_invisible)
+                btn.set("type", "object")
+                btn.set("name", "action_approve_rug_direct")
             # Reject: rewire to our own method. The Studio server action 2004
             # also resets each line's price_unit to x_studio_price_unit_original,
             # but that "original" is only captured by another Studio action
@@ -1094,9 +1211,9 @@ class SaleOrder(models.Model):
             # cycle where rug_confirmed never flips, the original stays at 0,
             # and the reset zeros the perfectly-good current price.
             for btn in arch.xpath("//button[@name='2004']"):
-                btn.set('invisible', rug_approve_invisible)
-                btn.set('type', 'object')
-                btn.set('name', 'action_reject_rug_direct')
+                btn.set("invisible", rug_approve_invisible)
+                btn.set("type", "object")
+                btn.set("name", "action_reject_rug_direct")
 
             # Confirm button: visible in both draft AND sent states so the
             # salesperson can confirm either path:
@@ -1113,7 +1230,7 @@ class SaleOrder(models.Model):
             # additional duplicates).
             confirm_btns = arch.xpath("//button[@name='action_confirm']")
             if confirm_btns:
-                confirm_btns[0].set('invisible', '1')
+                confirm_btns[0].set("invisible", "1")
                 if len(confirm_btns) >= 2:
                     # Split gating into (a) universal predicates that
                     # apply to EVERY sale.order regardless of quotation
@@ -1166,7 +1283,8 @@ class SaleOrder(models.Model):
                     # Note the customer-pays and reject-RUG branches
                     # share the same customer-signature requirement,
                     # so we OR them into one predicate for readability.
-                    confirm_btns[1].set('invisible',
+                    confirm_btns[1].set(
+                        "invisible",
                         "(state not in ('draft', 'sent')) or "
                         "(x_studio_order_payment_method == 'Credit' "
                         "and x_studio_over_credit "
@@ -1199,32 +1317,32 @@ class SaleOrder(models.Model):
                         "or (x_studio_inventory_short) "
                         "or (x_studio_price_not_confirmed) "
                         "or (x_studio_new_item_from_project)"
-                        "))"
+                        "))",
                     )
                     for btn in confirm_btns[2:]:
-                        btn.set('invisible', '1')
+                        btn.set("invisible", "1")
                     # Recolour the visible Confirm (confirm_btns[1])
                     # to primary purple. Odoo core often sets it as
                     # oe_highlight / btn-primary already, but Studio's
                     # arch here has cleared the class on the second
                     # duplicate — force it back to match the rest of
                     # the header's primary actions.
-                    confirm_btns[1].set('class', 'btn-primary')
+                    confirm_btns[1].set("class", "btn-primary")
 
             # Send PRO-FORMA Invoice: not used — hide both instances.
             for btn in arch.xpath("//button[contains(@id, 'send_proforma')]"):
-                btn.set('invisible', '1')
+                btn.set("invisible", "1")
 
             # Cancel: hidden by default for the repair workflow, but shown
             # once at least one quotation email has been sent (state = 'sent')
             # so the salesperson can cancel after sending if needed.
             for btn in arch.xpath("//button[@name='action_cancel']"):
-                btn.set('invisible', "state != 'sent'")
+                btn.set("invisible", "state != 'sent'")
 
             # Set to Quotation (action_draft): not used — once a sale order
             # has been cancelled it stays cancelled, no reverting to draft.
             for btn in arch.xpath("//button[@name='action_draft']"):
-                btn.set('invisible', '1')
+                btn.set("invisible", "1")
 
             # Create Advance Payment: visible only on Sales-type
             # quotations AFTER Confirm has been clicked (state='sale'
@@ -1235,9 +1353,10 @@ class SaleOrder(models.Model):
             # Draft Invoice / RUG settlement) and never see this
             # button.
             for btn in arch.xpath("//button[@name='2341']"):
-                btn.set('invisible',
+                btn.set(
+                    "invisible",
                     "x_studio_quotation_type != 'Sales' "
-                    "or state not in ('sale', 'done')"
+                    "or state not in ('sale', 'done')",
                 )
 
             # Send by Email: shown for Not Under Warranty (no RUG flow) AND for
@@ -1250,16 +1369,17 @@ class SaleOrder(models.Model):
             # Studio has hidden all action_quotation_send buttons via an
             # always-true `state not in ['False']` guard; inject a clean one.
             for header in arch.xpath("//header"):
-                btn = etree.Element('button')
-                btn.set('name', 'action_quotation_send')
-                btn.set('string', 'Send by Email')
-                btn.set('type', 'object')
-                btn.set('class', 'btn-primary')
-                btn.set('invisible',
+                btn = etree.Element("button")
+                btn.set("name", "action_quotation_send")
+                btn.set("string", "Send by Email")
+                btn.set("type", "object")
+                btn.set("class", "btn-primary")
+                btn.set(
+                    "invisible",
                     "(not x_repair_customer_pays "
                     "and not x_studio_rug_rejected) "
                     "or state != 'draft' "
-                    "or not x_repair_stock_ok"
+                    "or not x_repair_stock_ok",
                 )
                 header.insert(0, btn)
 
@@ -1273,13 +1393,13 @@ class SaleOrder(models.Model):
             # method so the salesperson can't advance the quotation while
             # this button is visible.
             for header in arch.xpath("//header"):
-                warn = etree.Element('button')
-                warn.set('name', 'action_show_stock_shortage')
-                warn.set('string', 'Not Enough Stock')
-                warn.set('type', 'object')
-                warn.set('class', 'btn-danger')
-                warn.set('invisible',
-                    "x_repair_stock_ok or state not in ('draft', 'sent')"
+                warn = etree.Element("button")
+                warn.set("name", "action_show_stock_shortage")
+                warn.set("string", "Not Enough Stock")
+                warn.set("type", "object")
+                warn.set("class", "btn-danger")
+                warn.set(
+                    "invisible", "x_repair_stock_ok or state not in ('draft', 'sent')"
                 )
                 header.insert(0, warn)
                 break
@@ -1308,34 +1428,36 @@ class SaleOrder(models.Model):
             # view-level readonly, so lines still populate on SO
             # creation — only human backend edits are blocked.
             so_lock_gate = "x_studio_quotation_type == 'Repair'"
-            for field_el in arch.xpath(
-                    "//sheet//field[not(ancestor::field)]"):
-                if field_el.get('invisible') == '1':
+            for field_el in arch.xpath("//sheet//field[not(ancestor::field)]"):
+                if field_el.get("invisible") == "1":
                     continue
-                existing = field_el.get('readonly', '')
+                existing = field_el.get("readonly", "")
                 field_el.set(
-                    'readonly',
-                    f"({existing}) or ({so_lock_gate})"
-                    if existing else so_lock_gate,
+                    "readonly",
+                    f"({existing}) or ({so_lock_gate})" if existing else so_lock_gate,
                 )
 
         return arch, view
 
-    @api.onchange('partner_id')
+    @api.onchange("partner_id")
     def _onchange_partner_payment_method(self):
         for order in self:
             if order.partner_id.x_studio_payment_method:
-                order.x_studio_order_payment_method = order.partner_id.x_studio_payment_method
+                order.x_studio_order_payment_method = (
+                    order.partner_id.x_studio_payment_method
+                )
 
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
-            if not vals.get('x_studio_order_payment_method'):
-                partner_id = vals.get('partner_id')
+            if not vals.get("x_studio_order_payment_method"):
+                partner_id = vals.get("partner_id")
                 if partner_id:
-                    partner = self.env['res.partner'].sudo().browse(partner_id)
+                    partner = self.env["res.partner"].sudo().browse(partner_id)
                     if partner.x_studio_payment_method:
-                        vals['x_studio_order_payment_method'] = partner.x_studio_payment_method
+                        vals["x_studio_order_payment_method"] = (
+                            partner.x_studio_payment_method
+                        )
         records = super().create(vals_list)
         records._fix_repair_auto_generate_quotation_type()
         # v283: newly-created SOs that came in already at state='done'
@@ -1364,12 +1486,12 @@ class SaleOrder(models.Model):
         Idempotent: skips SOs whose quotation_type is already set
         to something (any value).
         """
-        Task = self.env['project.task'].sudo()
+        Task = self.env["project.task"].sudo()
         # Detect whether Group C is installed by probing the field.
         # `_fields` lookup is O(1) and avoids a per-record hasattr on
         # the browse cache.
         has_repair_project_flag = (
-            'x_studio_repair_project' in self.env['project.project']._fields
+            "x_studio_repair_project" in self.env["project.project"]._fields
         )
 
         def _task_is_repair(task):
@@ -1398,21 +1520,29 @@ class SaleOrder(models.Model):
             candidate = order.task_id if order.task_id else False
             if not _task_is_repair(candidate):
                 if has_repair_project_flag:
-                    candidate = Task.search([
-                        ('sale_order_id', '=', order.id),
-                        ('project_id.x_studio_repair_project', '=', True),
-                    ], limit=1)
+                    candidate = Task.search(
+                        [
+                            ("sale_order_id", "=", order.id),
+                            ("project_id.x_studio_repair_project", "=", True),
+                        ],
+                        limit=1,
+                    )
                 else:
-                    candidate = Task.search([
-                        ('sale_order_id', '=', order.id),
-                        ('helpdesk_ticket_id', '!=', False),
-                    ], limit=1)
+                    candidate = Task.search(
+                        [
+                            ("sale_order_id", "=", order.id),
+                            ("helpdesk_ticket_id", "!=", False),
+                        ],
+                        limit=1,
+                    )
             if not _task_is_repair(candidate):
                 continue
-            update = {'x_studio_quotation_type': 'Repair'}
+            update = {"x_studio_quotation_type": "Repair"}
             partner = order.partner_id
-            if partner and getattr(partner, 'x_studio_payment_method', False):
-                update['x_studio_order_payment_method'] = partner.x_studio_payment_method
+            if partner and getattr(partner, "x_studio_payment_method", False):
+                update["x_studio_order_payment_method"] = (
+                    partner.x_studio_payment_method
+                )
             order.write(update)
 
     def action_quotation_send(self):
@@ -1424,45 +1554,46 @@ class SaleOrder(models.Model):
         # Both produce the same email body (portal quote link) and drive the
         # same ticket-stage transition. Warranty repairs (customer_pays=False,
         # not-rejected) and non-repair SOs return early — nothing custom.
-        if not self.x_repair_customer_pays \
-                and not self.x_studio_rug_rejected:
+        if not self.x_repair_customer_pays and not self.x_studio_rug_rejected:
             return action
 
         # Move linked helpdesk ticket from Diagnosis → Estimation Sent to Customer
         # when the Send by Email button is clicked (mirrors the RUG flow where
         # clicking Request RUG Approval triggers the same transition).
-        self._move_ticket_to_stage(self, 'Estimation Sent to Customer')
+        self._move_ticket_to_stage(self, "Estimation Sent to Customer")
 
         # Build the full portal URL (get_portal_url returns a relative path)
-        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url', '')
+        base_url = self.env["ir.config_parameter"].sudo().get_param("web.base.url", "")
         portal_url = base_url + self.get_portal_url()
 
         link_line = Markup(
             '<div style="margin-top:24px; text-align:center;">'
             '<a href="{url}" '
             'style="display:inline-block; padding:12px 24px; '
-            'background-color:#875A7B; color:#ffffff; text-decoration:none; '
-            'border-radius:4px; font-family:Arial,sans-serif; font-size:14px; '
+            "background-color:#875A7B; color:#ffffff; text-decoration:none; "
+            "border-radius:4px; font-family:Arial,sans-serif; font-size:14px; "
             'font-weight:bold;">'
-            'View Quotation'
-            '</a>'
-            '</div>'
+            "View Quotation"
+            "</a>"
+            "</div>"
         ).format(url=escape(portal_url))
 
-        ctx = action.get('context', {})
-        template_id = ctx.get('default_template_id')
+        ctx = action.get("context", {})
+        template_id = ctx.get("default_template_id")
         if template_id:
-            template = self.env['mail.template'].browse(template_id)
-            rendered = template._render_field('body_html', self.ids, options={'post_process': True})
-            body = rendered.get(self.id, '') or ''
-            ctx['default_body'] = body + link_line
+            template = self.env["mail.template"].browse(template_id)
+            rendered = template._render_field(
+                "body_html", self.ids, options={"post_process": True}
+            )
+            body = rendered.get(self.id, "") or ""
+            ctx["default_body"] = body + link_line
             # Clear the template so the composer uses our pre-built body directly
-            ctx['default_template_id'] = False
-            ctx['default_use_template'] = False
+            ctx["default_template_id"] = False
+            ctx["default_use_template"] = False
         else:
-            ctx['default_body'] = ctx.get('default_body', '') + link_line
+            ctx["default_body"] = ctx.get("default_body", "") + link_line
 
-        action['context'] = ctx
+        action["context"] = ctx
         return action
 
     def action_confirm(self):
@@ -1476,13 +1607,13 @@ class SaleOrder(models.Model):
         # captured by the prior portal _sign step, and the backend Confirm
         # button stays visible (state is still draft/sent).
         portal_call = bool(
-            request and request.httprequest
-            and (request.httprequest.path or '').startswith('/my/')
+            request
+            and request.httprequest
+            and (request.httprequest.path or "").startswith("/my/")
         )
         if portal_call:
             skip = self.filtered(
-                lambda o: o.x_repair_customer_pays
-                          or o.x_studio_rug_rejected
+                lambda o: o.x_repair_customer_pays or o.x_studio_rug_rejected
             )
             rest = self - skip
             result = super(SaleOrder, rest).action_confirm() if rest else True
@@ -1498,9 +1629,8 @@ class SaleOrder(models.Model):
             # this is a no-op when the rejection happened before Confirm —
             # but if the salesperson Confirms first and rejects later, this
             # explicit move keeps the stage consistent.
-            if (order.x_repair_customer_pays
-                    or order.x_studio_rug_rejected):
-                self._move_ticket_to_stage(order, 'Estimation Approval Received')
+            if order.x_repair_customer_pays or order.x_studio_rug_rejected:
+                self._move_ticket_to_stage(order, "Estimation Approval Received")
         return result
 
     def action_repair_create_invoice(self):
@@ -1528,17 +1658,15 @@ class SaleOrder(models.Model):
         # RUG-approved / non-repair: standard Odoo behaviour
         invoices = self._create_invoices()
         if not invoices:
-            raise UserError(
-                _("Nothing to invoice on this sale order.")
-            )
+            raise UserError(_("Nothing to invoice on this sale order."))
         return {
-            'name': 'Customer Invoice',
-            'view_mode': 'form',
-            'res_model': 'account.move',
-            'view_id': self.env.ref('account.view_move_form').id,
-            'type': 'ir.actions.act_window',
-            'res_id': invoices[0].id,
-            'target': 'current',
+            "name": "Customer Invoice",
+            "view_mode": "form",
+            "res_model": "account.move",
+            "view_id": self.env.ref("account.view_move_form").id,
+            "type": "ir.actions.act_window",
+            "res_id": invoices[0].id,
+            "target": "current",
         }
 
     def _create_repair_full_invoice(self):
@@ -1565,28 +1693,38 @@ class SaleOrder(models.Model):
         self.ensure_one()
         if not (self.x_repair_customer_pays or self.x_studio_rug_rejected):
             raise UserError(
-                _("Full-amount invoicing is only available on non-RUG "
-                "(customer-pays or Reject-RUG) repair sale orders.")
+                _(
+                    "Full-amount invoicing is only available on non-RUG "
+                    "(customer-pays or Reject-RUG) repair sale orders."
+                )
             )
-        if self.state != 'sale':
+        if self.state != "sale":
             raise UserError(_("The sale order must be confirmed first."))
-        existing = self.invoice_ids.filtered(lambda i: i.state != 'cancel')
+        existing = self.invoice_ids.filtered(lambda i: i.state != "cancel")
         if existing:
-            raise UserError(_(
-                "An invoice already exists for this sale order (%(invoice)s). "
-                "Cancel it first or use the existing invoice.",
-                invoice=existing[0].name,
-            ))
+            raise UserError(
+                _(
+                    "An invoice already exists for this sale order (%(invoice)s). "
+                    "Cancel it first or use the existing invoice.",
+                    invoice=existing[0].name,
+                )
+            )
 
         invoice_vals = self._prepare_invoice()
         invoice_line_cmds = []
         for line in self.order_line:
-            if line.display_type in ('line_section', 'line_note'):
-                invoice_line_cmds.append((0, 0, {
-                    'display_type': line.display_type,
-                    'name': line.name,
-                    'sequence': line.sequence,
-                }))
+            if line.display_type in ("line_section", "line_note"):
+                invoice_line_cmds.append(
+                    (
+                        0,
+                        0,
+                        {
+                            "display_type": line.display_type,
+                            "name": line.name,
+                            "sequence": line.sequence,
+                        },
+                    )
+                )
                 continue
             if line.is_downpayment:
                 continue
@@ -1595,31 +1733,33 @@ class SaleOrder(models.Model):
             # Force qty to the ordered qty. _prepare_invoice_line
             # already returns 'quantity': self.qty_to_invoice — the
             # override kwarg is applied AFTER via res.update(...).
-            invoice_line_cmds.append((0, 0,
-                line._prepare_invoice_line(quantity=line.product_uom_qty)
-            ))
+            invoice_line_cmds.append(
+                (0, 0, line._prepare_invoice_line(quantity=line.product_uom_qty))
+            )
 
         if not invoice_line_cmds:
             raise UserError(
-                _("Nothing to invoice on this sale order — no non-"
-                "downpayment lines with a positive ordered quantity.")
+                _(
+                    "Nothing to invoice on this sale order — no non-"
+                    "downpayment lines with a positive ordered quantity."
+                )
             )
 
-        invoice_vals['invoice_line_ids'] = invoice_line_cmds
-        invoice = self.env['account.move'].create(invoice_vals)
+        invoice_vals["invoice_line_ids"] = invoice_line_cmds
+        invoice = self.env["account.move"].create(invoice_vals)
 
         return {
-            'name': 'Customer Invoice',
-            'view_mode': 'form',
-            'res_model': 'account.move',
-            'view_id': self.env.ref('account.view_move_form').id,
-            'type': 'ir.actions.act_window',
-            'res_id': invoice.id,
-            'target': 'current',
+            "name": "Customer Invoice",
+            "view_mode": "form",
+            "res_model": "account.move",
+            "view_id": self.env.ref("account.view_move_form").id,
+            "type": "ir.actions.act_window",
+            "res_id": invoice.id,
+            "target": "current",
         }
 
     def action_approve_rug_direct(self):
-        self.write({'x_studio_rug_approved': True})
+        self.write({"x_studio_rug_approved": True})
         # write() moves the ticket to 'Estimation Approval Received'.
         # Confirm button becomes visible once rug_approved=True; user clicks it manually.
 
@@ -1634,7 +1774,7 @@ class SaleOrder(models.Model):
         override skips the line touch entirely; the lines keep whatever
         price they already had.
         """
-        self.write({'x_studio_rug_rejected': True})
+        self.write({"x_studio_rug_rejected": True})
 
     def _re_estimate_reset(self):
         """Put the SO back to draft so the salesperson can edit lines
@@ -1647,14 +1787,15 @@ class SaleOrder(models.Model):
         physical delivery."""
         self.ensure_one()
         done_outgoing = self.picking_ids.filtered(
-            lambda p: p.state == 'done'
-            and p.picking_type_id.code == 'outgoing'
+            lambda p: p.state == "done" and p.picking_type_id.code == "outgoing"
         )
         if done_outgoing:
             raise UserError(
-                _("Cannot re-estimate: a delivery has already been validated "
-                "on this Sales Order. Re-estimate is only allowed before the "
-                "first delivery.")
+                _(
+                    "Cannot re-estimate: a delivery has already been validated "
+                    "on this Sales Order. Re-estimate is only allowed before the "
+                    "first delivery."
+                )
             )
 
         # Force the SO back to 'draft' WITHOUT cancelling the procurement
@@ -1669,8 +1810,8 @@ class SaleOrder(models.Model):
         # lines whose qty is already procured; only the new lines trigger
         # fresh moves, which merge into the existing pickings via the
         # preserved procurement_group_id.
-        if self.state != 'draft':
-            self.write({'state': 'draft'})
+        if self.state != "draft":
+            self.write({"state": "draft"})
 
         # Reset customer sign and RUG approval cycle so they re-run on
         # the next round. Deliberately leave x_studio_rug_rejected alone
@@ -1678,16 +1819,19 @@ class SaleOrder(models.Model):
         # signature is included so x_customer_signed (computed from
         # signed_on / signed_by / signature) flips back to False
         # regardless of which of the three was set.
-        self.write({
-            'signed_by': False,
-            'signed_on': False,
-            'signature': False,
-            'x_studio_rug_request_sent': False,
-            'x_studio_rug_approved': False,
-            'x_studio_rug_confirmed': False,
-            'x_studio_re_estimate_count': (self.x_studio_re_estimate_count or 0) + 1,
-            'x_studio_re_estimate_request_sent': True,
-        })
+        self.write(
+            {
+                "signed_by": False,
+                "signed_on": False,
+                "signature": False,
+                "x_studio_rug_request_sent": False,
+                "x_studio_rug_approved": False,
+                "x_studio_rug_confirmed": False,
+                "x_studio_re_estimate_count": (self.x_studio_re_estimate_count or 0)
+                + 1,
+                "x_studio_re_estimate_request_sent": True,
+            }
+        )
 
     def _move_ticket_to_stage(self, order, stage_name):
         """Find the linked helpdesk ticket and move it to the named stage.
@@ -1697,57 +1841,66 @@ class SaleOrder(models.Model):
         the ticket has been there at any point in its history.
         """
         sudo_order = order.sudo()
-        task = sudo_order.task_id or self.env['project.task'].sudo().search(
-            [('sale_order_id', '=', order.id)], limit=1
+        task = sudo_order.task_id or self.env["project.task"].sudo().search(
+            [("sale_order_id", "=", order.id)], limit=1
         )
         ticket = task.sudo().helpdesk_ticket_id if task else False
         if not ticket:
             return
-        if (stage_name == 'Repair Completed'
-                and ticket._has_been_at_stage('Repair Completed')):
+        if stage_name == "Repair Completed" and ticket._has_been_at_stage(
+            "Repair Completed"
+        ):
             return
-        stage = self.env['helpdesk.stage'].sudo().search(
-            [('name', '=', stage_name),
-             ('team_ids', 'in', ticket.team_id.ids),
-             '|',
-             ('x_studio_company_id', '=', ticket.company_id.id),
-             ('x_studio_company_id', '=', False)],
-            limit=1
+        stage = (
+            self.env["helpdesk.stage"]
+            .sudo()
+            .search(
+                [
+                    ("name", "=", stage_name),
+                    ("team_ids", "in", ticket.team_id.ids),
+                    "|",
+                    ("x_studio_company_id", "=", ticket.company_id.id),
+                    ("x_studio_company_id", "=", False),
+                ],
+                limit=1,
+            )
         )
         if stage:
-            ticket.sudo().write({'stage_id': stage.id})
+            ticket.sudo().write({"stage_id": stage.id})
 
     def write(self, vals):
         # When partner changes on a draft/sent SO, sync Order Payment Type from customer
-        if vals.get('partner_id') and not vals.get('x_studio_order_payment_method'):
-            partner = self.env['res.partner'].sudo().browse(vals['partner_id'])
+        if vals.get("partner_id") and not vals.get("x_studio_order_payment_method"):
+            partner = self.env["res.partner"].sudo().browse(vals["partner_id"])
             if partner.x_studio_payment_method:
-                vals = dict(vals, x_studio_order_payment_method=partner.x_studio_payment_method)
+                vals = dict(
+                    vals, x_studio_order_payment_method=partner.x_studio_payment_method
+                )
 
         res = super().write(vals)
 
         # RUG request sent → Estimation Sent to Customer
-        if vals.get('x_studio_rug_request_sent'):
+        if vals.get("x_studio_rug_request_sent"):
             for order in self:
-                self._move_ticket_to_stage(order, 'Estimation Sent to Customer')
+                self._move_ticket_to_stage(order, "Estimation Sent to Customer")
 
         # RUG approved or rejected → Estimation Approval Received
-        if vals.get('x_studio_rug_approved') or vals.get('x_studio_rug_rejected'):
+        if vals.get("x_studio_rug_approved") or vals.get("x_studio_rug_rejected"):
             for order in self:
-                self._move_ticket_to_stage(order, 'Estimation Approval Received')
+                self._move_ticket_to_stage(order, "Estimation Approval Received")
 
         # RUG approved → reprice all lines to product cost price
-        if vals.get('x_studio_rug_approved'):
+        if vals.get("x_studio_rug_approved"):
             for order in self:
-                if order.x_studio_quotation_type == 'Repair':
+                if order.x_studio_quotation_type == "Repair":
                     for line in order.order_line:
                         if line.product_id:
-                            line.write({'price_unit': line.product_id.standard_price})
+                            line.write({"price_unit": line.product_id.standard_price})
 
         # v277: task_id was just set (typical FSM task-create path) —
         # re-evaluate quotation-type auto-detect. Idempotent on the
         # helper side (already-set records skip themselves).
-        if 'task_id' in vals:
+        if "task_id" in vals:
             self._fix_repair_auto_generate_quotation_type()
 
         # v283/v285: track lock/unlock cycle for repair SOs.
@@ -1757,11 +1910,15 @@ class SaleOrder(models.Model):
         # background. Only re-evaluate when a gate field changed; the
         # helper is guarded against re-entry via
         # _fix_repair_track_lock context flag.
-        lock_triggers = {'locked', 'x_studio_quotation_type',
-                         'x_studio_locked', 'x_studio_unlocked',
-                         'x_studio_re_estimate_count'}
+        lock_triggers = {
+            "locked",
+            "x_studio_quotation_type",
+            "x_studio_locked",
+            "x_studio_unlocked",
+            "x_studio_re_estimate_count",
+        }
         if lock_triggers & set(vals or ()):
-            if not self.env.context.get('_fix_repair_track_lock'):
+            if not self.env.context.get("_fix_repair_track_lock"):
                 self._fix_repair_apply_track_lock_status()
 
         # v287: propagate x_studio_rug_confirmed changes to child
@@ -1773,13 +1930,19 @@ class SaleOrder(models.Model):
         # value stays stale until something forces a recompute.
         # Force one explicitly by calling the compute on any invoice
         # whose invoice_origin matches an SO whose flag just changed.
-        if 'x_studio_rug_confirmed' in (vals or {}):
-            so_names = [n for n in self.mapped('name') if n]
+        if "x_studio_rug_confirmed" in (vals or {}):
+            so_names = [n for n in self.mapped("name") if n]
             if so_names:
-                invoices = self.env['account.move'].sudo().search([
-                    ('invoice_origin', 'in', so_names),
-                    ('move_type', '=', 'out_invoice'),
-                ])
+                invoices = (
+                    self.env["account.move"]
+                    .sudo()
+                    .search(
+                        [
+                            ("invoice_origin", "in", so_names),
+                            ("move_type", "=", "out_invoice"),
+                        ]
+                    )
+                )
                 if invoices:
                     invoices._compute_x_studio_rug_confirmed()
 
@@ -1812,16 +1975,20 @@ class SaleOrder(models.Model):
         target values already match. Recursion into write() is
         prevented by the _fix_repair_track_lock context flag.
         """
-        Line = self.env['sale.order.line'].sudo()
+        Line = self.env["sale.order.line"].sudo()
         for order in self:
-            if order.x_studio_quotation_type != 'Repair':
+            if order.x_studio_quotation_type != "Repair":
                 continue
             # 202 - lock path (native locked = True)
             if order.locked:
-                re_line = Line.search([
-                    ('order_id', '=', order.id),
-                    ('x_studio_re_estimated', '=', True),
-                ], limit=1, order='id desc')
+                re_line = Line.search(
+                    [
+                        ("order_id", "=", order.id),
+                        ("x_studio_re_estimated", "=", True),
+                    ],
+                    limit=1,
+                    order="id desc",
+                )
                 target_count = re_line.x_studio_count_1 if re_line else 0
                 needs_update = (
                     not order.x_studio_locked
@@ -1829,14 +1996,18 @@ class SaleOrder(models.Model):
                     or order.x_studio_re_estimate_count != target_count
                 )
                 if needs_update:
-                    order.with_context(_fix_repair_track_lock=True).write({
-                        'x_studio_locked': True,
-                        'x_studio_unlocked': False,
-                        'x_studio_re_estimate_count': target_count,
-                    })
+                    order.with_context(_fix_repair_track_lock=True).write(
+                        {
+                            "x_studio_locked": True,
+                            "x_studio_unlocked": False,
+                            "x_studio_re_estimate_count": target_count,
+                        }
+                    )
             # 203 - unlock path (native locked = False, Studio locked still True)
             elif order.x_studio_locked:
-                order.with_context(_fix_repair_track_lock=True).write({
-                    'x_studio_locked': False,
-                    'x_studio_unlocked': True,
-                })
+                order.with_context(_fix_repair_track_lock=True).write(
+                    {
+                        "x_studio_locked": False,
+                        "x_studio_unlocked": True,
+                    }
+                )

@@ -9,12 +9,12 @@ from odoo.addons.industry_fsm_sale.models.project_task import Task as FsmSaleTas
 
 
 class ProjectTask(models.Model):
-    _inherit = 'project.task'
+    _inherit = "project.task"
 
     # Mirrors the linked ticket's repair_stage_state so it can be used in
     # view invisible expressions without a full related-model traversal.
     ticket_repair_stage_state = fields.Char(
-        compute='_compute_ticket_repair_stage_state',
+        compute="_compute_ticket_repair_stage_state",
     )
 
     # True when this task's sale order has been cancelled. Used to bypass
@@ -22,19 +22,21 @@ class ProjectTask(models.Model):
     # the repair never completes, so we let the user close the task
     # anyway.
     so_cancelled = fields.Boolean(
-        compute='_compute_so_cancelled',
+        compute="_compute_so_cancelled",
     )
 
     def _compute_ticket_repair_stage_state(self):
         for task in self:
             task.ticket_repair_stage_state = (
-                task.helpdesk_ticket_id.repair_stage_state or ''
-            ) if task.helpdesk_ticket_id else ''
+                (task.helpdesk_ticket_id.repair_stage_state or "")
+                if task.helpdesk_ticket_id
+                else ""
+            )
 
-    @api.depends('sale_order_id.state')
+    @api.depends("sale_order_id.state")
     def _compute_so_cancelled(self):
         for task in self:
-            task.so_cancelled = task.sale_order_id.state == 'cancel'
+            task.so_cancelled = task.sale_order_id.state == "cancel"
 
     # ─────────────────────────────────────────────────────────────────
     # Studio-owned repair fields migrated to Python
@@ -46,35 +48,35 @@ class ProjectTask(models.Model):
     # repair workflow. Compute strings ported verbatim from Studio.
 
     x_studio_end_quick_repair = fields.Boolean(
-        string='End Quick Repair',
+        string="End Quick Repair",
     )
 
     x_studio_repair_image_01 = fields.Binary(
-        string='Repair Image 01',
+        string="Repair Image 01",
     )
 
     x_studio_repair_image_02 = fields.Binary(
-        string='Repair Image 02',
+        string="Repair Image 02",
     )
 
     x_studio_repair_reason = fields.Many2many(
-        'x_repair_reason',
-        string='Repair Reason',
+        "x_repair_reason",
+        string="Repair Reason",
     )
 
     x_studio_quick_repair_status_1 = fields.Selection(
         selection=[
-            ('None', 'None'),
-            ('Quick Repair', 'Quick Repair'),
+            ("None", "None"),
+            ("Quick Repair", "Quick Repair"),
         ],
-        string='Quick Repair Status',
+        string="Quick Repair Status",
     )
 
     # Related from linked helpdesk ticket's cluster-4 flag. Store=True
     # per Studio's row so it can be indexed/searched on task lists.
     x_studio_repair_completed_stage_updated = fields.Boolean(
-        string='Repair Completed Stage Updated',
-        related='helpdesk_ticket_id.x_studio_repair_complete_stage_updated',
+        string="Repair Completed Stage Updated",
+        related="helpdesk_ticket_id.x_studio_repair_complete_stage_updated",
         store=True,
         readonly=True,
     )
@@ -82,12 +84,12 @@ class ProjectTask(models.Model):
     # Written by x_studio_valid_delivered_so's compute as a side
     # effect. store=True stays; no auto-compute of its own.
     x_studio_valid_delivered_so2 = fields.Boolean(
-        string='Valid Delivered SO2',
+        string="Valid Delivered SO2",
     )
 
     x_studio_fully_invoiced_so = fields.Boolean(
-        string='Fully Invoiced SO',
-        compute='_compute_x_studio_fully_invoiced_so',
+        string="Fully Invoiced SO",
+        compute="_compute_x_studio_fully_invoiced_so",
         store=False,
         readonly=True,
     )
@@ -96,43 +98,50 @@ class ProjectTask(models.Model):
         for rec in self:
             valid = False
             if rec.sale_order_id != False:
-                if rec.sale_order_id.state == 'cancel':
+                if rec.sale_order_id.state == "cancel":
                     if rec.x_studio_repair_completed_stage_updated == True:
                         valid = True
                 else:
-                    if rec.sale_order_id.invoice_status == 'invoiced':
+                    if rec.sale_order_id.invoice_status == "invoiced":
                         valid = True
-            rec['x_studio_fully_invoiced_so'] = valid
+            rec["x_studio_fully_invoiced_so"] = valid
 
     x_studio_material_availability = fields.Selection(
         selection=[
-            ('Material Not Ready', 'Material Not Ready'),
-            ('Material Ready', 'Material Ready'),
+            ("Material Not Ready", "Material Not Ready"),
+            ("Material Ready", "Material Ready"),
         ],
-        string='Material Availability',
-        compute='_compute_x_studio_material_availability',
+        string="Material Availability",
+        compute="_compute_x_studio_material_availability",
         store=False,
         readonly=True,
     )
 
     def _compute_x_studio_material_availability(self):
         for rec in self:
-            val = 'Material Not Ready'
+            val = "Material Not Ready"
             if rec.sale_order_id != False:
-                if rec.sale_order_id.state == 'done':
-                    delivery = self.env['stock.picking'].search([
-                        ('sale_id', '=', rec.sale_order_id.id),
-                        ('state', '=', 'done'),
-                        ('picking_type_code', '=', 'outgoing'),
-                        ('location_id', '!=', rec.sale_order_id.warehouse_id.lot_stock_id.id),
-                    ], limit=1)
+                if rec.sale_order_id.state == "done":
+                    delivery = self.env["stock.picking"].search(
+                        [
+                            ("sale_id", "=", rec.sale_order_id.id),
+                            ("state", "=", "done"),
+                            ("picking_type_code", "=", "outgoing"),
+                            (
+                                "location_id",
+                                "!=",
+                                rec.sale_order_id.warehouse_id.lot_stock_id.id,
+                            ),
+                        ],
+                        limit=1,
+                    )
                     if delivery:
-                        val = 'Material Ready'
-            rec['x_studio_material_availability'] = val
+                        val = "Material Ready"
+            rec["x_studio_material_availability"] = val
 
     x_studio_valid_confirm_so = fields.Boolean(
-        string='Valid Confirm SO',
-        compute='_compute_x_studio_valid_confirm_so',
+        string="Valid Confirm SO",
+        compute="_compute_x_studio_valid_confirm_so",
         store=False,
         readonly=True,
     )
@@ -141,13 +150,13 @@ class ProjectTask(models.Model):
         for rec in self:
             valid = False
             if rec.sale_order_id != False:
-                if rec.sale_order_id.state == 'sent':
+                if rec.sale_order_id.state == "sent":
                     valid = True
-            rec['x_studio_valid_confirm_so'] = valid
+            rec["x_studio_valid_confirm_so"] = valid
 
     x_studio_valid_confirm2_so = fields.Boolean(
-        string='Valid Confirm2 SO',
-        compute='_compute_x_studio_valid_confirm2_so',
+        string="Valid Confirm2 SO",
+        compute="_compute_x_studio_valid_confirm2_so",
         store=False,
         readonly=True,
     )
@@ -156,16 +165,16 @@ class ProjectTask(models.Model):
         for rec in self:
             valid = False
             if rec.sale_order_id != False:
-                if rec.sale_order_id.state == 'done':
+                if rec.sale_order_id.state == "done":
                     valid = True
-            rec['x_studio_valid_confirm2_so'] = valid
+            rec["x_studio_valid_confirm2_so"] = valid
 
     # This compute has a SIDE EFFECT — it also writes to
     # x_studio_valid_delivered_so2 (the stored Boolean above).
     # Preserved verbatim from Studio.
     x_studio_valid_delivered_so = fields.Boolean(
-        string='Valid Delivered SO',
-        compute='_compute_x_studio_valid_delivered_so',
+        string="Valid Delivered SO",
+        compute="_compute_x_studio_valid_delivered_so",
         store=False,
         readonly=True,
     )
@@ -175,30 +184,39 @@ class ProjectTask(models.Model):
             valid = False
             valid2 = False
             if rec.sale_order_id != False:
-                if rec.sale_order_id.state == 'done':
-                    delivery = self.env['stock.picking'].search([
-                        ('sale_id', '=', rec.sale_order_id.id),
-                        ('state', '=', 'done'),
-                    ], limit=1)
+                if rec.sale_order_id.state == "done":
+                    delivery = self.env["stock.picking"].search(
+                        [
+                            ("sale_id", "=", rec.sale_order_id.id),
+                            ("state", "=", "done"),
+                        ],
+                        limit=1,
+                    )
                     if delivery:
                         valid = True
-                    loc_type = self.env['stock.location'].search([
-                        ('usage', '=', 'customer'),
-                    ], limit=1)
+                    loc_type = self.env["stock.location"].search(
+                        [
+                            ("usage", "=", "customer"),
+                        ],
+                        limit=1,
+                    )
                     if loc_type:
-                        delivery2 = self.env['stock.picking'].search([
-                            ('sale_id', '=', rec.sale_order_id.id),
-                            ('state', '=', 'done'),
-                            ('location_dest_id', '=', loc_type.id),
-                        ], limit=1)
+                        delivery2 = self.env["stock.picking"].search(
+                            [
+                                ("sale_id", "=", rec.sale_order_id.id),
+                                ("state", "=", "done"),
+                                ("location_dest_id", "=", loc_type.id),
+                            ],
+                            limit=1,
+                        )
                         if delivery2:
                             valid2 = True
-            rec['x_studio_valid_delivered_so'] = valid
-            rec['x_studio_valid_delivered_so2'] = valid2
+            rec["x_studio_valid_delivered_so"] = valid
+            rec["x_studio_valid_delivered_so2"] = valid2
 
     x_studio_valid_invoiced_so = fields.Boolean(
-        string='Valid Invoiced SO',
-        compute='_compute_x_studio_valid_invoiced_so',
+        string="Valid Invoiced SO",
+        compute="_compute_x_studio_valid_invoiced_so",
         store=False,
         readonly=True,
     )
@@ -208,26 +226,38 @@ class ProjectTask(models.Model):
             valid = False
             valid2 = False
             if rec.sale_order_id.id != False:
-                if rec.sale_order_id.x_studio_order_payment_method == 'Credit' or rec.sale_order_id.x_studio_rug_approved == True:
+                if (
+                    rec.sale_order_id.x_studio_order_payment_method == "Credit"
+                    or rec.sale_order_id.x_studio_rug_approved == True
+                ):
                     if rec.x_studio_repair_completed_stage_updated == True:
-                        if rec.sale_order_id.state == 'cancel':
+                        if rec.sale_order_id.state == "cancel":
                             valid = True
                         else:
-                            if rec.sale_order_id.x_studio_order_payment_method == 'Credit':
+                            if (
+                                rec.sale_order_id.x_studio_order_payment_method
+                                == "Credit"
+                            ):
                                 valid = True
                             else:
                                 if rec.sale_order_id.x_studio_rug_approved == True:
                                     valid = True
                                 else:
-                                    payment = self.env['account.payment'].search([
-                                        ('x_studio_sales_order', '=', rec.sale_order_id.id),
-                                        ('state', '=', 'posted'),
-                                    ])
+                                    payment = self.env["account.payment"].search(
+                                        [
+                                            (
+                                                "x_studio_sales_order",
+                                                "=",
+                                                rec.sale_order_id.id,
+                                            ),
+                                            ("state", "=", "posted"),
+                                        ]
+                                    )
                                     if payment:
                                         valid = True
                                     else:
                                         for invoices in rec.sale_order_id.invoice_ids:
-                                            if invoices.payment_state == 'in_payment':
+                                            if invoices.payment_state == "in_payment":
                                                 valid = True
                                             else:
                                                 valid2 = True
@@ -235,25 +265,27 @@ class ProjectTask(models.Model):
                                     if valid2 == True:
                                         valid = False
                 else:
-                    if rec.sale_order_id.state == 'cancel':
+                    if rec.sale_order_id.state == "cancel":
                         valid = True
                     else:
-                        payment = self.env['account.payment'].search([
-                            ('x_studio_sales_order', '=', rec.sale_order_id.id),
-                            ('state', '=', 'posted'),
-                        ])
+                        payment = self.env["account.payment"].search(
+                            [
+                                ("x_studio_sales_order", "=", rec.sale_order_id.id),
+                                ("state", "=", "posted"),
+                            ]
+                        )
                         if payment:
                             valid = True
                         else:
                             for invoices in rec.sale_order_id.invoice_ids:
-                                if invoices.payment_state == 'in_payment':
+                                if invoices.payment_state == "in_payment":
                                     valid = True
                                 else:
                                     valid2 = True
 
                         if valid2 == True:
                             valid = False
-            rec['x_studio_valid_invoiced_so'] = valid
+            rec["x_studio_valid_invoiced_so"] = valid
 
     # ─────────────────────────────────────────────────────────────────
     # Leftover Studio repair-workflow fields (v162)
@@ -271,8 +303,8 @@ class ProjectTask(models.Model):
     # Store=True per Studio so it's searchable / indexable on task
     # lists.
     x_studio_cancelled = fields.Boolean(
-        string='Cancelled',
-        related='helpdesk_ticket_id.x_studio_cancelled',
+        string="Cancelled",
+        related="helpdesk_ticket_id.x_studio_cancelled",
         store=True,
         readonly=True,
     )
@@ -280,7 +312,7 @@ class ProjectTask(models.Model):
     # Plain stored datetime — no compute, editable, marked copied=True
     # in Studio.
     x_studio_created_date = fields.Datetime(
-        string='Created Date',
+        string="Created Date",
         copy=True,
     )
 
@@ -288,9 +320,9 @@ class ProjectTask(models.Model):
     # its x_studio_task_id many2one back-reference. Both sides remain
     # DB-level Studio artefacts; the field itself is now Python-owned.
     x_studio_diagnosis_ids = fields.One2many(
-        'x_task_diagnosis',
-        'x_studio_task_id',
-        string='Diagnosis Ids',
+        "x_task_diagnosis",
+        "x_studio_task_id",
+        string="Diagnosis Ids",
     )
 
     # v276: three remaining Studio-manual fields ported verbatim from
@@ -298,14 +330,14 @@ class ProjectTask(models.Model):
     # workflows on the same project.task record.
     x_studio_payment_type = fields.Selection(
         selection=[
-            ('Cash', 'Cash'),
-            ('Credit', 'Credit'),
-            ('Advance', 'Advance'),
+            ("Cash", "Cash"),
+            ("Credit", "Credit"),
+            ("Advance", "Advance"),
         ],
-        string='Payment Type',
+        string="Payment Type",
     )
     x_studio_starting_date = fields.Datetime(
-        string='Starting Date',
+        string="Starting Date",
     )
     # Studio-generated stat counter: number of sale.order records whose
     # task_id points at this task. Kept as a plain integer to preserve
@@ -313,48 +345,49 @@ class ProjectTask(models.Model):
     # would be computed by Odoo/Studio in prod. Non-stored, no compute
     # here — reads return 0 on dev env unless separately populated.
     x_task_id_sale_order_count = fields.Integer(
-        string='Task Id Sale Order Count',
+        string="Task Id Sale Order Count",
     )
 
     # Non-stored computed. Studio's original compute added a no-op
     # branch that set valid=False when it was already False — dropped
     # from the port; observable behaviour is unchanged.
     x_studio_incomplete_delivery_available = fields.Boolean(
-        string='Incomplete Delivery Available',
-        compute='_compute_x_studio_incomplete_delivery_available',
+        string="Incomplete Delivery Available",
+        compute="_compute_x_studio_incomplete_delivery_available",
         store=False,
         readonly=True,
     )
 
-    @api.depends('sale_order_id', 'sale_order_id.state')
+    @api.depends("sale_order_id", "sale_order_id.state")
     def _compute_x_studio_incomplete_delivery_available(self):
-        Picking = self.env['stock.picking']
+        Picking = self.env["stock.picking"]
         for rec in self:
             valid = False
             so = rec.sale_order_id
-            if so and so.state != 'cancel':
+            if so and so.state != "cancel":
                 open_delivery = Picking.search(
-                    [('sale_id', '=', so.id), ('state', '!=', 'done')],
+                    [("sale_id", "=", so.id), ("state", "!=", "done")],
                     limit=1,
                 )
                 if open_delivery:
-                    valid = open_delivery.state != 'cancel'
+                    valid = open_delivery.state != "cancel"
                 else:
                     any_delivery = Picking.search(
-                        [('sale_id', '=', so.id)], limit=1,
+                        [("sale_id", "=", so.id)],
+                        limit=1,
                     )
                     valid = not any_delivery
-            rec['x_studio_incomplete_delivery_available'] = valid
+            rec["x_studio_incomplete_delivery_available"] = valid
 
     x_studio_priority = fields.Selection(
         selection=[
-            ('Highest', 'Highest'),
-            ('High', 'High'),
-            ('Normal', 'Normal'),
-            ('Low', 'Low'),
-            ('Lowest', 'Lowest'),
+            ("Highest", "Highest"),
+            ("High", "High"),
+            ("Normal", "Normal"),
+            ("Low", "Low"),
+            ("Lowest", "Lowest"),
         ],
-        string='Priority',
+        string="Priority",
         copy=True,
     )
 
@@ -363,19 +396,19 @@ class ProjectTask(models.Model):
     # related fields work fine across state='manual'/'base' boundaries).
     x_studio_quotation_type = fields.Selection(
         selection=[
-            ('Sales', 'Sales'),
-            ('Project', 'Project'),
-            ('Repair', 'Repair'),
+            ("Sales", "Sales"),
+            ("Project", "Project"),
+            ("Repair", "Repair"),
         ],
-        string='Quotation Type',
-        related='sale_order_id.x_studio_quotation_type',
+        string="Quotation Type",
+        related="sale_order_id.x_studio_quotation_type",
         store=True,
         readonly=True,
     )
 
     x_studio_related_information = fields.Binary(
-        string='Related Information',
-        related='helpdesk_ticket_id.x_studio_related_information',
+        string="Related Information",
+        related="helpdesk_ticket_id.x_studio_related_information",
         store=True,
         readonly=True,
     )
@@ -384,20 +417,20 @@ class ProjectTask(models.Model):
     # bool() of the one2many; the loop pattern is preserved verbatim
     # in commentary but the port uses the shorter expression.
     x_studio_valid_diagnosis = fields.Boolean(
-        string='Valid Diagnosis',
-        compute='_compute_x_studio_valid_diagnosis',
+        string="Valid Diagnosis",
+        compute="_compute_x_studio_valid_diagnosis",
         store=False,
         readonly=True,
     )
 
-    @api.depends('x_studio_diagnosis_ids')
+    @api.depends("x_studio_diagnosis_ids")
     def _compute_x_studio_valid_diagnosis(self):
         for rec in self:
             rec.x_studio_valid_diagnosis = bool(rec.x_studio_diagnosis_ids)
 
     x_studio_warranty_card = fields.Binary(
-        string='Warranty Card',
-        related='helpdesk_ticket_id.x_studio_warranty_card',
+        string="Warranty Card",
+        related="helpdesk_ticket_id.x_studio_warranty_card",
         store=True,
         readonly=True,
     )
@@ -408,35 +441,39 @@ class ProjectTask(models.Model):
         pins for the 13 repair-related x_studio_* fields on
         project.task. Idempotent; data preserved."""
         cluster = [
-            'x_studio_end_quick_repair',
-            'x_studio_fully_invoiced_so',
-            'x_studio_material_availability',
-            'x_studio_quick_repair_status_1',
-            'x_studio_repair_completed_stage_updated',
-            'x_studio_repair_image_01',
-            'x_studio_repair_image_02',
-            'x_studio_repair_reason',
-            'x_studio_valid_confirm_so',
-            'x_studio_valid_confirm2_so',
-            'x_studio_valid_delivered_so',
-            'x_studio_valid_delivered_so2',
-            'x_studio_valid_invoiced_so',
+            "x_studio_end_quick_repair",
+            "x_studio_fully_invoiced_so",
+            "x_studio_material_availability",
+            "x_studio_quick_repair_status_1",
+            "x_studio_repair_completed_stage_updated",
+            "x_studio_repair_image_01",
+            "x_studio_repair_image_02",
+            "x_studio_repair_reason",
+            "x_studio_valid_confirm_so",
+            "x_studio_valid_confirm2_so",
+            "x_studio_valid_delivered_so",
+            "x_studio_valid_delivered_so2",
+            "x_studio_valid_invoiced_so",
         ]
-        Field = self.env['ir.model.fields'].sudo()
-        rows = Field.search([
-            ('model', '=', 'project.task'),
-            ('name', 'in', cluster),
-        ])
-        manual_rows = rows.filtered(lambda f: f.state == 'manual')
+        Field = self.env["ir.model.fields"].sudo()
+        rows = Field.search(
+            [
+                ("model", "=", "project.task"),
+                ("name", "in", cluster),
+            ]
+        )
+        manual_rows = rows.filtered(lambda f: f.state == "manual")
         if manual_rows:
-            manual_rows.write({'state': 'base'})
+            manual_rows.write({"state": "base"})
 
-        ModelData = self.env['ir.model.data'].sudo()
-        studio_pins = ModelData.search([
-            ('model', '=', 'ir.model.fields'),
-            ('res_id', 'in', rows.ids),
-            ('module', '=', 'studio_customization'),
-        ])
+        ModelData = self.env["ir.model.data"].sudo()
+        studio_pins = ModelData.search(
+            [
+                ("model", "=", "ir.model.fields"),
+                ("res_id", "in", rows.ids),
+                ("module", "=", "studio_customization"),
+            ]
+        )
         if studio_pins:
             studio_pins.unlink()
 
@@ -479,19 +516,16 @@ class ProjectTask(models.Model):
             ticket = task.helpdesk_ticket_id
             so = task.sale_order_id
             desired = {
-                'x_studio_quotation_type': 'Repair',
-                'x_repair_customer_pays': not ticket.x_studio_rug_confirmed,
+                "x_studio_quotation_type": "Repair",
+                "x_repair_customer_pays": not ticket.x_studio_rug_confirmed,
             }
-            changed = {
-                k: v for k, v in desired.items()
-                if getattr(so, k) != v
-            }
+            changed = {k: v for k, v in desired.items() if getattr(so, k) != v}
             if changed:
                 so.sudo().write(changed)
 
     def write(self, vals):
         result = super().write(vals)
-        if 'sale_order_id' in vals and vals.get('sale_order_id'):
+        if "sale_order_id" in vals and vals.get("sale_order_id"):
             self._sync_repair_flags()
         return result
 
@@ -505,33 +539,40 @@ class ProjectTask(models.Model):
             if not record.helpdesk_ticket_id:
                 continue
             company_id = self.env.context.get(
-                'allowed_company_ids', [self.env.user.company_id.id]
+                "allowed_company_ids", [self.env.user.company_id.id]
             )[0]
-            company = self.env['res.company'].browse(company_id)
-            ticket = self.env['helpdesk.ticket'].search([
-                ('id', '=', record.helpdesk_ticket_id.id),
-            ], limit=1)
+            company = self.env["res.company"].browse(company_id)
+            ticket = self.env["helpdesk.ticket"].search(
+                [
+                    ("id", "=", record.helpdesk_ticket_id.id),
+                ],
+                limit=1,
+            )
             if not ticket:
                 continue
             now = datetime.datetime.now()
             if company.id == 1:
                 if ticket.stage_id.id == 1 or ticket.stage_id.id == 6:
                     if ticket.fsm_task_count > 0:
-                        ticket.write({
-                            'stage_id': 2,
-                            'x_studio_stage_date': now,
-                            'x_studio_created_by_3': self.env.uid,
-                            'x_studio_created_on_3': now,
-                        })
+                        ticket.write(
+                            {
+                                "stage_id": 2,
+                                "x_studio_stage_date": now,
+                                "x_studio_created_by_3": self.env.uid,
+                                "x_studio_created_on_3": now,
+                            }
+                        )
             else:
                 if ticket.stage_id.id == 20 or ticket.stage_id.id == 25:
                     if ticket.fsm_task_count > 0:
-                        ticket.write({
-                            'stage_id': 21,
-                            'x_studio_stage_date': now,
-                            'x_studio_created_by_3': self.env.uid,
-                            'x_studio_created_on_3': now,
-                        })
+                        ticket.write(
+                            {
+                                "stage_id": 21,
+                                "x_studio_stage_date": now,
+                                "x_studio_created_by_3": self.env.uid,
+                                "x_studio_created_on_3": now,
+                            }
+                        )
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -552,25 +593,30 @@ class ProjectTask(models.Model):
             if not record.id:
                 continue
             company_id = self.env.context.get(
-                'allowed_company_ids', [self.env.user.company_id.id]
+                "allowed_company_ids", [self.env.user.company_id.id]
             )[0]
-            company = self.env['res.company'].browse(company_id)
+            company = self.env["res.company"].browse(company_id)
             stage = 9 if company.id == 1 else 28
             record.x_studio_end_quick_repair = True
-            record.x_studio_quick_repair_status_1 = 'Quick Repair'
-            ticket = self.env['helpdesk.ticket'].search([
-                ('id', '=', record.helpdesk_ticket_id.id),
-            ], limit=1)
+            record.x_studio_quick_repair_status_1 = "Quick Repair"
+            ticket = self.env["helpdesk.ticket"].search(
+                [
+                    ("id", "=", record.helpdesk_ticket_id.id),
+                ],
+                limit=1,
+            )
             if ticket:
                 now = datetime.datetime.now()
-                ticket.write({
-                    'x_studio_repair_complete_stage_updated': True,
-                    'stage_id': stage,
-                    'x_studio_stage_date': now,
-                    'x_studio_created_by_8': self.env.uid,
-                    'x_studio_created_on_8': now,
-                    'x_studio_quick_repair_status': 'Quick Repair',
-                })
+                ticket.write(
+                    {
+                        "x_studio_repair_complete_stage_updated": True,
+                        "stage_id": stage,
+                        "x_studio_stage_date": now,
+                        "x_studio_created_by_8": self.env.uid,
+                        "x_studio_created_on_8": now,
+                        "x_studio_quick_repair_status": "Quick Repair",
+                    }
+                )
 
     def _repair_studio_diagnosis_validation(self):
         """Studio server action id 2224 native port. Unconditional
@@ -580,8 +626,10 @@ class ProjectTask(models.Model):
             if not record.id:
                 continue
             raise UserError(
-                _('Atleast one repair diagnosis line must be specified '
-                'for the selected task.')
+                _(
+                    "Atleast one repair diagnosis line must be specified "
+                    "for the selected task."
+                )
             )
 
     def _repair_studio_image_validation(self):
@@ -591,8 +639,7 @@ class ProjectTask(models.Model):
             if not record.id:
                 continue
             raise UserError(
-                _('Atleast one repair image should be uploaded for the '
-                'selected task.')
+                _("Atleast one repair image should be uploaded for the selected task.")
             )
 
     def _repair_studio_validate_diagnosis_lines(self):
@@ -603,7 +650,7 @@ class ProjectTask(models.Model):
             if not record.helpdesk_ticket_id:
                 continue
             if not record.x_studio_valid_diagnosis:
-                raise UserError(_('Repair diagnosis must be specified.'))
+                raise UserError(_("Repair diagnosis must be specified."))
 
     def _fsm_create_sale_order(self):
         """Delegate to industry_fsm_sale's implementation, skipping industry_fsm_stock."""
@@ -622,13 +669,13 @@ class ProjectTask(models.Model):
             ticket = task.helpdesk_ticket_id
             if ticket and task.fsm_done:
                 ticket._create_mark_as_done_picking()
-                ticket._move_to_stage('Repair Completed')
+                ticket._move_to_stage("Repair Completed")
         return res
 
     @api.model
-    def _get_view(self, view_id=None, view_type='form', **options):
+    def _get_view(self, view_id=None, view_type="form", **options):
         arch, view = super()._get_view(view_id, view_type, **options)
-        if view_type == 'form':
+        if view_type == "form":
             # Inject helper fields as invisible so they are available in
             # button invisible expressions below.
             # v258: extended the sentinel list — on standalone the base
@@ -640,21 +687,21 @@ class ProjectTask(models.Model):
             targets = arch.xpath("//sheet") or arch.xpath("//form")
             if targets:
                 for fname in (
-                    'ticket_repair_stage_state',
-                    'so_cancelled',
+                    "ticket_repair_stage_state",
+                    "so_cancelled",
                     # v258 additions — read from the invisible/readonly
                     # expressions our _get_view adds below.
-                    'helpdesk_ticket_id',
-                    'sale_order_id',
-                    'x_studio_valid_diagnosis',
-                    'x_studio_repair_image_01',
-                    'x_studio_end_quick_repair',
-                    'x_studio_cancelled',
+                    "helpdesk_ticket_id",
+                    "sale_order_id",
+                    "x_studio_valid_diagnosis",
+                    "x_studio_repair_image_01",
+                    "x_studio_end_quick_repair",
+                    "x_studio_cancelled",
                 ):
                     if not arch.xpath(f"//field[@name='{fname}']"):
-                        field_el = etree.Element('field')
-                        field_el.set('name', fname)
-                        field_el.set('invisible', '1')
+                        field_el = etree.Element("field")
+                        field_el.set("name", fname)
+                        field_el.set("invisible", "1")
                         targets[0].insert(0, field_el)
 
                 # v207 — inline warning banners for missing repair
@@ -695,33 +742,39 @@ class ProjectTask(models.Model):
                 # reactivity anchors. Never visually rendered. The
                 # fix_repair_task_toast_trigger class + variant class
                 # are the JS observer's hook.
-                if not arch.xpath("//div[contains(@class,'fix_repair_task_toast_trigger--diagnosis')]"):
-                    diag = etree.Element('div')
+                if not arch.xpath(
+                    "//div[contains(@class,'fix_repair_task_toast_trigger--diagnosis')]"
+                ):
+                    diag = etree.Element("div")
                     diag.set(
-                        'class',
-                        'fix_repair_task_toast_trigger '
-                        'fix_repair_task_toast_trigger--diagnosis',
+                        "class",
+                        "fix_repair_task_toast_trigger "
+                        "fix_repair_task_toast_trigger--diagnosis",
                     )
-                    diag.set('invisible',
+                    diag.set(
+                        "invisible",
                         "not helpdesk_ticket_id or "
                         "x_studio_end_quick_repair or "
                         "x_studio_cancelled or "
-                        "x_studio_valid_diagnosis"
+                        "x_studio_valid_diagnosis",
                     )
                     targets[0].insert(0, diag)
 
-                if not arch.xpath("//div[contains(@class,'fix_repair_task_toast_trigger--image')]"):
-                    img = etree.Element('div')
+                if not arch.xpath(
+                    "//div[contains(@class,'fix_repair_task_toast_trigger--image')]"
+                ):
+                    img = etree.Element("div")
                     img.set(
-                        'class',
-                        'fix_repair_task_toast_trigger '
-                        'fix_repair_task_toast_trigger--image',
+                        "class",
+                        "fix_repair_task_toast_trigger "
+                        "fix_repair_task_toast_trigger--image",
                     )
-                    img.set('invisible',
+                    img.set(
+                        "invisible",
                         "not helpdesk_ticket_id or "
                         "x_studio_end_quick_repair or "
                         "x_studio_cancelled or "
-                        "x_studio_repair_image_01"
+                        "x_studio_repair_image_01",
                     )
                     targets[0].insert(0, img)
 
@@ -741,13 +794,13 @@ class ProjectTask(models.Model):
             # show Tags / Sales Order Item / Planned Date / Material
             # Availability normally.
             for fname in (
-                'tag_ids',                          # Tags
-                'sale_line_id',                     # Sales Order Item
-                'planned_date_begin',               # Planned Date / Start date
-                'x_studio_material_availability',   # Material Availability
+                "tag_ids",  # Tags
+                "sale_line_id",  # Sales Order Item
+                "planned_date_begin",  # Planned Date / Start date
+                "x_studio_material_availability",  # Material Availability
             ):
                 for field_el in arch.xpath(f"//field[@name='{fname}']"):
-                    field_el.set('invisible', 'helpdesk_ticket_id')
+                    field_el.set("invisible", "helpdesk_ticket_id")
 
             # Freeze the task form (including its notebook pages) once
             # a linked sale.order exists. On the repair workflow, a
@@ -775,28 +828,29 @@ class ProjectTask(models.Model):
             # sale_order_id — stamping the expression on them raises
             # "Name not defined" when Odoo's ListRenderer evaluates
             # the readonly per-cell.
-            for field_el in arch.xpath(
-                    "//sheet//field[not(ancestor::field)]"):
-                if field_el.get('invisible') == '1':
+            for field_el in arch.xpath("//sheet//field[not(ancestor::field)]"):
+                if field_el.get("invisible") == "1":
                     continue
-                existing = field_el.get('readonly', '')
-                extra = 'helpdesk_ticket_id and sale_order_id'
+                existing = field_el.get("readonly", "")
+                extra = "helpdesk_ticket_id and sale_order_id"
                 field_el.set(
-                    'readonly',
+                    "readonly",
                     f"({existing}) or ({extra})" if existing else extra,
                 )
 
             # New Quotation: not used in the repair workflow — hide entirely.
             for btn in arch.xpath("//button[@name='action_fsm_create_quotation']"):
-                btn.set('invisible', '1')
+                btn.set("invisible", "1")
 
             # Products (material) stat button: for repair tickets only show once
             # both the Repair Diagnosis Validation and Image Validation are present.
             # Non-repair FSM tasks keep their original allow_material condition.
             for btn in arch.xpath("//button[@name='action_fsm_view_material']"):
-                existing = btn.get('invisible', '')
+                existing = btn.get("invisible", "")
                 extra = "helpdesk_ticket_id and not (x_studio_valid_diagnosis and x_studio_repair_image_01)"
-                btn.set('invisible', f"({existing}) or ({extra})" if existing else extra)
+                btn.set(
+                    "invisible", f"({existing}) or ({extra})" if existing else extra
+                )
 
             # Mark as Done: only show for repair tickets when the repair is
             # complete (ticket at Repair Completed). Non-repair FSM tasks have
@@ -812,15 +866,17 @@ class ProjectTask(models.Model):
             for btn in arch.xpath(
                 "//button[@name='action_fsm_validate'][@class='btn-primary']"
             ):
-                existing = btn.get('invisible', 'False')
-                btn.set('invisible', f"({existing}) or ({repair_guard})")
+                existing = btn.get("invisible", "False")
+                btn.set("invisible", f"({existing}) or ({repair_guard})")
 
             # Secondary: also remove Studio's over-restrictive Repair/Credit conditions
             for btn in arch.xpath(
                 "//button[@name='action_fsm_validate'][@class='btn-secondary']"
             ):
-                btn.set('invisible',
-                    f"not display_mark_as_done_secondary or ({repair_guard})")
+                btn.set(
+                    "invisible",
+                    f"not display_mark_as_done_secondary or ({repair_guard})",
+                )
 
             # Recolour every Mark as Done variant to primary purple.
             # Odoo's stock arch declares two action_fsm_validate
@@ -832,26 +888,26 @@ class ProjectTask(models.Model):
             # invisibility loops so the xpath [@class='btn-secondary']
             # lookup above still matches the arch's original class.
             for btn in arch.xpath("//button[@name='action_fsm_validate']"):
-                btn.set('class', 'btn-primary')
+                btn.set("class", "btn-primary")
 
             # Stage statusbar: make it read-only (no clicking between stages).
             # Stage transitions on repair tasks are driven by Mark as Done /
             # automations — the salesperson shouldn't be able to skip stages
             # by clicking on the bar.
             for field in arch.xpath("//field[@name='stage_id']"):
-                if field.get('widget', '').startswith('statusbar'):
-                    field.set('options', "{'clickable': '0', 'fold_field': 'fold'}")
-                    field.set('readonly', '1')
+                if field.get("widget", "").startswith("statusbar"):
+                    field.set("options", "{'clickable': '0', 'fold_field': 'fold'}")
+                    field.set("readonly", "1")
 
             # In Progress / Changes Requested / Approved … state button:
             # lock it readonly so the user can't pick a new state from the
             # dropdown. State changes happen via Mark as Done / automations.
             for field in arch.xpath("//field[@name='state']"):
-                field.set('readonly', '1')
+                field.set("readonly", "1")
 
             # Worksheet stat buttons (action_fsm_worksheet) — not used in
             # the repair workflow, hide entirely.
             for btn in arch.xpath("//button[@name='action_fsm_worksheet']"):
-                btn.set('invisible', '1')
+                btn.set("invisible", "1")
 
         return arch, view

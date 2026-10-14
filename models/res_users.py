@@ -8,11 +8,12 @@ The method is idempotent -- flips `state='manual' -> 'base'` on the
 completed that migration, the search returns nothing and the call
 is a no-op. Safe to run on any DB.
 """
+
 from odoo import api, models
 
 
 class ResUsers(models.Model):
-    _inherit = 'res.users'
+    _inherit = "res.users"
 
     @api.model
     def _migrate_studio_res_users_cluster_to_base(self):
@@ -24,25 +25,29 @@ class ResUsers(models.Model):
         studio_usermodel_migration.
         """
         cluster = [
-            'x_studio_source_location',
-            'x_studio_source_location_1',
-            'x_studio_virtual_location',
-            'x_studio_virtual_location_1',
+            "x_studio_source_location",
+            "x_studio_source_location_1",
+            "x_studio_virtual_location",
+            "x_studio_virtual_location_1",
         ]
-        Field = self.env['ir.model.fields'].sudo()
-        rows = Field.search([
-            ('model', '=', 'res.users'),
-            ('name', 'in', cluster),
-        ])
-        manual_rows = rows.filtered(lambda f: f.state == 'manual')
+        Field = self.env["ir.model.fields"].sudo()
+        rows = Field.search(
+            [
+                ("model", "=", "res.users"),
+                ("name", "in", cluster),
+            ]
+        )
+        manual_rows = rows.filtered(lambda f: f.state == "manual")
         if manual_rows:
-            manual_rows.write({'state': 'base'})
+            manual_rows.write({"state": "base"})
 
-        ModelData = self.env['ir.model.data'].sudo()
-        studio_pins = ModelData.search([
-            ('model', '=', 'ir.model.fields'),
-            ('res_id', 'in', rows.ids),
-            ('module', '=', 'studio_customization'),
-        ])
+        ModelData = self.env["ir.model.data"].sudo()
+        studio_pins = ModelData.search(
+            [
+                ("model", "=", "ir.model.fields"),
+                ("res_id", "in", rows.ids),
+                ("module", "=", "studio_customization"),
+            ]
+        )
         if studio_pins:
             studio_pins.unlink()

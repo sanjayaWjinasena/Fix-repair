@@ -27,11 +27,12 @@ parent sale.order (declared in BugFix-Sales), not on the line — the
 override navigates via record.order_id. x_studio_price_unit_original
 is declared on sale.order.line by BugFix-Sales v43.
 """
+
 from odoo import api, models
 
 
 class SaleOrderLine(models.Model):
-    _inherit = 'sale.order.line'
+    _inherit = "sale.order.line"
 
     def _fix_repair_maybe_reprice_rug_line(self):
         """Studio automation 193 port. Reset price to product cost on
@@ -48,9 +49,9 @@ class SaleOrderLine(models.Model):
             order = line.order_id
             if not order:
                 continue
-            if order.x_studio_quotation_type != 'Repair':
+            if order.x_studio_quotation_type != "Repair":
                 continue
-            if not getattr(order, 'x_studio_rug_confirmed', False):
+            if not getattr(order, "x_studio_rug_confirmed", False):
                 continue
             product = line.product_template_id
             if not product:
@@ -58,33 +59,35 @@ class SaleOrderLine(models.Model):
             target_price = product.standard_price
             if line.price_unit == target_price:
                 continue
-            line.with_context(_fix_repair_rug_reprice=True).write({
-                'price_unit': target_price,
-                'x_studio_price_unit_original': line.price_unit,
-            })
+            line.with_context(_fix_repair_rug_reprice=True).write(
+                {
+                    "price_unit": target_price,
+                    "x_studio_price_unit_original": line.price_unit,
+                }
+            )
 
     @api.model_create_multi
     def create(self, vals_list):
         lines = super().create(vals_list)
         # Skip when a parent recursion is already in flight.
-        if not self.env.context.get('_fix_repair_rug_reprice'):
+        if not self.env.context.get("_fix_repair_rug_reprice"):
             lines._fix_repair_maybe_reprice_rug_line()
         return lines
 
     def write(self, vals):
         res = super().write(vals)
         # Skip when we're the ones firing the write (recursion guard).
-        if self.env.context.get('_fix_repair_rug_reprice'):
+        if self.env.context.get("_fix_repair_rug_reprice"):
             return res
         # Only re-evaluate when a relevant field changed. product_uom_qty
         # doesn't affect price, so skipping saves cycles on qty edits.
-        triggers = {'price_unit', 'product_id', 'product_template_id'}
+        triggers = {"price_unit", "product_id", "product_template_id"}
         if not (triggers & set(vals or ())):
             return res
         self._fix_repair_maybe_reprice_rug_line()
         return res
 
-    @api.onchange('product_id', 'product_uom_qty', 'price_unit')
+    @api.onchange("product_id", "product_uom_qty", "price_unit")
     def _fix_repair_onchange_track_re_estimate(self):
         """v283: port of Studio automation 204 / server action 2252
         (RR - Track Lock Status - 3).
@@ -109,7 +112,7 @@ class SaleOrderLine(models.Model):
             order = line.order_id
             if not order:
                 continue
-            if order.x_studio_quotation_type != 'Repair':
+            if order.x_studio_quotation_type != "Repair":
                 continue
             if not order.x_studio_unlocked:
                 continue

@@ -83,7 +83,6 @@ Extends the Field Service task that carries out the repair. The "Repair Diagnosi
   <details><summary>code (5 lines)</summary>
 
 ```python
-
 # Fix-repair v265: delegates to native Python method already ported
 # from Clear-DB Studio server action 2316.
 if record:

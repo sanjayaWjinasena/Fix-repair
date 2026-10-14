@@ -8,6 +8,7 @@ doesn't fire (post_init_hook is install-only).
 Idempotent — the underlying function re-attaches only teams that
 aren't already in the stage's team_ids m2m.
 """
+
 import importlib.util
 import os
 
@@ -18,9 +19,10 @@ from odoo.modules.module import get_module_path
 def migrate(cr, version):
     if not version:
         return
-    hooks_path = os.path.join(get_module_path('Fix-repair'), 'hooks.py')
+    hooks_path = os.path.join(get_module_path("Fix-repair"), "hooks.py")
     spec = importlib.util.spec_from_file_location(
-        'fix_repair_hooks', hooks_path,
+        "fix_repair_hooks",
+        hooks_path,
     )
     hooks = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(hooks)

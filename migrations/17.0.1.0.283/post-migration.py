@@ -13,6 +13,7 @@ locked-but-not-unlocked SOs is intentionally NOT run -- those may
 legitimately be in the process of being re-estimated and touching them
 would race the user's own edits.
 """
+
 from odoo import SUPERUSER_ID, api
 
 
@@ -20,11 +21,13 @@ def migrate(cr, version):
     if not version:
         return
     env = api.Environment(cr, SUPERUSER_ID, {})
-    Order = env['sale.order'].sudo()
-    done_repair = Order.search([
-        ('x_studio_quotation_type', '=', 'Repair'),
-        ('state', '=', 'done'),
-        ('x_studio_locked', '=', False),
-    ])
+    Order = env["sale.order"].sudo()
+    done_repair = Order.search(
+        [
+            ("x_studio_quotation_type", "=", "Repair"),
+            ("state", "=", "done"),
+            ("x_studio_locked", "=", False),
+        ]
+    )
     if done_repair:
         done_repair._fix_repair_apply_track_lock_status()

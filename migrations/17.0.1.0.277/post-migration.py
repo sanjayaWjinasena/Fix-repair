@@ -6,6 +6,7 @@ that IS FSM-task-linked to a repair helpdesk ticket (or a repair
 project once Group C ships) but doesn't have the flag set — matches
 what the Studio automation would have done historically.
 """
+
 from odoo import SUPERUSER_ID, api
 
 
@@ -14,8 +15,14 @@ def migrate(cr, version):
         return
     env = api.Environment(cr, SUPERUSER_ID, {})
     # Back-fill on existing SOs whose flag is empty.
-    unset = env['sale.order'].sudo().search([
-        ('x_studio_quotation_type', '=', False),
-    ])
+    unset = (
+        env["sale.order"]
+        .sudo()
+        .search(
+            [
+                ("x_studio_quotation_type", "=", False),
+            ]
+        )
+    )
     if unset:
         unset._fix_repair_auto_generate_quotation_type()

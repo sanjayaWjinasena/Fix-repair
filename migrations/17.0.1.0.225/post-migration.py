@@ -6,6 +6,7 @@ every live DB, so the studio_customization xmlid cleanup needs to run
 at upgrade time too. This migration script calls the same hook
 function — idempotent, safe to leave in place.
 """
+
 import importlib.util
 import os
 
@@ -20,9 +21,10 @@ def migrate(cr, version):
 
     # Dynamic-load hooks.py: the module name 'Fix-repair' has a dash,
     # which breaks `from odoo.addons.Fix-repair.hooks import ...`.
-    hooks_path = os.path.join(get_module_path('Fix-repair'), 'hooks.py')
+    hooks_path = os.path.join(get_module_path("Fix-repair"), "hooks.py")
     spec = importlib.util.spec_from_file_location(
-        'fix_repair_hooks', hooks_path,
+        "fix_repair_hooks",
+        hooks_path,
     )
     hooks = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(hooks)

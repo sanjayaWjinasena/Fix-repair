@@ -12,6 +12,7 @@ Scope: only the 12 fields listed below, only their ir.model.data rows
 where module='studio_customization'. Field records themselves and
 their column data are left alone. Idempotent.
 """
+
 import logging
 import os
 
@@ -35,20 +36,20 @@ _STUDIO_DEPENDENT_VIEW_FILES = []
 # Kept in sync with models/res_partner.py.
 _PORTED_PARTNER_FIELDS = (
     # bank guarantee documents
-    'x_studio_bank_guarantee_docs',
-    'x_studio_bank_guarantee_docs_filename',
-    'x_studio_mandatory_bank_guarantee',
+    "x_studio_bank_guarantee_docs",
+    "x_studio_bank_guarantee_docs_filename",
+    "x_studio_mandatory_bank_guarantee",
     # vendor master
-    'x_studio_vendor_account',
-    'x_studio_vendor_name',
-    'x_studio_address',
+    "x_studio_vendor_account",
+    "x_studio_vendor_name",
+    "x_studio_address",
     # VAT / SVAT compliance
-    'x_studio_vat_registered',
-    'x_studio_vat_registration_number',
-    'x_studio_vat_registration_status',
-    'x_studio_vat_exempted_number',
-    'x_studio_svat_registration_number',
-    'x_studio_svat_registration_status',
+    "x_studio_vat_registered",
+    "x_studio_vat_registration_number",
+    "x_studio_vat_registration_status",
+    "x_studio_vat_exempted_number",
+    "x_studio_svat_registration_number",
+    "x_studio_svat_registration_status",
 )
 
 
@@ -58,21 +59,25 @@ def strip_studio_xmlids_for_ported_fields(env):
     Called from post_init_hook (fresh install) and from
     migrations/17.0.1.0.225/post-migration.py (existing DB upgrade).
     """
-    Fields = env['ir.model.fields'].sudo()
-    IMD = env['ir.model.data'].sudo()
+    Fields = env["ir.model.fields"].sudo()
+    IMD = env["ir.model.data"].sudo()
 
-    field_ids = Fields.search([
-        ('model', '=', 'res.partner'),
-        ('name', 'in', list(_PORTED_PARTNER_FIELDS)),
-    ]).ids
+    field_ids = Fields.search(
+        [
+            ("model", "=", "res.partner"),
+            ("name", "in", list(_PORTED_PARTNER_FIELDS)),
+        ]
+    ).ids
     if not field_ids:
         return
 
-    stale = IMD.search([
-        ('module', '=', 'studio_customization'),
-        ('model', '=', 'ir.model.fields'),
-        ('res_id', 'in', field_ids),
-    ])
+    stale = IMD.search(
+        [
+            ("module", "=", "studio_customization"),
+            ("model", "=", "ir.model.fields"),
+            ("res_id", "in", field_ids),
+        ]
+    )
     if not stale:
         return
 
@@ -107,13 +112,14 @@ def load_post_init_view_files(env):
     Python declarations in Fix-repair (state=base), so loading is
     safe on both envs.
     """
-    module_path = get_module_path('Fix-repair')
+    module_path = get_module_path("Fix-repair")
     for rel_path in _STUDIO_DEPENDENT_VIEW_FILES:
         full_path = os.path.join(module_path, rel_path)
         if not os.path.exists(full_path):
             _logger.warning(
                 "Fix-repair: %s listed as conditional data but missing "
-                "on disk — skipping.", rel_path,
+                "on disk — skipping.",
+                rel_path,
             )
             continue
         _logger.info("Fix-repair: loading %s.", rel_path)
@@ -123,12 +129,12 @@ def load_post_init_view_files(env):
         # `env.context` access inside xml_import.__init__.
         convert_file(
             env,
-            'Fix-repair',
+            "Fix-repair",
             rel_path,
             {},
-            mode='init',
+            mode="init",
             noupdate=False,
-            kind='data',
+            kind="data",
             pathname=full_path,
         )
 
@@ -142,18 +148,18 @@ load_conditional_studio_view_hides = load_post_init_view_files
 # Kept in sync with that file. Used by attach_repair_stages_to_all_teams
 # to iterate over the newly-seeded stages.
 _REPAIR_STAGE_XMLIDS = (
-    'Fix-repair.stage_sent_to_factory',
-    'Fix-repair.stage_received_at_factory',
-    'Fix-repair.stage_diagnosis',
-    'Fix-repair.stage_estimation_sent_to_customer',
-    'Fix-repair.stage_estimation_approval_received',
-    'Fix-repair.stage_advance_received',
-    'Fix-repair.stage_repair_started',
-    'Fix-repair.stage_repair_completed',
-    'Fix-repair.stage_sent_to_sales_centre',
-    'Fix-repair.stage_received_at_sales_centre',
-    'Fix-repair.stage_handed_over_to_customer',
-    'Fix-repair.stage_cancelled',
+    "Fix-repair.stage_sent_to_factory",
+    "Fix-repair.stage_received_at_factory",
+    "Fix-repair.stage_diagnosis",
+    "Fix-repair.stage_estimation_sent_to_customer",
+    "Fix-repair.stage_estimation_approval_received",
+    "Fix-repair.stage_advance_received",
+    "Fix-repair.stage_repair_started",
+    "Fix-repair.stage_repair_completed",
+    "Fix-repair.stage_sent_to_sales_centre",
+    "Fix-repair.stage_received_at_sales_centre",
+    "Fix-repair.stage_handed_over_to_customer",
+    "Fix-repair.stage_cancelled",
 )
 
 
@@ -169,8 +175,8 @@ def attach_repair_stages_to_all_teams(env):
     Idempotent — re-runs find the team already in stage.team_ids and
     no-op via set() semantics on the m2m write.
     """
-    Stage = env['helpdesk.stage'].sudo()
-    Team = env['helpdesk.team'].sudo()
+    Stage = env["helpdesk.stage"].sudo()
+    Team = env["helpdesk.team"].sudo()
 
     stage_ids = []
     for xmlid in _REPAIR_STAGE_XMLIDS:
@@ -202,7 +208,8 @@ def attach_repair_stages_to_all_teams(env):
 
     _logger.info(
         "Fix-repair: attached %d repair-pipeline stages to %d team(s).",
-        len(stage_ids), len(team_ids),
+        len(stage_ids),
+        len(team_ids),
     )
 
 
@@ -223,15 +230,15 @@ def enable_product_returns_on_all_teams(env):
 
     Idempotent — only writes when currently False.
     """
-    Team = env['helpdesk.team'].sudo()
-    to_flip = Team.search([('use_product_returns', '=', False)])
+    Team = env["helpdesk.team"].sudo()
+    to_flip = Team.search([("use_product_returns", "=", False)])
     if not to_flip:
         return
-    to_flip.write({'use_product_returns': True})
+    to_flip.write({"use_product_returns": True})
     _logger.info(
-        "Fix-repair: enabled use_product_returns on %d helpdesk.team "
-        "record(s): %s",
-        len(to_flip), to_flip.mapped('name'),
+        "Fix-repair: enabled use_product_returns on %d helpdesk.team record(s): %s",
+        len(to_flip),
+        to_flip.mapped("name"),
     )
 
 
@@ -254,7 +261,7 @@ def seed_default_stock_location_users(env):
 
     Idempotent — checks membership before writing.
     """
-    admin_user = env.ref('base.user_admin', raise_if_not_found=False)
+    admin_user = env.ref("base.user_admin", raise_if_not_found=False)
     if not admin_user:
         _logger.info(
             "Fix-repair: base.user_admin not found — skipping "
@@ -266,11 +273,13 @@ def seed_default_stock_location_users(env):
     # allowed companies. On a fresh install that's typically just
     # 'My Company (San Francisco)' (id=1) but the search picks up
     # whatever's actually there.
-    Stock = env['stock.location'].sudo()
-    default_locs = Stock.search([
-        ('usage', '=', 'internal'),
-        ('company_id', '!=', False),
-    ])
+    Stock = env["stock.location"].sudo()
+    default_locs = Stock.search(
+        [
+            ("usage", "=", "internal"),
+            ("company_id", "!=", False),
+        ]
+    )
     if not default_locs:
         _logger.info(
             "Fix-repair: no company-scoped internal stock locations "
@@ -288,7 +297,8 @@ def seed_default_stock_location_users(env):
     _logger.info(
         "Fix-repair: linked admin (uid=%d) to %d default internal "
         "stock.location record(s) via x_studio_users_stock_location.",
-        admin_user.id, changed,
+        admin_user.id,
+        changed,
     )
 
 
@@ -310,13 +320,15 @@ def seed_admin_repair_location_defaults(env):
 
     Idempotent — only writes when the field is currently False.
     """
-    Users = env['res.users'].sudo()
-    Stock = env['stock.location'].sudo()
+    Users = env["res.users"].sudo()
+    Stock = env["stock.location"].sudo()
 
-    internal_users = Users.search([
-        ('share', '=', False),
-        ('active', '=', True),
-    ])
+    internal_users = Users.search(
+        [
+            ("share", "=", False),
+            ("active", "=", True),
+        ]
+    )
     if not internal_users:
         return
 
@@ -331,25 +343,27 @@ def seed_admin_repair_location_defaults(env):
         if not company:
             continue
         if company.id not in location_by_company:
-            location_by_company[company.id] = Stock.search([
-                ('usage', '=', 'internal'),
-                ('company_id', '=', company.id),
-            ], limit=1)
+            location_by_company[company.id] = Stock.search(
+                [
+                    ("usage", "=", "internal"),
+                    ("company_id", "=", company.id),
+                ],
+                limit=1,
+            )
         default_loc = location_by_company[company.id]
         if not default_loc:
             continue
         vals = {}
         if needs_virtual:
-            vals['x_studio_virtual_location'] = default_loc.id
+            vals["x_studio_virtual_location"] = default_loc.id
         if needs_source:
-            vals['x_studio_source_location'] = default_loc.id
+            vals["x_studio_source_location"] = default_loc.id
         if vals:
             user.write(vals)
             changed_users += 1
 
     _logger.info(
-        "Fix-repair: seeded default repair location fields on %d "
-        "internal user(s).",
+        "Fix-repair: seeded default repair location fields on %d internal user(s).",
         changed_users,
     )
 
@@ -371,7 +385,7 @@ def seed_repair_return_receipt_locations(env):
 
     Idempotent — only writes when the flag is currently False.
     """
-    Warehouse = env['stock.warehouse'].sudo()
+    Warehouse = env["stock.warehouse"].sudo()
     warehouses = Warehouse.search([])
     if not warehouses:
         return
@@ -411,23 +425,26 @@ def enable_project_extras(env):
 
     Idempotent — only writes when the flag/membership is currently off.
     """
-    Users = env['res.users'].sudo()
-    Project = env['project.project'].sudo()
+    Users = env["res.users"].sudo()
+    Project = env["project.project"].sudo()
 
     # Group memberships — pick every non-share active user.
-    internal_users = Users.search([
-        ('share', '=', False), ('active', '=', True),
-    ])
+    internal_users = Users.search(
+        [
+            ("share", "=", False),
+            ("active", "=", True),
+        ]
+    )
     for xmlid in (
-        'project.group_project_task_dependencies',
-        'project.group_project_recurring_tasks',
+        "project.group_project_task_dependencies",
+        "project.group_project_recurring_tasks",
     ):
         grp = env.ref(xmlid, raise_if_not_found=False)
         if not grp:
             continue
         to_add = internal_users - grp.users
         if to_add:
-            grp.write({'users': [(4, u.id) for u in to_add]})
+            grp.write({"users": [(4, u.id) for u in to_add]})
 
     # Per-project flags.
     projects = Project.search([])
@@ -435,9 +452,9 @@ def enable_project_extras(env):
     for proj in projects:
         vals = {}
         if not proj.allow_task_dependencies:
-            vals['allow_task_dependencies'] = True
+            vals["allow_task_dependencies"] = True
         if not proj.rating_active:
-            vals['rating_active'] = True
+            vals["rating_active"] = True
         if vals:
             proj.write(vals)
             changed += 1
@@ -445,7 +462,8 @@ def enable_project_extras(env):
     _logger.info(
         "Fix-repair: enabled project extras on %d project(s); joined "
         "%d internal user(s) to task-dependencies + recurring-tasks groups.",
-        changed, len(internal_users),
+        changed,
+        len(internal_users),
     )
 
 
@@ -468,21 +486,27 @@ def activate_internal_picking_types(env):
     Warehouse scope (warehouse_id set) skips company-scoped-only or
     orphan internal types that shouldn't be resurrected.
     """
-    PickType = env['stock.picking.type'].sudo().with_context(
-        active_test=False,
+    PickType = (
+        env["stock.picking.type"]
+        .sudo()
+        .with_context(
+            active_test=False,
+        )
     )
-    dormant = PickType.search([
-        ('code', '=', 'internal'),
-        ('warehouse_id', '!=', False),
-        ('active', '=', False),
-    ])
+    dormant = PickType.search(
+        [
+            ("code", "=", "internal"),
+            ("warehouse_id", "!=", False),
+            ("active", "=", False),
+        ]
+    )
     if not dormant:
         return
-    dormant.write({'active': True})
+    dormant.write({"active": True})
     _logger.info(
-        "Fix-repair: reactivated %d dormant internal stock.picking.type "
-        "record(s): %s",
-        len(dormant), dormant.mapped('name'),
+        "Fix-repair: reactivated %d dormant internal stock.picking.type record(s): %s",
+        len(dormant),
+        dormant.mapped("name"),
     )
 
 
@@ -493,8 +517,8 @@ _REPAIR_SEQUENCE_CODES = (
     # the template so the two counter families stay visually
     # consistent even after Studio-era numbering diverges by company
     # (Clear-DB pattern).
-    ('repair.seq', 'Fix-repair.seq_repair_ticket'),
-    ('repair.serial.seq', 'Fix-repair.seq_repair_serial'),
+    ("repair.seq", "Fix-repair.seq_repair_ticket"),
+    ("repair.serial.seq", "Fix-repair.seq_repair_serial"),
 )
 
 
@@ -512,8 +536,8 @@ def seed_repair_sequences_per_company(env):
     Idempotent — skips companies that already have a per-company copy
     for the given code.
     """
-    Company = env['res.company'].sudo()
-    Sequence = env['ir.sequence'].sudo()
+    Company = env["res.company"].sudo()
+    Sequence = env["ir.sequence"].sudo()
 
     companies = Company.search([])
     if not companies:
@@ -525,29 +549,34 @@ def seed_repair_sequences_per_company(env):
             _logger.warning(
                 "Fix-repair: sequence template %s missing — cannot "
                 "seed per-company copies for code %s.",
-                template_xmlid, code,
+                template_xmlid,
+                code,
             )
             continue
 
         for company in companies:
-            existing = Sequence.search([
-                ('code', '=', code),
-                ('company_id', '=', company.id),
-            ], limit=1)
+            existing = Sequence.search(
+                [
+                    ("code", "=", code),
+                    ("company_id", "=", company.id),
+                ],
+                limit=1,
+            )
             if existing:
                 continue
-            template.copy({
-                'name': f"{template.name} ({company.name})",
-                'company_id': company.id,
-                # Fresh counter per company — don't inherit the
-                # template's current number_next (which reflects
-                # global usage during the transition period).
-                'number_next': 1,
-            })
+            template.copy(
+                {
+                    "name": f"{template.name} ({company.name})",
+                    "company_id": company.id,
+                    # Fresh counter per company — don't inherit the
+                    # template's current number_next (which reflects
+                    # global usage during the transition period).
+                    "number_next": 1,
+                }
+            )
 
     _logger.info(
-        "Fix-repair: ensured per-company repair sequences on %d "
-        "company/code pair(s).",
+        "Fix-repair: ensured per-company repair sequences on %d company/code pair(s).",
         len(companies) * len(_REPAIR_SEQUENCE_CODES),
     )
 
@@ -563,10 +592,10 @@ def assign_names_to_stale_new_tickets(env):
     style batching would only bump the sequence once for the whole
     batch).
     """
-    Ticket = env['helpdesk.ticket'].sudo()
-    Sequence = env['ir.sequence'].sudo()
+    Ticket = env["helpdesk.ticket"].sudo()
+    Sequence = env["ir.sequence"].sudo()
 
-    stale = Ticket.search(['|', ('name', '=', 'New'), ('name', '=', False)])
+    stale = Ticket.search(["|", ("name", "=", "New"), ("name", "=", False)])
     if not stale:
         return
 
@@ -578,7 +607,7 @@ def assign_names_to_stale_new_tickets(env):
         # numbers from the SUPERUSER's active company.
         seq = Sequence.with_context(
             company_id=ticket.company_id.id,
-        ).next_by_code('repair.seq')
+        ).next_by_code("repair.seq")
         if not seq:
             _logger.warning(
                 "Fix-repair: repair.seq unresolved for company %s "
@@ -588,7 +617,7 @@ def assign_names_to_stale_new_tickets(env):
                 ticket.id,
             )
             continue
-        ticket.write({'name': seq})
+        ticket.write({"name": seq})
         renamed += 1
 
     _logger.info(
@@ -596,8 +625,6 @@ def assign_names_to_stale_new_tickets(env):
         "to sequence-generated names.",
         renamed,
     )
-
-
 
 
 # --- Field selection seeds (via Odoo _update_selection framework API) ---
@@ -610,9 +637,9 @@ def assign_names_to_stale_new_tickets(env):
 # framework query_insert / query_update — no cr.execute in our code.
 # (model, field, value, label, sequence)
 _FIELD_SELECTIONS = [
-    ('helpdesk.ticket', 'x_studio_tracking', 'serial', 'By Unique Serial Number', 10),
-    ('helpdesk.ticket', 'x_studio_tracking', 'lot', 'By Lots', 1),
-    ('helpdesk.ticket', 'x_studio_tracking', 'none', 'No Tracking', 2),
+    ("helpdesk.ticket", "x_studio_tracking", "serial", "By Unique Serial Number", 10),
+    ("helpdesk.ticket", "x_studio_tracking", "lot", "By Lots", 1),
+    ("helpdesk.ticket", "x_studio_tracking", "none", "No Tracking", 2),
 ]
 
 
@@ -621,22 +648,26 @@ def _seed_field_selections(env, entries):
     _update_selection helper. Groups by (model, field), reads current
     selection, appends missing CDB values, calls _update_selection with
     the merged list — Odoo inserts only the new rows and keeps existing."""
-    Sel = env['ir.model.fields.selection'].sudo()
-    Fld = env['ir.model.fields'].sudo()
+    Sel = env["ir.model.fields.selection"].sudo()
+    Fld = env["ir.model.fields"].sudo()
     grouped = {}
     for model, fname, value, label, seq in entries:
         grouped.setdefault((model, fname), []).append((value, label, seq))
     for (model, fname), values in grouped.items():
         fld = Fld.search(
-            [('model', '=', model), ('name', '=', fname)], limit=1,
+            [("model", "=", model), ("name", "=", fname)],
+            limit=1,
         )
         if not fld:
             _logger.info(
-                "Fix-repair: skip %s.%s (field absent).", model, fname,
+                "Fix-repair: skip %s.%s (field absent).",
+                model,
+                fname,
             )
             continue
         existing_recs = Sel.search(
-            [('field_id', '=', fld.id)], order='sequence',
+            [("field_id", "=", fld.id)],
+            order="sequence",
         )
         existing_pairs = [(r.value, r.name) for r in existing_recs]
         existing_values = {v for v, _ in existing_pairs}
@@ -653,12 +684,19 @@ def _seed_field_selections(env, entries):
             with env.cr.savepoint():
                 Sel._update_selection(model, fname, existing_pairs)
                 _logger.info(
-                    "Fix-repair: seeded %s.%s += %s.", model, fname, added,
+                    "Fix-repair: seeded %s.%s += %s.",
+                    model,
+                    fname,
+                    added,
                 )
         except Exception as e:
             _logger.warning(
-                "Fix-repair: seed failed %s.%s (%s).", model, fname, e,
+                "Fix-repair: seed failed %s.%s (%s).",
+                model,
+                fname,
+                e,
             )
+
 
 # upgrade-testing branch: this branch installs functions only onto an existing database.
 # Steps that write or seed business/config data are skipped while SEED_DATA is False.
@@ -683,4 +721,5 @@ def post_init_hook(env):
     assign_names_to_stale_new_tickets(env)
     # v17.0.1.0.366: fill the now-computed sale.order check fields once.
     from .models.studio_computes import recompute_stored_studio_computes
+
     recompute_stored_studio_computes(env)

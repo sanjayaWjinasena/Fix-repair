@@ -257,7 +257,6 @@ This is the core of the module: a helpdesk ticket represents one repair job. Abo
   <details><summary>code (3 lines)</summary>
 
 ```python
-
 # fix_repair:idempotent-v1
 record._repair_seq_no_on_create_or_write()
 ```
@@ -269,7 +268,6 @@ record._repair_seq_no_on_create_or_write()
   <details><summary>code (3 lines)</summary>
 
 ```python
-
 # fix_repair:idempotent-v1
 record._repair_auto_select_product_for_rug()
 ```
@@ -281,7 +279,6 @@ record._repair_auto_select_product_for_rug()
   <details><summary>code (3 lines)</summary>
 
 ```python
-
 # fix_repair:idempotent-v1
 record._repair_auto_select_product_for_rug_2()
 ```
@@ -293,7 +290,6 @@ record._repair_auto_select_product_for_rug_2()
   <details><summary>code (3 lines)</summary>
 
 ```python
-
 # fix_repair:idempotent-v1
 record._repair_auto_select_product_for_rug_4()
 ```
@@ -305,7 +301,6 @@ record._repair_auto_select_product_for_rug_4()
   <details><summary>code (3 lines)</summary>
 
 ```python
-
 # fix_repair:idempotent-v1
 record._repair_populate_repair_location()
 ```
@@ -317,7 +312,6 @@ record._repair_populate_repair_location()
   <details><summary>code (3 lines)</summary>
 
 ```python
-
 # fix_repair:idempotent-v1
 record._repair_validate_cancelled_on_unlink()
 ```
@@ -329,7 +323,6 @@ record._repair_validate_cancelled_on_unlink()
   <details><summary>code (3 lines)</summary>
 
 ```python
-
 # fix_repair:idempotent-v1
 record._repair_auto_select_product_for_rug_33()
 ```
@@ -341,7 +334,6 @@ record._repair_auto_select_product_for_rug_33()
   <details><summary>code (3 lines)</summary>
 
 ```python
-
 # fix_repair:idempotent-v1
 record._repair_studio_user_location_validation()
 ```
@@ -353,7 +345,6 @@ record._repair_studio_user_location_validation()
   <details><summary>code (5 lines)</summary>
 
 ```python
-
 # Fix-repair v253: delegates to native Python method already ported
 # from Clear-DB Studio server action 1993.
 if record:
@@ -367,7 +358,6 @@ if record:
   <details><summary>code (3 lines)</summary>
 
 ```python
-
 # fix_repair:idempotent-v1
 record._repair_studio_auto_create_repair_serial_nos()
 ```
@@ -434,7 +424,6 @@ record._repair_auto_select_product_for_rug_4()
   <details><summary>code (3 lines)</summary>
 
 ```python
-
 # fix_repair:idempotent-v1
 record._repair_studio_cancel_repair()
 ```
@@ -446,7 +435,6 @@ record._repair_studio_cancel_repair()
   <details><summary>code (3 lines)</summary>
 
 ```python
-
 # fix_repair:idempotent-v1
 record._repair_studio_cancel_repair_2()
 ```
@@ -458,7 +446,6 @@ record._repair_studio_cancel_repair_2()
   <details><summary>code (3 lines)</summary>
 
 ```python
-
 # fix_repair:idempotent-v1
 record._repair_studio_change_repair_type_to_rug()
 ```
@@ -470,7 +457,6 @@ record._repair_studio_change_repair_type_to_rug()
   <details><summary>code (3 lines)</summary>
 
 ```python
-
 # fix_repair:idempotent-v1
 record._repair_auto_select_product_for_rug_22()
 ```
@@ -482,7 +468,6 @@ record._repair_auto_select_product_for_rug_22()
   <details><summary>code (3 lines)</summary>
 
 ```python
-
 # fix_repair:idempotent-v1
 record._repair_studio_receive_at_factory()
 ```
@@ -494,7 +479,6 @@ record._repair_studio_receive_at_factory()
   <details><summary>code (3 lines)</summary>
 
 ```python
-
 # fix_repair:idempotent-v1
 record._repair_studio_receive_at_sales_centre()
 ```
@@ -506,7 +490,6 @@ record._repair_studio_receive_at_sales_centre()
   <details><summary>code (3 lines)</summary>
 
 ```python
-
 # fix_repair:idempotent-v1
 record._repair_studio_reopen_repair()
 ```
@@ -529,7 +512,6 @@ record._repair_seq_no_on_create_or_write()
   <details><summary>code (3 lines)</summary>
 
 ```python
-
 # fix_repair:idempotent-v1
 record._repair_studio_send_to_factory()
 ```
@@ -541,7 +523,6 @@ record._repair_studio_send_to_factory()
   <details><summary>code (3 lines)</summary>
 
 ```python
-
 # fix_repair:idempotent-v1
 record._repair_studio_send_to_sales_centre()
 ```
@@ -553,7 +534,6 @@ record._repair_studio_send_to_sales_centre()
   <details><summary>code (3 lines)</summary>
 
 ```python
-
 # fix_repair:idempotent-v1
 record._repair_studio_update_rug_approval_in_pipeline()
 ```

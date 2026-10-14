@@ -21,6 +21,7 @@ lock fields align with the native locked field.
 Clear-DB reference is left unchanged (bug on Clear-DB, fixed only in
 Fix-repair's port).
 """
+
 from odoo import SUPERUSER_ID, api
 
 
@@ -28,13 +29,15 @@ def migrate(cr, version):
     if not version:
         return
     env = api.Environment(cr, SUPERUSER_ID, {})
-    Order = env['sale.order'].sudo()
+    Order = env["sale.order"].sudo()
     # Back-fill locked=True Repair SOs to also carry x_studio_locked=True.
-    locked = Order.search([
-        ('x_studio_quotation_type', '=', 'Repair'),
-        ('locked', '=', True),
-        ('x_studio_locked', '=', False),
-    ])
+    locked = Order.search(
+        [
+            ("x_studio_quotation_type", "=", "Repair"),
+            ("locked", "=", True),
+            ("x_studio_locked", "=", False),
+        ]
+    )
     if locked:
         locked._fix_repair_apply_track_lock_status()
     # Symmetric back-fill for legacy stuck x_studio_locked=True on

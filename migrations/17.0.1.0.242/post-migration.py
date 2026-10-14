@@ -4,6 +4,7 @@ xpath stripped from #4012). Existing DBs get the sanitised arch
 applied via convert_file(mode='init'), which updates records in
 place by external ID.
 """
+
 import importlib.util
 import os
 
@@ -14,9 +15,10 @@ from odoo.modules.module import get_module_path
 def migrate(cr, version):
     if not version:
         return
-    hooks_path = os.path.join(get_module_path('Fix-repair'), 'hooks.py')
+    hooks_path = os.path.join(get_module_path("Fix-repair"), "hooks.py")
     spec = importlib.util.spec_from_file_location(
-        'fix_repair_hooks', hooks_path,
+        "fix_repair_hooks",
+        hooks_path,
     )
     hooks = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(hooks)
