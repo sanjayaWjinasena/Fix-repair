@@ -109,7 +109,5 @@
             'Fix-repair/static/src/js/task_missing_data_notifier.js',
         ],
     },
-    'installable': True,
-    'auto_install': False,
     'application': False,
 }
