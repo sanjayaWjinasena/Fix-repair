@@ -296,13 +296,8 @@ class ProjectTask(models.Model):
     # Clear-DB. All three are cross-cutting between repair and other
     # workflows on the same project.task record.
     x_studio_payment_type = fields.Selection(
-        selection=[
-            ('Cash', 'Cash'),
-            ('Credit', 'Credit'),
-            ('Advance', 'Advance'),
-        ],
         string='Payment Type',
-    )
+    related='partner_id.x_studio_payment_method', store=True, readonly=True)
     x_studio_starting_date = fields.Datetime(
         string='Starting Date',
     )
@@ -361,11 +356,6 @@ class ProjectTask(models.Model):
     # manual on sale.order — outside this migration's scope, but
     # related fields work fine across state='manual'/'base' boundaries).
     x_studio_quotation_type = fields.Selection(
-        selection=[
-            ('Sales', 'Sales'),
-            ('Project', 'Project'),
-            ('Repair', 'Repair'),
-        ],
         string='Quotation Type',
         related='sale_order_id.x_studio_quotation_type',
         store=True,

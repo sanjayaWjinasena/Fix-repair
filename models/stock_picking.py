@@ -52,21 +52,11 @@ class StockPicking(models.Model):
     # Selection values verified verbatim against Clear-DB
     # (ir.model.fields.selection ids 3974-3976 / 4249-4251).
     x_studio_quotation_type = fields.Selection(
-        selection=[
-            ('Sales', 'Sales'),
-            ('Project', 'Project'),
-            ('Repair', 'Repair'),
-        ],
         string='Quotation Type',
-    )
+    related='sale_id.x_studio_quotation_type', store=True, readonly=True)
     x_studio_quotation_type_2 = fields.Selection(
-        selection=[
-            ('Sales', 'Sales'),
-            ('Project', 'Project'),
-            ('Repair', 'Repair'),
-        ],
         string='Quotation Type (2)',
-    )
+    related='sale_id.x_studio_quotation_type', store=True, readonly=True)
     # Studio-created duplicate m2o's onto sale.order. Fix-repair reads
     # them from stock.picking._get_view's hide-gate loop and from the
     # payment/GL computes.
@@ -79,14 +69,8 @@ class StockPicking(models.Model):
         ondelete='set null', index=True,
     )
     x_studio_type_of_operation = fields.Selection(
-        selection=[
-            ('incoming', 'Receipt'),
-            ('outgoing', 'Delivery'),
-            ('internal', 'Internal Transfer'),
-            ('mrp_operation', 'Manufacturing'),
-        ],
         string='Type of Operation',
-    )
+    related='picking_type_id.code', store=True, readonly=True)
     x_studio_validation = fields.Char(string='Validation')
 
     nuw_block_validate = fields.Boolean(
