@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<!-- QWeb Studio customizations ported from CDB. Parent inherits
-     resolve to standard Odoo or our own already-shipped views. -->
-<odoo>
-  <data>
-    </data>
-</odoo>

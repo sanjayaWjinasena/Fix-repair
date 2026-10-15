@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="sa_f5_x_diagnosis_areas_jin_company_id_in_diagnosis_areas" model="ir.actions.server">
+    <field name="name">JIN - Company Id in Diagnosis Areas</field>
+    <field name="model_id" search="[('model', '=', 'x_diagnosis_areas')]"/>
+    <field name="state">code</field>
+    <field name="code"><![CDATA[company_id = env.context.get('allowed_company_ids', [env.user.company_id.id])[0]
+company = env['res.company'].browse(company_id)
+
+record['x_studio_company_id'] = company.id]]></field>
+    <field name="usage">base_automation</field>
+    <field name="binding_view_types">list,form</field>
+  </record>
+  <record id="server_action_2664_jin_company_id_in_diagnosis_areas" model="ir.actions.server">
+    <field name="name">JIN - Company Id in Diagnosis Areas</field>
+    <field name="model_id" search="[('model', '=', 'x_diagnosis_areas')]"/>
+    <field name="state">code</field>
+    <field name="usage">base_automation</field>
+    <field name="code"><![CDATA[company_id = env.context.get('allowed_company_ids', [env.user.company_id.id])[0]
+company = env['res.company'].browse(company_id)
+
+record['x_studio_company_id'] = company.id]]></field>
+  </record>
+  <record id="base_automation_300_jin_company_id_in_diagnosis_areas" model="base.automation">
+    <field name="name">JIN - Company Id in Diagnosis Areas</field>
+    <field name="active" eval="True"/>
+    <field name="model_id" search="[('model', '=', 'x_diagnosis_areas')]"/>
+    <field name="trigger">on_create_or_write</field>
+    <field name="trigger_field_ids" eval="[(6, 0, [ref('Fix-repair.field_x_diagnosis_areas__create_date')])]"/>
+    <field name="action_server_ids" eval="[(6, 0, [ref('Fix-repair.server_action_2664_jin_company_id_in_diagnosis_areas')])]"/>
+  </record>
+  <record id="server_action_2664_jin_company_id_in_diagnosis_areas" model="ir.actions.server">
+    <field name="name">JIN - Company Id in Diagnosis Areas</field>
+    <field name="model_id" ref="Fix-repair.model_x_diagnosis_areas"/>
+    <field name="state">code</field>
+    <field name="usage">base_automation</field>
+    <field name="code"><![CDATA[
+company_id = env.context.get('allowed_company_ids', [env.user.company_id.id])[0]
+company = env['res.company'].browse(company_id)
+
+record['x_studio_company_id'] = company.id
+    ]]></field>
+  </record>
+    <data noupdate="1">
+    <record id="default_338_x_diagnosis_areas_x_active" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_x_diagnosis_areas__x_active"/>
+      <field name="json_value">true</field>
+    </record>
+    <record id="default_339_x_diagnosis_areas_x_studio_sequence" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_x_diagnosis_areas__x_studio_sequence"/>
+      <field name="json_value">10</field>
+    </record>
+    </data>
+</odoo>

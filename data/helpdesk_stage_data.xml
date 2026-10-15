@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Migrate x_studio_company_id on helpdesk.stage from Studio to
+         Python-owned. Master data used by the Cluster 5 stage-
+         validation computes to pick the right stage id per company.
+         Idempotent. -->
+    <function model="helpdesk.stage" name="_migrate_studio_stage_cluster_to_base"/>
+  <record id="server_action_2760_jin_company_id_in_helpdesk_stage" model="ir.actions.server">
+    <field name="name">JIN - Company Id in Helpdesk Stage</field>
+    <field name="model_id" search="[('model', '=', 'helpdesk.stage')]"/>
+    <field name="state">code</field>
+    <field name="usage">base_automation</field>
+    <field name="code"><![CDATA[# fix_repair:idempotent-v1
+record._jin_set_company_id()
+]]></field>
+  </record>
+  <record id="base_automation_329_jin_company_id_in_helpdesk_stage" model="base.automation">
+    <field name="name">JIN - Company Id in Helpdesk Stage</field>
+    <field name="active" eval="False"/>
+    <field name="model_id" ref="helpdesk.model_helpdesk_stage"/>
+    <field name="trigger">on_create_or_write</field>
+  </record>
+</odoo>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Migrate the four x_studio_* location fields on res.users
+         (source_location, source_location_1, virtual_location,
+         virtual_location_1). helpdesk.ticket's related chains walk
+         through these. Idempotent. -->
+    <function model="res.users" name="_migrate_studio_res_users_cluster_to_base"/>
+  <record id="server_action_2544_super_user_validate" model="ir.actions.server">
+    <field name="name">Super User Validate</field>
+    <field name="model_id" search="[('model', '=', 'res.users')]"/>
+    <field name="state">code</field>
+    <field name="usage">base_automation</field>
+    <field name="code"><![CDATA[# fix_repair:idempotent-v1
+record._super_user_validate()
+]]></field>
+  </record>
+  <record id="base_automation_250_super_user_validate" model="base.automation">
+    <field name="name">Super User Validate</field>
+    <field name="active" eval="False"/>
+    <field name="model_id" ref="resource.model_res_users"/>
+    <field name="trigger">on_create_or_write</field>
+  </record>
+</odoo>

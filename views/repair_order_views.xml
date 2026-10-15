@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="aw_f4_repair_order_repair_order" model="ir.actions.act_window">
+    <field name="name">repair.order</field>
+    <field name="res_model">repair.order</field>
+    <field name="view_mode">kanban,tree,form,pivot,graph</field>
+  </record>
+  <record id="act_window_2807_repair_order" model="ir.actions.act_window">
+    <field name="name">repair.order</field>
+    <field name="res_model">repair.order</field>
+    <field name="view_mode">kanban,tree,form,pivot,graph</field>
+    <field name="context">{}</field>
+    <field name="help" type="html"><p class="o_view_nocontent_smiling_face">
+                    This is your new action.
+                </p>
+                <p>By default, it contains a list and a form view and possibly
+                    other view types depending on the options you chose for your model.
+                </p>
+                <p>
+                    You can start customizing these screens by clicking on the Studio icon on the
+                    top right corner (you can also customize this help message there).
+                </p>
+            </field>
+  </record>
+  <record id="act_window_2807_repair_order" model="ir.actions.act_window">
+    <field name="name">repair.order</field>
+    <field name="res_model">repair.order</field>
+    <field name="view_mode">kanban,tree,form,pivot,graph</field>
+  </record>
+    <record id="view_4014_odoo_studio_repair_form_customization_e" model="ir.ui.view">
+      <field name="name">Odoo Studio: repair.form customization</field>
+      <field name="model">repair.order</field>
+      <field name="type">form</field>
+      <field name="priority">99</field>
+      <field name="inherit_id" ref="repair.view_repair_order_form"/>
+      <field name="mode">extension</field>
+      <field name="arch" type="xml">
+        <data>
+  <xpath expr="//field[@name='tag_ids']" position="after">
+    <field name="x_studio_confirm_draft_quotation" string="Confirm Draft Quotation" force_save="True" readonly="1"/>
+  </xpath>
+  <xpath expr="//field[@name='product_packaging_id']" position="after">
+    <!-- STRIPPED price_unit not on repair.order --></xpath>
+</data>
+      </field>
+    </record>
+    <record id="view_4015_odoo_studio_repair_form_customization_button_e" model="ir.ui.view">
+      <field name="name">Odoo Studio: repair.form customization_button</field>
+      <field name="model">repair.order</field>
+      <field name="type">form</field>
+      <field name="priority">99</field>
+      <field name="inherit_id" ref="repair.view_repair_order_form"/>
+      <field name="mode">extension</field>
+      <field name="arch" type="xml">
+        <data>
+    <xpath expr="//form" position="inside"><field name="x_studio_confirm_draft_quotation" invisible="1"/></xpath><xpath expr="//header/button[@name='action_validate']" position="before"> x_studio_confirm_draft_quotation
+      <!-- STRIPPED action button aid=1814 unresolvable -->
+    </xpath>
+    
+    <xpath expr="//header/button[@name='action_validate']" position="attributes">
+      <attribute name="invisible">state != 'draft'</attribute></xpath>
+    
+    </data>
+      </field>
+    </record>
+</odoo>

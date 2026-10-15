@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============================================================ -->
+    <!-- x_resolutions                                               -->
+    <!-- ============================================================ -->
+    <record id="view_x_resolutions_form" model="ir.ui.view">
+        <field name="name">x_resolutions.form</field>
+        <field name="model">x_resolutions</field>
+        <field name="type">form</field>
+        <field name="mode">primary</field>
+        <field name="priority">16</field>
+        <field name="arch" type="xml">
+            <form>
+                <header/>
+                <sheet string="Resolutions">
+                    <widget name="web_ribbon" text="Archived" bg_color="bg-danger" invisible="x_active == True"/>
+                    <field name="x_active" invisible="1"/>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="x_name" required="1" placeholder="Name..."/>
+                        </h1>
+                    </div>
+                    <group name="studio_group_6a461b">
+                        <group name="studio_group_6a461b_left"/>
+                        <group name="studio_group_6a461b_right"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter" name="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                    <field name="activity_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+    <record id="view_x_resolutions_tree" model="ir.ui.view">
+        <field name="name">x_resolutions.tree</field>
+        <field name="model">x_resolutions</field>
+        <field name="type">tree</field>
+        <field name="mode">primary</field>
+        <field name="priority">16</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="x_studio_sequence" widget="handle"/>
+                <field name="x_name"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_x_resolutions_search" model="ir.ui.view">
+        <field name="name">x_resolutions.search</field>
+        <field name="model">x_resolutions</field>
+        <field name="type">search</field>
+        <field name="mode">primary</field>
+        <field name="priority">16</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="x_name"/>
+                <separator/>
+                <filter string="Archived" name="archived_x_resolutions" domain="[['x_active', '=', False]]"/>
+                <separator/>
+            </search>
+        </field>
+    </record>
+    <record id="view_x_resolutions_tree_inherit" model="ir.ui.view">
+        <field name="name">x_resolutions.tree.inherit</field>
+        <field name="model">x_resolutions</field>
+        <field name="type">tree</field>
+        <field name="mode">extension</field>
+        <field name="priority">99</field>
+        <field name="inherit_id" ref="view_x_resolutions_tree"/>
+        <field name="arch" type="xml">
+            <data>
+                <xpath expr="//tree[1]" position="attributes">
+                    <attribute name="editable">bottom</attribute>
+                </xpath>
+                <xpath expr="//field[@name='x_studio_sequence']" position="attributes">
+                    <attribute name="column_invisible">1</attribute>
+                </xpath>
+                <xpath expr="//field[@name='x_name']" position="attributes">
+                    <attribute name="string">Resolution</attribute>
+                </xpath>
+                <xpath expr="//field[@name='x_name']" position="after">
+                    <field optional="show" name="x_studio_description" string="Description"/>
+                    <field optional="show" name="x_studio_company_id" string="Company"/>
+                </xpath>
+            </data>
+        </field>
+    </record>
+    <record id="action_x_resolutions" model="ir.actions.act_window">
+        <field name="name">Resolutions</field>
+        <field name="res_model">x_resolutions</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+  <record id="act_window_2215_resolutions" model="ir.actions.act_window">
+    <field name="name">Resolutions</field>
+    <field name="res_model">x_resolutions</field>
+    <field name="view_mode">tree,form</field>
+    <field name="context">{}</field>
+    <field name="help" type="html"><p class="o_view_nocontent_smiling_face">
+                    This is your new action.
+                </p>
+                <p>By default, it contains a list and a form view and possibly
+                    other view types depending on the options you chose for your model.
+                </p>
+                <p>
+                    You can start customizing these screens by clicking on the Studio icon on the
+                    top right corner (you can also customize this help message there).
+                </p>
+            </field>
+  </record>
+    <record id="view_4978_default_form_view_for_x_resolutions_e" model="ir.ui.view">
+      <field name="name">Default form view for x_resolutions</field>
+      <field name="model">x_resolutions</field>
+      <field name="type">form</field>
+      <field name="arch" type="xml">
+        <form>
+  <header/>
+  <sheet string="Resolutions">
+    <widget name="web_ribbon" text="Archived" bg_color="bg-danger" invisible="x_active == True"/>
+    <field name="x_active" invisible="1"/>
+    <div class="oe_title">
+                <h1>
+                    <field name="x_name" required="1" placeholder="Name..."/>
+                </h1>
+            </div>
+    <group name="studio_group_6a461b">
+      <group name="studio_group_6a461b_left"/>
+      <group name="studio_group_6a461b_right"/>
+    </group>
+  </sheet>
+  <div class="oe_chatter" name="oe_chatter">
+    <field name="message_follower_ids"/>
+    <field name="message_ids"/>
+    <field name="activity_ids"/>
+  </div>
+</form>
+      </field>
+    </record>
+    <record id="view_4977_default_list_view_for_x_resolutions_e" model="ir.ui.view">
+      <field name="name">Default list view for x_resolutions</field>
+      <field name="model">x_resolutions</field>
+      <field name="type">tree</field>
+      <field name="arch" type="xml">
+        <tree>
+  <field name="x_studio_sequence" widget="handle"/>
+  <field name="x_name"/>
+</tree>
+      </field>
+    </record>
+    <record id="view_4979_default_search_view_for_x_resolutions_e" model="ir.ui.view">
+      <field name="name">Default search view for x_resolutions</field>
+      <field name="model">x_resolutions</field>
+      <field name="type">search</field>
+      <field name="arch" type="xml">
+        <search>
+  <field name="x_name"/>
+  <separator/>
+  <filter string="Archived" name="archived_x_resolutions" domain="[['x_active', '=', False]]"/>
+  <separator/>
+</search>
+      </field>
+    </record>
+    <record id="view_final_x_resolutions_odoo_studio_default_list_view_for_x_resolutions_customizatio" model="ir.ui.view">
+      <field name="name">Odoo Studio: Default list view for x_resolutions customization</field>
+      <field name="model">x_resolutions</field>
+      <field name="type">tree</field>
+      <field name="priority">99</field>
+      <field name="inherit_id" ref="Fix-repair.view_4977_default_list_view_for_x_resolutions_e"/>
+      <field name="mode">extension</field>
+      <field name="arch" type="xml">
+        <data>
+  <xpath expr="//tree[1]" position="attributes">
+    <attribute name="editable">bottom</attribute>
+  </xpath>
+  <xpath expr="//field[@name='x_studio_sequence']" position="attributes">
+    <attribute name="column_invisible">1</attribute></xpath>
+  <xpath expr="//field[@name='x_name']" position="attributes">
+    <attribute name="string">Resolution</attribute>
+  </xpath>
+  <xpath expr="//field[@name='x_name']" position="after">
+    <field optional="show" name="x_studio_description" string="Description"/>
+    <field optional="show" name="x_studio_company_id" string="Company"/>
+  </xpath>
+</data>
+      </field>
+    </record>
+</odoo>

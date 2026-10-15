@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Migrate the 13 repair-related x_studio_* fields on
+         project.task (end_quick_repair, fully_invoiced_so, material
+         availability, quick_repair_status_1, repair_completed_stage
+         (related), repair_image_01/02, repair_reason M2M, and the
+         five valid_* computes that helpdesk.ticket Cluster 5 reads).
+         Compute strings ported verbatim from Studio. Idempotent. -->
+    <function model="project.task" name="_migrate_studio_project_task_repair_cluster_to_base"/>
+    <record id="action_repair_end_quick_repair" model="ir.actions.server">
+        <field name="name">RR - End Quick Repair</field>
+        <field name="model_id" ref="project.model_project_task"/>
+        <field name="binding_model_id" ref="project.model_project_task"/>
+        <field name="binding_view_types">form,list</field>
+        <field name="state">code</field>
+        <field name="code">
+# Fix-repair v265: delegates to native Python method already ported
+# from Clear-DB Studio server action 2316.
+if record:
+    record._repair_studio_end_quick_repair()
+        </field>
+    </record>
+</odoo>

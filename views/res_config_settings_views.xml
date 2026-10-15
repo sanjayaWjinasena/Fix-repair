@@ -1,20 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-
     <record id="res_config_settings_view_form_fix_repair" model="ir.ui.view">
         <field name="name">res.config.settings.form.fix.repair</field>
         <field name="model">res.config.settings</field>
         <field name="inherit_id" ref="base_setup.res_config_settings_view_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form" position="inside">
-                <app data-string="Fix Repair"
-                     string="Fix Repair"
-                     name="fix_repair"
-                     groups="base.group_system">
+                <app data-string="Fix Repair" string="Fix Repair" name="fix_repair" groups="base.group_system">
                     <block title="Repair Workflow" name="repair_workflow">
-                        <setting id="factory_repair_location_setting"
-                                 string="Factory Repair Location"
-                                 help="Internal stock location items land at when a repair ticket reaches 'Received at Factory'. Per active company.">
+                        <setting id="factory_repair_location_setting" string="Factory Repair Location" help="Internal stock location items land at when a repair ticket reaches 'Received at Factory'. Per active company.">
                             <field name="factory_repair_location_id"/>
                         </setting>
                     </block>
@@ -22,5 +16,4 @@
             </xpath>
         </field>
     </record>
-
 </odoo>

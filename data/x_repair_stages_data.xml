@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="server_action_2670_jin_company_id_in_repair_stages" model="ir.actions.server">
+    <field name="name">JIN - Company Id in Repair Stages</field>
+    <field name="model_id" search="[('model', '=', 'x_repair_stages')]"/>
+    <field name="state">code</field>
+    <field name="usage">base_automation</field>
+    <field name="code"><![CDATA[# fix_repair:idempotent-v1
+record._jin_set_company_id()
+]]></field>
+  </record>
+  <record id="base_automation_306_jin_company_id_in_repair_stages" model="base.automation">
+    <field name="name">JIN - Company Id in Repair Stages</field>
+    <field name="active" eval="False"/>
+    <field name="model_id" ref="Fix-repair.model_x_repair_stages"/>
+    <field name="trigger">on_create_or_write</field>
+  </record>
+    <data noupdate="1">
+    <record id="default_353_x_repair_stages_x_active" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_x_repair_stages__x_active"/>
+      <field name="json_value">true</field>
+    </record>
+    <record id="default_354_x_repair_stages_x_studio_sequence" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_x_repair_stages__x_studio_sequence"/>
+      <field name="json_value">10</field>
+    </record>
+    </data>
+</odoo>

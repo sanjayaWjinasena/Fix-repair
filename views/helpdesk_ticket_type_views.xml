@@ -1,20 +1,5 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!--
-    helpdesk.ticket.type form inherit — expose the 4 Studio-ported
-    config booleans so users can configure a Type as RUG / With serial /
-    Without serial from the Type form.
-
-    The fields themselves are declared in
-    Fix-repair/models/helpdesk_type_stage.py (v-earlier port). Without
-    this view inherit, the fields exist but there's no UI to edit them
-    on stand-alone (Clear-DB has an equivalent Studio arch we're
-    replacing here).
-
-    Sits after the sequence + name group in the base helpdesk.ticket.type
-    form. Fields render as a fresh <group> with column-2 layout.
--->
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-
     <record id="helpdesk_ticket_type_view_form_repair_config" model="ir.ui.view">
         <field name="name">helpdesk.ticket.type.form.repair.config</field>
         <field name="model">helpdesk.ticket.type</field>
@@ -29,7 +14,6 @@
             </xpath>
         </field>
     </record>
-
     <!--
         v247: tree inherit adding the 4 boolean columns to the
         helpdesk.ticket.type list view. Mirrors Clear-DB's Studio
@@ -51,5 +35,23 @@
             </xpath>
         </field>
     </record>
-
+    <record id="view_4610_odoo_studio_helpdesk_ticket_type_tree_customization_e" model="ir.ui.view">
+      <field name="name">Odoo Studio: helpdesk.ticket.type.tree customization</field>
+      <field name="model">helpdesk.ticket.type</field>
+      <field name="type">tree</field>
+      <field name="priority">99</field>
+      <field name="inherit_id" ref="helpdesk.helpdesk_ticket_type_view_tree"/>
+      <field name="mode">extension</field>
+      <field name="arch" type="xml">
+        <data>
+  <xpath expr="//tree[1]/field[@name='name']" position="after">
+    <field optional="show" name="x_studio_rug" string="RUG"/>
+    <field optional="show" name="x_studio_rug_confirmed" string="RUG Confirmed"/>
+    <field optional="show" name="x_studio_with_serial_no" string="With Serial No"/>
+    <field optional="show" name="x_studio_without_serial_no" string="Without Serial No"/>
+    <field name="id" optional="show" column_invisible="1"/>
+  </xpath>
+</data>
+      </field>
+    </record>
 </odoo>

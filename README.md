@@ -13,8 +13,8 @@ movements, quotation, RUG / non-RUG customer-pays branches, repair
 completion, invoicing, and dispatch.
 
 The module also owns the long-running Studio → Python migration for
-this environment (see [`MIGRATION.md`](MIGRATION.md) and
-[`STUDIO_MIGRATION_STATUS.md`](STUDIO_MIGRATION_STATUS.md)) — every
+this environment (see [`docs/MIGRATION.md`](docs/MIGRATION.md) and
+[`docs/STUDIO_MIGRATION_STATUS.md`](docs/STUDIO_MIGRATION_STATUS.md)) — every
 Studio-authored helpdesk-repair artefact in the DB has been claimed by
 this module's Python source.
 
@@ -74,7 +74,7 @@ this module's Python source.
 - HR, recruitment, accounting-only, purchase Studio work
 - Non-Repair Studio fields even on the models Fix-repair inherits (10
   such fields on `res.users` and `project.task` are deliberately left
-  as `state='manual'` — see [`STUDIO_MIGRATION_STATUS.md`](STUDIO_MIGRATION_STATUS.md)
+  as `state='manual'` — see [`docs/STUDIO_MIGRATION_STATUS.md`](docs/STUDIO_MIGRATION_STATUS.md)
   section 4)
 
 ## 2. Runtime dependencies
@@ -102,9 +102,9 @@ enforced.
 Fix-repair/
 ├── __manifest__.py
 ├── __init__.py
-├── MIGRATION.md                    # Chronological Studio→Python migration log
-├── STUDIO_MIGRATION_STATUS.md      # Inventory of every migrated artefact
-├── CHANGES.txt                     # Legacy changelog (kept for history)
+├── docs/MIGRATION.md                    # Chronological Studio→Python migration log
+├── docs/STUDIO_MIGRATION_STATUS.md      # Inventory of every migrated artefact
+├── docs/CHANGES.txt                     # Legacy changelog (kept for history)
 │
 ├── models/
 │   ├── __init__.py
@@ -285,7 +285,7 @@ reports).
 The 17 Studio-authored helpdesk-repair reports (C09–C19, Customer
 Letter, Repair Receipt, Repair Status, etc.) are all under
 `Fix-repair` ownership via runtime repin — see
-[`STUDIO_MIGRATION_STATUS.md`](STUDIO_MIGRATION_STATUS.md) section 7.
+[`docs/STUDIO_MIGRATION_STATUS.md`](docs/STUDIO_MIGRATION_STATUS.md) section 7.
 
 ## 5. Models & fields
 
@@ -412,7 +412,7 @@ actions):
 - `_create_repair_transfer` — core state='done' picking builder
 - `_current_item_location`, `_get_factory_repair_location`
 - `_move_to_stage`
-- Migration methods (see [`MIGRATION.md`](MIGRATION.md))
+- Migration methods (see [`docs/MIGRATION.md`](docs/MIGRATION.md))
 
 **Automation-replacement hooks:**
 
@@ -521,7 +521,7 @@ rewritten to a one-line native call with the marker
 faster (no `safe_eval` overhead on the actual work).
 
 Full tier-by-tier table: see
-[`STUDIO_MIGRATION_STATUS.md`](STUDIO_MIGRATION_STATUS.md) section 3.
+[`docs/STUDIO_MIGRATION_STATUS.md`](docs/STUDIO_MIGRATION_STATUS.md) section 3.
 
 ## 9. View overrides
 
@@ -597,13 +597,13 @@ company-scoping pattern).
 
 ## 12. Related documents
 
-- [`MIGRATION.md`](MIGRATION.md) — the chronological Studio → Python
+- [`docs/MIGRATION.md`](docs/MIGRATION.md) — the chronological Studio → Python
   migration log (Clusters 1–8, Tiers 1–7, per-version narrative
   through v163+)
-- [`STUDIO_MIGRATION_STATUS.md`](STUDIO_MIGRATION_STATUS.md) — the
+- [`docs/STUDIO_MIGRATION_STATUS.md`](docs/STUDIO_MIGRATION_STATUS.md) — the
   live-audited inventory of every migrated artefact with current
   Python-owned / Studio-owned status
-- [`CHANGES.txt`](CHANGES.txt) — the older changelog kept for
+- [`docs/CHANGES.txt`](docs/CHANGES.txt) — the older changelog kept for
   historical reference
 
 For a runtime verification of every migration claim in this document,

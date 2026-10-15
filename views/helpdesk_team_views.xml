@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Remove the 3-dots dropdown from helpdesk team dashboard cards.
+        The base helpdesk_team_view_kanban's kanban-menu template
+        offers Configuration / SLA Policies / Stages / Types / KPI
+        Settings + a Report section — all of which are admin-tier
+        management actions. Casual users clicking through a team card
+        to view its tickets shouldn't see this menu. Same "empty the
+        kanban-menu template" pattern as v218 on ticket cards: with
+        no menu items rendered, the 3-dots trigger button hides.
+
+        Priority 99 (no conflict expected — Studio typically doesn't
+        touch the team kanban).
+    -->
+    <record id="helpdesk_team_kanban_no_menu" model="ir.ui.view">
+        <field name="name">helpdesk.team.kanban.no.menu</field>
+        <field name="model">helpdesk.team</field>
+        <field name="inherit_id" ref="helpdesk.helpdesk_team_view_kanban"/>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <xpath expr="//templates/t[@t-name='kanban-menu']" position="replace">
+                <t t-name="kanban-menu"/>
+            </xpath>
+        </field>
+    </record>
+  <record id="ported_odoo_studio_helpdesk_28046b65_e20c_4a5e_8a99_12fc2676bd8f" model="ir.ui.view">
+    <field name="name">Odoo Studio: helpdesk.team.dashboard customization</field>
+    <field name="model">helpdesk.team</field>
+    <field name="key">studio_customization.odoo_studio_helpdesk_28046b65-e20c-4a5e-8a99-12fc2676bd8f</field>
+    <field name="type">kanban</field>
+    <field name="priority">160</field>
+    <field name="mode">extension</field>
+    <field name="inherit_id" ref="helpdesk.helpdesk_team_view_kanban"/>
+    <field name="arch" type="xml">
+      <data>
+        <xpath expr="//kanban[1]" position="attributes">
+          <attribute name="quick_create">true</attribute>
+        </xpath>
+        
+      </data>
+    </field>
+  </record>
+  <record id="act_window_2239_customer_letter_report" model="ir.actions.act_window">
+    <field name="name">Customer Letter Report</field>
+    <field name="res_model">helpdesk.team</field>
+    <field name="view_mode">kanban,tree,form</field>
+    <field name="context">{}</field>
+    <field name="help" type="html"><p class="o_view_nocontent_smiling_face">
+                    This is your new action.
+                </p>
+                <p>By default, it contains a list and a form view and possibly
+                    other view types depending on the options you chose for your model.
+                </p>
+                <p>
+                    You can start customizing these screens by clicking on the Studio icon on the
+                    top right corner (you can also customize this help message there).
+                </p>
+            </field>
+  </record>
+  <record id="act_window_2876_helpdesk_team_helpdesk_team" model="ir.actions.act_window">
+    <field name="name">Helpdesk Team (helpdesk.team)</field>
+    <field name="res_model">helpdesk.team</field>
+    <field name="view_mode">kanban,tree,form</field>
+    <field name="context">{}</field>
+    <field name="help" type="html"><p class="o_view_nocontent_smiling_face">
+                    This is your new action.
+                </p>
+                <p>By default, it contains a list and a form view and possibly
+                    other view types depending on the options you chose for your model.
+                </p>
+                <p>
+                    You can start customizing these screens by clicking on the Studio icon on the
+                    top right corner (you can also customize this help message there).
+                </p>
+            </field>
+  </record>
+</odoo>

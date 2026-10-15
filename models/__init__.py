@@ -19,13 +19,11 @@ from . import stock_return_picking
 from . import stock_warehouse
 from . import x_task_diagnosis
 
-from . import res_users_gap
-from . import x_conditions_gap
-from . import x_diagnosis_areas_gap
-from . import x_diagnosis_codes_gap
-from . import x_resolutions_gap
-from . import x_symptom_areas_gap
-from . import x_symptom_codes_gap
-from . import x_task_diagnosis_gap
+from . import x_conditions
+from . import x_diagnosis_areas
+from . import x_diagnosis_codes
+from . import x_resolutions
+from . import x_symptom_areas
+from . import x_symptom_codes
 from . import studio_computes
 from . import hide_dev_extras

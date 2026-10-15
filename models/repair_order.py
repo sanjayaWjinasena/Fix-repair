@@ -9,7 +9,7 @@ No compute, no default, no help — matches Clear-DB exactly (a plain
 boolean flag). Studio pinned it via ir.model.data.module='studio_customization';
 declaring it here in Python takes ownership and the eventual migration
 step to unlink the studio_customization pin can follow the same
-pattern as the other repair.* clusters (see MIGRATION.md v145).
+pattern as the other repair.* clusters (see docs/MIGRATION.md v145).
 """
 
 from odoo import fields, models

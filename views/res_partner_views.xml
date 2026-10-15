@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="res_partner_form_fix_repair_field_content" model="ir.ui.view">
+    <field name="name">res.partner.form.fix.repair.field.content</field>
+    <field name="model">res.partner</field>
+    <field name="inherit_id" ref="BugFix-Sales.ported_view_2299_odoo_studio_res_partner_form_customizati"/>
+    <field name="priority">100</field>
+    <field name="arch" type="xml">
+      <xpath expr="//group[@name='studio_group_L0Ae5_left']" position="inside">
+        <field name="x_studio_vat_registration_status"/>
+        <field name="x_studio_vat_registration_number"/>
+        <field name="x_studio_vat_exempted_number"/>
+      </xpath>
+      <xpath expr="//group[@name='studio_group_L0Ae5_right']" position="inside">
+        <field name="x_studio_svat_registration_status"/>
+        <field name="x_studio_svat_registration_number"/>
+      </xpath>
+      <xpath expr="//group[@name='studio_group_SuozI_right']" position="inside">
+        <field name="x_studio_vendor_account"/>
+        <field name="x_studio_address"/>
+      </xpath>
+      <xpath expr="//group[@name='studio_group_yhybZ_left']" position="inside">
+        <field name="x_studio_mandatory_bank_guarantee"/>
+        <field name="x_studio_bank_guarantee_docs" filename="x_studio_bank_guarantee_docs_filename" widget="binary"/>
+        <field name="x_studio_bank_guarantee_docs_filename" invisible="1"/>
+      </xpath>
+    </field>
+  </record>
+</odoo>

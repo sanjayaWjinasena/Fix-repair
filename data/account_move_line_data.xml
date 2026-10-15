@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Same delegation treatment for account.move.line studio computes
+         (x_studio_credit_limit_2). Reads partner.credit_limit natively
+         instead of via safe_eval on every AML write. -->
+    <function model="account.move.line" name="_delegate_studio_computes_to_native"/>
+</odoo>

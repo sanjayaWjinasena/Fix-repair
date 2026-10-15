@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+    <record id="default_355_x_task_diagnosis_x_active" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_x_task_diagnosis__x_active"/>
+      <field name="json_value">true</field>
+    </record>
+    <record id="default_356_x_task_diagnosis_x_studio_sequence" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_x_task_diagnosis__x_studio_sequence"/>
+      <field name="json_value">10</field>
+    </record>
+    </data>
+</odoo>
