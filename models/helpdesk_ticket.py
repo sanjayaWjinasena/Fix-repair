@@ -1000,11 +1000,6 @@ class HelpdeskTicket(models.Model):
     )
 
     x_studio_tracking = fields.Selection(
-        selection=[
-            ('serial', 'By Unique Serial Number'),
-            ('lot', 'By Lots'),
-            ('none', 'No Tracking'),
-        ],
         string='Tracking',
         related='product_id.tracking',
         store=False,
