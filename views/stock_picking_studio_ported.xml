@@ -48,10 +48,9 @@
                        string="Helpdesk Ticket Id"
                        invisible="not x_studio_helpdesk_ticket_id"
                        readonly="1"/>
-                <field name="location_dest_id"
-                       string="Destination Location"
-                       invisible="not x_studio_helpdesk_ticket_id"
-                       readonly="1"/>
+                <!-- v370: no second location_dest_id here. Clear-DB has only the standard field; this
+                     copy made Destination Location show twice (bug sheet 15/Oct, Kapila) and caught
+                     the Studio-ported attributes xpath meant for the standard field. -->
             </xpath>
 
             <!-- Right column, after Deadline's parent group. v271:
