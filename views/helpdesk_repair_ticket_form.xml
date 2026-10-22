@@ -69,4 +69,51 @@
 
   <menuitem id="menu_helpdesk_ticket_general" name="General Tickets"
             parent="helpdesk.helpdesk_ticket_menu_main" action="action_helpdesk_ticket_general" sequence="30"/>
+
+  <!-- Ticket types: Odoo's standard form offers general types only, the Repair form Repair types only. -->
+  <record id="helpdesk_ticket_view_form_general_types" model="ir.ui.view">
+    <field name="name">helpdesk.ticket.form.general_types (Fix-repair)</field>
+    <field name="model">helpdesk.ticket</field>
+    <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
+    <field name="priority">90</field>
+    <field name="arch" type="xml">
+      <xpath expr="//field[@name='ticket_type_id']" position="attributes">
+        <attribute name="domain">[('x_jin_repair_type', '=', False)]</attribute>
+      </xpath>
+    </field>
+  </record>
+  <record id="helpdesk_ticket_view_form_repair_types" model="ir.ui.view">
+    <field name="name">helpdesk.ticket.form.repair_types (Fix-repair)</field>
+    <field name="model">helpdesk.ticket</field>
+    <field name="inherit_id" ref="helpdesk_ticket_view_form_repair"/>
+    <field name="priority">200</field>
+    <field name="arch" type="xml">
+      <xpath expr="//field[@name='ticket_type_id']" position="attributes">
+        <attribute name="domain">[('x_jin_repair_type', '=', True)]</attribute>
+      </xpath>
+    </field>
+  </record>
+
+  <record id="helpdesk_ticket_type_view_tree_repair_type" model="ir.ui.view">
+    <field name="name">helpdesk.ticket.type.tree.repair_type (Fix-repair)</field>
+    <field name="model">helpdesk.ticket.type</field>
+    <field name="inherit_id" ref="helpdesk.helpdesk_ticket_type_view_tree"/>
+    <field name="priority">60</field>
+    <field name="arch" type="xml">
+      <xpath expr="//field[@name='name']" position="after">
+        <field name="x_jin_repair_type" optional="show"/>
+      </xpath>
+    </field>
+  </record>
+  <record id="helpdesk_ticket_type_view_form_repair_type" model="ir.ui.view">
+    <field name="name">helpdesk.ticket.type.form.repair_type (Fix-repair)</field>
+    <field name="model">helpdesk.ticket.type</field>
+    <field name="inherit_id" ref="helpdesk.helpdesk_ticket_type_view_form"/>
+    <field name="priority">60</field>
+    <field name="arch" type="xml">
+      <xpath expr="//field[@name='name']" position="after">
+        <field name="x_jin_repair_type"/>
+      </xpath>
+    </field>
+  </record>
 </odoo>

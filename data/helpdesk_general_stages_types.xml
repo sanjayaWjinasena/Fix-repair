@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Stages and ticket types for general (non-repair) Helpdesk tickets, as Odoo ships them.
+    Odoo's own records (helpdesk.stage_in_progress, stage_solved, type_question, type_incident)
+    were renamed for the Repair flow (Diagnosis, Advance Received, Repair - Under Warranty ...)
+    and are used by the Repair teams, so general teams get their own set.
+-->
+<odoo>
+  <data noupdate="1">
+    <record id="helpdesk_stage_general_new" model="helpdesk.stage">
+      <field name="name">New</field>
+      <field name="sequence">0</field>
+      <field name="template_id" ref="helpdesk.new_ticket_request_email_template"/>
+    </record>
+    <record id="helpdesk_stage_general_in_progress" model="helpdesk.stage">
+      <field name="name">In Progress</field>
+      <field name="sequence">1</field>
+    </record>
+    <record id="helpdesk_stage_general_on_hold" model="helpdesk.stage">
+      <field name="name">On Hold</field>
+      <field name="sequence">2</field>
+    </record>
+    <record id="helpdesk_stage_general_solved" model="helpdesk.stage">
+      <field name="name">Solved</field>
+      <field name="sequence">3</field>
+      <field name="fold" eval="True"/>
+    </record>
+    <record id="helpdesk_stage_general_cancelled" model="helpdesk.stage">
+      <field name="name">Cancelled</field>
+      <field name="sequence">4</field>
+      <field name="fold" eval="True"/>
+    </record>
+
+    <record id="helpdesk_ticket_type_general_question" model="helpdesk.ticket.type">
+      <field name="name">Question</field>
+      <field name="sequence">1</field>
+    </record>
+    <record id="helpdesk_ticket_type_general_issue" model="helpdesk.ticket.type">
+      <field name="name">Issue</field>
+      <field name="sequence">2</field>
+    </record>
+  </data>
+</odoo>
