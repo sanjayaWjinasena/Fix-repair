@@ -1,6 +1,5 @@
 from . import account_move
 from . import account_payment
-from . import account_payment_register
 from . import helpdesk_ticket
 from . import helpdesk_type_stage
 from . import ir_actions_report
@@ -15,7 +14,6 @@ from . import sale_order_line
 from . import stock_location
 from . import stock_lot
 from . import stock_picking
-from . import stock_return_picking
 from . import stock_warehouse
 from . import x_task_diagnosis
 

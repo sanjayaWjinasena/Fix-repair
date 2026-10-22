@@ -111,5 +111,4 @@
             "Fix-repair/static/src/js/task_missing_data_notifier.js",
         ],
     },
-    "application": False,
 }

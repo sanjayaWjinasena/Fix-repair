@@ -30,7 +30,7 @@ class ResConfigSettings(models.TransientModel):
                 res["factory_repair_location_id"] = loc_id
         return res
 
-    def set_values(self):
+    def set_values(self):  # pylint: disable=missing-return
         super().set_values()
         key = f"fix_repair.factory_repair_location.{self.env.company.id}"
         val = (
