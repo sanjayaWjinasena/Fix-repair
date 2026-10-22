@@ -1864,6 +1864,21 @@ class HelpdeskTicket(models.Model):
         # before the Repair form exists (first install), keep the old behaviour
         return not repair_form or view == repair_form
 
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+        Team = self.env['helpdesk.team']
+        team = Team.browse(res['team_id']) if res.get('team_id') else Team
+        general_menu = self.env.context.get('jin_general_ticket')
+        # Helpdesk > Tickets > General Tickets: Odoo would pick the user's first team, a Repair team.
+        if general_menu and 'team_id' in fields_list and (not team or team.x_jin_repair_team):
+            team = Team.search([('x_jin_repair_team', '=', False), ('company_id', 'in', self.env.companies.ids)], limit=1)
+            res['team_id'] = team.id or False
+        # 'New' is the Repair numbering sentinel (repair.seq); a general ticket starts with an empty subject.
+        if (general_menu or (team and not team.x_jin_repair_team)) and res.get('name') == 'New':
+            res['name'] = False
+        return res
+
     def get_formview_id(self, access_uid=None):
         """Links (mail, chatter, smart buttons) open general tickets in Odoo's standard form."""
         if len(self) == 1 and not self._jin_is_repair_ticket():

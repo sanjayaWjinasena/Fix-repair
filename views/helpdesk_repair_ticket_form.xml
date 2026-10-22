@@ -42,7 +42,7 @@
     <field name="res_model">helpdesk.ticket</field>
     <field name="view_mode">tree,kanban,form,activity</field>
     <field name="domain">['|', ('team_id', '=', False), ('team_id.x_jin_repair_team', '=', False)]</field>
-    <field name="context">{}</field>
+    <field name="context">{'jin_general_ticket': True}</field>
     <field name="help" type="html">
       <p class="o_view_nocontent_smiling_face">No general tickets yet</p>
       <p>Tickets of teams that are not a Repair Team appear here and open in Odoo's standard ticket form.</p>
@@ -80,6 +80,10 @@
       <xpath expr="//field[@name='ticket_type_id']" position="attributes">
         <attribute name="domain">[('x_jin_repair_type', '=', False)]</attribute>
       </xpath>
+      <!-- a ticket in a Repair team must use the Repair form (its rules and buttons) -->
+      <xpath expr="//field[@name='team_id']" position="attributes">
+        <attribute name="domain">[('x_jin_repair_team', '=', False)]</attribute>
+      </xpath>
     </field>
   </record>
   <record id="helpdesk_ticket_view_form_repair_types" model="ir.ui.view">
@@ -90,6 +94,9 @@
     <field name="arch" type="xml">
       <xpath expr="//field[@name='ticket_type_id']" position="attributes">
         <attribute name="domain">[('x_jin_repair_type', '=', True)]</attribute>
+      </xpath>
+      <xpath expr="//field[@name='team_id']" position="attributes">
+        <attribute name="domain">[('x_jin_repair_team', '=', True)]</attribute>
       </xpath>
     </field>
   </record>
