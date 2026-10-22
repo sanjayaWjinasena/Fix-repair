@@ -1899,10 +1899,11 @@ class SaleOrder(models.Model):
             ticket.sudo().write({"stage_id": stage.id})
 
     def write(self, vals):
-        res, vals = self._fix_repair_write_when_partner_changes_draft(vals)
-        self._fix_repair_write_rug_approved_or_rejected(vals)
-        self._fix_repair_write_v277_task_id_was(vals)
-        self._fix_repair_write_v287_propagate_x_studio(vals)
+        vals = self._fix_repair_write_when_partner_changes_draft(vals)
+        res = super().write(vals)
+        self._fix_repair_write_rug_request_sent_estimation(vals)
+        lock_triggers = self._fix_repair_write_rug_approved_reprice_all(vals)
+        self._fix_repair_write_part_5(lock_triggers, vals)
 
         return res
 
@@ -1915,22 +1916,22 @@ class SaleOrder(models.Model):
                 vals = dict(
                     vals, x_studio_order_payment_method=partner.x_studio_payment_method
                 )
+        return vals
 
-        res = super().write(vals)
-
+    def _fix_repair_write_rug_request_sent_estimation(self, vals):
+        """RUG request sent → Estimation Sent to Customer."""
         # RUG request sent → Estimation Sent to Customer
         if vals.get("x_studio_rug_request_sent"):
             for order in self:
                 self._move_ticket_to_stage(order, "Estimation Sent to Customer")
-        return res, vals
 
-    def _fix_repair_write_rug_approved_or_rejected(self, vals):
-        """RUG approved or rejected → Estimation Approval Received."""
         # RUG approved or rejected → Estimation Approval Received
         if vals.get("x_studio_rug_approved") or vals.get("x_studio_rug_rejected"):
             for order in self:
                 self._move_ticket_to_stage(order, "Estimation Approval Received")
 
+    def _fix_repair_write_rug_approved_reprice_all(self, vals):
+        """RUG approved → reprice all lines to product cost price."""
         # RUG approved → reprice all lines to product cost price
         if vals.get("x_studio_rug_approved"):
             for order in self:
@@ -1939,8 +1940,6 @@ class SaleOrder(models.Model):
                         if line.product_id:
                             line.write({"price_unit": line.product_id.standard_price})
 
-    def _fix_repair_write_v277_task_id_was(self, vals):
-        """v277: task_id was just set (typical FSM task-create path) — re-evaluat."""
         # v277: task_id was just set (typical FSM task-create path) —
         # re-evaluate quotation-type auto-detect. Idempotent on the
         # helper side (already-set records skip themselves).
@@ -1961,12 +1960,14 @@ class SaleOrder(models.Model):
             "x_studio_unlocked",
             "x_studio_re_estimate_count",
         }
+        return lock_triggers
+
+    def _fix_repair_write_part_5(self, lock_triggers, vals):
+        """Part of write."""
         if lock_triggers & set(vals or ()):
             if not self.env.context.get("_fix_repair_track_lock"):
                 self._fix_repair_apply_track_lock_status()
 
-    def _fix_repair_write_v287_propagate_x_studio(self, vals):
-        """v287: propagate x_studio_rug_confirmed changes to child invoices. The ."""
         # v287: propagate x_studio_rug_confirmed changes to child
         # invoices. The invoice-side stored compute (in Fix-repair's
         # account_move.py) only depends on `invoice_origin` +
