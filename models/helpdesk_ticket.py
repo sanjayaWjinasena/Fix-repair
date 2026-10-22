@@ -1982,975 +1982,1037 @@ class HelpdeskTicket(models.Model):
     def _get_view(self, view_id=None, view_type="form", **options):
         arch, view = super()._get_view(view_id, view_type, **options)
         if view_type == "form":
-            # Inject computed/Studio fields used in button conditions below
-            # that may not already be present in the arch.
-            #
-            # Every field referenced in a client-side `invisible=` /
-            # `readonly=` / `required=` modifier expression MUST also
-            # exist as a <field> element in the view — otherwise the
-            # client evaluator raises "Name '<field>' is not defined"
-            # at render time. On Jinasena production those fields are
-            # visible via Studio's own view inherits; on stand-alone
-            # installs the base helpdesk.ticket arch doesn't include
-            # them, so we inject invisible sentinels here.
-            for sheet in arch.xpath("//sheet"):
-                for fname in (
-                    "has_return_picking",
-                    "x_studio_normal_repair_without_serial_no",
-                    "x_studio_job_location",
-                    "so_fully_paid",
-                    "is_tested_ok",
-                    "is_so_cancelled",
-                    "task_done",
-                    "has_ready_dispatch_picking",
-                    # v1 on Fields-disable branch: x_ticket_locked
-                    # flips True once any repair-flow picking on this
-                    # ticket has been validated (state='done'). Used
-                    # by the readonly loop below to freeze every
-                    # editable field on the form so the intake data
-                    # captured before first movement stays a truthful
-                    # record.
-                    "x_ticket_locked",
-                    # v232: fields referenced by the header-button
-                    # invisible= expressions written further down.
-                    # Client-side modifier eval requires these to
-                    # appear in the view so their values are fetched.
-                    "x_studio_rug_repair",
-                    "x_studio_rug_confirmed",
-                    "x_studio_valid_return",
-                    "x_studio_serial_no",
-                    "x_studio_repair_reason",
-                    "x_studio_warranty_card",
-                    "x_studio_pick_id",
-                    "repair_stage_state",
-                    "use_fsm",
-                    "fsm_task_count",
-                    # v294: fields referenced by the v293 visible-field
-                    # readonly= expressions further down (ticket_type_id
-                    # / return_receipt_location / repair_reason /
-                    # partner_email etc.). Owl's modifier evaluator
-                    # crashes with "Name '<field>' is not defined" if
-                    # any of them isn't in the composed arch.
-                    "x_studio_rug_approved",
-                    "x_studio_rug_request_sent",
-                    "x_studio_repair_serial_created",
-                    "x_studio_cancelled",
-                    "x_studio_stage_name",
-                    "x_studio_valid_confirm_return",
-                    # v295: fields referenced by the Customer Name /
-                    # Serial Number / Product / Valid Return / Lot
-                    # invisible+readonly expressions further down.
-                    # `x_studio_tracking` gates the Serial visibility;
-                    # the three `use_*` helpdesk.team booleans gate the
-                    # Product / Valid Return / Lot cluster.
-                    "x_studio_tracking",
-                    "use_credit_notes",
-                    "use_product_returns",
-                    "use_product_repairs",
-                ):
-                    if not arch.xpath(f"//field[@name='{fname}']"):
-                        fld = etree.Element("field")
-                        fld.set("name", fname)
-                        fld.set("invisible", "1")
-                        sheet.insert(0, fld)
-                break
-
-            # v303: hide the Coupon button contributed by the
-            # `sale_loyalty` / helpdesk-sale-loyalty stock module.
-            # Clear-DB has no such button in its composed header (the
-            # loyalty module isn't installed there), so a fresh-install
-            # standalone should match. Cannot xpath by action id
-            # (auto-assigned, was 1750 on standalone) — match by string
-            # label + type='action' instead. Safe because no custom
-            # button uses that combo.
-            for btn in arch.xpath(
-                "//header/button[@string='Coupon' and @type='action']"
-            ):
-                btn.set("invisible", "1")
-
-            # Recolour Return (action 195) and Plan Intervention
-            # (action_generate_fsm_task) buttons to primary purple.
-            # Done here in Python instead of in the XML inherit
-            # because both buttons live in downstream inherits
-            # (helpdesk_stock adds 195, helpdesk_fsm adds
-            # action_generate_fsm_task) — not the direct parent view
-            # helpdesk_ticket_views.xml points at. XML xpath fails
-            # install-time validation for buttons not in the direct
-            # parent; the _get_view Python path operates on the
-            # fully-merged arch so the buttons are always resolvable.
-            for btn_name in ("195", "action_generate_fsm_task"):
-                for btn_el in arch.xpath(f"//button[@name='{btn_name}']"):
-                    btn_el.set("class", "btn-primary")
-
-            # Freeze all form fields once the first repair movement
-            # is done. The workflow buttons in the header (Send to
-            # Factory / Received at Factory / etc.), smart buttons
-            # (Tasks / Movements), Print gear, and Back / × close
-            # actions all stay live because they're not <field>
-            # elements. Only data fields get the readonly gate.
-            #
-            # Preserves any existing readonly expression per field
-            # via "(existing) or x_ticket_locked" so field-specific
-            # readonly gates (Studio's own, or product_id /
-            # user_id above) keep firing before the ticket-level
-            # freeze kicks in.
-            #
-            # xpath scope: direct fields inside <sheet> only, NOT
-            # fields nested in another field's embedded view (one2many
-            # sub-lists for messages, followers, fsm_task_ids etc.).
-            # Subrecords are on other models that don't have
-            # x_ticket_locked — stamping the expression on them would
-            # raise "Name not defined" when Odoo's ListRenderer
-            # evaluates it per-cell (owl lifecycle crash).
-            for field_el in arch.xpath("//sheet//field[not(ancestor::field)]"):
-                # Skip fields we've injected purely as markers
-                # (invisible=1 with no display) — no user
-                # interaction on them, no point stamping readonly.
-                if field_el.get("invisible") == "1":
-                    continue
-                existing = field_el.get("readonly", "")
-                extra = "x_ticket_locked"
-                field_el.set(
-                    "readonly",
-                    f"({existing}) or {extra}" if existing else extra,
+            self._fix_repair_get_view_inject_computed_studio_fields(arch)
+            self._fix_repair_get_view_freeze_all_form_fields(arch)
+            self._fix_repair_get_view_assign_me_hide_soon(arch)
+            self._fix_repair_get_view_part_4(arch)
+            cust_loc = self._fix_repair_get_view_send_sales_centre_visible(arch)
+            btn_context, return_btns = self._fix_repair_get_view_part_6(arch, cust_loc)
+            self._fix_repair_get_view_part_7(arch, btn_context, return_btns)
+            _reposition_or_create = self._fix_repair_get_view_sale_order_id_exists(arch)
+            assignee_anchor = self._fix_repair_get_view_move_ticket_type_id(arch)
+            partner_nodes = self._fix_repair_get_view_part_10(
+                _reposition_or_create, arch, assignee_anchor
+            )
+            already_has_factory_notebook, primary_groups = (
+                self._fix_repair_get_view_part_11(
+                    _reposition_or_create, arch, partner_nodes
                 )
+            )
+            serial_anchor = self._fix_repair_get_view_part_12(
+                _reposition_or_create,
+                already_has_factory_notebook,
+                arch,
+                primary_groups,
+            )
+            self._fix_repair_get_view_part_13(
+                _reposition_or_create, arch, serial_anchor
+            )
+        return arch, view
 
-            # product_id: manually selectable (serial-tracked products only) for
-            # the "Without Serial No" ticket type; readonly for all other types
-            # where product is auto-populated from x_studio_serial_no.
-            for field in arch.xpath("//field[@name='product_id']"):
-                field.set("readonly", "not x_studio_normal_repair_without_serial_no")
-                field.set(
-                    "domain",
-                    "[('tracking', '=', 'serial')] "
-                    "if x_studio_normal_repair_without_serial_no else []",
-                )
-
-            # Assigned-to user: always readonly. The Assign to Me button is the
-            # only way to change it (so reassignment is intentional, not a
-            # stray click on the dropdown).
-            for field in arch.xpath("//field[@name='user_id']"):
-                field.set("readonly", "1")
-
-            # Ticket ID (`name` — displays as REPAIR/YYYY/NNNNN): always
-            # readonly. The sequence-based name is assigned by
-            # _repair_seq_no_on_create_or_write when the record hits
-            # create(), so there's no legitimate reason for the operator
-            # to type anything in the title field. Leaving it editable
-            # meant a stray keystroke on the New ticket form would
-            # override the sequence hook (which only fires when the
-            # value is 'New' or empty) and freeze the ticket with an
-            # arbitrary human-typed name. Readonly on the arch is
-            # simpler and safer than adding create/write guards.
-            for field in arch.xpath("//field[@name='name']"):
-                field.set("readonly", "1")
-
-            # Assign to Me: hide as soon as ANY user is assigned (previously
-            # only hidden when assigned to the current user — meaning logged-in
-            # users could re-grab a ticket from someone else with one click).
-            for btn in arch.xpath("//button[@name='action_assign_to_me']"):
-                btn.set("invisible", "user_id")
-
-            # Required-fields gate (same fields the Return button needs):
-            #   • A user must first claim the ticket (Assign to Me) — the
-            #     button stays clickable on a brand-new ticket because no
-            #     other field is required yet.
-            #   • Once assigned (user_id set), ticket_type_id becomes required.
-            #   • Once a type is picked, the rest become required so the ticket
-            #     can't be saved in a half-filled state that would also leave
-            #     the Return button hidden.
-            #   • Serial number is NOT required for the Without Serial No
-            #     type — that flow generates the serial via the Create Serial
-            #     No button, which needs to be clickable before x_studio_serial_no
-            #     can be populated.
-            #   • Warranty card is required only on RUG-confirmed tickets.
-            for field in arch.xpath("//field[@name='ticket_type_id']"):
-                field.set("required", "user_id")
+    def _fix_repair_get_view_inject_computed_studio_fields(self, arch):
+        """Inject computed/Studio fields used in button conditions below that may."""
+        # Inject computed/Studio fields used in button conditions below
+        # that may not already be present in the arch.
+        #
+        # Every field referenced in a client-side `invisible=` /
+        # `readonly=` / `required=` modifier expression MUST also
+        # exist as a <field> element in the view — otherwise the
+        # client evaluator raises "Name '<field>' is not defined"
+        # at render time. On Jinasena production those fields are
+        # visible via Studio's own view inherits; on stand-alone
+        # installs the base helpdesk.ticket arch doesn't include
+        # them, so we inject invisible sentinels here.
+        for sheet in arch.xpath("//sheet"):
             for fname in (
-                "partner_id",
+                "has_return_picking",
+                "x_studio_normal_repair_without_serial_no",
                 "x_studio_job_location",
+                "so_fully_paid",
+                "is_tested_ok",
+                "is_so_cancelled",
+                "task_done",
+                "has_ready_dispatch_picking",
+                # v1 on Fields-disable branch: x_ticket_locked
+                # flips True once any repair-flow picking on this
+                # ticket has been validated (state='done'). Used
+                # by the readonly loop below to freeze every
+                # editable field on the form so the intake data
+                # captured before first movement stays a truthful
+                # record.
+                "x_ticket_locked",
+                # v232: fields referenced by the header-button
+                # invisible= expressions written further down.
+                # Client-side modifier eval requires these to
+                # appear in the view so their values are fetched.
+                "x_studio_rug_repair",
+                "x_studio_rug_confirmed",
+                "x_studio_valid_return",
+                "x_studio_serial_no",
                 "x_studio_repair_reason",
-                "product_id",
+                "x_studio_warranty_card",
+                "x_studio_pick_id",
+                "repair_stage_state",
+                "use_fsm",
+                "fsm_task_count",
+                # v294: fields referenced by the v293 visible-field
+                # readonly= expressions further down (ticket_type_id
+                # / return_receipt_location / repair_reason /
+                # partner_email etc.). Owl's modifier evaluator
+                # crashes with "Name '<field>' is not defined" if
+                # any of them isn't in the composed arch.
+                "x_studio_rug_approved",
+                "x_studio_rug_request_sent",
+                "x_studio_repair_serial_created",
+                "x_studio_cancelled",
+                "x_studio_stage_name",
+                "x_studio_valid_confirm_return",
+                # v295: fields referenced by the Customer Name /
+                # Serial Number / Product / Valid Return / Lot
+                # invisible+readonly expressions further down.
+                # `x_studio_tracking` gates the Serial visibility;
+                # the three `use_*` helpdesk.team booleans gate the
+                # Product / Valid Return / Lot cluster.
+                "x_studio_tracking",
+                "use_credit_notes",
+                "use_product_returns",
+                "use_product_repairs",
             ):
-                for field in arch.xpath(f"//field[@name='{fname}']"):
-                    field.set("required", "ticket_type_id")
-            for field in arch.xpath("//field[@name='x_studio_serial_no']"):
-                field.set(
-                    "required",
-                    "ticket_type_id and not x_studio_normal_repair_without_serial_no",
-                )
-            for field in arch.xpath("//field[@name='x_studio_warranty_card']"):
-                field.set("required", "x_studio_rug_confirmed")
+                if not arch.xpath(f"//field[@name='{fname}']"):
+                    fld = etree.Element("field")
+                    fld.set("name", fname)
+                    fld.set("invisible", "1")
+                    sheet.insert(0, fld)
+            break
 
-            # Create Serial No button — Without Serial No type only, once product is set
-            # and no serial has been created yet.
-            for header in arch.xpath("//header"):
-                btn = etree.Element("button")
-                btn.set("name", "action_create_repair_serial")
-                btn.set("string", "Create Serial No")
-                btn.set("type", "object")
-                # Primary purple to match the rest of the repair header
-                # buttons (Assign to Me, Return, Dispatch, Plan
-                # Intervention, Mark as Done). btn-primary keeps this
-                # button visually in the same tier — it's part of the
-                # stage-progression flow, not a secondary utility.
-                btn.set("class", "btn-primary")
-                # Visible only on Without-Serial-No tickets that have a
-                # product set AND no serial linked yet. Hides as soon as
-                # x_studio_serial_no is populated (after a click).
-                btn.set(
-                    "invisible",
-                    "not x_studio_normal_repair_without_serial_no "
-                    "or not product_id "
-                    "or x_studio_serial_no",
-                )
-                header.insert(0, btn)
+        # v303: hide the Coupon button contributed by the
+        # `sale_loyalty` / helpdesk-sale-loyalty stock module.
+        # Clear-DB has no such button in its composed header (the
+        # loyalty module isn't installed there), so a fresh-install
+        # standalone should match. Cannot xpath by action id
+        # (auto-assigned, was 1750 on standalone) — match by string
+        # label + type='action' instead. Safe because no custom
+        # button uses that combo.
+        for btn in arch.xpath("//header/button[@string='Coupon' and @type='action']"):
+            btn.set("invisible", "1")
+
+        # Recolour Return (action 195) and Plan Intervention
+        # (action_generate_fsm_task) buttons to primary purple.
+        # Done here in Python instead of in the XML inherit
+        # because both buttons live in downstream inherits
+        # (helpdesk_stock adds 195, helpdesk_fsm adds
+        # action_generate_fsm_task) — not the direct parent view
+        # helpdesk_ticket_views.xml points at. XML xpath fails
+        # install-time validation for buttons not in the direct
+        # parent; the _get_view Python path operates on the
+        # fully-merged arch so the buttons are always resolvable.
+        for btn_name in ("195", "action_generate_fsm_task"):
+            for btn_el in arch.xpath(f"//button[@name='{btn_name}']"):
+                btn_el.set("class", "btn-primary")
+
+    def _fix_repair_get_view_freeze_all_form_fields(self, arch):
+        """Freeze all form fields once the first repair movement is done. The wor."""
+        # Freeze all form fields once the first repair movement
+        # is done. The workflow buttons in the header (Send to
+        # Factory / Received at Factory / etc.), smart buttons
+        # (Tasks / Movements), Print gear, and Back / × close
+        # actions all stay live because they're not <field>
+        # elements. Only data fields get the readonly gate.
+        #
+        # Preserves any existing readonly expression per field
+        # via "(existing) or x_ticket_locked" so field-specific
+        # readonly gates (Studio's own, or product_id /
+        # user_id above) keep firing before the ticket-level
+        # freeze kicks in.
+        #
+        # xpath scope: direct fields inside <sheet> only, NOT
+        # fields nested in another field's embedded view (one2many
+        # sub-lists for messages, followers, fsm_task_ids etc.).
+        # Subrecords are on other models that don't have
+        # x_ticket_locked — stamping the expression on them would
+        # raise "Name not defined" when Odoo's ListRenderer
+        # evaluates it per-cell (owl lifecycle crash).
+        for field_el in arch.xpath("//sheet//field[not(ancestor::field)]"):
+            # Skip fields we've injected purely as markers
+            # (invisible=1 with no display) — no user
+            # interaction on them, no point stamping readonly.
+            if field_el.get("invisible") == "1":
+                continue
+            existing = field_el.get("readonly", "")
+            extra = "x_ticket_locked"
+            field_el.set(
+                "readonly",
+                f"({existing}) or {extra}" if existing else extra,
+            )
+
+        # product_id: manually selectable (serial-tracked products only) for
+        # the "Without Serial No" ticket type; readonly for all other types
+        # where product is auto-populated from x_studio_serial_no.
+        for field in arch.xpath("//field[@name='product_id']"):
+            field.set("readonly", "not x_studio_normal_repair_without_serial_no")
+            field.set(
+                "domain",
+                "[('tracking', '=', 'serial')] "
+                "if x_studio_normal_repair_without_serial_no else []",
+            )
+
+        # Assigned-to user: always readonly. The Assign to Me button is the
+        # only way to change it (so reassignment is intentional, not a
+        # stray click on the dropdown).
+        for field in arch.xpath("//field[@name='user_id']"):
+            field.set("readonly", "1")
+
+        # Ticket ID (`name` — displays as REPAIR/YYYY/NNNNN): always
+        # readonly. The sequence-based name is assigned by
+        # _repair_seq_no_on_create_or_write when the record hits
+        # create(), so there's no legitimate reason for the operator
+        # to type anything in the title field. Leaving it editable
+        # meant a stray keystroke on the New ticket form would
+        # override the sequence hook (which only fires when the
+        # value is 'New' or empty) and freeze the ticket with an
+        # arbitrary human-typed name. Readonly on the arch is
+        # simpler and safer than adding create/write guards.
+        for field in arch.xpath("//field[@name='name']"):
+            field.set("readonly", "1")
+
+    def _fix_repair_get_view_assign_me_hide_soon(self, arch):
+        """Assign to Me: hide as soon as ANY user is assigned (previously only hi."""
+        # Assign to Me: hide as soon as ANY user is assigned (previously
+        # only hidden when assigned to the current user — meaning logged-in
+        # users could re-grab a ticket from someone else with one click).
+        for btn in arch.xpath("//button[@name='action_assign_to_me']"):
+            btn.set("invisible", "user_id")
+
+        # Required-fields gate (same fields the Return button needs):
+        #   • A user must first claim the ticket (Assign to Me) — the
+        #     button stays clickable on a brand-new ticket because no
+        #     other field is required yet.
+        #   • Once assigned (user_id set), ticket_type_id becomes required.
+        #   • Once a type is picked, the rest become required so the ticket
+        #     can't be saved in a half-filled state that would also leave
+        #     the Return button hidden.
+        #   • Serial number is NOT required for the Without Serial No
+        #     type — that flow generates the serial via the Create Serial
+        #     No button, which needs to be clickable before x_studio_serial_no
+        #     can be populated.
+        #   • Warranty card is required only on RUG-confirmed tickets.
+        for field in arch.xpath("//field[@name='ticket_type_id']"):
+            field.set("required", "user_id")
+        for fname in (
+            "partner_id",
+            "x_studio_job_location",
+            "x_studio_repair_reason",
+            "product_id",
+        ):
+            for field in arch.xpath(f"//field[@name='{fname}']"):
+                field.set("required", "ticket_type_id")
+        for field in arch.xpath("//field[@name='x_studio_serial_no']"):
+            field.set(
+                "required",
+                "ticket_type_id and not x_studio_normal_repair_without_serial_no",
+            )
+
+    def _fix_repair_get_view_part_4(self, arch):
+        """Part of _get_view."""
+        for field in arch.xpath("//field[@name='x_studio_warranty_card']"):
+            field.set("required", "x_studio_rug_confirmed")
+
+        # Create Serial No button — Without Serial No type only, once product is set
+        # and no serial has been created yet.
+        for header in arch.xpath("//header"):
+            btn = etree.Element("button")
+            btn.set("name", "action_create_repair_serial")
+            btn.set("string", "Create Serial No")
+            btn.set("type", "object")
+            # Primary purple to match the rest of the repair header
+            # buttons (Assign to Me, Return, Dispatch, Plan
+            # Intervention, Mark as Done). btn-primary keeps this
+            # button visually in the same tier — it's part of the
+            # stage-progression flow, not a secondary utility.
+            btn.set("class", "btn-primary")
+            # Visible only on Without-Serial-No tickets that have a
+            # product set AND no serial linked yet. Hides as soon as
+            # x_studio_serial_no is populated (after a click).
+            btn.set(
+                "invisible",
+                "not x_studio_normal_repair_without_serial_no "
+                "or not product_id "
+                "or x_studio_serial_no",
+            )
+            header.insert(0, btn)
+            break
+
+        # Restrict stage selection to the ticket's own company
+        for field in arch.xpath("//field[@name='stage_id']"):
+            field.set(
+                "domain",
+                "[('team_ids', 'in', [team_id]), "
+                "'|', ('x_studio_company_id', '=', company_id), "
+                "('x_studio_company_id', '=', False)]",
+            )
+
+        # Return Receipt Location: only show stock.locations where the
+        # ticket's Assigned-to user appears in Users (Stock Location).
+        # When the ticket is unassigned, show all locations.
+        for field in arch.xpath("//field[@name='x_studio_return_receipt_location']"):
+            field.set(
+                "domain",
+                "[('x_studio_users_stock_location', 'in', user_id)] if user_id else []",
+            )
+
+        # Change to RUG: visible on External-not-RUG tickets (rug_repair=True,
+        # rug_confirmed=False) that have a serial, at early stages only.
+        for header in arch.xpath("//header"):
+            btn = etree.Element("button")
+            btn.set("name", "action_change_to_rug")
+            btn.set("string", "Change to RUG")
+            btn.set("type", "object")
+            btn.set("class", "btn-secondary")
+            btn.set(
+                "invisible",
+                "not x_studio_rug_repair or "
+                "x_studio_rug_confirmed or "
+                "not x_studio_serial_no or "
+                "repair_stage_state not in ('new', 'sent_to_factory', 'received_at_factory')",
+            )
+            header.append(btn)
+            break
+
+    def _fix_repair_get_view_send_sales_centre_visible(self, arch):
+        """Send to Sales Centre: visible once Mark as Done has been clicked on th."""
+        # Send to Sales Centre: visible once Mark as Done has been
+        # clicked on the linked FSM task (task_done = True), and only
+        # while the ticket hasn't yet reached the Sales Centre. Once
+        # the user clicks the button the ticket moves to
+        # 'sent_to_sales_centre' and beyond, so we hide it there.
+        # Centre Repair still hidden — that flow skips the sales-centre
+        # trip entirely. Extra carve-out: when the SO is cancelled the
+        # ticket gets stuck at Estimation Sent to Customer, so we let
+        # Factory Repair surface the button there too (once Mark as
+        # Done is hit); the normal-flow at Estimation Sent to Customer
+        # stays hidden because is_so_cancelled is False.
+        for btn in arch.xpath("//button[@name='action_send_to_sales_centre']"):
+            btn.set(
+                "invisible",
+                "not task_done or "
+                "x_studio_job_location == 'Centre Repair' or "
+                "repair_stage_state in ('sent_to_sales_centre', "
+                "'received_at_sales_centre', 'other') or "
+                "(repair_stage_state == 'estimation_sent_to_customer' "
+                " and not is_so_cancelled)",
+            )
+
+        # Received at Sales Centre: hide for Centre Repair jobs.
+        for btn in arch.xpath("//button[@name='action_received_at_sales_centre']"):
+            existing = btn.get("invisible", "")
+            btn.set(
+                "invisible",
+                f"({existing}) or x_studio_job_location == 'Centre Repair'"
+                if existing
+                else "x_studio_job_location == 'Centre Repair'",
+            )
+
+        # Send to Factory: verbatim from Clear-DB Studio arch —
+        # visible only in New stage, only after the intake return
+        # picking exists, only for Factory Repair jobs. Confirmed
+        # against Clear-DB composed arch on 2026-08-28. v297 had
+        # relaxed the extras but Clear-DB actually keeps them, so
+        # v298 restores the stricter gate.
+        for btn in arch.xpath("//button[@name='action_send_to_factory']"):
+            btn.set(
+                "invisible",
+                "repair_stage_state != 'new' or "
+                "not has_return_picking or "
+                "x_studio_job_location != 'Factory Repair'",
+            )
+
+        # Plan Intervention:
+        #   Factory Repair → show at Received at Factory (item arrived at factory).
+        #   Centre Repair  → show in New stage once the item has been collected
+        #                    (has_return_picking), skipping the factory trip entirely.
+        # RUG tickets additionally require x_studio_valid_return before proceeding.
+        for btn in arch.xpath("//button[@name='action_generate_fsm_task']"):
+            btn.set(
+                "invisible",
+                "not use_fsm or "
+                "fsm_task_count > 0 or "
+                "(x_studio_rug_repair and not x_studio_valid_return) or "
+                "(x_studio_job_location == 'Factory Repair' and repair_stage_state != 'received_at_factory') or "
+                "(x_studio_job_location == 'Centre Repair' and (repair_stage_state != 'new' or not has_return_picking)) or "
+                "not x_studio_job_location",
+            )
+        # Return button — same action 195, two distinct popup behaviours:
+        #   New stage:                 default_ticket_id=id → wizard shows Sale Order
+        #                              group so user selects which delivery to reverse
+        #   Received at Sales Centre:  default_picking_id=x_studio_pick_id, no ticket_id
+        #                              → Sale Order group hidden, items pre-load from
+        #                              the picking; return location defaults to Customers
+        cust_loc = self.env.ref(
+            "stock.stock_location_customers", raise_if_not_found=False
+        )
+        return cust_loc
+
+    def _fix_repair_get_view_part_6(self, arch, cust_loc):
+        """Part of _get_view."""
+        cust_loc_id = cust_loc.id if cust_loc else 5
+        # default_location_id (Return Location) → Customer for any
+        # hand-back-to-customer scenario:
+        #   • Factory Repair  at Received at Sales Centre
+        #   • NUW with serial at Received at Sales Centre
+        #   • Centre Repair   at Repair Completed (Centre Repair skips
+        #     the factory trip — the item is already at the sales centre
+        #     by the time the ticket hits Repair Completed, so this is
+        #     equivalent to Received at Sales Centre for that flow).
+        ship_back_cond = (
+            "(repair_stage_state == 'received_at_sales_centre' "
+            "or (x_studio_job_location == 'Centre Repair' "
+            "and repair_stage_state == 'repair_completed'))"
+        )
+        btn_context = (
+            "{'default_ticket_id': (repair_stage_state == 'new' and id) or False, "
+            "'default_picking_id': x_studio_pick_id or False, "
+            "'default_partner_id': partner_id, "
+            f"'default_location_id': ({ship_back_cond} and {cust_loc_id}) or False, "
+            "'default_company_id': company_id}"
+        )
+        # v302: match the standard Return button by resolved
+        # action id + string fallback instead of the hardcoded
+        # `name='195'`. The base Odoo `stock` module's
+        # `stock.return.picking` window action carries a fresh
+        # ir.model.data auto-numbered id on every install; on
+        # Clear-DB it's 195, on the standalone dev env it's 853.
+        # A literal xpath on 195 silently skipped the retargeting
+        # on standalone — Fix-repair's Return + Dispatch buttons
+        # never landed there. Resolve at render time via env.ref,
+        # fall back to matching by string='Return' if the xmlid
+        # is missing (e.g. rebranded fork).
+        return_action = self.env.ref(
+            "stock.act_stock_return_picking",
+            raise_if_not_found=False,
+        )
+        return_ids = [str(return_action.id)] if return_action else []
+        return_btns = []
+        for candidate_id in return_ids:
+            return_btns.extend(arch.xpath(f"//header/button[@name='{candidate_id}']"))
+        return btn_context, return_btns
+
+    def _fix_repair_get_view_part_7(self, arch, btn_context, return_btns):
+        """Part of _get_view."""
+        if not return_btns:
+            # Fallback: string match. Restricts to the Odoo-stock-
+            # provided Return button (string="Return" on English
+            # locale); anything else with string="Return" is
+            # unlikely inside a helpdesk.ticket header.
+            return_btns = arch.xpath(
+                "//header/button[@string='Return' and @type='action']"
+            )
+        for btn in return_btns:
+            # v298: verbatim from Clear-DB Studio arch. Confirmed
+            # against the composed helpdesk.ticket form arch on
+            # Clear-DB (2026-08-28). Every field in this expression
+            # is a required prerequisite for the return picking
+            # flow — Studio was strict on purpose, so the operator
+            # can't kick off a return until the ticket carries
+            # every downstream reference the wizard needs.
+            #
+            # v297 had relaxed this to just `has_return_picking`,
+            # but the Clear-DB match is the strict form below —
+            # v298 restores it.
+            btn.set(
+                "invisible",
+                "has_return_picking or "
+                "not partner_id or "
+                "not ticket_type_id or "
+                "not x_studio_job_location or "
+                "not x_studio_repair_reason or "
+                "not x_studio_serial_no or "
+                "not product_id or "
+                "(x_studio_rug_confirmed and not x_studio_warranty_card)",
+            )
+            btn.set("context", btn_context)
+            # Retarget the Return button from action 195 (which opens
+            # the stock.return.picking wizard modal) to our own
+            # helpdesk.ticket method that runs the wizard flow
+            # server-side and returns the act_window landing on the
+            # freshly-created RET picking. One click, no popup.
+            #
+            # Only the Return button is retargeted here — the
+            # Dispatch sibling created below still points at action
+            # 195 (kept as a fallback for that flow; the wizard
+            # opens with a real source picking already selected,
+            # which is a slightly different UX shape).
+            btn.set("type", "object")
+            btn.set("name", "fix_repair_action_direct_return")
+            # Add Dispatch sibling — bound to our own direct-Dispatch
+            # method so the wizard popup is skipped for that step too.
+            # v215 change: was action 195 (opens the standard wizard);
+            # now points at fix_repair_action_direct_dispatch which
+            # reproduces the interactive Dispatch context (ticket_id
+            # unset, picking_id = x_studio_pick_id, location_id
+            # deferred to super's compute = Customers) programmatically.
+            dispatch = etree.Element("button")
+            dispatch.set("name", "fix_repair_action_direct_dispatch")
+            dispatch.set("string", "Dispatch")
+            dispatch.set("type", "object")
+            # Match the Return / Assign to Me / Plan Intervention
+            # header buttons — all primary purple accent — instead of
+            # inheriting whatever class the Return button happens to
+            # carry at this point. Fixes a subtle fragility: if a
+            # future edit removes v200's Return recolour above,
+            # Dispatch would silently regress to whatever class
+            # Studio left on the base Return.
+            dispatch.set("class", "btn-primary")
+            # Dispatch visibility — three checks, all must pass:
+            #  1. has_return_picking (the item came in)
+            #  2. Payment-or-bypass: so_fully_paid OR is_tested_ok OR
+            #     is_so_cancelled (the latter two never invoice, so they
+            #     stand in for payment)
+            #  3. Stage + job-location match — normal flows plus an
+            #     extra Centre Repair case: when the SO is cancelled
+            #     the ticket gets stuck at Estimation Sent to Customer,
+            #     so Dispatch surfaces there once Mark as Done is hit.
+            dispatch.set(
+                "invisible",
+                "not has_return_picking or "
+                "has_ready_dispatch_picking or "
+                "(not so_fully_paid "
+                " and not is_tested_ok "
+                " and not is_so_cancelled) or "
+                "not ("
+                "(x_studio_job_location == 'Factory Repair' and repair_stage_state == 'received_at_sales_centre') or "
+                "(x_studio_job_location == 'Centre Repair' and repair_stage_state == 'repair_completed') or "
+                "(x_studio_normal_repair_with_serial_no and repair_stage_state == 'received_at_sales_centre') or "
+                "(x_studio_job_location == 'Centre Repair' and is_so_cancelled and task_done and repair_stage_state == 'estimation_sent_to_customer')"
+                ")",
+            )
+            dispatch.set("context", btn_context)
+            btn.addnext(dispatch)
+
+        # Serial Number: only show lots already issued via a sale order.
+        # sale_order_ids is non-stored so domain filters on it are ignored.
+        # is_issued is a virtual field with a _search that queries move lines.
+        serial_domain = "[('is_issued', '=', True)]"
+        serial_options = "{'no_create': True, 'no_quick_create': True}"
+        for field in arch.xpath("//field[@name='x_studio_serial_no']"):
+            field.set("domain", serial_domain)
+            field.set("options", serial_options)
+        for field in arch.xpath("//field[@name='lot_id']"):
+            field.set("domain", serial_domain)
+            field.set("options", serial_options)
+
+    def _fix_repair_get_view_sale_order_id_exists(self, arch):
+        """sale_order_id exists in the arch as invisible="1" (hidden input used b."""
+        # sale_order_id exists in the arch as invisible="1" (hidden input used
+        # by helpdesk_sale onchange machinery). Reposition it to appear right
+        # after x_studio_serial_no as a visible readonly field.
+        serial_nodes = arch.xpath("//field[@name='x_studio_serial_no']")
+        so_nodes = arch.xpath("//field[@name='sale_order_id']")
+        if serial_nodes and so_nodes:
+            so_node = so_nodes[0]
+            so_node.getparent().remove(so_node)
+            so_node.set("readonly", "1")
+            so_node.set("string", "Sales Order")
+            so_node.attrib.pop("invisible", None)
+            so_node.set("invisible", "not sale_order_id")
+            serial_nodes[0].addnext(so_node)
+
+        # ============================================================
+        # v293: port visible Studio field placements from Clear-DB
+        # view 4012.
+        #
+        # Background
+        # ----------
+        # helpdesk_ticket_studio_ported.xml was aggressively stripped
+        # in v292 down to just the ghost anchors + Warranty/Cancel
+        # notebook pages — the rest of the Clear-DB Studio arch
+        # (Return Receipt Location, Repair Location, Repair Reason,
+        # Job Location, Re-estimate Status/Count, Customer Email,
+        # Factory Repair Details notebook, etc.) failed install-time
+        # xpath validation because those xpaths targeted elements
+        # added by sibling module inherits (not the direct parent
+        # view) — Odoo rejected them silently, leaving fresh-install
+        # Fix-repair with the bare helpdesk.ticket form.
+        #
+        # Same pattern the buttons 195 / 2254 / 991 use: XML inherit
+        # can't reach them, so we place them here on the merged arch
+        # where every sibling module's own inherits have already
+        # been applied.
+        #
+        # Every readonly expression appends `or x_ticket_locked` so
+        # the ticket-lock freeze (see readonly loop above) still
+        # applies to these newly-visible fields — they were added
+        # after that loop ran.
+        # ============================================================
+
+        def _reposition_or_create(name, **attrs):
+            """Locate an existing <field name=name/> anywhere in the
+            arch, remove it (dropping every attribute except name),
+            re-set the given attributes and return the element ready
+            to be inserted at a target position. If no existing
+            element matches, create a fresh one.
+
+            Handles the case where the sentinel-injection loop above
+            already placed the field as invisible=1 at sheet[0]: we
+            take that element, wipe its attributes, and reuse it in
+            its Clear-DB-appropriate position.
+            """
+            existing = arch.xpath(f"//field[@name='{name}']")
+            if existing:
+                el = existing[0]
+                el.getparent().remove(el)
+                for k in list(el.attrib.keys()):
+                    if k != "name":
+                        del el.attrib[k]
+            else:
+                el = etree.Element("field")
+                el.set("name", name)
+            for k, v in attrs.items():
+                el.set(k, v)
+            return el
+
+        return _reposition_or_create
+
+    def _fix_repair_get_view_move_ticket_type_id(self, arch):
+        """---- Move ticket_type_id after user_id ------------------- Clear-DB la."""
+        # ---- Move ticket_type_id after user_id -------------------
+        # Clear-DB layout groups ticket_type_id with the assignee
+        # rather than leaving it at the top. Do this BEFORE inserting
+        # the fields below so the domain_user_ids anchor sits in the
+        # expected place.
+        user_id_slots = arch.xpath("//sheet//group[1]/group[1]/field[@name='user_id']")
+        tt_nodes = arch.xpath("//field[@name='ticket_type_id']")
+        if user_id_slots and tt_nodes:
+            tt = tt_nodes[0]
+            tt.getparent().remove(tt)
+            tt.set("force_save", "1")
+            tt.set("required", "user_id")
+            tt.set(
+                "readonly",
+                "x_studio_rug_approved == True or "
+                "x_studio_rug_request_sent == True or "
+                "x_studio_repair_serial_created == True or "
+                "x_studio_valid_return == True or "
+                "x_studio_cancelled == True or "
+                "not user_id or "
+                'x_studio_stage_name != "New" or '
+                "x_ticket_locked",
+            )
+            user_id_slots[0].addnext(tt)
+
+        # ---- Anchor after which we drop the assignee-block fields.
+        # domain_user_ids is added by helpdesk_fsm; on very bare
+        # installs it might not exist, so we fall back to user_id.
+        anchor_xpath_candidates = (
+            "//field[@name='domain_user_ids']",
+            "//sheet//group[1]/group[1]/field[@name='user_id']",
+        )
+        assignee_anchor = None
+        for xp in anchor_xpath_candidates:
+            matches = arch.xpath(xp)
+            if matches:
+                assignee_anchor = matches[-1]
                 break
+        return assignee_anchor
 
-            # Restrict stage selection to the ticket's own company
-            for field in arch.xpath("//field[@name='stage_id']"):
-                field.set(
-                    "domain",
-                    "[('team_ids', 'in', [team_id]), "
-                    "'|', ('x_studio_company_id', '=', company_id), "
-                    "('x_studio_company_id', '=', False)]",
-                )
+    def _fix_repair_get_view_part_10(
+        self, _reposition_or_create, arch, assignee_anchor
+    ):
+        """Part of _get_view."""
+        if assignee_anchor is not None:
+            # Fields to insert in Clear-DB order.
+            # addnext inserts immediately after — build a list and
+            # iterate in reverse so each new element ends up right
+            # after the anchor in the correct order.
+            new_fields = []
 
-            # Return Receipt Location: only show stock.locations where the
-            # ticket's Assigned-to user appears in Users (Stock Location).
-            # When the ticket is unassigned, show all locations.
-            for field in arch.xpath(
-                "//field[@name='x_studio_return_receipt_location']"
+            # Four Studio ticket-type status booleans, visible only
+            # when True (matching Clear-DB's `X != True` invisible
+            # expression). Each doubles as its own indicator badge.
+            for bool_name in (
+                "x_studio_rug_repair",
+                "x_studio_rug_confirmed",
+                "x_studio_normal_repair_with_serial_no",
+                "x_studio_normal_repair_without_serial_no",
             ):
-                field.set(
-                    "domain",
-                    "[('x_studio_users_stock_location', 'in', user_id)] if user_id else []",
-                )
-
-            # Change to RUG: visible on External-not-RUG tickets (rug_repair=True,
-            # rug_confirmed=False) that have a serial, at early stages only.
-            for header in arch.xpath("//header"):
-                btn = etree.Element("button")
-                btn.set("name", "action_change_to_rug")
-                btn.set("string", "Change to RUG")
-                btn.set("type", "object")
-                btn.set("class", "btn-secondary")
-                btn.set(
-                    "invisible",
-                    "not x_studio_rug_repair or "
-                    "x_studio_rug_confirmed or "
-                    "not x_studio_serial_no or "
-                    "repair_stage_state not in ('new', 'sent_to_factory', 'received_at_factory')",
-                )
-                header.append(btn)
-                break
-
-            # Send to Sales Centre: visible once Mark as Done has been
-            # clicked on the linked FSM task (task_done = True), and only
-            # while the ticket hasn't yet reached the Sales Centre. Once
-            # the user clicks the button the ticket moves to
-            # 'sent_to_sales_centre' and beyond, so we hide it there.
-            # Centre Repair still hidden — that flow skips the sales-centre
-            # trip entirely. Extra carve-out: when the SO is cancelled the
-            # ticket gets stuck at Estimation Sent to Customer, so we let
-            # Factory Repair surface the button there too (once Mark as
-            # Done is hit); the normal-flow at Estimation Sent to Customer
-            # stays hidden because is_so_cancelled is False.
-            for btn in arch.xpath("//button[@name='action_send_to_sales_centre']"):
-                btn.set(
-                    "invisible",
-                    "not task_done or "
-                    "x_studio_job_location == 'Centre Repair' or "
-                    "repair_stage_state in ('sent_to_sales_centre', "
-                    "'received_at_sales_centre', 'other') or "
-                    "(repair_stage_state == 'estimation_sent_to_customer' "
-                    " and not is_so_cancelled)",
-                )
-
-            # Received at Sales Centre: hide for Centre Repair jobs.
-            for btn in arch.xpath("//button[@name='action_received_at_sales_centre']"):
-                existing = btn.get("invisible", "")
-                btn.set(
-                    "invisible",
-                    f"({existing}) or x_studio_job_location == 'Centre Repair'"
-                    if existing
-                    else "x_studio_job_location == 'Centre Repair'",
-                )
-
-            # Send to Factory: verbatim from Clear-DB Studio arch —
-            # visible only in New stage, only after the intake return
-            # picking exists, only for Factory Repair jobs. Confirmed
-            # against Clear-DB composed arch on 2026-08-28. v297 had
-            # relaxed the extras but Clear-DB actually keeps them, so
-            # v298 restores the stricter gate.
-            for btn in arch.xpath("//button[@name='action_send_to_factory']"):
-                btn.set(
-                    "invisible",
-                    "repair_stage_state != 'new' or "
-                    "not has_return_picking or "
-                    "x_studio_job_location != 'Factory Repair'",
-                )
-
-            # Plan Intervention:
-            #   Factory Repair → show at Received at Factory (item arrived at factory).
-            #   Centre Repair  → show in New stage once the item has been collected
-            #                    (has_return_picking), skipping the factory trip entirely.
-            # RUG tickets additionally require x_studio_valid_return before proceeding.
-            for btn in arch.xpath("//button[@name='action_generate_fsm_task']"):
-                btn.set(
-                    "invisible",
-                    "not use_fsm or "
-                    "fsm_task_count > 0 or "
-                    "(x_studio_rug_repair and not x_studio_valid_return) or "
-                    "(x_studio_job_location == 'Factory Repair' and repair_stage_state != 'received_at_factory') or "
-                    "(x_studio_job_location == 'Centre Repair' and (repair_stage_state != 'new' or not has_return_picking)) or "
-                    "not x_studio_job_location",
-                )
-            # Return button — same action 195, two distinct popup behaviours:
-            #   New stage:                 default_ticket_id=id → wizard shows Sale Order
-            #                              group so user selects which delivery to reverse
-            #   Received at Sales Centre:  default_picking_id=x_studio_pick_id, no ticket_id
-            #                              → Sale Order group hidden, items pre-load from
-            #                              the picking; return location defaults to Customers
-            cust_loc = self.env.ref(
-                "stock.stock_location_customers", raise_if_not_found=False
-            )
-            cust_loc_id = cust_loc.id if cust_loc else 5
-            # default_location_id (Return Location) → Customer for any
-            # hand-back-to-customer scenario:
-            #   • Factory Repair  at Received at Sales Centre
-            #   • NUW with serial at Received at Sales Centre
-            #   • Centre Repair   at Repair Completed (Centre Repair skips
-            #     the factory trip — the item is already at the sales centre
-            #     by the time the ticket hits Repair Completed, so this is
-            #     equivalent to Received at Sales Centre for that flow).
-            ship_back_cond = (
-                "(repair_stage_state == 'received_at_sales_centre' "
-                "or (x_studio_job_location == 'Centre Repair' "
-                "and repair_stage_state == 'repair_completed'))"
-            )
-            btn_context = (
-                "{'default_ticket_id': (repair_stage_state == 'new' and id) or False, "
-                "'default_picking_id': x_studio_pick_id or False, "
-                "'default_partner_id': partner_id, "
-                f"'default_location_id': ({ship_back_cond} and {cust_loc_id}) or False, "
-                "'default_company_id': company_id}"
-            )
-            # v302: match the standard Return button by resolved
-            # action id + string fallback instead of the hardcoded
-            # `name='195'`. The base Odoo `stock` module's
-            # `stock.return.picking` window action carries a fresh
-            # ir.model.data auto-numbered id on every install; on
-            # Clear-DB it's 195, on the standalone dev env it's 853.
-            # A literal xpath on 195 silently skipped the retargeting
-            # on standalone — Fix-repair's Return + Dispatch buttons
-            # never landed there. Resolve at render time via env.ref,
-            # fall back to matching by string='Return' if the xmlid
-            # is missing (e.g. rebranded fork).
-            return_action = self.env.ref(
-                "stock.act_stock_return_picking",
-                raise_if_not_found=False,
-            )
-            return_ids = [str(return_action.id)] if return_action else []
-            return_btns = []
-            for candidate_id in return_ids:
-                return_btns.extend(
-                    arch.xpath(f"//header/button[@name='{candidate_id}']")
-                )
-            if not return_btns:
-                # Fallback: string match. Restricts to the Odoo-stock-
-                # provided Return button (string="Return" on English
-                # locale); anything else with string="Return" is
-                # unlikely inside a helpdesk.ticket header.
-                return_btns = arch.xpath(
-                    "//header/button[@string='Return' and @type='action']"
-                )
-            for btn in return_btns:
-                # v298: verbatim from Clear-DB Studio arch. Confirmed
-                # against the composed helpdesk.ticket form arch on
-                # Clear-DB (2026-08-28). Every field in this expression
-                # is a required prerequisite for the return picking
-                # flow — Studio was strict on purpose, so the operator
-                # can't kick off a return until the ticket carries
-                # every downstream reference the wizard needs.
-                #
-                # v297 had relaxed this to just `has_return_picking`,
-                # but the Clear-DB match is the strict form below —
-                # v298 restores it.
-                btn.set(
-                    "invisible",
-                    "has_return_picking or "
-                    "not partner_id or "
-                    "not ticket_type_id or "
-                    "not x_studio_job_location or "
-                    "not x_studio_repair_reason or "
-                    "not x_studio_serial_no or "
-                    "not product_id or "
-                    "(x_studio_rug_confirmed and not x_studio_warranty_card)",
-                )
-                btn.set("context", btn_context)
-                # Retarget the Return button from action 195 (which opens
-                # the stock.return.picking wizard modal) to our own
-                # helpdesk.ticket method that runs the wizard flow
-                # server-side and returns the act_window landing on the
-                # freshly-created RET picking. One click, no popup.
-                #
-                # Only the Return button is retargeted here — the
-                # Dispatch sibling created below still points at action
-                # 195 (kept as a fallback for that flow; the wizard
-                # opens with a real source picking already selected,
-                # which is a slightly different UX shape).
-                btn.set("type", "object")
-                btn.set("name", "fix_repair_action_direct_return")
-                # Add Dispatch sibling — bound to our own direct-Dispatch
-                # method so the wizard popup is skipped for that step too.
-                # v215 change: was action 195 (opens the standard wizard);
-                # now points at fix_repair_action_direct_dispatch which
-                # reproduces the interactive Dispatch context (ticket_id
-                # unset, picking_id = x_studio_pick_id, location_id
-                # deferred to super's compute = Customers) programmatically.
-                dispatch = etree.Element("button")
-                dispatch.set("name", "fix_repair_action_direct_dispatch")
-                dispatch.set("string", "Dispatch")
-                dispatch.set("type", "object")
-                # Match the Return / Assign to Me / Plan Intervention
-                # header buttons — all primary purple accent — instead of
-                # inheriting whatever class the Return button happens to
-                # carry at this point. Fixes a subtle fragility: if a
-                # future edit removes v200's Return recolour above,
-                # Dispatch would silently regress to whatever class
-                # Studio left on the base Return.
-                dispatch.set("class", "btn-primary")
-                # Dispatch visibility — three checks, all must pass:
-                #  1. has_return_picking (the item came in)
-                #  2. Payment-or-bypass: so_fully_paid OR is_tested_ok OR
-                #     is_so_cancelled (the latter two never invoice, so they
-                #     stand in for payment)
-                #  3. Stage + job-location match — normal flows plus an
-                #     extra Centre Repair case: when the SO is cancelled
-                #     the ticket gets stuck at Estimation Sent to Customer,
-                #     so Dispatch surfaces there once Mark as Done is hit.
-                dispatch.set(
-                    "invisible",
-                    "not has_return_picking or "
-                    "has_ready_dispatch_picking or "
-                    "(not so_fully_paid "
-                    " and not is_tested_ok "
-                    " and not is_so_cancelled) or "
-                    "not ("
-                    "(x_studio_job_location == 'Factory Repair' and repair_stage_state == 'received_at_sales_centre') or "
-                    "(x_studio_job_location == 'Centre Repair' and repair_stage_state == 'repair_completed') or "
-                    "(x_studio_normal_repair_with_serial_no and repair_stage_state == 'received_at_sales_centre') or "
-                    "(x_studio_job_location == 'Centre Repair' and is_so_cancelled and task_done and repair_stage_state == 'estimation_sent_to_customer')"
-                    ")",
-                )
-                dispatch.set("context", btn_context)
-                btn.addnext(dispatch)
-
-            # Serial Number: only show lots already issued via a sale order.
-            # sale_order_ids is non-stored so domain filters on it are ignored.
-            # is_issued is a virtual field with a _search that queries move lines.
-            serial_domain = "[('is_issued', '=', True)]"
-            serial_options = "{'no_create': True, 'no_quick_create': True}"
-            for field in arch.xpath("//field[@name='x_studio_serial_no']"):
-                field.set("domain", serial_domain)
-                field.set("options", serial_options)
-            for field in arch.xpath("//field[@name='lot_id']"):
-                field.set("domain", serial_domain)
-                field.set("options", serial_options)
-
-            # sale_order_id exists in the arch as invisible="1" (hidden input used
-            # by helpdesk_sale onchange machinery). Reposition it to appear right
-            # after x_studio_serial_no as a visible readonly field.
-            serial_nodes = arch.xpath("//field[@name='x_studio_serial_no']")
-            so_nodes = arch.xpath("//field[@name='sale_order_id']")
-            if serial_nodes and so_nodes:
-                so_node = so_nodes[0]
-                so_node.getparent().remove(so_node)
-                so_node.set("readonly", "1")
-                so_node.set("string", "Sales Order")
-                so_node.attrib.pop("invisible", None)
-                so_node.set("invisible", "not sale_order_id")
-                serial_nodes[0].addnext(so_node)
-
-            # ============================================================
-            # v293: port visible Studio field placements from Clear-DB
-            # view 4012.
-            #
-            # Background
-            # ----------
-            # helpdesk_ticket_studio_ported.xml was aggressively stripped
-            # in v292 down to just the ghost anchors + Warranty/Cancel
-            # notebook pages — the rest of the Clear-DB Studio arch
-            # (Return Receipt Location, Repair Location, Repair Reason,
-            # Job Location, Re-estimate Status/Count, Customer Email,
-            # Factory Repair Details notebook, etc.) failed install-time
-            # xpath validation because those xpaths targeted elements
-            # added by sibling module inherits (not the direct parent
-            # view) — Odoo rejected them silently, leaving fresh-install
-            # Fix-repair with the bare helpdesk.ticket form.
-            #
-            # Same pattern the buttons 195 / 2254 / 991 use: XML inherit
-            # can't reach them, so we place them here on the merged arch
-            # where every sibling module's own inherits have already
-            # been applied.
-            #
-            # Every readonly expression appends `or x_ticket_locked` so
-            # the ticket-lock freeze (see readonly loop above) still
-            # applies to these newly-visible fields — they were added
-            # after that loop ran.
-            # ============================================================
-
-            def _reposition_or_create(name, **attrs):
-                """Locate an existing <field name=name/> anywhere in the
-                arch, remove it (dropping every attribute except name),
-                re-set the given attributes and return the element ready
-                to be inserted at a target position. If no existing
-                element matches, create a fresh one.
-
-                Handles the case where the sentinel-injection loop above
-                already placed the field as invisible=1 at sheet[0]: we
-                take that element, wipe its attributes, and reuse it in
-                its Clear-DB-appropriate position.
-                """
-                existing = arch.xpath(f"//field[@name='{name}']")
-                if existing:
-                    el = existing[0]
-                    el.getparent().remove(el)
-                    for k in list(el.attrib.keys()):
-                        if k != "name":
-                            del el.attrib[k]
-                else:
-                    el = etree.Element("field")
-                    el.set("name", name)
-                for k, v in attrs.items():
-                    el.set(k, v)
-                return el
-
-            # ---- Move ticket_type_id after user_id -------------------
-            # Clear-DB layout groups ticket_type_id with the assignee
-            # rather than leaving it at the top. Do this BEFORE inserting
-            # the fields below so the domain_user_ids anchor sits in the
-            # expected place.
-            user_id_slots = arch.xpath(
-                "//sheet//group[1]/group[1]/field[@name='user_id']"
-            )
-            tt_nodes = arch.xpath("//field[@name='ticket_type_id']")
-            if user_id_slots and tt_nodes:
-                tt = tt_nodes[0]
-                tt.getparent().remove(tt)
-                tt.set("force_save", "1")
-                tt.set("required", "user_id")
-                tt.set(
-                    "readonly",
-                    "x_studio_rug_approved == True or "
-                    "x_studio_rug_request_sent == True or "
-                    "x_studio_repair_serial_created == True or "
-                    "x_studio_valid_return == True or "
-                    "x_studio_cancelled == True or "
-                    "not user_id or "
-                    'x_studio_stage_name != "New" or '
-                    "x_ticket_locked",
-                )
-                user_id_slots[0].addnext(tt)
-
-            # ---- Anchor after which we drop the assignee-block fields.
-            # domain_user_ids is added by helpdesk_fsm; on very bare
-            # installs it might not exist, so we fall back to user_id.
-            anchor_xpath_candidates = (
-                "//field[@name='domain_user_ids']",
-                "//sheet//group[1]/group[1]/field[@name='user_id']",
-            )
-            assignee_anchor = None
-            for xp in anchor_xpath_candidates:
-                matches = arch.xpath(xp)
-                if matches:
-                    assignee_anchor = matches[-1]
-                    break
-
-            if assignee_anchor is not None:
-                # Fields to insert in Clear-DB order.
-                # addnext inserts immediately after — build a list and
-                # iterate in reverse so each new element ends up right
-                # after the anchor in the correct order.
-                new_fields = []
-
-                # Four Studio ticket-type status booleans, visible only
-                # when True (matching Clear-DB's `X != True` invisible
-                # expression). Each doubles as its own indicator badge.
-                for bool_name in (
-                    "x_studio_rug_repair",
-                    "x_studio_rug_confirmed",
-                    "x_studio_normal_repair_with_serial_no",
-                    "x_studio_normal_repair_without_serial_no",
-                ):
-                    new_fields.append(
-                        _reposition_or_create(
-                            bool_name,
-                            force_save="1",
-                            readonly="True",
-                            invisible=f"{bool_name} != True",
-                        )
-                    )
-
-                # Return Receipt Location — where the returned item is
-                # first booked in. Domain (users-stock-location scope)
-                # is set by a separate xpath block above; we only place
-                # the field here.
                 new_fields.append(
                     _reposition_or_create(
-                        "x_studio_return_receipt_location",
-                        options="{'no_create': True}",
-                        required="user_id",
-                        force_save="1",
-                        readonly=(
-                            "x_studio_rug_approved == True or "
-                            "x_studio_rug_request_sent == True or "
-                            "x_studio_valid_confirm_return == True or "
-                            "x_studio_repair_serial_created == True or "
-                            "x_studio_cancelled == True or "
-                            "not user_id or "
-                            "x_ticket_locked"
-                        ),
-                    )
-                )
-
-                # Repair Location — computed / stamped by the flow,
-                # always readonly on the form.
-                new_fields.append(
-                    _reposition_or_create(
-                        "x_studio_repair_location",
+                        bool_name,
                         force_save="1",
                         readonly="True",
+                        invisible=f"{bool_name} != True",
                     )
                 )
 
-                # Repair Reason — many2many tags. Required post-assignee,
-                # locked once the ticket leaves New (or is cancelled).
-                new_fields.append(
-                    _reposition_or_create(
-                        "x_studio_repair_reason",
-                        widget="many2many_tags",
-                        required="user_id",
-                        force_save="1",
-                        readonly=(
-                            "x_studio_cancelled == True or "
-                            "not user_id or "
-                            'x_studio_stage_name != "New" or '
-                            "x_ticket_locked"
-                        ),
-                    )
-                )
-
-                # Job Location — where the repair actually happens
-                # (Factory Repair / Centre Repair / …). Drives the
-                # Factory Repair Details notebook visibility below.
-                new_fields.append(
-                    _reposition_or_create(
-                        "x_studio_job_location",
-                        required="x_studio_valid_confirm_return == True",
-                        force_save="0",
-                        readonly="x_ticket_locked",
-                    )
-                )
-
-                for el in reversed(new_fields):
-                    assignee_anchor.addnext(el)
-
-            # ---- Re-estimate Status + Count after tag_ids ------------
-            # Clear-DB hides tag_ids and slots the two re-estimate
-            # markers in its place. Same here.
-            tag_nodes = arch.xpath("//field[@name='tag_ids']")
-            if tag_nodes:
-                tag_el = tag_nodes[0]
-                tag_el.set("invisible", "True")
-
-                re_count = _reposition_or_create(
-                    "x_studio_re_estimate_count",
-                    widget="many2one_reference",
-                    options="{'enable_formatting': false}",
-                    force_save="1",
-                    readonly="True",
-                )
-                re_status = _reposition_or_create(
-                    "x_studio_re_estimate_status",
-                    force_save="1",
-                    readonly="True",
-                )
-                # addnext twice → status ends up first, count second.
-                tag_el.addnext(re_count)
-                tag_el.addnext(re_status)
-
-            # ---- partner_email as visible "Email" after partner_id ----
-            # partner_id itself: Clear-DB makes it required once a user
-            # is assigned. Fix-repair's existing required= block already
-            # requires it on ticket_type_id — we OR-strengthen readonly
-            # to include the ticket-lock and cancelled-ticket freezes.
-            partner_nodes = arch.xpath("//field[@name='partner_id']")
-            if partner_nodes:
-                p_el = partner_nodes[0]
-                # Don't override the required= gate the earlier block
-                # sets on partner_id — only set force_save/readonly.
-                p_el.set("force_save", "0")
-                existing_ro = p_el.get("readonly", "")
-                p_el.set(
-                    "readonly",
-                    f"({existing_ro}) or x_ticket_locked"
-                    if existing_ro
-                    else "x_ticket_locked",
-                )
-
-                p_email = _reposition_or_create(
-                    "partner_email",
-                    string="Email",
-                    force_save="1",
-                    readonly=(
-                        "x_studio_cancelled == True or "
-                        "not user_id or "
-                        'x_studio_stage_name == "Handed Over to Customer" or '
-                        'x_studio_stage_name == "Cancelled" or '
-                        "x_ticket_locked"
-                    ),
-                )
-                p_el.addnext(p_email)
-
-            # ---- Factory Repair Details notebook page ---------------
-            # Studio adds a whole separate notebook (studio_notebook_2qc)
-            # after the primary group holding the transfer + delivery
-            # audit trail. Visible only when Job Location == 'Factory
-            # Repair'. Fields inside are stamped by the flow (shipped
-            # by/date, received by/date, driver, vehicle).
-            primary_groups = arch.xpath("//sheet/group[1]")
-            already_has_factory_notebook = arch.xpath(
-                "//notebook[@name='studio_notebook_2qc_1j0bd1828']"
-            )
-            if primary_groups and not already_has_factory_notebook:
-                nb = etree.Element(
-                    "notebook",
-                    name="studio_notebook_2qc_1j0bd1828",
-                )
-
-                fr_page = etree.SubElement(
-                    nb,
-                    "page",
-                    string="Factory Repair Details",
-                    name="studio_page_2qc",
-                    invisible=("x_studio_job_location != 'Factory Repair'"),
-                )
-
-                # Group row 1: Sales Centre + Factory transfer details
-                tx_group = etree.SubElement(fr_page, "group")
-                sc_group = etree.SubElement(
-                    tx_group,
-                    "group",
-                    string="Repair Transfer Details (Sales Centre)",
-                )
-                for fname, _label in (
-                    ("x_studio_s_shipped_date", "Shipped Date"),
-                    ("x_studio_s_shipped_by", "Shipped By"),
-                    ("x_studio_s_received_date", "Received Date"),
-                    ("x_studio_s_received_by", "Received By"),
-                ):
-                    etree.SubElement(
-                        sc_group,
-                        "field",
-                        name=fname,
-                        force_save="1",
-                        readonly="True",
-                    )
-                fac_group = etree.SubElement(
-                    tx_group,
-                    "group",
-                    string="Repair Transfer Details (Factory)",
-                )
-                for fname, _label in (
-                    ("x_studio_f_shipped_date", "Shipped Date"),
-                    ("x_studio_f_shipped_by", "Shipped By"),
-                    ("x_studio_f_received_date", "Received Date"),
-                    ("x_studio_f_received_by", "Received By"),
-                ):
-                    etree.SubElement(
-                        fac_group,
-                        "field",
-                        name=fname,
-                        force_save="1",
-                        readonly="True",
-                    )
-
-                # Group row 2: Delivery Details
-                del_group = etree.SubElement(fr_page, "group")
-                del_left = etree.SubElement(
-                    del_group,
-                    "group",
-                    string="Delivery Details",
-                )
-                for fname in (
-                    "x_studio_driver_name",
-                    "x_studio_vehicle_details",
-                ):
-                    etree.SubElement(
-                        del_left,
-                        "field",
-                        name=fname,
-                        force_save="1",
-                        readonly="True",
-                    )
-                # Empty right group for two-column balance
-                etree.SubElement(del_group, "group")
-
-                primary_groups[0].addnext(nb)
-
-            # ============================================================
-            # v295: additional Clear-DB customer-block visible fields.
-            # Layers on top of v293:
-            #   - partner_name  (Customer Name) — right before partner_email
-            #   - x_studio_serial_no  (Serial Number) — after email_cc
-            #   - product_id  (Product) — after sale_line_id
-            #   - x_studio_valid_return  (Valid Return) — after product_id
-            #   - lot_id  (Lot/Serial Number) — after valid_return
-            # Matches the Clear-DB view 4012 xpaths that couldn't be
-            # ported to XML because their target elements live in
-            # sibling module inherits.
-            # ============================================================
-
-            # ---- Customer Name (partner_name) before partner_email ---
-            partner_id_nodes = arch.xpath("//field[@name='partner_id']")
-            if partner_id_nodes:
-                p_name = _reposition_or_create(
-                    "partner_name",
-                    invisible="partner_id",
-                    force_save="1",
-                    readonly=(
-                        "x_studio_cancelled == True or not user_id or x_ticket_locked"
-                    ),
-                )
-                # addnext puts p_name immediately after partner_id.
-                # partner_email (added in v293) stays after — result:
-                # partner_id → partner_name → partner_email.
-                partner_id_nodes[0].addnext(p_name)
-
-            # ---- Serial Number (x_studio_serial_no) visible ----------
-            # Clear-DB slots it after email_cc. On envs where email_cc
-            # isn't in the arch (older helpdesk fork) fall back to
-            # partner_phone.
-            serial_anchor = None
-            for xp in (
-                "//field[@name='email_cc']",
-                "//field[@name='partner_phone']",
-            ):
-                matches = arch.xpath(xp)
-                if matches:
-                    serial_anchor = matches[0]
-                    break
-            if serial_anchor is not None:
-                sn = _reposition_or_create(
-                    "x_studio_serial_no",
-                    invisible='product_id and x_studio_tracking != "serial"',
+            # Return Receipt Location — where the returned item is
+            # first booked in. Domain (users-stock-location scope)
+            # is set by a separate xpath block above; we only place
+            # the field here.
+            new_fields.append(
+                _reposition_or_create(
+                    "x_studio_return_receipt_location",
+                    options="{'no_create': True}",
+                    required="user_id",
                     force_save="1",
                     readonly=(
                         "x_studio_rug_approved == True or "
                         "x_studio_rug_request_sent == True or "
-                        "x_studio_normal_repair_without_serial_no == True or "
-                        "not ticket_type_id or "
-                        'x_studio_stage_name != "New" or '
-                        "x_studio_valid_return == True or "
+                        "x_studio_valid_confirm_return == True or "
+                        "x_studio_repair_serial_created == True or "
                         "x_studio_cancelled == True or "
                         "not user_id or "
                         "x_ticket_locked"
                     ),
                 )
-                # Re-apply the domain+options the earlier serial-domain
-                # block above set on the sentinel (that block ran before
-                # we lifted the sentinel out).
-                sn.set("domain", "[('is_issued', '=', True)]")
-                sn.set(
-                    "options",
-                    "{'no_create': True, 'no_quick_create': True}",
-                )
-                # Re-apply the required= gate the earlier required-fields
-                # block set on the sentinel.
-                sn.set(
-                    "required",
-                    "ticket_type_id and not x_studio_normal_repair_without_serial_no",
-                )
-                serial_anchor.addnext(sn)
+            )
 
-            # ---- Product (product_id) visible after sale_line_id -----
-            # product_id already exists in the base helpdesk arch; the
-            # existing readonly / domain / required blocks above set
-            # attributes on the FIRST occurrence they find. Repositioning
-            # via _reposition_or_create wipes attrs, so we re-apply
-            # everything here — matching Clear-DB visibility gate plus
-            # the two-flavour readonly (from ticket-type discriminator)
-            # and the ticket-lock freeze.
-            sale_line_nodes = arch.xpath("//field[@name='sale_line_id']")
-            if sale_line_nodes:
-                prod = _reposition_or_create(
-                    "product_id",
-                    invisible=(
-                        "not use_credit_notes and "
-                        "not use_product_returns and "
-                        "not use_product_repairs"
-                    ),
-                    required="ticket_type_id",
-                    force_save="0",
+            # Repair Location — computed / stamped by the flow,
+            # always readonly on the form.
+            new_fields.append(
+                _reposition_or_create(
+                    "x_studio_repair_location",
+                    force_save="1",
+                    readonly="True",
+                )
+            )
+
+            # Repair Reason — many2many tags. Required post-assignee,
+            # locked once the ticket leaves New (or is cancelled).
+            new_fields.append(
+                _reposition_or_create(
+                    "x_studio_repair_reason",
+                    widget="many2many_tags",
+                    required="user_id",
+                    force_save="1",
                     readonly=(
-                        "not x_studio_normal_repair_without_serial_no or "
+                        "x_studio_cancelled == True or "
+                        "not user_id or "
+                        'x_studio_stage_name != "New" or '
                         "x_ticket_locked"
                     ),
-                    domain=(
-                        "[('tracking', '=', 'serial')] "
-                        "if x_studio_normal_repair_without_serial_no "
-                        "else []"
-                    ),
                 )
-                sale_line_nodes[0].addnext(prod)
+            )
 
-                # ---- Valid Return (x_studio_valid_return) ------------
-                vr = _reposition_or_create(
-                    "x_studio_valid_return",
-                    invisible=(
-                        "x_studio_rug_repair == True or "
-                        "x_studio_serial_no or "
-                        "x_studio_normal_repair_with_serial_no == True or "
-                        "x_studio_normal_repair_without_serial_no == True or "
-                        "(not use_credit_notes and "
-                        "not use_product_returns and "
-                        "not use_product_repairs)"
-                    ),
-                    force_save="1",
-                    readonly=("x_studio_rug_repair == True or x_ticket_locked"),
+            # Job Location — where the repair actually happens
+            # (Factory Repair / Centre Repair / …). Drives the
+            # Factory Repair Details notebook visibility below.
+            new_fields.append(
+                _reposition_or_create(
+                    "x_studio_job_location",
+                    required="x_studio_valid_confirm_return == True",
+                    force_save="0",
+                    readonly="x_ticket_locked",
                 )
-                prod_now = arch.xpath("//field[@name='product_id']")
-                if prod_now:
-                    prod_now[0].addnext(vr)
+            )
 
-                # ---- Lot/Serial Number (lot_id) ---------------------
-                lot = _reposition_or_create(
-                    "lot_id",
-                    invisible=(
-                        "x_studio_rug_repair == True or "
-                        "x_studio_serial_no or "
-                        "x_studio_normal_repair_with_serial_no == True or "
-                        "x_studio_normal_repair_without_serial_no == True or "
-                        "(not use_credit_notes and "
-                        "not use_product_returns and "
-                        "not use_product_repairs)"
-                    ),
+            for el in reversed(new_fields):
+                assignee_anchor.addnext(el)
+
+        # ---- Re-estimate Status + Count after tag_ids ------------
+        # Clear-DB hides tag_ids and slots the two re-estimate
+        # markers in its place. Same here.
+        tag_nodes = arch.xpath("//field[@name='tag_ids']")
+        if tag_nodes:
+            tag_el = tag_nodes[0]
+            tag_el.set("invisible", "True")
+
+            re_count = _reposition_or_create(
+                "x_studio_re_estimate_count",
+                widget="many2one_reference",
+                options="{'enable_formatting': false}",
+                force_save="1",
+                readonly="True",
+            )
+            re_status = _reposition_or_create(
+                "x_studio_re_estimate_status",
+                force_save="1",
+                readonly="True",
+            )
+            # addnext twice → status ends up first, count second.
+            tag_el.addnext(re_count)
+            tag_el.addnext(re_status)
+
+        # ---- partner_email as visible "Email" after partner_id ----
+        # partner_id itself: Clear-DB makes it required once a user
+        # is assigned. Fix-repair's existing required= block already
+        # requires it on ticket_type_id — we OR-strengthen readonly
+        # to include the ticket-lock and cancelled-ticket freezes.
+        partner_nodes = arch.xpath("//field[@name='partner_id']")
+        return partner_nodes
+
+    def _fix_repair_get_view_part_11(self, _reposition_or_create, arch, partner_nodes):
+        """Part of _get_view."""
+        if partner_nodes:
+            p_el = partner_nodes[0]
+            # Don't override the required= gate the earlier block
+            # sets on partner_id — only set force_save/readonly.
+            p_el.set("force_save", "0")
+            existing_ro = p_el.get("readonly", "")
+            p_el.set(
+                "readonly",
+                f"({existing_ro}) or x_ticket_locked"
+                if existing_ro
+                else "x_ticket_locked",
+            )
+
+            p_email = _reposition_or_create(
+                "partner_email",
+                string="Email",
+                force_save="1",
+                readonly=(
+                    "x_studio_cancelled == True or "
+                    "not user_id or "
+                    'x_studio_stage_name == "Handed Over to Customer" or '
+                    'x_studio_stage_name == "Cancelled" or '
+                    "x_ticket_locked"
+                ),
+            )
+            p_el.addnext(p_email)
+
+        # ---- Factory Repair Details notebook page ---------------
+        # Studio adds a whole separate notebook (studio_notebook_2qc)
+        # after the primary group holding the transfer + delivery
+        # audit trail. Visible only when Job Location == 'Factory
+        # Repair'. Fields inside are stamped by the flow (shipped
+        # by/date, received by/date, driver, vehicle).
+        primary_groups = arch.xpath("//sheet/group[1]")
+        already_has_factory_notebook = arch.xpath(
+            "//notebook[@name='studio_notebook_2qc_1j0bd1828']"
+        )
+        return already_has_factory_notebook, primary_groups
+
+    def _fix_repair_get_view_part_12(
+        self, _reposition_or_create, already_has_factory_notebook, arch, primary_groups
+    ):
+        """Part of _get_view."""
+        if primary_groups and not already_has_factory_notebook:
+            nb = etree.Element(
+                "notebook",
+                name="studio_notebook_2qc_1j0bd1828",
+            )
+
+            fr_page = etree.SubElement(
+                nb,
+                "page",
+                string="Factory Repair Details",
+                name="studio_page_2qc",
+                invisible=("x_studio_job_location != 'Factory Repair'"),
+            )
+
+            # Group row 1: Sales Centre + Factory transfer details
+            tx_group = etree.SubElement(fr_page, "group")
+            sc_group = etree.SubElement(
+                tx_group,
+                "group",
+                string="Repair Transfer Details (Sales Centre)",
+            )
+            for fname, _label in (
+                ("x_studio_s_shipped_date", "Shipped Date"),
+                ("x_studio_s_shipped_by", "Shipped By"),
+                ("x_studio_s_received_date", "Received Date"),
+                ("x_studio_s_received_by", "Received By"),
+            ):
+                etree.SubElement(
+                    sc_group,
+                    "field",
+                    name=fname,
                     force_save="1",
-                    readonly=("x_studio_rug_repair == True or x_ticket_locked"),
+                    readonly="True",
                 )
-                # Re-apply the serial-lot domain+options that the
-                # earlier serial-domain block set on the sentinel.
-                lot.set("domain", "[('is_issued', '=', True)]")
-                lot.set(
-                    "options",
-                    "{'no_create': True, 'no_quick_create': True}",
+            fac_group = etree.SubElement(
+                tx_group,
+                "group",
+                string="Repair Transfer Details (Factory)",
+            )
+            for fname, _label in (
+                ("x_studio_f_shipped_date", "Shipped Date"),
+                ("x_studio_f_shipped_by", "Shipped By"),
+                ("x_studio_f_received_date", "Received Date"),
+                ("x_studio_f_received_by", "Received By"),
+            ):
+                etree.SubElement(
+                    fac_group,
+                    "field",
+                    name=fname,
+                    force_save="1",
+                    readonly="True",
                 )
-                vr_now = arch.xpath("//field[@name='x_studio_valid_return']")
-                if vr_now:
-                    vr_now[0].addnext(lot)
-        return arch, view
+
+            # Group row 2: Delivery Details
+            del_group = etree.SubElement(fr_page, "group")
+            del_left = etree.SubElement(
+                del_group,
+                "group",
+                string="Delivery Details",
+            )
+            for fname in (
+                "x_studio_driver_name",
+                "x_studio_vehicle_details",
+            ):
+                etree.SubElement(
+                    del_left,
+                    "field",
+                    name=fname,
+                    force_save="1",
+                    readonly="True",
+                )
+            # Empty right group for two-column balance
+            etree.SubElement(del_group, "group")
+
+            primary_groups[0].addnext(nb)
+
+        # ============================================================
+        # v295: additional Clear-DB customer-block visible fields.
+        # Layers on top of v293:
+        #   - partner_name  (Customer Name) — right before partner_email
+        #   - x_studio_serial_no  (Serial Number) — after email_cc
+        #   - product_id  (Product) — after sale_line_id
+        #   - x_studio_valid_return  (Valid Return) — after product_id
+        #   - lot_id  (Lot/Serial Number) — after valid_return
+        # Matches the Clear-DB view 4012 xpaths that couldn't be
+        # ported to XML because their target elements live in
+        # sibling module inherits.
+        # ============================================================
+
+        # ---- Customer Name (partner_name) before partner_email ---
+        partner_id_nodes = arch.xpath("//field[@name='partner_id']")
+        if partner_id_nodes:
+            p_name = _reposition_or_create(
+                "partner_name",
+                invisible="partner_id",
+                force_save="1",
+                readonly=(
+                    "x_studio_cancelled == True or not user_id or x_ticket_locked"
+                ),
+            )
+            # addnext puts p_name immediately after partner_id.
+            # partner_email (added in v293) stays after — result:
+            # partner_id → partner_name → partner_email.
+            partner_id_nodes[0].addnext(p_name)
+
+        # ---- Serial Number (x_studio_serial_no) visible ----------
+        # Clear-DB slots it after email_cc. On envs where email_cc
+        # isn't in the arch (older helpdesk fork) fall back to
+        # partner_phone.
+        serial_anchor = None
+        return serial_anchor
+
+    def _fix_repair_get_view_part_13(self, _reposition_or_create, arch, serial_anchor):
+        """Part of _get_view."""
+        for xp in (
+            "//field[@name='email_cc']",
+            "//field[@name='partner_phone']",
+        ):
+            matches = arch.xpath(xp)
+            if matches:
+                serial_anchor = matches[0]
+                break
+        if serial_anchor is not None:
+            sn = _reposition_or_create(
+                "x_studio_serial_no",
+                invisible='product_id and x_studio_tracking != "serial"',
+                force_save="1",
+                readonly=(
+                    "x_studio_rug_approved == True or "
+                    "x_studio_rug_request_sent == True or "
+                    "x_studio_normal_repair_without_serial_no == True or "
+                    "not ticket_type_id or "
+                    'x_studio_stage_name != "New" or '
+                    "x_studio_valid_return == True or "
+                    "x_studio_cancelled == True or "
+                    "not user_id or "
+                    "x_ticket_locked"
+                ),
+            )
+            # Re-apply the domain+options the earlier serial-domain
+            # block above set on the sentinel (that block ran before
+            # we lifted the sentinel out).
+            sn.set("domain", "[('is_issued', '=', True)]")
+            sn.set(
+                "options",
+                "{'no_create': True, 'no_quick_create': True}",
+            )
+            # Re-apply the required= gate the earlier required-fields
+            # block set on the sentinel.
+            sn.set(
+                "required",
+                "ticket_type_id and not x_studio_normal_repair_without_serial_no",
+            )
+            serial_anchor.addnext(sn)
+
+        # ---- Product (product_id) visible after sale_line_id -----
+        # product_id already exists in the base helpdesk arch; the
+        # existing readonly / domain / required blocks above set
+        # attributes on the FIRST occurrence they find. Repositioning
+        # via _reposition_or_create wipes attrs, so we re-apply
+        # everything here — matching Clear-DB visibility gate plus
+        # the two-flavour readonly (from ticket-type discriminator)
+        # and the ticket-lock freeze.
+        sale_line_nodes = arch.xpath("//field[@name='sale_line_id']")
+        if sale_line_nodes:
+            prod = _reposition_or_create(
+                "product_id",
+                invisible=(
+                    "not use_credit_notes and "
+                    "not use_product_returns and "
+                    "not use_product_repairs"
+                ),
+                required="ticket_type_id",
+                force_save="0",
+                readonly=(
+                    "not x_studio_normal_repair_without_serial_no or x_ticket_locked"
+                ),
+                domain=(
+                    "[('tracking', '=', 'serial')] "
+                    "if x_studio_normal_repair_without_serial_no "
+                    "else []"
+                ),
+            )
+            sale_line_nodes[0].addnext(prod)
+
+            # ---- Valid Return (x_studio_valid_return) ------------
+            vr = _reposition_or_create(
+                "x_studio_valid_return",
+                invisible=(
+                    "x_studio_rug_repair == True or "
+                    "x_studio_serial_no or "
+                    "x_studio_normal_repair_with_serial_no == True or "
+                    "x_studio_normal_repair_without_serial_no == True or "
+                    "(not use_credit_notes and "
+                    "not use_product_returns and "
+                    "not use_product_repairs)"
+                ),
+                force_save="1",
+                readonly=("x_studio_rug_repair == True or x_ticket_locked"),
+            )
+            prod_now = arch.xpath("//field[@name='product_id']")
+            if prod_now:
+                prod_now[0].addnext(vr)
+
+            # ---- Lot/Serial Number (lot_id) ---------------------
+            lot = _reposition_or_create(
+                "lot_id",
+                invisible=(
+                    "x_studio_rug_repair == True or "
+                    "x_studio_serial_no or "
+                    "x_studio_normal_repair_with_serial_no == True or "
+                    "x_studio_normal_repair_without_serial_no == True or "
+                    "(not use_credit_notes and "
+                    "not use_product_returns and "
+                    "not use_product_repairs)"
+                ),
+                force_save="1",
+                readonly=("x_studio_rug_repair == True or x_ticket_locked"),
+            )
+            # Re-apply the serial-lot domain+options that the
+            # earlier serial-domain block set on the sentinel.
+            lot.set("domain", "[('is_issued', '=', True)]")
+            lot.set(
+                "options",
+                "{'no_create': True, 'no_quick_create': True}",
+            )
+            vr_now = arch.xpath("//field[@name='x_studio_valid_return']")
+            if vr_now:
+                vr_now[0].addnext(lot)
 
     def action_change_to_rug(self):
         """Change ticket type from External-not-RUG to RUG (Under Warranty - RUG)."""

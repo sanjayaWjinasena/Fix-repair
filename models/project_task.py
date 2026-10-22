@@ -223,69 +223,82 @@ class ProjectTask(models.Model):
 
     def _compute_x_studio_valid_invoiced_so(self):
         for rec in self:
-            valid = False
-            valid2 = False
-            if rec.sale_order_id.id != False:
-                if (
-                    rec.sale_order_id.x_studio_order_payment_method == "Credit"
-                    or rec.sale_order_id.x_studio_rug_approved == True
-                ):
-                    if rec.x_studio_repair_completed_stage_updated == True:
-                        if rec.sale_order_id.state == "cancel":
-                            valid = True
-                        else:
-                            if (
-                                rec.sale_order_id.x_studio_order_payment_method
-                                == "Credit"
-                            ):
-                                valid = True
-                            else:
-                                if rec.sale_order_id.x_studio_rug_approved == True:
-                                    valid = True
-                                else:
-                                    payment = self.env["account.payment"].search(
-                                        [
-                                            (
-                                                "x_studio_sales_order",
-                                                "=",
-                                                rec.sale_order_id.id,
-                                            ),
-                                            ("state", "=", "posted"),
-                                        ]
-                                    )
-                                    if payment:
-                                        valid = True
-                                    else:
-                                        for invoices in rec.sale_order_id.invoice_ids:
-                                            if invoices.payment_state == "in_payment":
-                                                valid = True
-                                            else:
-                                                valid2 = True
+            valid, valid2 = self._fix_repair_compute_x_studio_valid_invoiced_so_part_1()
+            valid = self._fix_repair_compute_x_studio_valid_invoiced_so_part_2(
+                rec, valid2
+            )
+            self._fix_repair_compute_x_studio_valid_invoiced_so_part_3(rec, valid)
 
-                                    if valid2 == True:
-                                        valid = False
-                else:
+    def _fix_repair_compute_x_studio_valid_invoiced_so_part_1(self):
+        """Part of _compute_x_studio_valid_invoiced_so."""
+        valid = False
+        valid2 = False
+        return valid, valid2
+
+    def _fix_repair_compute_x_studio_valid_invoiced_so_part_2(self, rec, valid2):
+        """Part of _compute_x_studio_valid_invoiced_so."""
+        if rec.sale_order_id.id != False:
+            if (
+                rec.sale_order_id.x_studio_order_payment_method == "Credit"
+                or rec.sale_order_id.x_studio_rug_approved == True
+            ):
+                if rec.x_studio_repair_completed_stage_updated == True:
                     if rec.sale_order_id.state == "cancel":
                         valid = True
                     else:
-                        payment = self.env["account.payment"].search(
-                            [
-                                ("x_studio_sales_order", "=", rec.sale_order_id.id),
-                                ("state", "=", "posted"),
-                            ]
-                        )
-                        if payment:
+                        if rec.sale_order_id.x_studio_order_payment_method == "Credit":
                             valid = True
                         else:
-                            for invoices in rec.sale_order_id.invoice_ids:
-                                if invoices.payment_state == "in_payment":
+                            if rec.sale_order_id.x_studio_rug_approved == True:
+                                valid = True
+                            else:
+                                payment = self.env["account.payment"].search(
+                                    [
+                                        (
+                                            "x_studio_sales_order",
+                                            "=",
+                                            rec.sale_order_id.id,
+                                        ),
+                                        ("state", "=", "posted"),
+                                    ]
+                                )
+                                if payment:
                                     valid = True
                                 else:
-                                    valid2 = True
+                                    for invoices in rec.sale_order_id.invoice_ids:
+                                        if invoices.payment_state == "in_payment":
+                                            valid = True
+                                        else:
+                                            valid2 = True
 
-                        if valid2 == True:
-                            valid = False
-            rec["x_studio_valid_invoiced_so"] = valid
+                                if valid2 == True:
+                                    valid = False
+            else:
+                if rec.sale_order_id.state == "cancel":
+                    valid = True
+                else:
+                    payment = self.env["account.payment"].search(
+                        [
+                            ("x_studio_sales_order", "=", rec.sale_order_id.id),
+                            ("state", "=", "posted"),
+                        ]
+                    )
+                    if payment:
+                        valid = True
+                    else:
+                        for invoices in rec.sale_order_id.invoice_ids:
+                            if invoices.payment_state == "in_payment":
+                                valid = True
+                            else:
+                                valid2 = True
+
+                    if valid2 == True:
+                        valid = False
+        return valid
+
+    def _fix_repair_compute_x_studio_valid_invoiced_so_part_3(self, rec, valid):
+        """Part of _compute_x_studio_valid_invoiced_so."""
+        rec["x_studio_valid_invoiced_so"] = valid
 
     # ─────────────────────────────────────────────────────────────────
     # Leftover Studio repair-workflow fields (v162)
@@ -676,238 +689,249 @@ class ProjectTask(models.Model):
     def _get_view(self, view_id=None, view_type="form", **options):
         arch, view = super()._get_view(view_id, view_type, **options)
         if view_type == "form":
-            # Inject helper fields as invisible so they are available in
-            # button invisible expressions below.
-            # v258: extended the sentinel list — on standalone the base
-            # project.task arch doesn't happen to mention these fields,
-            # so OWL's FormRenderer raises "Name … is not defined" when
-            # our injected invisible expressions reference them. Clear-
-            # DB masks this because Studio's project.task view already
-            # renders (invisibly) most of these fields elsewhere.
-            targets = arch.xpath("//sheet") or arch.xpath("//form")
-            if targets:
-                for fname in (
-                    "ticket_repair_stage_state",
-                    "so_cancelled",
-                    # v258 additions — read from the invisible/readonly
-                    # expressions our _get_view adds below.
-                    "helpdesk_ticket_id",
-                    "sale_order_id",
-                    "x_studio_valid_diagnosis",
-                    "x_studio_repair_image_01",
-                    "x_studio_end_quick_repair",
-                    "x_studio_cancelled",
-                ):
-                    if not arch.xpath(f"//field[@name='{fname}']"):
-                        field_el = etree.Element("field")
-                        field_el.set("name", fname)
-                        field_el.set("invisible", "1")
-                        targets[0].insert(0, field_el)
-
-                # v207 — inline warning banners for missing repair
-                # data. Replaces the v205/v206 JS notification
-                # approach (useEffect on record.data slots — didn't
-                # reliably dismiss on image upload because the
-                # binary widget's mutation didn't propagate to the
-                # reactive proxy the effect was watching).
-                #
-                # Use the SAME invisible-expression pattern the
-                # original Studio buttons used (action 2224 / 2242
-                # — removed in v190). Odoo's built-in view-attr
-                # reactivity re-evaluates these expressions on
-                # every field change, so the banners hide the
-                # instant the field is populated — no save needed.
-                #
-                # Visibility mirrors the buttons' old invisible
-                # exactly (minus the arch-caching quirks that were
-                # avoided by rebuilding the arch in v190's sanitize):
-                #   * helpdesk_ticket_id must be set (repair task).
-                #   * x_studio_cancelled must NOT be True.
-                #   * x_studio_end_quick_repair must NOT be True.
-                #   * The specific data field must be missing.
-                #
-                # Idempotent — bail if banners already there
-                # (subsequent _get_view calls on the same arch).
-                # v208 — inject reactivity-trigger divs. The arch
-                # invisible expression is the reliable mechanism
-                # (v207 confirmed it dismisses on field change with
-                # zero delay). But the user wants toast notifications
-                # rather than inline banners. Solution: keep the
-                # arch divs so Odoo's built-in reactivity governs
-                # when they appear/disappear from the DOM, but style
-                # them display:none via CSS and have a JS asset watch
-                # for their DOM presence to fire / dismiss toasts.
-                #
-                # The two <div> elements below therefore serve as
-                # reactivity anchors. Never visually rendered. The
-                # fix_repair_task_toast_trigger class + variant class
-                # are the JS observer's hook.
-                if not arch.xpath(
-                    "//div[contains(@class,'fix_repair_task_toast_trigger--diagnosis')]"
-                ):
-                    diag = etree.Element("div")
-                    diag.set(
-                        "class",
-                        "fix_repair_task_toast_trigger "
-                        "fix_repair_task_toast_trigger--diagnosis",
-                    )
-                    diag.set(
-                        "invisible",
-                        "not helpdesk_ticket_id or "
-                        "x_studio_end_quick_repair or "
-                        "x_studio_cancelled or "
-                        "x_studio_valid_diagnosis",
-                    )
-                    targets[0].insert(0, diag)
-
-                if not arch.xpath(
-                    "//div[contains(@class,'fix_repair_task_toast_trigger--image')]"
-                ):
-                    img = etree.Element("div")
-                    img.set(
-                        "class",
-                        "fix_repair_task_toast_trigger "
-                        "fix_repair_task_toast_trigger--image",
-                    )
-                    img.set(
-                        "invisible",
-                        "not helpdesk_ticket_id or "
-                        "x_studio_end_quick_repair or "
-                        "x_studio_cancelled or "
-                        "x_studio_repair_image_01",
-                    )
-                    targets[0].insert(0, img)
-
-            # UI-only field hides. Kept in Python so we can operate
-            # on the fully-merged arch — some of these fields are
-            # inserted by other modules' inherits (sale_project,
-            # project_enterprise, studio_customization) and can't
-            # be reliably targeted from an XML inherit that points
-            # at project.view_task_form2 (the base). Hiding here
-            # gracefully skips any field not present in this
-            # install. All fields keep their DB columns, computes,
-            # and constraints — only the render is suppressed.
-            # Gate all four hides on helpdesk_ticket_id: only tasks
-            # created from a helpdesk ticket (i.e. via Plan Intervention
-            # on a repair ticket) get these fields hidden. Plain
-            # project.task records outside the repair flow continue to
-            # show Tags / Sales Order Item / Planned Date / Material
-            # Availability normally.
-            for fname in (
-                "tag_ids",  # Tags
-                "sale_line_id",  # Sales Order Item
-                "planned_date_begin",  # Planned Date / Start date
-                "x_studio_material_availability",  # Material Availability
-            ):
-                for field_el in arch.xpath(f"//field[@name='{fname}']"):
-                    field_el.set("invisible", "helpdesk_ticket_id")
-
-            # Freeze the task form (including its notebook pages) once
-            # a linked sale.order exists. On the repair workflow, a
-            # task's sale_order_id is set as soon as Plan Intervention
-            # confirms the SO — any subsequent edit to task fields
-            # (Diagnosis, Repair Image, Warranty Card, etc.) would
-            # drift away from what the SO / invoice / picking cycle
-            # has already booked against. Gate applies only to repair
-            # tasks (helpdesk_ticket_id set) so plain project.task
-            # records outside the repair flow retain full editability.
-            #
-            # ORed into each field's existing readonly expression via
-            # "(existing) or (helpdesk_ticket_id and sale_order_id)"
-            # so per-field readonly gates from Studio / core Odoo
-            # keep firing before this ticket-level freeze.
-            #
-            # Buttons (Mark as Done, Products smart button, etc.)
-            # aren't <field> elements so the loop leaves them alone
-            # — same rationale as helpdesk.ticket.x_ticket_locked.
-            #
-            # not(ancestor::field): skip fields nested inside another
-            # field's embedded view (one2many sub-lists like subtasks,
-            # timesheets, stock.moves). Those subrecords are on
-            # different models and don't have helpdesk_ticket_id /
-            # sale_order_id — stamping the expression on them raises
-            # "Name not defined" when Odoo's ListRenderer evaluates
-            # the readonly per-cell.
-            for field_el in arch.xpath("//sheet//field[not(ancestor::field)]"):
-                if field_el.get("invisible") == "1":
-                    continue
-                existing = field_el.get("readonly", "")
-                extra = "helpdesk_ticket_id and sale_order_id"
-                field_el.set(
-                    "readonly",
-                    f"({existing}) or ({extra})" if existing else extra,
-                )
-
-            # New Quotation: not used in the repair workflow — hide entirely.
-            for btn in arch.xpath("//button[@name='action_fsm_create_quotation']"):
-                btn.set("invisible", "1")
-
-            # Products (material) stat button: for repair tickets only show once
-            # both the Repair Diagnosis Validation and Image Validation are present.
-            # Non-repair FSM tasks keep their original allow_material condition.
-            for btn in arch.xpath("//button[@name='action_fsm_view_material']"):
-                existing = btn.get("invisible", "")
-                extra = "helpdesk_ticket_id and not (x_studio_valid_diagnosis and x_studio_repair_image_01)"
-                btn.set(
-                    "invisible", f"({existing}) or ({extra})" if existing else extra
-                )
-
-            # Mark as Done: only show for repair tickets when the repair is
-            # complete (ticket at Repair Completed). Non-repair FSM tasks have
-            # no helpdesk_ticket_id so the guard is False and they show normally.
-            # When the linked SO has been cancelled the repair never reaches
-            # 'Repair Completed', so bypass the stage gate in that case so the
-            # user can still close the task.
-            repair_guard = (
-                "helpdesk_ticket_id and "
-                "ticket_repair_stage_state != 'repair_completed' and "
-                "not so_cancelled"
-            )
-            for btn in arch.xpath(
-                "//button[@name='action_fsm_validate'][@class='btn-primary']"
-            ):
-                existing = btn.get("invisible", "False")
-                btn.set("invisible", f"({existing}) or ({repair_guard})")
-
-            # Secondary: also remove Studio's over-restrictive Repair/Credit conditions
-            for btn in arch.xpath(
-                "//button[@name='action_fsm_validate'][@class='btn-secondary']"
-            ):
-                btn.set(
-                    "invisible",
-                    f"not display_mark_as_done_secondary or ({repair_guard})",
-                )
-
-            # Recolour every Mark as Done variant to primary purple.
-            # Odoo's stock arch declares two action_fsm_validate
-            # buttons — one btn-primary, one btn-secondary — each
-            # gated for different states (timesheet-timer-running,
-            # allow_billable, etc). Whichever surfaces should render
-            # in the primary accent so the salesperson sees the same
-            # visual cue regardless of state. Runs AFTER the existing
-            # invisibility loops so the xpath [@class='btn-secondary']
-            # lookup above still matches the arch's original class.
-            for btn in arch.xpath("//button[@name='action_fsm_validate']"):
-                btn.set("class", "btn-primary")
-
-            # Stage statusbar: make it read-only (no clicking between stages).
-            # Stage transitions on repair tasks are driven by Mark as Done /
-            # automations — the salesperson shouldn't be able to skip stages
-            # by clicking on the bar.
-            for field in arch.xpath("//field[@name='stage_id']"):
-                if field.get("widget", "").startswith("statusbar"):
-                    field.set("options", "{'clickable': '0', 'fold_field': 'fold'}")
-                    field.set("readonly", "1")
-
-            # In Progress / Changes Requested / Approved … state button:
-            # lock it readonly so the user can't pick a new state from the
-            # dropdown. State changes happen via Mark as Done / automations.
-            for field in arch.xpath("//field[@name='state']"):
-                field.set("readonly", "1")
-
-            # Worksheet stat buttons (action_fsm_worksheet) — not used in
-            # the repair workflow, hide entirely.
-            for btn in arch.xpath("//button[@name='action_fsm_worksheet']"):
-                btn.set("invisible", "1")
+            self._fix_repair_get_view_inject_helper_fields_invisible(arch)
+            self._fix_repair_get_view_ui_only_field_hides(arch)
+            self._fix_repair_get_view_products_material_stat_button(arch)
+            self._fix_repair_get_view_stage_statusbar_make_read(arch)
 
         return arch, view
+
+    def _fix_repair_get_view_inject_helper_fields_invisible(self, arch):
+        """Inject helper fields as invisible so they are available in button invi."""
+        # Inject helper fields as invisible so they are available in
+        # button invisible expressions below.
+        # v258: extended the sentinel list — on standalone the base
+        # project.task arch doesn't happen to mention these fields,
+        # so OWL's FormRenderer raises "Name … is not defined" when
+        # our injected invisible expressions reference them. Clear-
+        # DB masks this because Studio's project.task view already
+        # renders (invisibly) most of these fields elsewhere.
+        targets = arch.xpath("//sheet") or arch.xpath("//form")
+        if targets:
+            for fname in (
+                "ticket_repair_stage_state",
+                "so_cancelled",
+                # v258 additions — read from the invisible/readonly
+                # expressions our _get_view adds below.
+                "helpdesk_ticket_id",
+                "sale_order_id",
+                "x_studio_valid_diagnosis",
+                "x_studio_repair_image_01",
+                "x_studio_end_quick_repair",
+                "x_studio_cancelled",
+            ):
+                if not arch.xpath(f"//field[@name='{fname}']"):
+                    field_el = etree.Element("field")
+                    field_el.set("name", fname)
+                    field_el.set("invisible", "1")
+                    targets[0].insert(0, field_el)
+
+            # v207 — inline warning banners for missing repair
+            # data. Replaces the v205/v206 JS notification
+            # approach (useEffect on record.data slots — didn't
+            # reliably dismiss on image upload because the
+            # binary widget's mutation didn't propagate to the
+            # reactive proxy the effect was watching).
+            #
+            # Use the SAME invisible-expression pattern the
+            # original Studio buttons used (action 2224 / 2242
+            # — removed in v190). Odoo's built-in view-attr
+            # reactivity re-evaluates these expressions on
+            # every field change, so the banners hide the
+            # instant the field is populated — no save needed.
+            #
+            # Visibility mirrors the buttons' old invisible
+            # exactly (minus the arch-caching quirks that were
+            # avoided by rebuilding the arch in v190's sanitize):
+            #   * helpdesk_ticket_id must be set (repair task).
+            #   * x_studio_cancelled must NOT be True.
+            #   * x_studio_end_quick_repair must NOT be True.
+            #   * The specific data field must be missing.
+            #
+            # Idempotent — bail if banners already there
+            # (subsequent _get_view calls on the same arch).
+            # v208 — inject reactivity-trigger divs. The arch
+            # invisible expression is the reliable mechanism
+            # (v207 confirmed it dismisses on field change with
+            # zero delay). But the user wants toast notifications
+            # rather than inline banners. Solution: keep the
+            # arch divs so Odoo's built-in reactivity governs
+            # when they appear/disappear from the DOM, but style
+            # them display:none via CSS and have a JS asset watch
+            # for their DOM presence to fire / dismiss toasts.
+            #
+            # The two <div> elements below therefore serve as
+            # reactivity anchors. Never visually rendered. The
+            # fix_repair_task_toast_trigger class + variant class
+            # are the JS observer's hook.
+            if not arch.xpath(
+                "//div[contains(@class,'fix_repair_task_toast_trigger--diagnosis')]"
+            ):
+                diag = etree.Element("div")
+                diag.set(
+                    "class",
+                    "fix_repair_task_toast_trigger "
+                    "fix_repair_task_toast_trigger--diagnosis",
+                )
+                diag.set(
+                    "invisible",
+                    "not helpdesk_ticket_id or "
+                    "x_studio_end_quick_repair or "
+                    "x_studio_cancelled or "
+                    "x_studio_valid_diagnosis",
+                )
+                targets[0].insert(0, diag)
+
+            if not arch.xpath(
+                "//div[contains(@class,'fix_repair_task_toast_trigger--image')]"
+            ):
+                img = etree.Element("div")
+                img.set(
+                    "class",
+                    "fix_repair_task_toast_trigger "
+                    "fix_repair_task_toast_trigger--image",
+                )
+                img.set(
+                    "invisible",
+                    "not helpdesk_ticket_id or "
+                    "x_studio_end_quick_repair or "
+                    "x_studio_cancelled or "
+                    "x_studio_repair_image_01",
+                )
+                targets[0].insert(0, img)
+
+    def _fix_repair_get_view_ui_only_field_hides(self, arch):
+        """UI-only field hides. Kept in Python so we can operate on the fully-mer."""
+        # UI-only field hides. Kept in Python so we can operate
+        # on the fully-merged arch — some of these fields are
+        # inserted by other modules' inherits (sale_project,
+        # project_enterprise, studio_customization) and can't
+        # be reliably targeted from an XML inherit that points
+        # at project.view_task_form2 (the base). Hiding here
+        # gracefully skips any field not present in this
+        # install. All fields keep their DB columns, computes,
+        # and constraints — only the render is suppressed.
+        # Gate all four hides on helpdesk_ticket_id: only tasks
+        # created from a helpdesk ticket (i.e. via Plan Intervention
+        # on a repair ticket) get these fields hidden. Plain
+        # project.task records outside the repair flow continue to
+        # show Tags / Sales Order Item / Planned Date / Material
+        # Availability normally.
+        for fname in (
+            "tag_ids",  # Tags
+            "sale_line_id",  # Sales Order Item
+            "planned_date_begin",  # Planned Date / Start date
+            "x_studio_material_availability",  # Material Availability
+        ):
+            for field_el in arch.xpath(f"//field[@name='{fname}']"):
+                field_el.set("invisible", "helpdesk_ticket_id")
+
+        # Freeze the task form (including its notebook pages) once
+        # a linked sale.order exists. On the repair workflow, a
+        # task's sale_order_id is set as soon as Plan Intervention
+        # confirms the SO — any subsequent edit to task fields
+        # (Diagnosis, Repair Image, Warranty Card, etc.) would
+        # drift away from what the SO / invoice / picking cycle
+        # has already booked against. Gate applies only to repair
+        # tasks (helpdesk_ticket_id set) so plain project.task
+        # records outside the repair flow retain full editability.
+        #
+        # ORed into each field's existing readonly expression via
+        # "(existing) or (helpdesk_ticket_id and sale_order_id)"
+        # so per-field readonly gates from Studio / core Odoo
+        # keep firing before this ticket-level freeze.
+        #
+        # Buttons (Mark as Done, Products smart button, etc.)
+        # aren't <field> elements so the loop leaves them alone
+        # — same rationale as helpdesk.ticket.x_ticket_locked.
+        #
+        # not(ancestor::field): skip fields nested inside another
+        # field's embedded view (one2many sub-lists like subtasks,
+        # timesheets, stock.moves). Those subrecords are on
+        # different models and don't have helpdesk_ticket_id /
+        # sale_order_id — stamping the expression on them raises
+        # "Name not defined" when Odoo's ListRenderer evaluates
+        # the readonly per-cell.
+        for field_el in arch.xpath("//sheet//field[not(ancestor::field)]"):
+            if field_el.get("invisible") == "1":
+                continue
+            existing = field_el.get("readonly", "")
+            extra = "helpdesk_ticket_id and sale_order_id"
+            field_el.set(
+                "readonly",
+                f"({existing}) or ({extra})" if existing else extra,
+            )
+
+        # New Quotation: not used in the repair workflow — hide entirely.
+        for btn in arch.xpath("//button[@name='action_fsm_create_quotation']"):
+            btn.set("invisible", "1")
+
+    def _fix_repair_get_view_products_material_stat_button(self, arch):
+        """Products (material) stat button: for repair tickets only show once bot."""
+        # Products (material) stat button: for repair tickets only show once
+        # both the Repair Diagnosis Validation and Image Validation are present.
+        # Non-repair FSM tasks keep their original allow_material condition.
+        for btn in arch.xpath("//button[@name='action_fsm_view_material']"):
+            existing = btn.get("invisible", "")
+            extra = "helpdesk_ticket_id and not (x_studio_valid_diagnosis and x_studio_repair_image_01)"
+            btn.set("invisible", f"({existing}) or ({extra})" if existing else extra)
+
+        # Mark as Done: only show for repair tickets when the repair is
+        # complete (ticket at Repair Completed). Non-repair FSM tasks have
+        # no helpdesk_ticket_id so the guard is False and they show normally.
+        # When the linked SO has been cancelled the repair never reaches
+        # 'Repair Completed', so bypass the stage gate in that case so the
+        # user can still close the task.
+        repair_guard = (
+            "helpdesk_ticket_id and "
+            "ticket_repair_stage_state != 'repair_completed' and "
+            "not so_cancelled"
+        )
+        for btn in arch.xpath(
+            "//button[@name='action_fsm_validate'][@class='btn-primary']"
+        ):
+            existing = btn.get("invisible", "False")
+            btn.set("invisible", f"({existing}) or ({repair_guard})")
+
+        # Secondary: also remove Studio's over-restrictive Repair/Credit conditions
+        for btn in arch.xpath(
+            "//button[@name='action_fsm_validate'][@class='btn-secondary']"
+        ):
+            btn.set(
+                "invisible",
+                f"not display_mark_as_done_secondary or ({repair_guard})",
+            )
+
+        # Recolour every Mark as Done variant to primary purple.
+        # Odoo's stock arch declares two action_fsm_validate
+        # buttons — one btn-primary, one btn-secondary — each
+        # gated for different states (timesheet-timer-running,
+        # allow_billable, etc). Whichever surfaces should render
+        # in the primary accent so the salesperson sees the same
+        # visual cue regardless of state. Runs AFTER the existing
+        # invisibility loops so the xpath [@class='btn-secondary']
+        # lookup above still matches the arch's original class.
+        for btn in arch.xpath("//button[@name='action_fsm_validate']"):
+            btn.set("class", "btn-primary")
+
+    def _fix_repair_get_view_stage_statusbar_make_read(self, arch):
+        """Stage statusbar: make it read-only (no clicking between stages). Stage."""
+        # Stage statusbar: make it read-only (no clicking between stages).
+        # Stage transitions on repair tasks are driven by Mark as Done /
+        # automations — the salesperson shouldn't be able to skip stages
+        # by clicking on the bar.
+        for field in arch.xpath("//field[@name='stage_id']"):
+            if field.get("widget", "").startswith("statusbar"):
+                field.set("options", "{'clickable': '0', 'fold_field': 'fold'}")
+                field.set("readonly", "1")
+
+        # In Progress / Changes Requested / Approved … state button:
+        # lock it readonly so the user can't pick a new state from the
+        # dropdown. State changes happen via Mark as Done / automations.
+        for field in arch.xpath("//field[@name='state']"):
+            field.set("readonly", "1")
+
+        # Worksheet stat buttons (action_fsm_worksheet) — not used in
+        # the repair workflow, hide entirely.
+        for btn in arch.xpath("//button[@name='action_fsm_worksheet']"):
+            btn.set("invisible", "1")

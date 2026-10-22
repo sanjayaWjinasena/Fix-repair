@@ -644,6 +644,16 @@ class StockPicking(models.Model):
             field.write({"compute": f"{marker}\n{call}\n"})
 
     def _action_done(self):
+        repair_so_ids, res = self._fix_repair_action_done_part_1()
+        self._fix_repair_action_done_part_2(repair_so_ids)
+        nuw_so_ids = self._fix_repair_action_done_path_c_customer_pays()
+        self._fix_repair_action_done_part_4(nuw_so_ids)
+        self._fix_repair_action_done_path_b_return_customer()
+
+        return res
+
+    def _fix_repair_action_done_part_1(self):
+        """Part of _action_done."""
         res = super()._action_done()
 
         # ── Path A: Repair SO pickings (warranty path only) ───────────────────
@@ -655,7 +665,10 @@ class StockPicking(models.Model):
             so = picking.sale_id
             if so.x_studio_quotation_type == "Repair" and not so.x_studio_rug_rejected:
                 repair_so_ids.add(so.id)
+        return repair_so_ids, res
 
+    def _fix_repair_action_done_part_2(self, repair_so_ids):
+        """Part of _action_done."""
         for so in self.env["sale.order"].sudo().browse(list(repair_so_ids)):
             task = so.task_id or self.env["project.task"].sudo().search(
                 [("sale_order_id", "=", so.id)], limit=1
@@ -698,6 +711,8 @@ class StockPicking(models.Model):
                 ):
                     self.env["sale.order"]._move_ticket_to_stage(so, "Repair Completed")
 
+    def _fix_repair_action_done_path_c_customer_pays(self):
+        """── Path C: Customer-pays SO pickings (started-NUW + Reject-RUG) ──── S."""
         # ── Path C: Customer-pays SO pickings (started-NUW + Reject-RUG) ────
         # Same flow for both: customer must pay before pickings can advance
         # the ticket past Repair Started.
@@ -706,7 +721,10 @@ class StockPicking(models.Model):
             so = picking.sale_id
             if so.x_repair_customer_pays or so.x_studio_rug_rejected:
                 nuw_so_ids.add(so.id)
+        return nuw_so_ids
 
+    def _fix_repair_action_done_part_4(self, nuw_so_ids):
+        """Part of _action_done."""
         for so in self.env["sale.order"].sudo().browse(list(nuw_so_ids)):
             task = so.task_id or self.env["project.task"].sudo().search(
                 [("sale_order_id", "=", so.id)], limit=1
@@ -749,6 +767,8 @@ class StockPicking(models.Model):
                 ):
                     self.env["sale.order"]._move_ticket_to_stage(so, "Repair Completed")
 
+    def _fix_repair_action_done_path_b_return_customer(self):
+        """── Path B: Return-to-customer handover pickings ──────────────────────."""
         # ── Path B: Return-to-customer handover pickings ──────────────────────
         # Pickings: Virtual/inventory location → Customer location.
         # Primary match: picking.return_id.id == ticket.x_studio_pick_id
@@ -814,5 +834,3 @@ class StockPicking(models.Model):
                     )
                 if ticket:
                     ticket._move_to_stage("Handed Over to Customer")
-
-        return res

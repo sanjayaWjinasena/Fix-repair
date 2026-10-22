@@ -897,547 +897,577 @@ class SaleOrder(models.Model):
     def _get_view(self, view_id=None, view_type="form", **options):
         arch, view = super()._get_view(view_id, view_type, **options)
         if view_type == "form":
-            # Inject our custom helper fields so button expressions can read
-            # them. We use x_customer_signed (computed from signed_on /
-            # signed_by / signature) instead of signed_on directly, because
-            # the standard signed_on field somehow doesn't survive
-            # Studio's view post-processing — but our own fields do.
-            for sheet in arch.xpath("//sheet"):
-                for fname in (
-                    "ticket_repair_stage_state",
-                    "x_customer_signed",
-                    "can_re_estimate",
-                    "x_repair_stock_ok",
-                    "x_repair_customer_pays",
-                    # v263: x_studio_quotation_type is read by our
-                    # OR-merged invisible expressions below
-                    # (repair_expr). On standalone the base sale.order
-                    # arch doesn't happen to render this field, so OWL
-                    # can't evaluate the expression at render time
-                    # without a sentinel.
-                    "x_studio_quotation_type",
-                    # v264: Confirm-button invisible expression reads
-                    # both RUG flags plus is_subscription. Base arch
-                    # doesn't fetch them without sentinels on standalone.
-                    "x_studio_rug_confirmed",
-                    "x_studio_rug_rejected",
-                    "is_subscription",
-                    "x_studio_order_payment_method",
-                    "x_studio_over_credit",
-                    "x_studio_credit_limit_approved",
-                    "x_studio_overdue",
-                    "x_studio_overdue_approved",
-                    "x_studio_valid_order_lines",
-                    "x_studio_expired",
-                    "x_studio_over_commission",
-                    "x_studio_over_commission_approved",
-                    "x_studio_margin_exceed",
-                    "x_studio_margin_approved",
-                    "x_studio_over_bank_guarantee",
-                    "x_studio_bank_guarantee_approved",
-                    "x_studio_proj_budget_status",
-                    "x_studio_budget_created",
-                    "x_studio_inventory_short",
-                    "x_studio_price_not_confirmed",
-                    "x_studio_new_item_from_project",
-                ):
-                    if not arch.xpath(f"//field[@name='{fname}']"):
-                        fld = etree.Element("field")
-                        fld.set("name", fname)
-                        fld.set("invisible", "1")
-                        sheet.insert(0, fld)
-                break
-
-            # Hide UI-only fields from the Sale Order form — but ONLY on
-            # Repair SOs. Sales / Project quotations continue to show
-            # Quotation Template, Sales Order Validity, Recurring Plan
-            # etc. as before, because those flows genuinely use them.
-            # Fields stay on the model on every SO (data + computes +
-            # Confirm-button gating below still work) — we just suppress
-            # rendering when x_studio_quotation_type == 'Repair'.
-            # arch.xpath returns [] when Studio hasn't placed the field
-            # into any view slot, so absent fields are silently skipped.
-            # OR-merge with any existing invisible expression so sibling
-            # modules that pre-set their own type-based hide (e.g.
-            # BugFix-Sales hides these fields on Sales-type quotations)
-            # don't get stomped by our overwrite. Fix-repair runs LAST
-            # in the _get_view MRO because it depends on BugFix-Sales,
-            # so a naïve .set() drops earlier hides silently.
-            repair_expr = "x_studio_quotation_type == 'Repair'"
-            for fname in (
-                "sale_order_template_id",  # Quotation Template
-                "x_studio_sales_order_validity",  # Sales Order Validity
-                "x_studio_service_item_available",  # Service Item Available
-                "x_studio_main_project_no",  # Main Project No
-                "x_studio_re_estimate_request_count",  # Re-estimate Request Count (bool)
-                "x_studio_re_estimate_request_count_1",  # Re-estimate Request Count (int)
-                "x_studio_re_estimate_count",  # Re-estimate Count
-                "plan_id",  # Recurring Plan
-                "x_studio_expired",  # Expired
-            ):
-                # Responsive SO header renders <label for="fname"/> in a
-                # separate cell from the <field name="fname"/>. Hiding
-                # only the field leaves the label dangling. Include both.
-                elements = arch.xpath(f"//field[@name='{fname}']") + arch.xpath(
-                    f"//label[@for='{fname}']"
-                )
-                for el in elements:
-                    existing = el.get("invisible", "")
-                    if existing and existing not in ("0", "False"):
-                        el.set(
-                            "invisible",
-                            f"({existing}) or ({repair_expr})",
-                        )
-                    else:
-                        el.set("invisible", repair_expr)
-
-            # Document Introduction / Conclusion (from BugFix-Sales): hide
-            # ONLY on Repair sale orders. Sales / Project quotations still
-            # show them because the intro/conclusion selectors are useful
-            # for those flows. Conditional invisible instead of "1" so the
-            # visibility flips automatically when x_studio_quotation_type
-            # changes. Same label + field pair treatment.
-            for fname in ("bugfix_sales_intro_id", "bugfix_sales_conclusion_id"):
-                elements = arch.xpath(f"//field[@name='{fname}']") + arch.xpath(
-                    f"//label[@for='{fname}']"
-                )
-                for el in elements:
-                    existing = el.get("invisible", "")
-                    if existing and existing not in ("0", "False"):
-                        el.set(
-                            "invisible",
-                            f"({existing}) or ({repair_expr})",
-                        )
-                    else:
-                        el.set("invisible", repair_expr)
-
-            # Strip ghost Studio fields whose ir.model.fields row exists
-            # but whose model registration is broken. Studio created two
-            # `x_studio_current_tot_amount` rows (name + `_1` suffix) as
-            # related fields pointing at amount_total, but neither is
-            # loaded on sale.order._fields — a simple read() raises
-            # ValueError: Invalid field. Leaving the <field> elements in
-            # arch crashes the client (owl "field is undefined"). Until
-            # the ghost rows are cleaned up in Studio, drop them from
-            # arch here so the form renders.
-            for ghost in (
-                "x_studio_current_tot_amount",
-                "x_studio_current_tot_amount_1",
-            ):
-                for el in arch.xpath(f"//field[@name='{ghost}']"):
-                    parent = el.getparent()
-                    if parent is not None:
-                        parent.remove(el)
-
-            # Re-estimate button in the SO header. Visible when the SO
-            # is signed AND no outgoing delivery is validated AND no
-            # invoice exists yet. Confirm dialog spells out the side
-            # effects (state -> draft, signed cleared, RUG cycle
-            # restarted) so the salesperson knows.
-            #
-            # invoice_count guard (v189): once an invoice exists we
-            # can't cleanly re-estimate — the invoice would need to
-            # be cancelled / reversed first, and the salesperson
-            # should do that consciously via the invoice form
-            # rather than through a Re-estimate that silently
-            # invalidates it. Hiding the button while any invoice
-            # is present forces the correct order of operations.
-            for header in arch.xpath("//header"):
-                if arch.xpath("//button[@name='action_re_estimate']"):
-                    break
-                re_est = etree.Element("button")
-                re_est.set("name", "action_re_estimate")
-                re_est.set("string", "Re-estimate")
-                re_est.set("type", "object")
-                re_est.set("class", "btn-secondary")
-                re_est.set(
-                    "confirm",
-                    "Re-estimate this Sales Order? It will be reset to draft, "
-                    "the customer's signature cleared, and the RUG approval "
-                    "cycle restarted. The linked helpdesk ticket will move "
-                    "back to Diagnosis.",
-                )
-                re_est.set("invisible", "not can_re_estimate or invoice_count > 0")
-                header.insert(0, re_est)
-                break
-
-            # Hide the Unlock button (Odoo core, appears when
-            # state='done' / SO is locked) once an invoice exists on
-            # this SO. Same rationale as the Re-estimate guard —
-            # unlocking a locked SO with a live invoice would create
-            # a ledger / lifecycle mismatch. Salesperson should
-            # cancel or reverse the invoice first, then the natural
-            # SO state can revert. Non-invoiced Sales SOs still see
-            # Unlock in the header when they're 'done'.
-            for btn in arch.xpath("//button[@name='action_unlock']"):
-                existing = btn.get("invisible", "")
-                extra = "invoice_count > 0"
-                btn.set(
-                    "invisible",
-                    f"({existing}) or ({extra})" if existing else extra,
-                )
-
-            # Create Invoice buttons — three variants ship by default:
-            #   • create_invoice (purple)             : invoice_status='to invoice'
-            #   • create_invoice_sub (gray)           : subscription-only
-            #   • create_invoice_percentage (gray)    : percentage advance
-            #
-            # v163 behaviour:
-            #   • RUG-confirmed (warranty path):
-            #       - Purple available once the ticket hits Repair Completed;
-            #         click routes to action_repair_create_invoice which
-            #         falls through to standard Odoo _create_invoices()
-            #         (delivered-qty invoice, no down-payment wizard).
-            #   • Non-RUG (customer-pays or Reject-RUG):
-            #       - Purple visible immediately after confirm — even
-            #         before delivery. Click routes to
-            #         _create_repair_full_invoice() which builds ONE
-            #         invoice for the entire SO ignoring the
-            #         invoice_policy='delivery' gate. Supports quick
-            #         repairs where the customer pays 100% upfront.
-            #   • Repair SOs universally lose the Percentage advance
-            #     variant (no more down-payment split).
-            #   • Non-Repair SOs (Sales / Project) keep the standard
-            #     Odoo behaviour on both buttons — untouched here.
-            for btn in arch.xpath("//button[@id='create_invoice']"):
-                # Repoint the button at our router method. This
-                # replaces the default action= wizard call
-                # (action_view_sale_advance_payment_inv) with a plain
-                # object-method call, so no down-payment prompt.
-                btn.set("name", "action_repair_create_invoice")
-                btn.set("type", "object")
-                # The default context passes
-                #   default_advance_payment_method='delivered'
-                # into the wizard — no longer relevant.
-                btn.attrib.pop("context", None)
-                btn.set(
-                    "invisible",
-                    # Universal gates
-                    "is_subscription or state != 'sale' "
-                    # Hide once at least one non-cancelled invoice
-                    # exists on the SO. Odoo's invoice_count is
-                    # computed after filtering out state='cancel'
-                    # moves, so this reappears automatically when
-                    # every invoice on the SO gets cancelled.
-                    #
-                    # Note we use invoice_count rather than
-                    # invoice_status == 'invoiced' because down-
-                    # payment-only SOs from the legacy two-invoice
-                    # flow can have invoice_status = 'no' (product
-                    # lines still at qty_invoiced = 0) while still
-                    # carrying an active down-payment invoice.
-                    "or invoice_count > 0 "
-                    # RUG in progress: waiting for Repair Completed
-                    "or (x_studio_rug_confirmed and not x_studio_rug_rejected "
-                    "    and ticket_repair_stage_state != 'repair_completed') "
-                    # RUG-approved / non-Repair: keep standard Odoo
-                    # gate — only visible when something is invoiceable
-                    "or (not (x_repair_customer_pays or x_studio_rug_rejected) "
-                    "    and invoice_status not in ('to invoice', 'upselling'))",
-                )
-
-            for btn in arch.xpath("//button[@id='create_invoice_percentage']"):
-                # Hide the percentage down-payment variant on every
-                # Repair SO. Non-Repair SOs keep the standard gate.
-                btn.set(
-                    "invisible",
-                    "is_subscription or state != 'sale' "
-                    "or invoice_status != 'no' "
-                    "or x_studio_quotation_type == 'Repair'",
-                )
-
-            # Order Payment Type: editable in draft/sent for all customers
-            for el in arch.xpath("//field[@name='x_studio_order_payment_method']"):
-                el.set("readonly", "state in ('cancel', 'done', 'sale')")
-
-            # Quotation Type: editable in draft/sent until an FSM task is linked.
-            # Repair SOs are auto-set to 'Repair' by project_task._sync_repair_flags
-            # when Plan Intervention creates the task; the type readonly lock kicks
-            # in from that moment. Non-repair SOs (Sales, Project) stay editable
-            # until confirm.
-            #
-            # task_id is declared as optional="hidden" in Odoo's standard arch
-            # (industry_fsm_sale extension). Optional-hidden fields aren't loaded
-            # into the record cache by default, so the readonly modifier below
-            # crashes with "Name 'task_id' is not defined" when onchange fires
-            # (e.g. after selecting a customer). Force task_id to always load
-            # by removing the `optional` attribute from every existing arch decl.
-            for el in arch.xpath("//field[@name='task_id']"):
-                el.attrib.pop("optional", None)
-            for el in arch.xpath("//field[@name='x_studio_quotation_type']"):
-                el.set(
-                    "readonly", "(task_id != False) or (state not in ['draft', 'sent'])"
-                )
-
-            # RUG Request button: only on WARRANTY Repair quotations, before
-            # request is sent. Customer-pays repairs (formerly 'Not Under
-            # Warranty' quotation_type) don't go through the RUG cycle —
-            # they're customer-pays from the start, so the RUG buttons must
-            # stay hidden. Reject-RUG SOs also hide the request button
-            # because the RUG cycle already resolved.
-            rug_req_invisible = (
-                "(x_studio_quotation_type != 'Repair') or "
-                "(x_repair_customer_pays) or "
-                "(state not in ['draft', 'sent']) or "
-                "(x_studio_rug_request_sent == True) or "
-                "(x_studio_rug_rejected == True) or "
-                "(x_studio_rug_approved == True) or "
-                "(not x_repair_stock_ok)"
+            repair_expr = self._fix_repair_get_view_inject_our_custom_helper(arch)
+            self._fix_repair_get_view_document_introduction_conclusion_from(
+                arch, repair_expr
             )
-            for btn in arch.xpath("//button[@name='1980']"):
-                btn.set("invisible", rug_req_invisible)
-
-            # Approve/Reject RUG buttons: only on WARRANTY Repair quotations,
-            # after request is sent. Same customer-pays guard as above — if a
-            # customer-pays repair somehow has rug_request_sent=True (legacy
-            # data), still hide the approve/reject buttons.
+            self._fix_repair_get_view_re_estimate_button_header(arch)
             rug_approve_invisible = (
-                "(x_studio_quotation_type != 'Repair') or "
-                "(x_repair_customer_pays) or "
-                "(state not in ['draft', 'sent']) or "
-                "(x_studio_rug_request_sent == False) or "
-                "(x_studio_rug_rejected == True) or "
-                "(x_studio_rug_approved == True)"
+                self._fix_repair_get_view_order_payment_type_editable(arch)
             )
-            # Approve: rewire to our method so it confirms the SO directly (no send wizard)
-            for btn in arch.xpath("//button[@name='1981']"):
-                btn.set("invisible", rug_approve_invisible)
-                btn.set("type", "object")
-                btn.set("name", "action_approve_rug_direct")
-            # Reject: rewire to our own method. The Studio server action 2004
-            # also resets each line's price_unit to x_studio_price_unit_original,
-            # but that "original" is only captured by another Studio action
-            # when x_studio_rug_confirmed flips True — in a request → reject
-            # cycle where rug_confirmed never flips, the original stays at 0,
-            # and the reset zeros the perfectly-good current price.
-            for btn in arch.xpath("//button[@name='2004']"):
-                btn.set("invisible", rug_approve_invisible)
-                btn.set("type", "object")
-                btn.set("name", "action_reject_rug_direct")
-
-            # Confirm button: visible in both draft AND sent states so the
-            # salesperson can confirm either path:
-            #   • Repair (warranty) + RUG approved  → standard warranty flow
-            #   • Repair (warranty) + RUG rejected  → only AFTER customer signs
-            #                                         (falls through to customer-pays)
-            #   • Repair (customer-pays)            → only AFTER customer signs
-            #                                         the portal preview
-            # Stays hidden on warranty Repair quotations while the RUG is still
-            # pending (neither approved nor rejected yet).
-            # Studio's arch has two action_confirm buttons — we want the
-            # SECOND one to be the visible one, so force-hide the first and
-            # apply our visibility logic to the second (and force-hide any
-            # additional duplicates).
-            confirm_btns = arch.xpath("//button[@name='action_confirm']")
-            if confirm_btns:
-                confirm_btns[0].set("invisible", "1")
-                if len(confirm_btns) >= 2:
-                    # Split gating into (a) universal predicates that
-                    # apply to EVERY sale.order regardless of quotation
-                    # type, and (b) repair-workflow predicates that only
-                    # fire for x_studio_quotation_type == 'Repair'.
-                    #
-                    # Universal:
-                    #   - state check (must be draft/sent)
-                    #   - credit-limit gate on Credit-payment SOs
-                    #   - bank-guarantee gate on Credit-payment SOs
-                    #     (parallels credit-limit — customer has a BG
-                    #     ceiling and it's been exceeded)
-                    #   - overdue-debt gate: partner has overdue invoices
-                    #     and the override approval has not been granted
-                    #   - valid-order-lines gate: SO must have at least
-                    #     one billable line with qty>0 AND price>0
-                    #   - expired-quotation gate: validity_date has
-                    #     passed. Studio's compute already excludes
-                    #     Project quotation type, so this fires only on
-                    #     Sales / Repair SOs by design.
-                    #
-                    # Repair-only (three sub-cases inside one branch):
-                    #   - Warranty repair (customer_pays=False):
-                    #       needs RUG cycle resolved (approved OR
-                    #       rejected). If rejected mid-flow, falls
-                    #       through to the customer-pays path below.
-                    #   - Customer-pays repair (customer_pays=True):
-                    #       requires customer to have signed the
-                    #       quotation on the portal preview before
-                    #       Confirm.
-                    #   - Reject-RUG:
-                    #       warranty repair that fell through to
-                    #       customer-pays after RUG rejection. Same
-                    #       signature gate as customer-pays.
-                    #   - Stock shortage applies to every repair.
-                    #
-                    # Non-Repair (Sales + Project):
-                    #   - over-commission gate: salesperson commission
-                    #     exceeds threshold and manager hasn't approved
-                    #   - margin-exceed gate: SO margin below allowed
-                    #     minimum on any line and manager hasn't approved
-                    #
-                    # Project-only:
-                    #   - budget must be created AND status must be
-                    #     validated or done (not draft/cancel/confirm)
-                    #   - no inventory shortages / sub-contract lines
-                    #   - all line prices confirmed by manager
-                    #   - no un-approved new-item lines
-                    #
-                    # Note the customer-pays and reject-RUG branches
-                    # share the same customer-signature requirement,
-                    # so we OR them into one predicate for readability.
-                    confirm_btns[1].set(
-                        "invisible",
-                        "(state not in ('draft', 'sent')) or "
-                        "(x_studio_order_payment_method == 'Credit' "
-                        "and x_studio_over_credit "
-                        "and not x_studio_credit_limit_approved) or "
-                        "(x_studio_order_payment_method == 'Credit' "
-                        "and x_studio_over_bank_guarantee "
-                        "and not x_studio_bank_guarantee_approved) or "
-                        "(x_studio_overdue "
-                        "and not x_studio_overdue_approved) or "
-                        "(not x_studio_valid_order_lines) or "
-                        "(x_studio_expired) or "
-                        "(x_studio_quotation_type == 'Repair' and ("
-                        "(not x_repair_customer_pays "
-                        "and not x_studio_rug_approved "
-                        "and not x_studio_rug_rejected) "
-                        "or ((x_repair_customer_pays or x_studio_rug_rejected) "
-                        "and not x_customer_signed) "
-                        "or (not x_repair_stock_ok)"
-                        ")) or "
-                        "(x_studio_quotation_type in ('Sales', 'Project') and ("
-                        "(x_studio_over_commission "
-                        "and not x_studio_over_commission_approved) "
-                        "or (x_studio_margin_exceed "
-                        "and not x_studio_margin_approved)"
-                        ")) or "
-                        "(x_studio_quotation_type == 'Project' and ("
-                        "(not x_studio_budget_created) "
-                        "or (x_studio_proj_budget_status "
-                        "not in ('validate', 'done')) "
-                        "or (x_studio_inventory_short) "
-                        "or (x_studio_price_not_confirmed) "
-                        "or (x_studio_new_item_from_project)"
-                        "))",
-                    )
-                    for btn in confirm_btns[2:]:
-                        btn.set("invisible", "1")
-                    # Recolour the visible Confirm (confirm_btns[1])
-                    # to primary purple. Odoo core often sets it as
-                    # oe_highlight / btn-primary already, but Studio's
-                    # arch here has cleared the class on the second
-                    # duplicate — force it back to match the rest of
-                    # the header's primary actions.
-                    confirm_btns[1].set("class", "btn-primary")
-
-            # Send PRO-FORMA Invoice: not used — hide both instances.
-            for btn in arch.xpath("//button[contains(@id, 'send_proforma')]"):
-                btn.set("invisible", "1")
-
-            # Cancel: hidden by default for the repair workflow, but shown
-            # once at least one quotation email has been sent (state = 'sent')
-            # so the salesperson can cancel after sending if needed.
-            for btn in arch.xpath("//button[@name='action_cancel']"):
-                btn.set("invisible", "state != 'sent'")
-
-            # Set to Quotation (action_draft): not used — once a sale order
-            # has been cancelled it stays cancelled, no reverting to draft.
-            for btn in arch.xpath("//button[@name='action_draft']"):
-                btn.set("invisible", "1")
-
-            # Create Advance Payment: visible only on Sales-type
-            # quotations AFTER Confirm has been clicked (state='sale'
-            # or 'done'). Not shown on draft / sent quotations because
-            # you can't take a payment on something the customer
-            # hasn't yet committed to. Repair / Not Under Warranty /
-            # Project flows use their own invoicing paths (Create
-            # Draft Invoice / RUG settlement) and never see this
-            # button.
-            for btn in arch.xpath("//button[@name='2341']"):
-                btn.set(
-                    "invisible",
-                    "x_studio_quotation_type != 'Sales' "
-                    "or state not in ('sale', 'done')",
-                )
-
-            # Send by Email: shown for Not Under Warranty (no RUG flow) AND for
-            # Repair tickets where the RUG was rejected — once rejected the
-            # quotation falls back to the customer-pays flow so the salesperson
-            # needs to email the quote.
-            # Only visible in 'draft' — once an email has been sent (state
-            # becomes 'sent'), hide the button so the salesperson doesn't
-            # accidentally fire a duplicate email.
-            # Studio has hidden all action_quotation_send buttons via an
-            # always-true `state not in ['False']` guard; inject a clean one.
-            for header in arch.xpath("//header"):
-                btn = etree.Element("button")
-                btn.set("name", "action_quotation_send")
-                btn.set("string", "Send by Email")
-                btn.set("type", "object")
-                btn.set("class", "btn-primary")
-                btn.set(
-                    "invisible",
-                    "(not x_repair_customer_pays "
-                    "and not x_studio_rug_rejected) "
-                    "or state != 'draft' "
-                    "or not x_repair_stock_ok",
-                )
-                header.insert(0, btn)
-
-            # Stock shortage warning: red button that appears in draft/sent
-            # when any storable line on the SO can't be covered by free_qty
-            # at the repair source (Factory Repair Location for Factory
-            # tickets, branch stock for Centre tickets). Clicking opens a
-            # UserError modal listing exactly what's short. The three
-            # forward-progress buttons (Send by Email, Request RUG,
-            # Confirm) are gated behind x_repair_stock_ok in this same
-            # method so the salesperson can't advance the quotation while
-            # this button is visible.
-            for header in arch.xpath("//header"):
-                warn = etree.Element("button")
-                warn.set("name", "action_show_stock_shortage")
-                warn.set("string", "Not Enough Stock")
-                warn.set("type", "object")
-                warn.set("class", "btn-danger")
-                warn.set(
-                    "invisible", "x_repair_stock_ok or state not in ('draft', 'sent')"
-                )
-                header.insert(0, warn)
-                break
-
-            # v222 lockdown: freeze the entire SO form on Repair-type
-            # SOs at every state (draft → sent → sale → done). The SO
-            # is meant to mirror the linked helpdesk ticket verbatim;
-            # ad-hoc backend edits defeat that. The o2m order_line
-            # field is caught by this same walk — setting readonly on
-            # it hides Add-a-line and disables in-place edit / delete.
-            #
-            # Scope: repair SOs only. Non-repair Sales / Project flows
-            # keep Odoo's core readonly rules untouched.
-            #
-            # v195 (superseded): earlier this gate was
-            #   "x_studio_quotation_type == 'Repair' and invoice_count > 0"
-            # — locking only after invoicing. v222 broadens it to lock
-            # from creation onward per business requirement.
-            #
-            # not(ancestor::field): skip embedded views — order_line's
-            # inner <tree>, invoice_ids one2many, tax_totals sub-
-            # widgets, etc. Those subrecords are on other models and
-            # don't have x_studio_quotation_type in their eval context.
-            #
-            # Ticket → SO creation writes via sudo() and bypasses
-            # view-level readonly, so lines still populate on SO
-            # creation — only human backend edits are blocked.
-            so_lock_gate = "x_studio_quotation_type == 'Repair'"
-            for field_el in arch.xpath("//sheet//field[not(ancestor::field)]"):
-                if field_el.get("invisible") == "1":
-                    continue
-                existing = field_el.get("readonly", "")
-                field_el.set(
-                    "readonly",
-                    f"({existing}) or ({so_lock_gate})" if existing else so_lock_gate,
-                )
+            self._fix_repair_get_view_approve_rewire_our_method(
+                arch, rug_approve_invisible
+            )
+            self._fix_repair_get_view_send_pro_forma_invoice(arch)
+            self._fix_repair_get_view_stock_shortage_warning_red(arch)
 
         return arch, view
+
+    def _fix_repair_get_view_inject_our_custom_helper(self, arch):
+        """Inject our custom helper fields so button expressions can read them. W."""
+        # Inject our custom helper fields so button expressions can read
+        # them. We use x_customer_signed (computed from signed_on /
+        # signed_by / signature) instead of signed_on directly, because
+        # the standard signed_on field somehow doesn't survive
+        # Studio's view post-processing — but our own fields do.
+        for sheet in arch.xpath("//sheet"):
+            for fname in (
+                "ticket_repair_stage_state",
+                "x_customer_signed",
+                "can_re_estimate",
+                "x_repair_stock_ok",
+                "x_repair_customer_pays",
+                # v263: x_studio_quotation_type is read by our
+                # OR-merged invisible expressions below
+                # (repair_expr). On standalone the base sale.order
+                # arch doesn't happen to render this field, so OWL
+                # can't evaluate the expression at render time
+                # without a sentinel.
+                "x_studio_quotation_type",
+                # v264: Confirm-button invisible expression reads
+                # both RUG flags plus is_subscription. Base arch
+                # doesn't fetch them without sentinels on standalone.
+                "x_studio_rug_confirmed",
+                "x_studio_rug_rejected",
+                "is_subscription",
+                "x_studio_order_payment_method",
+                "x_studio_over_credit",
+                "x_studio_credit_limit_approved",
+                "x_studio_overdue",
+                "x_studio_overdue_approved",
+                "x_studio_valid_order_lines",
+                "x_studio_expired",
+                "x_studio_over_commission",
+                "x_studio_over_commission_approved",
+                "x_studio_margin_exceed",
+                "x_studio_margin_approved",
+                "x_studio_over_bank_guarantee",
+                "x_studio_bank_guarantee_approved",
+                "x_studio_proj_budget_status",
+                "x_studio_budget_created",
+                "x_studio_inventory_short",
+                "x_studio_price_not_confirmed",
+                "x_studio_new_item_from_project",
+            ):
+                if not arch.xpath(f"//field[@name='{fname}']"):
+                    fld = etree.Element("field")
+                    fld.set("name", fname)
+                    fld.set("invisible", "1")
+                    sheet.insert(0, fld)
+            break
+
+        # Hide UI-only fields from the Sale Order form — but ONLY on
+        # Repair SOs. Sales / Project quotations continue to show
+        # Quotation Template, Sales Order Validity, Recurring Plan
+        # etc. as before, because those flows genuinely use them.
+        # Fields stay on the model on every SO (data + computes +
+        # Confirm-button gating below still work) — we just suppress
+        # rendering when x_studio_quotation_type == 'Repair'.
+        # arch.xpath returns [] when Studio hasn't placed the field
+        # into any view slot, so absent fields are silently skipped.
+        # OR-merge with any existing invisible expression so sibling
+        # modules that pre-set their own type-based hide (e.g.
+        # BugFix-Sales hides these fields on Sales-type quotations)
+        # don't get stomped by our overwrite. Fix-repair runs LAST
+        # in the _get_view MRO because it depends on BugFix-Sales,
+        # so a naïve .set() drops earlier hides silently.
+        repair_expr = "x_studio_quotation_type == 'Repair'"
+        for fname in (
+            "sale_order_template_id",  # Quotation Template
+            "x_studio_sales_order_validity",  # Sales Order Validity
+            "x_studio_service_item_available",  # Service Item Available
+            "x_studio_main_project_no",  # Main Project No
+            "x_studio_re_estimate_request_count",  # Re-estimate Request Count (bool)
+            "x_studio_re_estimate_request_count_1",  # Re-estimate Request Count (int)
+            "x_studio_re_estimate_count",  # Re-estimate Count
+            "plan_id",  # Recurring Plan
+            "x_studio_expired",  # Expired
+        ):
+            # Responsive SO header renders <label for="fname"/> in a
+            # separate cell from the <field name="fname"/>. Hiding
+            # only the field leaves the label dangling. Include both.
+            elements = arch.xpath(f"//field[@name='{fname}']") + arch.xpath(
+                f"//label[@for='{fname}']"
+            )
+            for el in elements:
+                existing = el.get("invisible", "")
+                if existing and existing not in ("0", "False"):
+                    el.set(
+                        "invisible",
+                        f"({existing}) or ({repair_expr})",
+                    )
+                else:
+                    el.set("invisible", repair_expr)
+        return repair_expr
+
+    def _fix_repair_get_view_document_introduction_conclusion_from(
+        self, arch, repair_expr
+    ):
+        """Document Introduction / Conclusion (from BugFix-Sales): hide ONLY on R."""
+        # Document Introduction / Conclusion (from BugFix-Sales): hide
+        # ONLY on Repair sale orders. Sales / Project quotations still
+        # show them because the intro/conclusion selectors are useful
+        # for those flows. Conditional invisible instead of "1" so the
+        # visibility flips automatically when x_studio_quotation_type
+        # changes. Same label + field pair treatment.
+        for fname in ("bugfix_sales_intro_id", "bugfix_sales_conclusion_id"):
+            elements = arch.xpath(f"//field[@name='{fname}']") + arch.xpath(
+                f"//label[@for='{fname}']"
+            )
+            for el in elements:
+                existing = el.get("invisible", "")
+                if existing and existing not in ("0", "False"):
+                    el.set(
+                        "invisible",
+                        f"({existing}) or ({repair_expr})",
+                    )
+                else:
+                    el.set("invisible", repair_expr)
+
+        # Strip ghost Studio fields whose ir.model.fields row exists
+        # but whose model registration is broken. Studio created two
+        # `x_studio_current_tot_amount` rows (name + `_1` suffix) as
+        # related fields pointing at amount_total, but neither is
+        # loaded on sale.order._fields — a simple read() raises
+        # ValueError: Invalid field. Leaving the <field> elements in
+        # arch crashes the client (owl "field is undefined"). Until
+        # the ghost rows are cleaned up in Studio, drop them from
+        # arch here so the form renders.
+        for ghost in (
+            "x_studio_current_tot_amount",
+            "x_studio_current_tot_amount_1",
+        ):
+            for el in arch.xpath(f"//field[@name='{ghost}']"):
+                parent = el.getparent()
+                if parent is not None:
+                    parent.remove(el)
+
+    def _fix_repair_get_view_re_estimate_button_header(self, arch):
+        """Re-estimate button in the SO header. Visible when the SO is signed AND."""
+        # Re-estimate button in the SO header. Visible when the SO
+        # is signed AND no outgoing delivery is validated AND no
+        # invoice exists yet. Confirm dialog spells out the side
+        # effects (state -> draft, signed cleared, RUG cycle
+        # restarted) so the salesperson knows.
+        #
+        # invoice_count guard (v189): once an invoice exists we
+        # can't cleanly re-estimate — the invoice would need to
+        # be cancelled / reversed first, and the salesperson
+        # should do that consciously via the invoice form
+        # rather than through a Re-estimate that silently
+        # invalidates it. Hiding the button while any invoice
+        # is present forces the correct order of operations.
+        for header in arch.xpath("//header"):
+            if arch.xpath("//button[@name='action_re_estimate']"):
+                break
+            re_est = etree.Element("button")
+            re_est.set("name", "action_re_estimate")
+            re_est.set("string", "Re-estimate")
+            re_est.set("type", "object")
+            re_est.set("class", "btn-secondary")
+            re_est.set(
+                "confirm",
+                "Re-estimate this Sales Order? It will be reset to draft, "
+                "the customer's signature cleared, and the RUG approval "
+                "cycle restarted. The linked helpdesk ticket will move "
+                "back to Diagnosis.",
+            )
+            re_est.set("invisible", "not can_re_estimate or invoice_count > 0")
+            header.insert(0, re_est)
+            break
+
+        # Hide the Unlock button (Odoo core, appears when
+        # state='done' / SO is locked) once an invoice exists on
+        # this SO. Same rationale as the Re-estimate guard —
+        # unlocking a locked SO with a live invoice would create
+        # a ledger / lifecycle mismatch. Salesperson should
+        # cancel or reverse the invoice first, then the natural
+        # SO state can revert. Non-invoiced Sales SOs still see
+        # Unlock in the header when they're 'done'.
+        for btn in arch.xpath("//button[@name='action_unlock']"):
+            existing = btn.get("invisible", "")
+            extra = "invoice_count > 0"
+            btn.set(
+                "invisible",
+                f"({existing}) or ({extra})" if existing else extra,
+            )
+
+        # Create Invoice buttons — three variants ship by default:
+        #   • create_invoice (purple)             : invoice_status='to invoice'
+        #   • create_invoice_sub (gray)           : subscription-only
+        #   • create_invoice_percentage (gray)    : percentage advance
+        #
+        # v163 behaviour:
+        #   • RUG-confirmed (warranty path):
+        #       - Purple available once the ticket hits Repair Completed;
+        #         click routes to action_repair_create_invoice which
+        #         falls through to standard Odoo _create_invoices()
+        #         (delivered-qty invoice, no down-payment wizard).
+        #   • Non-RUG (customer-pays or Reject-RUG):
+        #       - Purple visible immediately after confirm — even
+        #         before delivery. Click routes to
+        #         _create_repair_full_invoice() which builds ONE
+        #         invoice for the entire SO ignoring the
+        #         invoice_policy='delivery' gate. Supports quick
+        #         repairs where the customer pays 100% upfront.
+        #   • Repair SOs universally lose the Percentage advance
+        #     variant (no more down-payment split).
+        #   • Non-Repair SOs (Sales / Project) keep the standard
+        #     Odoo behaviour on both buttons — untouched here.
+        for btn in arch.xpath("//button[@id='create_invoice']"):
+            # Repoint the button at our router method. This
+            # replaces the default action= wizard call
+            # (action_view_sale_advance_payment_inv) with a plain
+            # object-method call, so no down-payment prompt.
+            btn.set("name", "action_repair_create_invoice")
+            btn.set("type", "object")
+            # The default context passes
+            #   default_advance_payment_method='delivered'
+            # into the wizard — no longer relevant.
+            btn.attrib.pop("context", None)
+            btn.set(
+                "invisible",
+                # Universal gates
+                "is_subscription or state != 'sale' "
+                # Hide once at least one non-cancelled invoice
+                # exists on the SO. Odoo's invoice_count is
+                # computed after filtering out state='cancel'
+                # moves, so this reappears automatically when
+                # every invoice on the SO gets cancelled.
+                #
+                # Note we use invoice_count rather than
+                # invoice_status == 'invoiced' because down-
+                # payment-only SOs from the legacy two-invoice
+                # flow can have invoice_status = 'no' (product
+                # lines still at qty_invoiced = 0) while still
+                # carrying an active down-payment invoice.
+                "or invoice_count > 0 "
+                # RUG in progress: waiting for Repair Completed
+                "or (x_studio_rug_confirmed and not x_studio_rug_rejected "
+                "    and ticket_repair_stage_state != 'repair_completed') "
+                # RUG-approved / non-Repair: keep standard Odoo
+                # gate — only visible when something is invoiceable
+                "or (not (x_repair_customer_pays or x_studio_rug_rejected) "
+                "    and invoice_status not in ('to invoice', 'upselling'))",
+            )
+
+        for btn in arch.xpath("//button[@id='create_invoice_percentage']"):
+            # Hide the percentage down-payment variant on every
+            # Repair SO. Non-Repair SOs keep the standard gate.
+            btn.set(
+                "invisible",
+                "is_subscription or state != 'sale' "
+                "or invoice_status != 'no' "
+                "or x_studio_quotation_type == 'Repair'",
+            )
+
+    def _fix_repair_get_view_order_payment_type_editable(self, arch):
+        """Order Payment Type: editable in draft/sent for all customers."""
+        # Order Payment Type: editable in draft/sent for all customers
+        for el in arch.xpath("//field[@name='x_studio_order_payment_method']"):
+            el.set("readonly", "state in ('cancel', 'done', 'sale')")
+
+        # Quotation Type: editable in draft/sent until an FSM task is linked.
+        # Repair SOs are auto-set to 'Repair' by project_task._sync_repair_flags
+        # when Plan Intervention creates the task; the type readonly lock kicks
+        # in from that moment. Non-repair SOs (Sales, Project) stay editable
+        # until confirm.
+        #
+        # task_id is declared as optional="hidden" in Odoo's standard arch
+        # (industry_fsm_sale extension). Optional-hidden fields aren't loaded
+        # into the record cache by default, so the readonly modifier below
+        # crashes with "Name 'task_id' is not defined" when onchange fires
+        # (e.g. after selecting a customer). Force task_id to always load
+        # by removing the `optional` attribute from every existing arch decl.
+        for el in arch.xpath("//field[@name='task_id']"):
+            el.attrib.pop("optional", None)
+        for el in arch.xpath("//field[@name='x_studio_quotation_type']"):
+            el.set("readonly", "(task_id != False) or (state not in ['draft', 'sent'])")
+
+        # RUG Request button: only on WARRANTY Repair quotations, before
+        # request is sent. Customer-pays repairs (formerly 'Not Under
+        # Warranty' quotation_type) don't go through the RUG cycle —
+        # they're customer-pays from the start, so the RUG buttons must
+        # stay hidden. Reject-RUG SOs also hide the request button
+        # because the RUG cycle already resolved.
+        rug_req_invisible = (
+            "(x_studio_quotation_type != 'Repair') or "
+            "(x_repair_customer_pays) or "
+            "(state not in ['draft', 'sent']) or "
+            "(x_studio_rug_request_sent == True) or "
+            "(x_studio_rug_rejected == True) or "
+            "(x_studio_rug_approved == True) or "
+            "(not x_repair_stock_ok)"
+        )
+        for btn in arch.xpath("//button[@name='1980']"):
+            btn.set("invisible", rug_req_invisible)
+
+        # Approve/Reject RUG buttons: only on WARRANTY Repair quotations,
+        # after request is sent. Same customer-pays guard as above — if a
+        # customer-pays repair somehow has rug_request_sent=True (legacy
+        # data), still hide the approve/reject buttons.
+        rug_approve_invisible = (
+            "(x_studio_quotation_type != 'Repair') or "
+            "(x_repair_customer_pays) or "
+            "(state not in ['draft', 'sent']) or "
+            "(x_studio_rug_request_sent == False) or "
+            "(x_studio_rug_rejected == True) or "
+            "(x_studio_rug_approved == True)"
+        )
+        return rug_approve_invisible
+
+    def _fix_repair_get_view_approve_rewire_our_method(
+        self, arch, rug_approve_invisible
+    ):
+        """Approve: rewire to our method so it confirms the SO directly (no send ."""
+        # Approve: rewire to our method so it confirms the SO directly (no send wizard)
+        for btn in arch.xpath("//button[@name='1981']"):
+            btn.set("invisible", rug_approve_invisible)
+            btn.set("type", "object")
+            btn.set("name", "action_approve_rug_direct")
+        # Reject: rewire to our own method. The Studio server action 2004
+        # also resets each line's price_unit to x_studio_price_unit_original,
+        # but that "original" is only captured by another Studio action
+        # when x_studio_rug_confirmed flips True — in a request → reject
+        # cycle where rug_confirmed never flips, the original stays at 0,
+        # and the reset zeros the perfectly-good current price.
+        for btn in arch.xpath("//button[@name='2004']"):
+            btn.set("invisible", rug_approve_invisible)
+            btn.set("type", "object")
+            btn.set("name", "action_reject_rug_direct")
+
+        # Confirm button: visible in both draft AND sent states so the
+        # salesperson can confirm either path:
+        #   • Repair (warranty) + RUG approved  → standard warranty flow
+        #   • Repair (warranty) + RUG rejected  → only AFTER customer signs
+        #                                         (falls through to customer-pays)
+        #   • Repair (customer-pays)            → only AFTER customer signs
+        #                                         the portal preview
+        # Stays hidden on warranty Repair quotations while the RUG is still
+        # pending (neither approved nor rejected yet).
+        # Studio's arch has two action_confirm buttons — we want the
+        # SECOND one to be the visible one, so force-hide the first and
+        # apply our visibility logic to the second (and force-hide any
+        # additional duplicates).
+        confirm_btns = arch.xpath("//button[@name='action_confirm']")
+        if confirm_btns:
+            confirm_btns[0].set("invisible", "1")
+            if len(confirm_btns) >= 2:
+                # Split gating into (a) universal predicates that
+                # apply to EVERY sale.order regardless of quotation
+                # type, and (b) repair-workflow predicates that only
+                # fire for x_studio_quotation_type == 'Repair'.
+                #
+                # Universal:
+                #   - state check (must be draft/sent)
+                #   - credit-limit gate on Credit-payment SOs
+                #   - bank-guarantee gate on Credit-payment SOs
+                #     (parallels credit-limit — customer has a BG
+                #     ceiling and it's been exceeded)
+                #   - overdue-debt gate: partner has overdue invoices
+                #     and the override approval has not been granted
+                #   - valid-order-lines gate: SO must have at least
+                #     one billable line with qty>0 AND price>0
+                #   - expired-quotation gate: validity_date has
+                #     passed. Studio's compute already excludes
+                #     Project quotation type, so this fires only on
+                #     Sales / Repair SOs by design.
+                #
+                # Repair-only (three sub-cases inside one branch):
+                #   - Warranty repair (customer_pays=False):
+                #       needs RUG cycle resolved (approved OR
+                #       rejected). If rejected mid-flow, falls
+                #       through to the customer-pays path below.
+                #   - Customer-pays repair (customer_pays=True):
+                #       requires customer to have signed the
+                #       quotation on the portal preview before
+                #       Confirm.
+                #   - Reject-RUG:
+                #       warranty repair that fell through to
+                #       customer-pays after RUG rejection. Same
+                #       signature gate as customer-pays.
+                #   - Stock shortage applies to every repair.
+                #
+                # Non-Repair (Sales + Project):
+                #   - over-commission gate: salesperson commission
+                #     exceeds threshold and manager hasn't approved
+                #   - margin-exceed gate: SO margin below allowed
+                #     minimum on any line and manager hasn't approved
+                #
+                # Project-only:
+                #   - budget must be created AND status must be
+                #     validated or done (not draft/cancel/confirm)
+                #   - no inventory shortages / sub-contract lines
+                #   - all line prices confirmed by manager
+                #   - no un-approved new-item lines
+                #
+                # Note the customer-pays and reject-RUG branches
+                # share the same customer-signature requirement,
+                # so we OR them into one predicate for readability.
+                confirm_btns[1].set(
+                    "invisible",
+                    "(state not in ('draft', 'sent')) or "
+                    "(x_studio_order_payment_method == 'Credit' "
+                    "and x_studio_over_credit "
+                    "and not x_studio_credit_limit_approved) or "
+                    "(x_studio_order_payment_method == 'Credit' "
+                    "and x_studio_over_bank_guarantee "
+                    "and not x_studio_bank_guarantee_approved) or "
+                    "(x_studio_overdue "
+                    "and not x_studio_overdue_approved) or "
+                    "(not x_studio_valid_order_lines) or "
+                    "(x_studio_expired) or "
+                    "(x_studio_quotation_type == 'Repair' and ("
+                    "(not x_repair_customer_pays "
+                    "and not x_studio_rug_approved "
+                    "and not x_studio_rug_rejected) "
+                    "or ((x_repair_customer_pays or x_studio_rug_rejected) "
+                    "and not x_customer_signed) "
+                    "or (not x_repair_stock_ok)"
+                    ")) or "
+                    "(x_studio_quotation_type in ('Sales', 'Project') and ("
+                    "(x_studio_over_commission "
+                    "and not x_studio_over_commission_approved) "
+                    "or (x_studio_margin_exceed "
+                    "and not x_studio_margin_approved)"
+                    ")) or "
+                    "(x_studio_quotation_type == 'Project' and ("
+                    "(not x_studio_budget_created) "
+                    "or (x_studio_proj_budget_status "
+                    "not in ('validate', 'done')) "
+                    "or (x_studio_inventory_short) "
+                    "or (x_studio_price_not_confirmed) "
+                    "or (x_studio_new_item_from_project)"
+                    "))",
+                )
+                for btn in confirm_btns[2:]:
+                    btn.set("invisible", "1")
+                # Recolour the visible Confirm (confirm_btns[1])
+                # to primary purple. Odoo core often sets it as
+                # oe_highlight / btn-primary already, but Studio's
+                # arch here has cleared the class on the second
+                # duplicate — force it back to match the rest of
+                # the header's primary actions.
+                confirm_btns[1].set("class", "btn-primary")
+
+    def _fix_repair_get_view_send_pro_forma_invoice(self, arch):
+        """Send PRO-FORMA Invoice: not used — hide both instances."""
+        # Send PRO-FORMA Invoice: not used — hide both instances.
+        for btn in arch.xpath("//button[contains(@id, 'send_proforma')]"):
+            btn.set("invisible", "1")
+
+        # Cancel: hidden by default for the repair workflow, but shown
+        # once at least one quotation email has been sent (state = 'sent')
+        # so the salesperson can cancel after sending if needed.
+        for btn in arch.xpath("//button[@name='action_cancel']"):
+            btn.set("invisible", "state != 'sent'")
+
+        # Set to Quotation (action_draft): not used — once a sale order
+        # has been cancelled it stays cancelled, no reverting to draft.
+        for btn in arch.xpath("//button[@name='action_draft']"):
+            btn.set("invisible", "1")
+
+        # Create Advance Payment: visible only on Sales-type
+        # quotations AFTER Confirm has been clicked (state='sale'
+        # or 'done'). Not shown on draft / sent quotations because
+        # you can't take a payment on something the customer
+        # hasn't yet committed to. Repair / Not Under Warranty /
+        # Project flows use their own invoicing paths (Create
+        # Draft Invoice / RUG settlement) and never see this
+        # button.
+        for btn in arch.xpath("//button[@name='2341']"):
+            btn.set(
+                "invisible",
+                "x_studio_quotation_type != 'Sales' or state not in ('sale', 'done')",
+            )
+
+        # Send by Email: shown for Not Under Warranty (no RUG flow) AND for
+        # Repair tickets where the RUG was rejected — once rejected the
+        # quotation falls back to the customer-pays flow so the salesperson
+        # needs to email the quote.
+        # Only visible in 'draft' — once an email has been sent (state
+        # becomes 'sent'), hide the button so the salesperson doesn't
+        # accidentally fire a duplicate email.
+        # Studio has hidden all action_quotation_send buttons via an
+        # always-true `state not in ['False']` guard; inject a clean one.
+        for header in arch.xpath("//header"):
+            btn = etree.Element("button")
+            btn.set("name", "action_quotation_send")
+            btn.set("string", "Send by Email")
+            btn.set("type", "object")
+            btn.set("class", "btn-primary")
+            btn.set(
+                "invisible",
+                "(not x_repair_customer_pays "
+                "and not x_studio_rug_rejected) "
+                "or state != 'draft' "
+                "or not x_repair_stock_ok",
+            )
+            header.insert(0, btn)
+
+    def _fix_repair_get_view_stock_shortage_warning_red(self, arch):
+        """Stock shortage warning: red button that appears in draft/sent when any."""
+        # Stock shortage warning: red button that appears in draft/sent
+        # when any storable line on the SO can't be covered by free_qty
+        # at the repair source (Factory Repair Location for Factory
+        # tickets, branch stock for Centre tickets). Clicking opens a
+        # UserError modal listing exactly what's short. The three
+        # forward-progress buttons (Send by Email, Request RUG,
+        # Confirm) are gated behind x_repair_stock_ok in this same
+        # method so the salesperson can't advance the quotation while
+        # this button is visible.
+        for header in arch.xpath("//header"):
+            warn = etree.Element("button")
+            warn.set("name", "action_show_stock_shortage")
+            warn.set("string", "Not Enough Stock")
+            warn.set("type", "object")
+            warn.set("class", "btn-danger")
+            warn.set("invisible", "x_repair_stock_ok or state not in ('draft', 'sent')")
+            header.insert(0, warn)
+            break
+
+        # v222 lockdown: freeze the entire SO form on Repair-type
+        # SOs at every state (draft → sent → sale → done). The SO
+        # is meant to mirror the linked helpdesk ticket verbatim;
+        # ad-hoc backend edits defeat that. The o2m order_line
+        # field is caught by this same walk — setting readonly on
+        # it hides Add-a-line and disables in-place edit / delete.
+        #
+        # Scope: repair SOs only. Non-repair Sales / Project flows
+        # keep Odoo's core readonly rules untouched.
+        #
+        # v195 (superseded): earlier this gate was
+        #   "x_studio_quotation_type == 'Repair' and invoice_count > 0"
+        # — locking only after invoicing. v222 broadens it to lock
+        # from creation onward per business requirement.
+        #
+        # not(ancestor::field): skip embedded views — order_line's
+        # inner <tree>, invoice_ids one2many, tax_totals sub-
+        # widgets, etc. Those subrecords are on other models and
+        # don't have x_studio_quotation_type in their eval context.
+        #
+        # Ticket → SO creation writes via sudo() and bypasses
+        # view-level readonly, so lines still populate on SO
+        # creation — only human backend edits are blocked.
+        so_lock_gate = "x_studio_quotation_type == 'Repair'"
+        for field_el in arch.xpath("//sheet//field[not(ancestor::field)]"):
+            if field_el.get("invisible") == "1":
+                continue
+            existing = field_el.get("readonly", "")
+            field_el.set(
+                "readonly",
+                f"({existing}) or ({so_lock_gate})" if existing else so_lock_gate,
+            )
 
     @api.onchange("partner_id")
     def _onchange_partner_payment_method(self):
@@ -1869,6 +1899,15 @@ class SaleOrder(models.Model):
             ticket.sudo().write({"stage_id": stage.id})
 
     def write(self, vals):
+        res, vals = self._fix_repair_write_when_partner_changes_draft(vals)
+        self._fix_repair_write_rug_approved_or_rejected(vals)
+        self._fix_repair_write_v277_task_id_was(vals)
+        self._fix_repair_write_v287_propagate_x_studio(vals)
+
+        return res
+
+    def _fix_repair_write_when_partner_changes_draft(self, vals):
+        """When partner changes on a draft/sent SO, sync Order Payment Type from ."""
         # When partner changes on a draft/sent SO, sync Order Payment Type from customer
         if vals.get("partner_id") and not vals.get("x_studio_order_payment_method"):
             partner = self.env["res.partner"].sudo().browse(vals["partner_id"])
@@ -1883,7 +1922,10 @@ class SaleOrder(models.Model):
         if vals.get("x_studio_rug_request_sent"):
             for order in self:
                 self._move_ticket_to_stage(order, "Estimation Sent to Customer")
+        return res, vals
 
+    def _fix_repair_write_rug_approved_or_rejected(self, vals):
+        """RUG approved or rejected → Estimation Approval Received."""
         # RUG approved or rejected → Estimation Approval Received
         if vals.get("x_studio_rug_approved") or vals.get("x_studio_rug_rejected"):
             for order in self:
@@ -1897,6 +1939,8 @@ class SaleOrder(models.Model):
                         if line.product_id:
                             line.write({"price_unit": line.product_id.standard_price})
 
+    def _fix_repair_write_v277_task_id_was(self, vals):
+        """v277: task_id was just set (typical FSM task-create path) — re-evaluat."""
         # v277: task_id was just set (typical FSM task-create path) —
         # re-evaluate quotation-type auto-detect. Idempotent on the
         # helper side (already-set records skip themselves).
@@ -1921,6 +1965,8 @@ class SaleOrder(models.Model):
             if not self.env.context.get("_fix_repair_track_lock"):
                 self._fix_repair_apply_track_lock_status()
 
+    def _fix_repair_write_v287_propagate_x_studio(self, vals):
+        """v287: propagate x_studio_rug_confirmed changes to child invoices. The ."""
         # v287: propagate x_studio_rug_confirmed changes to child
         # invoices. The invoice-side stored compute (in Fix-repair's
         # account_move.py) only depends on `invoice_origin` +
@@ -1945,8 +1991,6 @@ class SaleOrder(models.Model):
                 )
                 if invoices:
                     invoices._compute_x_studio_rug_confirmed()
-
-        return res
 
     def _fix_repair_apply_track_lock_status(self):
         """v283/v285: port of Studio automations 202 + 203 (RR - Track
