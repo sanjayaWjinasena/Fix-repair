@@ -167,7 +167,7 @@ class StockPicking(models.Model):
                     "Register at least a partial payment on the invoice "
                     "before validating the delivery.\n\n"
                     "Affected pickings:\n%(pickings)s",
-                    pickings="\n".join("  • %s" % p.name for p in blocked),
+                    pickings="\n".join(f"  • {p.name}" for p in blocked),
                 )
             )
         return super().button_validate()

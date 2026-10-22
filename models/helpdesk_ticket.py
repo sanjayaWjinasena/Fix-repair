@@ -4427,7 +4427,7 @@ class HelpdeskTicket(models.Model):
         if not pins:
             return
         for pin in pins:
-            slug = "action_%s" % pin.res_id
+            slug = f"action_{pin.res_id}"
             # Guard: already migrated on a prior run.
             existing = Data.search(
                 [
@@ -4817,7 +4817,7 @@ class HelpdeskTicket(models.Model):
         # Pass 3 — rewrite report_name references so env.ref() lands
         # on the new Fix-repair.<tail> address.
         for report, tail in report_name_updates:
-            new_ref = "Fix-repair.%s" % tail
+            new_ref = f"Fix-repair.{tail}"
             if report.report_name != new_ref:
                 report.write({"report_name": new_ref})
 
@@ -4892,7 +4892,7 @@ class HelpdeskTicket(models.Model):
             view = View.browse(pin.res_id)
             if not view.exists():
                 continue
-            slug = "view_%s_%s_%s" % (
+            slug = "view_{}_{}_{}".format(
                 view.model.replace(".", "_"),
                 view.type,
                 view.id,

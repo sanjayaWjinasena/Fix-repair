@@ -179,7 +179,7 @@ class AccountPaymentRegister(models.TransientModel):
     @staticmethod
     def _format_pct(value):
         """Trim trailing zeros so 50.0 renders as '50' but 12.5 stays '12.5'."""
-        return ("%f" % value).rstrip("0").rstrip(".")
+        return (f"{value:f}").rstrip("0").rstrip(".")
 
     @staticmethod
     def _format_money(value):
