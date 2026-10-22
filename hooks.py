@@ -672,10 +672,10 @@ def _seed_field_selections(env, entries):
         existing_pairs = [(r.value, r.name) for r in existing_recs]
         existing_values = {v for v, _ in existing_pairs}
         added = []
-        for v, l, _seq in sorted(values, key=lambda t: t[2]):
+        for v, line, _seq in sorted(values, key=lambda t: t[2]):
             if v in existing_values:
                 continue
-            existing_pairs.append((v, l))
+            existing_pairs.append((v, line))
             existing_values.add(v)
             added.append(v)
         if not added:

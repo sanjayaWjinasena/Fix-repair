@@ -191,7 +191,9 @@ class SaleOrder(models.Model):
                 continue
             short = False
             for line in order.order_line.filtered(
-                lambda l: l.product_id.type == "product" and not l.display_type
+                lambda rec_line: (
+                    rec_line.product_id.type == "product" and not rec_line.display_type
+                )
             ):
                 need = line.product_uom_qty or 0
                 if need <= 0:
@@ -218,7 +220,9 @@ class SaleOrder(models.Model):
         source_names = ", ".join(locations.mapped("display_name"))
         details = []
         for line in self.order_line.filtered(
-            lambda l: l.product_id.type == "product" and not l.display_type
+            lambda rec_line: (
+                rec_line.product_id.type == "product" and not rec_line.display_type
+            )
         ):
             need = line.product_uom_qty or 0
             if need <= 0:
@@ -756,7 +760,9 @@ class SaleOrder(models.Model):
                 # Backfill existing method lines that lack an
                 # outstanding account
                 if outstanding:
-                    to_backfill = existing.filtered(lambda l: not l.payment_account_id)
+                    to_backfill = existing.filtered(
+                        lambda line: not line.payment_account_id
+                    )
                     if to_backfill:
                         to_backfill.write({"payment_account_id": outstanding.id})
 

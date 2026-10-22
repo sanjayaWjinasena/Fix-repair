@@ -395,9 +395,9 @@ class HelpdeskTicket(models.Model):
         for rec in self:
             task_status = False
             for line in rec.fsm_task_ids:
-                if line.fsm_done == True:
+                if line.fsm_done:
                     task_status = True
-                if line.x_studio_end_quick_repair == True:
+                if line.x_studio_end_quick_repair:
                     task_status = True
             rec["x_studio_fsm_task_done"] = task_status
 
@@ -413,9 +413,9 @@ class HelpdeskTicket(models.Model):
         for rec in self:
             valid = False
             for invoices in rec.fsm_task_ids:
-                if invoices.x_studio_fully_invoiced_so == True:
+                if invoices.x_studio_fully_invoiced_so:
                     valid = True
-                if invoices.x_studio_end_quick_repair == True:
+                if invoices.x_studio_end_quick_repair:
                     valid = True
             rec["x_studio_fully_paid_so"] = valid
 
@@ -493,10 +493,10 @@ class HelpdeskTicket(models.Model):
             company = self.env["res.company"].browse(company_ids[0])
             valid = False
             for invoices in rec.fsm_task_ids:
-                if invoices.x_studio_valid_confirm_so == True:
+                if invoices.x_studio_valid_confirm_so:
                     valid = True
-            if valid == True:
-                if rec.x_studio_estimation_sent_stage_updated == False:
+            if valid:
+                if not rec.x_studio_estimation_sent_stage_updated:
                     rec["x_studio_estimation_sent_stage_updated"] = True
                     if company.id == 1:
                         rec["stage_id"] = 10
@@ -523,10 +523,10 @@ class HelpdeskTicket(models.Model):
             company = self.env["res.company"].browse(company_ids[0])
             valid = False
             for invoices in rec.fsm_task_ids:
-                if invoices.x_studio_valid_confirm2_so == True:
+                if invoices.x_studio_valid_confirm2_so:
                     valid = True
-            if valid == True:
-                if rec.x_studio_estimation_approved_stage_updated == False:
+            if valid:
+                if not rec.x_studio_estimation_approved_stage_updated:
                     rec["x_studio_estimation_approved_stage_updated"] = True
                     if company.id == 1:
                         rec["stage_id"] = 12
@@ -556,11 +556,11 @@ class HelpdeskTicket(models.Model):
                 if invoices.sale_order_id.x_studio_order_payment_method == "Credit":
                     valid = False
                 else:
-                    if invoices.x_studio_valid_invoiced_so == True:
+                    if invoices.x_studio_valid_invoiced_so:
                         valid = True
-            if valid == True:
-                if rec.x_studio_repair_complete_stage_updated == False:
-                    if rec.x_studio_invoice_stage_updated == False:
+            if valid:
+                if not rec.x_studio_repair_complete_stage_updated:
+                    if not rec.x_studio_invoice_stage_updated:
                         if company.id == 1:
                             rec["stage_id"] = 3
                         else:
@@ -588,12 +588,12 @@ class HelpdeskTicket(models.Model):
             valid = False
             valid2 = False
             for invoices in rec.fsm_task_ids:
-                if invoices.x_studio_valid_delivered_so == True:
+                if invoices.x_studio_valid_delivered_so:
                     valid = True
-                if invoices.x_studio_valid_delivered_so2 == True:
+                if invoices.x_studio_valid_delivered_so2:
                     valid2 = True
-            if valid2 == True:
-                if rec.x_studio_repair_complete_stage_updated == False:
+            if valid2:
+                if not rec.x_studio_repair_complete_stage_updated:
                     if company.id == 1:
                         rec["stage_id"] = 9
                     else:
@@ -621,8 +621,8 @@ class HelpdeskTicket(models.Model):
                         rec["x_studio_qty"] = qty
                         rec["x_studio_sales_price"] = prices
             else:
-                if valid == True:
-                    if rec.x_studio_repair_started_stage_updated == False:
+                if valid:
+                    if not rec.x_studio_repair_started_stage_updated:
                         if company.id == 1:
                             rec["stage_id"] = 11
                         else:
@@ -649,12 +649,12 @@ class HelpdeskTicket(models.Model):
             company = self.env["res.company"].browse(company_ids[0])
             task_status = False
             for line in rec.fsm_task_ids:
-                if line.fsm_done == True:
+                if line.fsm_done:
                     task_status = True
-                if line.x_studio_end_quick_repair == True:
+                if line.x_studio_end_quick_repair:
                     task_status = True
 
-            if task_status == False:
+            if not task_status:
                 if rec.x_studio_sale_order == True:
                     if rec.x_studio_sale_order.state == "cancel":
                         task_status = True
@@ -680,8 +680,8 @@ class HelpdeskTicket(models.Model):
                         else:
                             task_status = False
 
-            if task_status == True:
-                if rec.x_studio_repair_complete_stage_updated == False:
+            if task_status:
+                if not rec.x_studio_repair_complete_stage_updated:
                     if company.id == 1:
                         rec["stage_id"] = 9
                     else:
