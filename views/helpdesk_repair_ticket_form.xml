@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Repair tickets and general tickets side by side.
+
+    * helpdesk_ticket_view_form_repair: the Repair ticket form. It is Odoo's standard ticket
+      form plus every Fix-repair form customization (those views now inherit from this one,
+      not from helpdesk.helpdesk_ticket_view_form). Priority 15 makes it the default ticket
+      form, so every existing menu, report and link keeps opening Repair tickets as before.
+    * Odoo's standard form (helpdesk.helpdesk_ticket_view_form) is left as Odoo ships it and is
+      used for tickets of teams that are not a Repair Team: from their Helpdesk > Overview
+      card, from links, and from Helpdesk > Tickets > General Tickets.
+-->
+<odoo>
+  <record id="helpdesk_ticket_view_form_repair" model="ir.ui.view">
+    <field name="name">helpdesk.ticket.form.repair (Fix-repair)</field>
+    <field name="model">helpdesk.ticket</field>
+    <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
+    <field name="mode">primary</field>
+    <field name="priority">15</field>
+    <field name="arch" type="xml">
+      <xpath expr="//form" position="attributes">
+        <attribute name="class" add="o_jin_repair_ticket_form" separator=" "/>
+      </xpath>
+    </field>
+  </record>
+
+  <record id="helpdesk_team_view_form_repair_team" model="ir.ui.view">
+    <field name="name">helpdesk.team.form.repair_team (Fix-repair)</field>
+    <field name="model">helpdesk.team</field>
+    <field name="inherit_id" ref="helpdesk.helpdesk_team_view_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//setting[.//field[@name='use_product_repairs']]" position="after">
+        <setting id="jin_repair_team" help="Tickets open in the Repair ticket form (repair fields, rules and buttons). Off: Odoo's standard ticket form.">
+          <field name="x_jin_repair_team"/>
+        </setting>
+      </xpath>
+    </field>
+  </record>
+
+  <record id="action_helpdesk_ticket_general" model="ir.actions.act_window">
+    <field name="name">General Tickets</field>
+    <field name="res_model">helpdesk.ticket</field>
+    <field name="view_mode">tree,kanban,form,activity</field>
+    <field name="domain">['|', ('team_id', '=', False), ('team_id.x_jin_repair_team', '=', False)]</field>
+    <field name="context">{}</field>
+    <field name="help" type="html">
+      <p class="o_view_nocontent_smiling_face">No general tickets yet</p>
+      <p>Tickets of teams that are not a Repair Team appear here and open in Odoo's standard ticket form.</p>
+    </field>
+  </record>
+  <record id="action_helpdesk_ticket_general_view_tree" model="ir.actions.act_window.view">
+    <field name="sequence">1</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="helpdesk.helpdesk_tickets_view_tree"/>
+    <field name="act_window_id" ref="action_helpdesk_ticket_general"/>
+  </record>
+  <record id="action_helpdesk_ticket_general_view_kanban" model="ir.actions.act_window.view">
+    <field name="sequence">2</field>
+    <field name="view_mode">kanban</field>
+    <field name="view_id" ref="helpdesk.helpdesk_ticket_view_kanban"/>
+    <field name="act_window_id" ref="action_helpdesk_ticket_general"/>
+  </record>
+  <record id="action_helpdesk_ticket_general_view_form" model="ir.actions.act_window.view">
+    <field name="sequence">3</field>
+    <field name="view_mode">form</field>
+    <field name="view_id" ref="helpdesk.helpdesk_ticket_view_form"/>
+    <field name="act_window_id" ref="action_helpdesk_ticket_general"/>
+  </record>
+
+  <menuitem id="menu_helpdesk_ticket_general" name="General Tickets"
+            parent="helpdesk.helpdesk_ticket_menu_main" action="action_helpdesk_ticket_general" sequence="30"/>
+</odoo>

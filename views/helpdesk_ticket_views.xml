@@ -4,7 +4,7 @@
     <record id="helpdesk_ticket_form_assign_to_me" model="ir.ui.view">
         <field name="name">helpdesk.ticket.form.assign.to.me</field>
         <field name="model">helpdesk.ticket</field>
-        <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
+        <field name="inherit_id" ref="Fix-repair.helpdesk_ticket_view_form_repair"/>
         <field name="arch" type="xml">
             <!-- Stored computed field — web_read reads a plain DB varchar, no many2one traversal -->
             <xpath expr="//field[@name='name']" position="before">
@@ -184,7 +184,7 @@
     <record id="helpdesk_ticket_form_statusbar_readonly" model="ir.ui.view">
         <field name="name">helpdesk.ticket.form.statusbar.readonly</field>
         <field name="model">helpdesk.ticket</field>
-        <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
+        <field name="inherit_id" ref="Fix-repair.helpdesk_ticket_view_form_repair"/>
         <field name="priority">99</field>
         <field name="arch" type="xml">
             <!--
@@ -226,7 +226,7 @@
     <record id="helpdesk_ticket_form_hide_fields" model="ir.ui.view">
         <field name="name">helpdesk.ticket.form.hide.fields</field>
         <field name="model">helpdesk.ticket</field>
-        <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
+        <field name="inherit_id" ref="Fix-repair.helpdesk_ticket_view_form_repair"/>
         <field name="priority">99</field>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='team_id']" position="attributes">

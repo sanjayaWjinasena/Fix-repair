@@ -7,7 +7,7 @@
     <field name="type">form</field>
     <field name="priority">99</field>
     <field name="mode">extension</field>
-    <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
+    <field name="inherit_id" ref="Fix-repair.helpdesk_ticket_view_form_repair"/>
     <field name="arch" type="xml">
       <data>
         

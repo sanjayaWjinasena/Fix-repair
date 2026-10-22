@@ -1850,9 +1850,33 @@ class HelpdeskTicket(models.Model):
             to_deactivate.write({'active': False})
 
     @api.model
+    # ------------------------------------------------------------------
+    # Repair tickets vs general tickets
+    # ------------------------------------------------------------------
+    def _jin_is_repair_ticket(self):
+        """A ticket of a Repair Team, or with no team yet (the Repair flow stays the default)."""
+        self.ensure_one()
+        return not self.team_id or self.team_id.x_jin_repair_team
+
+    @api.model
+    def _jin_is_repair_form_view(self, view):
+        repair_form = self.env.ref('Fix-repair.helpdesk_ticket_view_form_repair', raise_if_not_found=False)
+        # before the Repair form exists (first install), keep the old behaviour
+        return not repair_form or view == repair_form
+
+    def get_formview_id(self, access_uid=None):
+        """Links (mail, chatter, smart buttons) open general tickets in Odoo's standard form."""
+        if len(self) == 1 and not self._jin_is_repair_ticket():
+            form = self.env.ref('helpdesk.helpdesk_ticket_view_form', raise_if_not_found=False)
+            if form:
+                return form.id
+        return super().get_formview_id(access_uid=access_uid)
+
     def _get_view(self, view_id=None, view_type='form', **options):
         arch, view = super()._get_view(view_id, view_type, **options)
-        if view_type == 'form':
+        # Only the Repair ticket form gets the repair rewrite; Odoo's standard ticket form (used
+        # by non-repair teams) stays as Odoo ships it.
+        if view_type == 'form' and self._jin_is_repair_form_view(view):
             # Inject computed/Studio fields used in button conditions below
             # that may not already be present in the arch.
             #
@@ -3895,7 +3919,7 @@ class HelpdeskTicket(models.Model):
         seq assignment on create only.
         """
         records = super().create(vals_list)
-        records._repair_seq_no_on_create_or_write()
+        records.filtered(lambda t: t._jin_is_repair_ticket())._repair_seq_no_on_create_or_write()
         return records
 
     def unlink(self):

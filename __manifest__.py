@@ -2,7 +2,7 @@
 {
     # upgrade-testing branch: data files below are commented out - this branch installs functions only, no data is seeded.
     'name': 'Jinasena : Module : Repair',
-    'version': '17.0.1.0.371',
+    'version': '17.0.1.0.372',
     'summary': 'Enhancements to the Customer Care - Repair helpdesk workflow',
     'author': 'Jinasena Agricultural Machinery (Pvt) Ltd.',
     'category': 'Helpdesk',
@@ -49,6 +49,7 @@
         # 'data/repair_diagnosis_seed.xml',  # upgrade-testing: data, not shipped
         'data/helpdesk_ticket_server_actions.xml',
         'data/project_task_server_actions.xml',
+        'views/helpdesk_repair_ticket_form.xml',
         'views/helpdesk_ticket_studio_ported.xml',
         'views/helpdesk_ticket_studio_field_hides.xml',
         'views/helpdesk_ticket_views.xml',
