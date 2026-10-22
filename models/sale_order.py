@@ -562,7 +562,8 @@ class SaleOrder(models.Model):
                     "if record.account_internal_group == 'income' "
                     "and not record.x_studio_sales_report_type:\n"
                     "  rpt = env['x_sales_report_type'].sudo().search(\n"
-                    "    [('x_studio_report_code', '=', 'Sales Details for Incentive Calc.')],\n"
+                    "    [('x_studio_report_code', '=', 'Sales Details for "
+                    "Incentive Calc.')],\n"
                     "    limit=1)\n"
                     "  if rpt:\n"
                     "    record.write({'x_studio_sales_report_type': rpt.id})\n"
@@ -596,9 +597,11 @@ class SaleOrder(models.Model):
                 ],
                 "new_code": (
                     marker + "\n"
-                    "if record.x_studio_quotation_type == 'Repair' and record.state == 'done':\n"
+                    "if record.x_studio_quotation_type == 'Repair' and "
+                    "record.state == 'done':\n"
                     "  re_line = env['sale.order.line'].sudo().search(\n"
-                    "    [('order_id', '=', record.id), ('x_studio_re_estimated', '=', True)],\n"
+                    "    [('order_id', '=', record.id), "
+                    "('x_studio_re_estimated', '=', True)],\n"
                     "    limit=1, order='id desc')\n"
                     "  target_count = re_line.x_studio_count_1 if re_line else 0\n"
                     "  if (not record.x_studio_locked\n"
@@ -623,7 +626,8 @@ class SaleOrder(models.Model):
                     "if (record.x_studio_quotation_type == 'Repair'\n"
                     "    and record.state == 'sale'\n"
                     "    and record.x_studio_locked):\n"
-                    "  record.write({'x_studio_locked': False, 'x_studio_unlocked': True})\n"
+                    "  record.write({'x_studio_locked': False, "
+                    "'x_studio_unlocked': True})\n"
                 ),
             },
             {
@@ -637,9 +641,12 @@ class SaleOrder(models.Model):
                 "new_code": (
                     marker + "\n"
                     "if record.create_uid:\n"
-                    "  tag_rule = env['account.analytic.distribution.model'].sudo().search(\n"
-                    "    [('partner_id.user_id', '=', record.create_uid.id)], limit=1)\n"
-                    "  target = tag_rule.x_studio_user_mandatory if tag_rule else False\n"
+                    "  tag_rule = "
+                    "env['account.analytic.distribution.model'].sudo().search(\n"
+                    "    [('partner_id.user_id', '=', "
+                    "record.create_uid.id)], limit=1)\n"
+                    "  target = tag_rule.x_studio_user_mandatory if tag_rule "
+                    "else False\n"
                     "  if record.x_studio_account_mandatory != target:\n"
                     "    record.write({'x_studio_account_mandatory': target})\n"
                 ),
@@ -975,8 +982,10 @@ class SaleOrder(models.Model):
                 "x_studio_sales_order_validity",  # Sales Order Validity
                 "x_studio_service_item_available",  # Service Item Available
                 "x_studio_main_project_no",  # Main Project No
-                "x_studio_re_estimate_request_count",  # Re-estimate Request Count (bool)
-                "x_studio_re_estimate_request_count_1",  # Re-estimate Request Count (int)
+                # Re-estimate Request Count (bool)
+                "x_studio_re_estimate_request_count",
+                # Re-estimate Request Count (int)
+                "x_studio_re_estimate_request_count_1",
                 "x_studio_re_estimate_count",  # Re-estimate Count
                 "plan_id",  # Recurring Plan
                 "x_studio_expired",  # Expired
@@ -1205,7 +1214,8 @@ class SaleOrder(models.Model):
                 "(x_studio_rug_rejected == True) or "
                 "(x_studio_rug_approved == True)"
             )
-            # Approve: rewire to our method so it confirms the SO directly (no send wizard)
+            # Approve: rewire to our method so it confirms the SO directly (no send
+            # wizard)
             for btn in arch.xpath("//button[@name='1981']"):
                 btn.set("invisible", rug_approve_invisible)
                 btn.set("type", "object")
@@ -1767,7 +1777,8 @@ class SaleOrder(models.Model):
     def action_approve_rug_direct(self):
         self.write({"x_studio_rug_approved": True})
         # write() moves the ticket to 'Estimation Approval Received'.
-        # Confirm button becomes visible once rug_approved=True; user clicks it manually.
+        # Confirm button becomes visible once rug_approved=True; user clicks it
+        # manually.
 
     def action_reject_rug_direct(self):
         """Reject RUG without zeroing the order lines' price_unit.

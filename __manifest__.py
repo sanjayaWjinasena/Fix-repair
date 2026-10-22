@@ -1,5 +1,6 @@
 {
-    # upgrade-testing branch: data files below are commented out - this branch installs functions only, no data is seeded.
+    # upgrade-testing branch: data files below are commented out - this branch installs
+    # functions only, no data is seeded.
     "name": "Jinasena : Module : Repair",
     "version": "17.0.1.0.368",
     "summary": "Enhancements to the Customer Care - Repair helpdesk workflow",

@@ -653,7 +653,8 @@ class ProjectTask(models.Model):
                 raise UserError(_("Repair diagnosis must be specified."))
 
     def _fsm_create_sale_order(self):
-        """Delegate to industry_fsm_sale's implementation, skipping industry_fsm_stock."""
+        """Delegate to industry_fsm_sale's implementation, skipping
+        industry_fsm_stock."""
         FsmSaleTask._fsm_create_sale_order(self)
 
     def action_fsm_validate(self, stop_running_timers=False):
@@ -847,7 +848,10 @@ class ProjectTask(models.Model):
             # Non-repair FSM tasks keep their original allow_material condition.
             for btn in arch.xpath("//button[@name='action_fsm_view_material']"):
                 existing = btn.get("invisible", "")
-                extra = "helpdesk_ticket_id and not (x_studio_valid_diagnosis and x_studio_repair_image_01)"
+                extra = (
+                    "helpdesk_ticket_id and not (x_studio_valid_diagnosis and "
+                    "x_studio_repair_image_01)"
+                )
                 btn.set(
                     "invisible", f"({existing}) or ({extra})" if existing else extra
                 )

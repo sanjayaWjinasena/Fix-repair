@@ -1873,7 +1873,8 @@ class HelpdeskTicket(models.Model):
             self.sale_order_id = False
 
     def _get_so_from_serial(self, serial):
-        """Return the Sale Order that last delivered this serial number to a customer."""
+        """Return the Sale Order that last delivered this serial number to a
+        customer."""
         if not serial:
             return self.env["sale.order"]
         cust_locs = (
@@ -2224,7 +2225,8 @@ class HelpdeskTicket(models.Model):
             ):
                 field.set(
                     "domain",
-                    "[('x_studio_users_stock_location', 'in', user_id)] if user_id else []",
+                    "[('x_studio_users_stock_location', 'in', user_id)] if "
+                    "user_id else []",
                 )
 
             # Change to RUG: visible on External-not-RUG tickets (rug_repair=True,
@@ -2240,7 +2242,8 @@ class HelpdeskTicket(models.Model):
                     "not x_studio_rug_repair or "
                     "x_studio_rug_confirmed or "
                     "not x_studio_serial_no or "
-                    "repair_stage_state not in ('new', 'sent_to_factory', 'received_at_factory')",
+                    "repair_stage_state not in ('new', 'sent_to_factory', "
+                    "'received_at_factory')",
                 )
                 header.append(btn)
                 break
@@ -2294,7 +2297,7 @@ class HelpdeskTicket(models.Model):
             # Plan Intervention:
             #   Factory Repair → show at Received at Factory (item arrived at factory).
             #   Centre Repair  → show in New stage once the item has been collected
-            #                    (has_return_picking), skipping the factory trip entirely.
+            # (has_return_picking), skipping the factory trip entirely.
             # RUG tickets additionally require x_studio_valid_return before proceeding.
             for btn in arch.xpath("//button[@name='action_generate_fsm_task']"):
                 btn.set(
@@ -2302,16 +2305,20 @@ class HelpdeskTicket(models.Model):
                     "not use_fsm or "
                     "fsm_task_count > 0 or "
                     "(x_studio_rug_repair and not x_studio_valid_return) or "
-                    "(x_studio_job_location == 'Factory Repair' and repair_stage_state != 'received_at_factory') or "
-                    "(x_studio_job_location == 'Centre Repair' and (repair_stage_state != 'new' or not has_return_picking)) or "
+                    "(x_studio_job_location == 'Factory Repair' and "
+                    "repair_stage_state != 'received_at_factory') or "
+                    "(x_studio_job_location == 'Centre Repair' and "
+                    "(repair_stage_state != 'new' or not "
+                    "has_return_picking)) or "
                     "not x_studio_job_location",
                 )
             # Return button — same action 195, two distinct popup behaviours:
-            #   New stage:                 default_ticket_id=id → wizard shows Sale Order
-            #                              group so user selects which delivery to reverse
-            #   Received at Sales Centre:  default_picking_id=x_studio_pick_id, no ticket_id
-            #                              → Sale Order group hidden, items pre-load from
-            #                              the picking; return location defaults to Customers
+            # New stage:                 default_ticket_id=id → wizard shows Sale Order
+            # group so user selects which delivery to reverse
+            # Received at Sales Centre:  default_picking_id=x_studio_pick_id, no
+            # ticket_id
+            # → Sale Order group hidden, items pre-load from
+            # the picking; return location defaults to Customers
             cust_loc = self.env.ref(
                 "stock.stock_location_customers", raise_if_not_found=False
             )
@@ -2438,10 +2445,15 @@ class HelpdeskTicket(models.Model):
                     " and not is_tested_ok "
                     " and not is_so_cancelled) or "
                     "not ("
-                    "(x_studio_job_location == 'Factory Repair' and repair_stage_state == 'received_at_sales_centre') or "
-                    "(x_studio_job_location == 'Centre Repair' and repair_stage_state == 'repair_completed') or "
-                    "(x_studio_normal_repair_with_serial_no and repair_stage_state == 'received_at_sales_centre') or "
-                    "(x_studio_job_location == 'Centre Repair' and is_so_cancelled and task_done and repair_stage_state == 'estimation_sent_to_customer')"
+                    "(x_studio_job_location == 'Factory Repair' and "
+                    "repair_stage_state == 'received_at_sales_centre') or "
+                    "(x_studio_job_location == 'Centre Repair' and "
+                    "repair_stage_state == 'repair_completed') or "
+                    "(x_studio_normal_repair_with_serial_no and "
+                    "repair_stage_state == 'received_at_sales_centre') or "
+                    "(x_studio_job_location == 'Centre Repair' and "
+                    "is_so_cancelled and task_done and repair_stage_state == "
+                    "'estimation_sent_to_customer')"
                     ")",
                 )
                 dispatch.set("context", btn_context)
@@ -3937,7 +3949,8 @@ class HelpdeskTicket(models.Model):
             if record.stage_id.id != 13:
                 raise UserError(
                     _(
-                        "The repaired item should be handed over to customer to send the report."
+                        "The repaired item should be handed over to customer "
+                        "to send the report."
                     )
                 )
             template = self.env["mail.template"].search(
