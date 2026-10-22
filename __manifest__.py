@@ -98,12 +98,12 @@
         "views/fix_repair_templates.xml",
         "views/fix_repair_menus.xml",
         # Not loaded on this branch:
-        # 'data/repair_stages.xml',  # upgrade-testing: data, not shipped
-        # 'data/repair_sequences.xml',  # upgrade-testing: data, not shipped
-        # 'data/helpdesk_ticket_types.xml',  # upgrade-testing: data, not shipped
-        # 'data/repair_diagnosis_seed.xml',  # upgrade-testing: data, not shipped
-        # 'views/res_partner_hide_dev_extras.xml',
-        # 'views/product_template_hide_dev_extras.xml',
+        # 'data/repair_stage_data.xml',  # upgrade-testing: data, not shipped
+        # 'data/repair_sequence_data.xml',  # upgrade-testing: data, not shipped
+        # 'data/helpdesk_ticket_type_seed_data.xml',  # upgrade-testing: data, not shipped
+        # 'data/repair_diagnosis_seed_data.xml',  # upgrade-testing: data, not shipped
+        # '_disabled/views/res_partner_hide_dev_extras.xml',
+        # '_disabled/views/product_template_hide_dev_extras.xml',
     ],
     "assets": {
         "web.assets_backend": [
