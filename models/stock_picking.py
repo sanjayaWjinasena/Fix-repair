@@ -167,7 +167,7 @@ class StockPicking(models.Model):
                     "Register at least a partial payment on the invoice "
                     "before validating the delivery.\n\n"
                     "Affected pickings:\n%(pickings)s",
-                    pickings="\n".join("  • %s" % p.name for p in blocked),
+                    pickings="\n".join(f"  • {p.name}" for p in blocked),
                 )
             )
         return super().button_validate()
@@ -340,9 +340,11 @@ class StockPicking(models.Model):
             inv_amount = 0
             if tso:
                 if tso.state == "cancel":
-                    if rec.x_studio_created_from_help_ticket.x_studio_repair_complete_stage_updated:
+                    created_ticket = rec.x_studio_created_from_help_ticket
+                    if created_ticket.x_studio_repair_complete_stage_updated:
                         valid = False
-                    if rec.x_studio_helpdesk_ticket_id.x_studio_repair_complete_stage_updated:
+                    helpdesk_ticket = rec.x_studio_helpdesk_ticket_id
+                    if helpdesk_ticket.x_studio_repair_complete_stage_updated:
                         valid = False
                 else:
                     if tso.x_studio_order_payment_method == "Cash":
@@ -739,7 +741,8 @@ class StockPicking(models.Model):
             elif current_stage in _pre_repair_stages_nuw:
                 pass
             else:
-                # Stage is 'Advance Received' (or 'Repair Started' for subsequent pickings)
+                # Stage is 'Advance Received' (or 'Repair Started' for subsequent
+                # pickings)
                 self.env["sale.order"]._move_ticket_to_stage(so, "Repair Started")
                 all_pickings = (
                     self.env["stock.picking"].sudo().search([("sale_id", "=", so.id)])

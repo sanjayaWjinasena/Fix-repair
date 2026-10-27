@@ -10,7 +10,8 @@ class ResConfigSettings(models.TransientModel):
     # ir.config_parameter under fix_repair.factory_repair_location.<company_id>.
     factory_repair_location_id = fields.Many2one(
         "stock.location",
-        domain="[('usage', '=', 'internal'), '|', ('company_id', '=', False), ('company_id', 'in', allowed_company_ids)]",
+        domain="[('usage', '=', 'internal'), '|', ('company_id', '=', False), "
+        "('company_id', 'in', allowed_company_ids)]",
         help="Internal stock location items land at when a repair ticket "
         "reaches 'Received at Factory'. Stored per company under "
         "ir.config_parameter 'fix_repair.factory_repair_location.<company_id>'.",

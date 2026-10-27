@@ -136,12 +136,12 @@ class AccountMove(models.Model):
             )
             rug_account = config.x_studio_rug_account if config else False
             product_lines = move.invoice_line_ids.filtered(
-                lambda l: l.display_type not in ("line_section", "line_note")
+                lambda line: line.display_type not in ("line_section", "line_note")
             )
             move.is_rug_account_set = bool(
                 rug_account
                 and product_lines
-                and all(l.account_id == rug_account for l in product_lines)
+                and all(line.account_id == rug_account for line in product_lines)
             )
 
     def _get_view(self, view_id=None, view_type="form", **options):
@@ -249,7 +249,7 @@ class AccountMove(models.Model):
                 )
             rug_account = config.x_studio_rug_account
             product_lines = move.invoice_line_ids.filtered(
-                lambda l: l.display_type not in ("line_section", "line_note")
+                lambda line: line.display_type not in ("line_section", "line_note")
             )
             product_lines.write({"account_id": rug_account.id})
             # v280 — mirror Studio's rug_acc_updated flag so automation
@@ -361,10 +361,10 @@ class AccountMove(models.Model):
             return
 
         receivable_lines = self.line_ids.filtered(
-            lambda l: (
-                l.account_id.account_type == "asset_receivable"
-                and not l.reconciled
-                and (l.debit or l.credit)
+            lambda line: (
+                line.account_id.account_type == "asset_receivable"
+                and not line.reconciled
+                and (line.debit or line.credit)
             )
         )
         if not receivable_lines:
@@ -380,7 +380,7 @@ class AccountMove(models.Model):
         rug_account = config.x_studio_rug_account
 
         invoice_rug_lines = self.line_ids.filtered(
-            lambda l: l.account_id == rug_account
+            lambda line: line.account_id == rug_account
         )
         if not invoice_rug_lines:
             return
@@ -451,13 +451,17 @@ class AccountMove(models.Model):
         # Reconcile Debtors: invoice DR ↔ clearing CR → invoice goes 'paid'
         (
             receivable_lines
-            | clearing.line_ids.filtered(lambda l: l.account_id == receivable_account)
+            | clearing.line_ids.filtered(
+                lambda line: line.account_id == receivable_account
+            )
         ).reconcile()
 
         # Reconcile RUG account: invoice CR ↔ clearing DR → both net to zero
-        invoice_rug_unrec = invoice_rug_lines.filtered(lambda l: not l.reconciled)
+        invoice_rug_unrec = invoice_rug_lines.filtered(lambda line: not line.reconciled)
         if invoice_rug_unrec and rug_account.reconcile:
             (
                 invoice_rug_unrec
-                | clearing.line_ids.filtered(lambda l: l.account_id == rug_account)
+                | clearing.line_ids.filtered(
+                    lambda line: line.account_id == rug_account
+                )
             ).reconcile()

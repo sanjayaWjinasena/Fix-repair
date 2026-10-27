@@ -147,7 +147,8 @@ class AccountPaymentRegister(models.TransientModel):
                 for order in non_rug:
                     # v275: read the % from res.company.x_studio_advance_payment_
                     # (BugFix-Sales v22 cutover: proxy field backed by
-                    # ir.config_parameter key 'bugfix_sales.advance_payment_pct.<company_id>').
+                    # ir.config_parameter key
+                    # 'bugfix_sales.advance_payment_pct.<company_id>').
                     # The old x_minimum_sales_margin Studio model isn't
                     # declared on standalone dev env — env['x_minimum_sales_margin']
                     # raised KeyError. Reading via the company proxy is
@@ -179,7 +180,7 @@ class AccountPaymentRegister(models.TransientModel):
     @staticmethod
     def _format_pct(value):
         """Trim trailing zeros so 50.0 renders as '50' but 12.5 stays '12.5'."""
-        return ("%f" % value).rstrip("0").rstrip(".")
+        return (f"{value:f}").rstrip("0").rstrip(".")
 
     @staticmethod
     def _format_money(value):

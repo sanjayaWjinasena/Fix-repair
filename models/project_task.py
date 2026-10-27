@@ -99,7 +99,7 @@ class ProjectTask(models.Model):
             valid = False
             if rec.sale_order_id != False:
                 if rec.sale_order_id.state == "cancel":
-                    if rec.x_studio_repair_completed_stage_updated == True:
+                    if rec.x_studio_repair_completed_stage_updated:
                         valid = True
                 else:
                     if rec.sale_order_id.invoice_status == "invoiced":
@@ -225,12 +225,12 @@ class ProjectTask(models.Model):
         for rec in self:
             valid = False
             valid2 = False
-            if rec.sale_order_id.id != False:
+            if rec.sale_order_id.id:
                 if (
                     rec.sale_order_id.x_studio_order_payment_method == "Credit"
-                    or rec.sale_order_id.x_studio_rug_approved == True
+                    or rec.sale_order_id.x_studio_rug_approved
                 ):
-                    if rec.x_studio_repair_completed_stage_updated == True:
+                    if rec.x_studio_repair_completed_stage_updated:
                         if rec.sale_order_id.state == "cancel":
                             valid = True
                         else:
@@ -240,7 +240,7 @@ class ProjectTask(models.Model):
                             ):
                                 valid = True
                             else:
-                                if rec.sale_order_id.x_studio_rug_approved == True:
+                                if rec.sale_order_id.x_studio_rug_approved:
                                     valid = True
                                 else:
                                     payment = self.env["account.payment"].search(
@@ -262,7 +262,7 @@ class ProjectTask(models.Model):
                                             else:
                                                 valid2 = True
 
-                                    if valid2 == True:
+                                    if valid2:
                                         valid = False
                 else:
                     if rec.sale_order_id.state == "cancel":
@@ -283,7 +283,7 @@ class ProjectTask(models.Model):
                                 else:
                                     valid2 = True
 
-                        if valid2 == True:
+                        if valid2:
                             valid = False
             rec["x_studio_valid_invoiced_so"] = valid
 
@@ -653,7 +653,8 @@ class ProjectTask(models.Model):
                 raise UserError(_("Repair diagnosis must be specified."))
 
     def _fsm_create_sale_order(self):
-        """Delegate to industry_fsm_sale's implementation, skipping industry_fsm_stock."""
+        """Delegate to industry_fsm_sale's implementation, skipping
+        industry_fsm_stock."""
         FsmSaleTask._fsm_create_sale_order(self)
 
     def action_fsm_validate(self, stop_running_timers=False):
@@ -847,7 +848,10 @@ class ProjectTask(models.Model):
             # Non-repair FSM tasks keep their original allow_material condition.
             for btn in arch.xpath("//button[@name='action_fsm_view_material']"):
                 existing = btn.get("invisible", "")
-                extra = "helpdesk_ticket_id and not (x_studio_valid_diagnosis and x_studio_repair_image_01)"
+                extra = (
+                    "helpdesk_ticket_id and not (x_studio_valid_diagnosis and "
+                    "x_studio_repair_image_01)"
+                )
                 btn.set(
                     "invisible", f"({existing}) or ({extra})" if existing else extra
                 )
