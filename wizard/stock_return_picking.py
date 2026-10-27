@@ -466,7 +466,7 @@ class StockReturnPicking(models.TransientModel):
         return res
 
     @api.depends("picking_id", "ticket_id")
-    def _compute_moves_locations(self):
+    def _compute_moves_locations(self):  # pylint: disable=missing-return
         super()._compute_moves_locations()
         # Gate the whole override on wizard.ticket_id being set. That
         # narrows this codepath to the collection-Return flow (where

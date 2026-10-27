@@ -1656,11 +1656,9 @@ class HelpdeskTicket(models.Model):
         # was the actual v213 bug: my pop was a no-op through the merge
         # because env.context still carried the button-supplied False.
         # Positional replacement is the fix.
-        wizard = (
-            self.env["stock.return.picking"]
-            .with_context(ctx)  # pylint: disable=context-overridden
-            .create({})
-        )
+        # Positional context on purpose (see above).
+        # pylint: disable=context-overridden
+        wizard = self.env["stock.return.picking"].with_context(ctx).create({})
         # create_returns() is the standard public button handler. It
         # calls _create_returns() (our override rewrites the picking's
         # name and stamps the ticket) and returns the act_window
@@ -1710,11 +1708,9 @@ class HelpdeskTicket(models.Model):
 
         # Use positional with_context to REPLACE env.context (the
         # kwargs form would re-introduce the popped keys via merge).
-        wizard = (
-            self.env["stock.return.picking"]
-            .with_context(ctx)  # pylint: disable=context-overridden
-            .create({})
-        )
+        # Positional context on purpose (see above).
+        # pylint: disable=context-overridden
+        wizard = self.env["stock.return.picking"].with_context(ctx).create({})
         return wizard.create_returns()
 
     @api.depends(

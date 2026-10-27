@@ -53,7 +53,7 @@ class StockWarehouse(models.Model):
         child Intransit (usage='transit') location exists under its view.
         Idempotent."""
         skip_prefixes = ("IT-", "IW-", "IB-")
-        for wh in self.sudo().search([]):
+        for wh in self.sudo().search([]):  # pylint: disable=no-search-all
             if not wh.code or wh.code.startswith(skip_prefixes):
                 continue
             wh._ensure_intransit_location()
@@ -64,7 +64,7 @@ class StockWarehouse(models.Model):
         child Repair (usage='repair') location exists under its view.
         Idempotent."""
         skip_prefixes = ("IT-", "IW-", "IB-")
-        for wh in self.sudo().search([]):
+        for wh in self.sudo().search([]):  # pylint: disable=no-search-all
             if not wh.code or wh.code.startswith(skip_prefixes):
                 continue
             wh._ensure_repair_location()
@@ -79,7 +79,7 @@ class StockWarehouse(models.Model):
         """
         Param = self.env["ir.config_parameter"].sudo()
         Wh = self.env["stock.warehouse"].sudo()
-        for company in self.env["res.company"].sudo().search([]):
+        for company in self.env["res.company"].sudo().search([]):  # pylint: disable=no-search-all
             key = f"fix_repair.factory_repair_location.{company.id}"
             if Param.get_param(key):
                 continue
