@@ -144,7 +144,7 @@ def load_post_init_view_files(env):
 load_conditional_studio_view_hides = load_post_init_view_files
 
 
-# v243: 12 repair-pipeline stage xmlids from data/repair_stages.xml.
+# v243: 12 repair-pipeline stage xmlids from data/repair_stage_data.xml.
 # Kept in sync with that file. Used by attach_repair_stages_to_all_teams
 # to iterate over the newly-seeded stages.
 _REPAIR_STAGE_XMLIDS = (
@@ -186,7 +186,7 @@ def attach_repair_stages_to_all_teams(env):
     if not stage_ids:
         _logger.warning(
             "Fix-repair: no repair-pipeline stages found via ir.model.data — "
-            "skipping team attachment. Was data/repair_stages.xml loaded?"
+            "skipping team attachment. Was data/repair_stage_data.xml loaded?"
         )
         return
 
@@ -512,7 +512,7 @@ def activate_internal_picking_types(env):
 
 _REPAIR_SEQUENCE_CODES = (
     # (code, template_xmlid) — template is the company_id=False
-    # "master" seeded from data/repair_sequences.xml. Per-company
+    # "master" seeded from data/repair_sequence_data.xml. Per-company
     # copies duplicate name / prefix / padding / implementation from
     # the template so the two counter families stay visually
     # consistent even after Studio-era numbering diverges by company

@@ -1,7 +1,7 @@
 """Hide fields/buttons of apps Jinasena doesn't use on the product and contact forms.
 
-Replaces views/product_template_hide_dev_extras.xml and
-views/res_partner_hide_dev_extras.xml (v368). Those views used one hard
+Replaces _disabled/views/product_template_hide_dev_extras.xml and
+_disabled/views/res_partner_hide_dev_extras.xml (v368). Those views used one hard
 <xpath> per element; when an app providing an element is not installed
 (or gets uninstalled) the xpath cannot be located and Odoo refuses to
 render the whole form ("Element ... cannot be located in parent view").
