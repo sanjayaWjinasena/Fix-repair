@@ -691,10 +691,7 @@ def _seed_field_selections(env, entries):
                 )
         except Exception as e:
             _logger.warning(
-                "Fix-repair: seed failed %s.%s (%s).",
-                model,
-                fname,
-                e,
+                "Fix-repair: seed failed %s.%s (%s).", model, fname, e, exc_info=True
             )
 
 

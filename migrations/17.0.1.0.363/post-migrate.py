@@ -64,4 +64,5 @@ def migrate(cr, version):
                 model,
                 fname,
                 e,
+                exc_info=True,
             )
