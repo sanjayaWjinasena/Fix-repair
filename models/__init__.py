@@ -30,3 +30,4 @@ from . import x_symptom_codes_gap
 from . import x_task_diagnosis_gap
 from . import studio_computes
 from . import hide_dev_extras
+from . import res_company

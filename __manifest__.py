@@ -2,7 +2,7 @@
 {
     # upgrade-testing branch: data files below are commented out - this branch installs functions only, no data is seeded.
     'name': 'Jinasena : Module : Repair',
-    'version': '17.0.1.0.376',
+    'version': '17.0.1.0.377',
     'summary': 'Enhancements to the Customer Care - Repair helpdesk workflow',
     'author': 'Jinasena Agricultural Machinery (Pvt) Ltd.',
     'category': 'Helpdesk',
@@ -42,7 +42,7 @@
         'security/ir.model.access.csv',
         'security/removed_handmade_access_rights.xml',
         # 'data/repair_stages.xml',  # upgrade-testing: data, not shipped
-        # 'data/repair_sequences.xml',  # upgrade-testing: data, not shipped
+        # 'data/repair_sequences.xml',  # upgrade-testing: data, not shipped (sequences: models/res_company.py since v1.0.377)
         # 'data/helpdesk_ticket_types.xml',  # upgrade-testing: data, not shipped
         'views/repair_diagnosis_catalog_views.xml',
         'data/repair_diagnosis_menus.xml',

@@ -671,6 +671,8 @@ def post_init_hook(env):
     strip_studio_xmlids_for_ported_fields(env)
     load_post_init_view_files(env)
     _seed_field_selections(env, _FIELD_SELECTIONS)
+    # v1.0.377: repair numbering sequences per company (always; not environment data).
+    env['res.company']._jin_ensure_repair_sequences()
     if not SEED_DATA:
         return
     attach_repair_stages_to_all_teams(env)
