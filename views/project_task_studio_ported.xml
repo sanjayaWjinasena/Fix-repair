@@ -82,40 +82,28 @@
                 <field name="x_studio_quotation_type"/>
                 <field name="x_studio_material_availability"/>
             </xpath>
+        </field>
+    </record>
 
+    <!-- v1.0.381: Repair Diagnosis tab in its own view, priority 100. The Repair Image and
+         Warranty Card tabs come from BugFix-Project (Clear-DB Studio view 3019, priority 99);
+         Fix-repair added its own copies too, so the task showed both tabs twice. Applied after
+         BugFix-Project's view, this keeps Clear-DB's order: Repair Image, Warranty Card,
+         Repair Diagnosis. The diagnosis list is required on repair tasks, as on Clear-DB. -->
+    <record id="view_project_task_repair_diagnosis_page" model="ir.ui.view">
+        <field name="name">project.task.form.repair.diagnosis.page</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_form2"/>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
             <xpath expr="//notebook" position="inside">
-                <!-- v261: Repair Image tab (Clear-DB view 3019 verbatim) -->
-                <page string="Repair Image" name="repair_image">
-                    <group>
-                        <group>
-                            <field name="x_studio_repair_image_01"
-                                   widget="image"/>
-                        </group>
-                        <group>
-                            <field name="x_studio_repair_image_02"
-                                   widget="image"/>
-                        </group>
-                    </group>
-                </page>
-                <!-- v261: Warranty Card tab (Clear-DB view 3019 verbatim) -->
-                <page string="Warranty Card" name="warranty_card">
-                    <group>
-                        <group>
-                            <field name="x_studio_warranty_card"
-                                   widget="image"/>
-                        </group>
-                        <group>
-                            <field name="x_studio_related_information"
-                                   widget="image"/>
-                        </group>
-                    </group>
-                </page>
                 <page string="Repair Diagnosis"
                       name="repair_diagnosis"
                       invisible="not helpdesk_ticket_id">
                     <field name="x_studio_diagnosis_ids"
                            nolabel="1"
-                           force_save="1">
+                           force_save="1"
+                           required="helpdesk_ticket_id">
                         <tree editable="bottom">
                             <field name="x_studio_sequence" widget="handle"/>
                             <field name="x_name" column_invisible="True"/>

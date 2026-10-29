@@ -453,8 +453,28 @@ class StockReturnPicking(models.TransientModel):
 
         if self.ticket_id:
             self.product_return_moves.write({'quantity': 1})
+        # Dispatch (no ticket_id on the wizard): the item goes back from
+        # where it sits now, which is not where the reversed intake receipt
+        # put it when the repair moved it on (factory, sales centre). Read
+        # before super(): the new return is stamped on the ticket below.
+        dispatch_src = False
+        if ticket and not self.ticket_id:
+            last_done = self.env['stock.picking'].sudo().search([
+                ('x_studio_helpdesk_ticket_id', '=', ticket.id),
+                ('state', '=', 'done'),
+            ], order='date_done desc, id desc', limit=1)
+            if last_done.location_dest_id.usage == 'internal':
+                dispatch_src = last_done.location_dest_id
         new_picking_id, pick_type_id = super()._create_returns()
         new_picking = self.env['stock.picking'].browse(new_picking_id)
+        if (dispatch_src and new_picking.location_id != dispatch_src
+                and new_picking.state not in ('done', 'cancel')):
+            # Bug sheet Repairs row 6 (29/Oct): source = where the item was
+            # received at the sales centre.
+            new_picking.sudo().do_unreserve()
+            new_picking.sudo().write({'location_id': dispatch_src.id})
+            new_picking.move_ids.sudo().write({'location_id': dispatch_src.id})
+            new_picking.sudo().action_assign()
 
         # Rename the new picking to <WH_CODE>/RET/xxxxx based on the
         # ticket's Return Receipt Location warehouse — applies to BOTH

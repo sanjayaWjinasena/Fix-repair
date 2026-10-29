@@ -3274,23 +3274,25 @@ class HelpdeskTicket(models.Model):
         for ticket in self:
             ticket._create_received_at_sales_centre_picking()
         stage = self._get_or_create_stage('Received at Sales Centre', 110)
+        Picking = self.env['stock.picking'].sudo()
         for ticket in self:
-            # Find the most-recent done incoming picking that collected this
-            # customer's item to the repair virtual location.  Stored so the
-            # "Return to Customer" popup (action 195 at this stage) can
-            # pre-load the picking via default_picking_id.
-            repair_loc = ticket.x_studio_virtual_location_1 or ticket.x_studio_virtual_location
-            domain = [
-                ('partner_id', '=', ticket.partner_id.id),
-                ('company_id', '=', ticket.company_id.id),
+            # The picking the "Return to Customer" popup (action 195 at this
+            # stage) reverses, pre-loaded via default_picking_id. It must be
+            # this ticket's own intake receipt (customer -> repair location),
+            # as on Clear-DB: a customer-wide search picked other documents of
+            # the same customer (bug sheet Repairs row 6, 29/Oct: a spare-part
+            # receipt, so the dispatch moved the wrong item from the wrong
+            # location). Where the item sits now is applied to the dispatch by
+            # stock.return.picking._create_returns.
+            ticket_receipts = Picking.search([
+                ('x_studio_helpdesk_ticket_id', '=', ticket.id),
                 ('state', '=', 'done'),
                 ('picking_type_code', '=', 'incoming'),
-            ]
-            if repair_loc:
-                domain.append(('location_dest_id', '=', repair_loc.id))
-            pick = self.env['stock.picking'].sudo().search(
-                domain, order='date_done desc', limit=1
-            )
+            ], order='date_done desc, id desc')
+            pick = ticket_receipts.filtered(
+                lambda p: ticket.product_id in p.move_ids.product_id
+            )[:1] if ticket.product_id else ticket_receipts[:1]
+            pick = pick or ticket_receipts[:1]
             ticket.write({
                 'stage_id': stage.id,
                 'x_studio_s_received_date': fields.Datetime.now(),
