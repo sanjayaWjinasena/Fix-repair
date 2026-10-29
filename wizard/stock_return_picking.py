@@ -123,6 +123,10 @@ class StockReturnPicking(models.TransientModel):
 
     @api.model
     def default_get(self, fields_list):
+        # Tracking only, by design (decision 2026-10-29): when the ticket has no
+        # delivery to return from, a source picking/move is created and written
+        # as done directly (no Odoo validation, so no stock quantities change),
+        # only to give the return wizard a source.
         defaults = super().default_get(fields_list)
         ticket_id = defaults.get("ticket_id") or self.env.context.get(
             "default_ticket_id"

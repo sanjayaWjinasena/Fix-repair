@@ -19,7 +19,7 @@ The user-facing entry point is checked by Odoo's normal access rules.
 | `project_task._sync_repair_flags` | linked sale order flags | `write` / `_fsm_ensure_sale_order` on the task | field-service technicians usually have no sales write rights |
 | `stock_return_picking._create_returns` | new return picking, ticket link | return wizard | rename/stamp the picking the user just created |
 
-## Needs a decision (data integrity, not access)
+## Direct `done` on stock moves: tracking only (decided 2026-10-29)
 
 These write `state = "done"` directly on stock moves and pickings, which
 skips Odoo's validation (`_action_done`): no stock quantities (quants) or
@@ -29,6 +29,10 @@ valuation entries are created for those moves.
 |---|---|
 | `helpdesk_ticket._create_repair_transfer` | creates the repair transfer and sets its move and picking to `done` |
 | `stock_return_picking.default_get` | creates a "fake" picking/move and sets them to `done` so the return wizard has a source |
+
+Decision 2026-10-29: these transfers are a tracking trail only; stock levels are not
+meant to follow the repaired item. Documented in both methods. (Had stock levels been
+needed, the fix would have been to use the standard validation instead.) Originally:
 
 If these transfers are only meant as a tracking trail, document that on
 the picking type. If stock levels must follow the item, replace the direct

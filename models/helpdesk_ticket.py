@@ -3389,6 +3389,11 @@ class HelpdeskTicket(models.Model):
         the ticket's Movements smart button. Deliberately does NOT
         write sale_id / sale_line_id / group_id / origin — repair-flow
         pickings live on the ticket, not on the repair sale order.
+
+        Tracking only, by design (decision 2026-10-29): the picking and move are
+        written as done directly, without Odoo's validation, so no stock
+        quantities or valuation entries are created. They record where the
+        repaired item went; stock levels are not meant to follow it.
         """
         self.ensure_one()
         serial = self.serial_no
