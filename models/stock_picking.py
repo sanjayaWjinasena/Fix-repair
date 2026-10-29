@@ -215,7 +215,12 @@ class StockPicking(models.Model):
             # should be reaching for it from the picking form.
             # Kept the underlying action on record so historical
             # references stay resolvable; only the button hide.
-            for btn in arch.xpath("//button[@name='1999']"):
+            # The action id differs per DB (1999 on KG, 3644 on staging),
+            # so match by the button string as well as the legacy id.
+            for btn in arch.xpath(
+                "//button[@name='1999' or "
+                "(@type='action' and normalize-space(@string)='Retun Reject Reason')]"
+            ):
                 btn.set('invisible', '1')
 
             # Hide UI-only fields on repair-flow pickings — every

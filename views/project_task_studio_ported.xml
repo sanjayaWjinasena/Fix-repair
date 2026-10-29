@@ -119,9 +119,9 @@
                         <tree editable="bottom">
                             <field name="x_studio_sequence" widget="handle"/>
                             <field name="x_name" column_invisible="True"/>
-                            <field name="x_studio_condition" optional="show"/>
-                            <field name="x_studio_symptom_area" optional="show"/>
-                            <field name="x_studio_symptom_code" optional="show"/>
+                            <field name="x_studio_condition" column_invisible="True"/>
+                            <field name="x_studio_symptom_area" column_invisible="True"/>
+                            <field name="x_studio_symptom_code" column_invisible="True"/>
                             <field name="x_studio_description" optional="show"/>
                             <field name="x_studio_diagnosis_area" optional="show" required="1"/>
                             <field name="x_studio_diagnosis_code"

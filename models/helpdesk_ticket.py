@@ -2481,11 +2481,11 @@ class HelpdeskTicket(models.Model):
                     ))
 
                 # Return Receipt Location — where the returned item is
-                # first booked in. Domain (users-stock-location scope)
-                # is set by a separate xpath block above; we only place
-                # the field here.
+                # first booked in. The domain must be set here because
+                # _reposition_or_create wipes attributes set earlier.
                 new_fields.append(_reposition_or_create(
                     'x_studio_return_receipt_location',
+                    domain="[('x_studio_users_stock_location', 'in', user_id)] if user_id else []",
                     options="{'no_create': True}",
                     required='user_id',
                     force_save='1',
