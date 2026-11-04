@@ -144,15 +144,14 @@ class StockReturnPicking(models.TransientModel):
         # repair SO that the FSM task creates later is the SO that owns
         # all these movements; project_task._bind_ticket_pickings_to_so
         # re-points them once that SO exists.
+        # Clear-DB never builds the phantom without the user's repair
+        # locations (bug sheet Repairs row 6): the old fallback to the
+        # company's first warehouse sent the item to JM-EK/Stock.
+        self._fix_repair_check_user_locations(ticket)
         repair_loc = (
             ticket.x_studio_virtual_location_1
             or ticket.x_studio_virtual_location
         )
-        if not repair_loc:
-            warehouse = self.env['stock.warehouse'].sudo().search(
-                [('company_id', '=', ticket.company_id.id)], limit=1
-            )
-            repair_loc = warehouse.lot_stock_id if warehouse else False
         cust_loc = self.env['stock.location'].sudo().search(
             [('usage', '=', 'customer')], limit=1
         )
@@ -309,6 +308,29 @@ class StockReturnPicking(models.TransientModel):
 
         return arch, view
 
+    def _fix_repair_check_user_locations(self, ticket):
+        """Port of Clear-DB server action 1997 (RR - RUG Return from Help
+        desk): a repair return needs the Virtual and Source Locations the
+        ticket takes from its user, branched by active company like the
+        original (company 1 uses the base fields, others the _1 variant).
+        """
+        active_company_id = (
+            self.env.context.get('allowed_company_ids',
+                                 [self.env.company.id])
+            or [self.env.company.id]
+        )[0]
+        if active_company_id == 1:
+            ok = (ticket.x_studio_virtual_location
+                  and ticket.x_studio_source_location)
+        else:
+            ok = (ticket.x_studio_virtual_location_1
+                  and ticket.x_studio_source_location_1)
+        if not ok:
+            raise UserError(
+                "Virtual & Source Locations must be setup for Current "
+                "Logged in User."
+            )
+
     def _fix_repair_validate_return_location(self):
         """Validate location_id matches the ticket's suggested return
         location for RUG or Normal-with-Serial-No repair returns.
@@ -452,6 +474,7 @@ class StockReturnPicking(models.TransientModel):
             ], limit=1)
 
         if self.ticket_id:
+            self._fix_repair_check_user_locations(self.ticket_id)
             self.product_return_moves.write({'quantity': 1})
         # Dispatch (no ticket_id on the wizard): the item goes back from
         # where it sits now, which is not where the reversed intake receipt
