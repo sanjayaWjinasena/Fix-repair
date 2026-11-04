@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!-- ============================================================ -->
-    <!-- x_diagnosis_areas                                           -->
+    <!-- diagnosis_areas                                           -->
     <!-- ============================================================ -->
     <record id="view_x_diagnosis_areas_form" model="ir.ui.view">
-        <field name="name">x_diagnosis_areas.form</field>
-        <field name="model">x_diagnosis_areas</field>
+        <field name="name">diagnosis_areas.form</field>
+        <field name="model">diagnosis_areas</field>
         <field name="type">form</field>
         <field name="mode">primary</field>
         <field name="priority">16</field>
@@ -13,11 +13,11 @@
             <form>
                 <header/>
                 <sheet string="Diagnosis Areas">
-                    <widget name="web_ribbon" text="Archived" bg_color="bg-danger" invisible="x_active == True"/>
-                    <field name="x_active" invisible="1"/>
+                    <widget name="web_ribbon" text="Archived" bg_color="bg-danger" invisible="active == True"/>
+                    <field name="active" invisible="1"/>
                     <div class="oe_title">
                         <h1>
-                            <field name="x_name" required="1" placeholder="Name..."/>
+                            <field name="name" required="1" placeholder="Name..."/>
                         </h1>
                     </div>
                     <group name="studio_group_36cd75">
@@ -34,36 +34,36 @@
         </field>
     </record>
     <record id="view_x_diagnosis_areas_tree" model="ir.ui.view">
-        <field name="name">x_diagnosis_areas.tree</field>
-        <field name="model">x_diagnosis_areas</field>
+        <field name="name">diagnosis_areas.tree</field>
+        <field name="model">diagnosis_areas</field>
         <field name="type">tree</field>
         <field name="mode">primary</field>
         <field name="priority">16</field>
         <field name="arch" type="xml">
             <tree>
-                <field name="x_studio_sequence" widget="handle"/>
-                <field name="x_name"/>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
             </tree>
         </field>
     </record>
     <record id="view_x_diagnosis_areas_search" model="ir.ui.view">
-        <field name="name">x_diagnosis_areas.search</field>
-        <field name="model">x_diagnosis_areas</field>
+        <field name="name">diagnosis_areas.search</field>
+        <field name="model">diagnosis_areas</field>
         <field name="type">search</field>
         <field name="mode">primary</field>
         <field name="priority">16</field>
         <field name="arch" type="xml">
             <search>
-                <field name="x_name"/>
+                <field name="name"/>
                 <separator/>
-                <filter string="Archived" name="archived_x_diagnosis_areas" domain="[['x_active', '=', False]]"/>
+                <filter string="Archived" name="archived_diagnosis_areas" domain="[['active', '=', False]]"/>
                 <separator/>
             </search>
         </field>
     </record>
     <record id="view_x_diagnosis_areas_tree_inherit" model="ir.ui.view">
-        <field name="name">x_diagnosis_areas.tree.inherit</field>
-        <field name="model">x_diagnosis_areas</field>
+        <field name="name">diagnosis_areas.tree.inherit</field>
+        <field name="model">diagnosis_areas</field>
         <field name="type">tree</field>
         <field name="mode">extension</field>
         <field name="priority">99</field>
@@ -73,27 +73,27 @@
                 <xpath expr="//tree[1]" position="attributes">
                     <attribute name="editable">bottom</attribute>
                 </xpath>
-                <xpath expr="//field[@name='x_studio_sequence']" position="attributes">
+                <xpath expr="//field[@name='sequence']" position="attributes">
                     <attribute name="column_invisible">1</attribute>
                 </xpath>
-                <xpath expr="//field[@name='x_name']" position="attributes">
+                <xpath expr="//field[@name='name']" position="attributes">
                     <attribute name="string">Diagnosis Area</attribute>
                 </xpath>
-                <xpath expr="//field[@name='x_name']" position="after">
-                    <field optional="show" name="x_studio_description" string="Description"/>
-                    <field optional="show" name="x_studio_company_id" string="Company"/>
+                <xpath expr="//field[@name='name']" position="after">
+                    <field optional="show" name="description" string="Description"/>
+                    <field optional="show" name="accounting_company_id" string="Company"/>
                 </xpath>
             </data>
         </field>
     </record>
-    <record id="action_x_diagnosis_areas" model="ir.actions.act_window">
+    <record id="action_diagnosis_areas" model="ir.actions.act_window">
         <field name="name">Diagnosis Areas</field>
-        <field name="res_model">x_diagnosis_areas</field>
+        <field name="res_model">diagnosis_areas</field>
         <field name="view_mode">tree,form</field>
     </record>
   <record id="act_window_2212_diagnosis_areas" model="ir.actions.act_window">
     <field name="name">Diagnosis Areas</field>
-    <field name="res_model">x_diagnosis_areas</field>
+    <field name="res_model">diagnosis_areas</field>
     <field name="view_mode">tree,form</field>
     <field name="context">{}</field>
     <field name="help" type="html"><p class="o_view_nocontent_smiling_face">
@@ -109,18 +109,18 @@
             </field>
   </record>
     <record id="view_4965_default_form_view_for_x_diagnosis_areas_e" model="ir.ui.view">
-      <field name="name">Default form view for x_diagnosis_areas</field>
-      <field name="model">x_diagnosis_areas</field>
+      <field name="name">Default form view for diagnosis_areas</field>
+      <field name="model">diagnosis_areas</field>
       <field name="type">form</field>
       <field name="arch" type="xml">
         <form>
   <header/>
   <sheet string="Diagnosis Areas">
-    <widget name="web_ribbon" text="Archived" bg_color="bg-danger" invisible="x_active == True"/>
-    <field name="x_active" invisible="1"/>
+    <widget name="web_ribbon" text="Archived" bg_color="bg-danger" invisible="active == True"/>
+    <field name="active" invisible="1"/>
     <div class="oe_title">
                 <h1>
-                    <field name="x_name" required="1" placeholder="Name..."/>
+                    <field name="name" required="1" placeholder="Name..."/>
                 </h1>
             </div>
     <group name="studio_group_36cd75">
@@ -137,32 +137,32 @@
       </field>
     </record>
     <record id="view_4964_default_list_view_for_x_diagnosis_areas_e" model="ir.ui.view">
-      <field name="name">Default list view for x_diagnosis_areas</field>
-      <field name="model">x_diagnosis_areas</field>
+      <field name="name">Default list view for diagnosis_areas</field>
+      <field name="model">diagnosis_areas</field>
       <field name="type">tree</field>
       <field name="arch" type="xml">
         <tree>
-  <field name="x_studio_sequence" widget="handle"/>
-  <field name="x_name"/>
+  <field name="sequence" widget="handle"/>
+  <field name="name"/>
 </tree>
       </field>
     </record>
     <record id="view_4966_default_search_view_for_x_diagnosis_areas_e" model="ir.ui.view">
-      <field name="name">Default search view for x_diagnosis_areas</field>
-      <field name="model">x_diagnosis_areas</field>
+      <field name="name">Default search view for diagnosis_areas</field>
+      <field name="model">diagnosis_areas</field>
       <field name="type">search</field>
       <field name="arch" type="xml">
         <search>
-  <field name="x_name"/>
+  <field name="name"/>
   <separator/>
-  <filter string="Archived" name="archived_x_diagnosis_areas" domain="[['x_active', '=', False]]"/>
+  <filter string="Archived" name="archived_diagnosis_areas" domain="[['active', '=', False]]"/>
   <separator/>
 </search>
       </field>
     </record>
     <record id="view_final_x_diagnosis_areas_odoo_studio_default_list_view_for_x_diagnosis_areas_customiz" model="ir.ui.view">
-      <field name="name">Odoo Studio: Default list view for x_diagnosis_areas customization</field>
-      <field name="model">x_diagnosis_areas</field>
+      <field name="name">Odoo Studio: Default list view for diagnosis_areas customization</field>
+      <field name="model">diagnosis_areas</field>
       <field name="type">tree</field>
       <field name="priority">99</field>
       <field name="inherit_id" ref="Fix-repair.view_4964_default_list_view_for_x_diagnosis_areas_e"/>
@@ -172,14 +172,14 @@
   <xpath expr="//tree[1]" position="attributes">
     <attribute name="editable">bottom</attribute>
   </xpath>
-  <xpath expr="//field[@name='x_studio_sequence']" position="attributes">
+  <xpath expr="//field[@name='sequence']" position="attributes">
     <attribute name="column_invisible">1</attribute></xpath>
-  <xpath expr="//field[@name='x_name']" position="attributes">
+  <xpath expr="//field[@name='name']" position="attributes">
     <attribute name="string">Diagnosis Area</attribute>
   </xpath>
-  <xpath expr="//field[@name='x_name']" position="after">
-    <field optional="show" name="x_studio_description" string="Description"/>
-    <field optional="show" name="x_studio_company_id" string="Company"/>
+  <xpath expr="//field[@name='name']" position="after">
+    <field optional="show" name="description" string="Description"/>
+    <field optional="show" name="accounting_company_id" string="Company"/>
   </xpath>
 </data>
       </field>

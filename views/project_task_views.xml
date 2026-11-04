@@ -16,8 +16,8 @@
                      expression. project_task._get_view runtime-injects
                      these too, but install-time view validation runs
                      before _get_view. -->
-                <field name="x_studio_end_quick_repair" invisible="1"/>
-                <field name="x_studio_cancelled" invisible="1"/>
+                <field name="end_quick_repair" invisible="1"/>
+                <field name="cancelled" invisible="1"/>
                 <field name="material_line_product_count" invisible="1"/>
             </xpath>
 
@@ -29,32 +29,32 @@
                  personal_stage_type_id field, same slot Clear-DB
                  view 3019 uses. -->
             <xpath expr="//field[@name='personal_stage_type_id']" position="after">
-                <button name="%(Fix-repair.action_repair_end_quick_repair)d" type="action" string="Tested OK" class="btn-primary" invisible="material_line_product_count &gt; 0 or x_studio_cancelled == True or not helpdesk_ticket_id or x_studio_end_quick_repair == True"/>
+                <button name="%(Fix-repair.action_repair_end_quick_repair)d" type="action" string="Tested OK" class="btn-primary" invisible="material_line_product_count &gt; 0 or cancelled == True or not helpdesk_ticket_id or end_quick_repair == True"/>
             </xpath>
 
             <!-- v261: header field insertions matching Clear-DB Studio
                  view 3019 verbatim. Rename user_ids label + insert
-                 helpdesk_ticket_id / x_studio_created_date /
-                 x_studio_repair_reason (invisible). Show sale_order_id
+                 helpdesk_ticket_id / created_date /
+                 repair_reason (invisible). Show sale_order_id
                  and rename to Studio's typo "Sales Orderr" for
-                 parity. Insert x_studio_priority / _quotation_type /
+                 parity. Insert custom_reports_priority / _quotation_type /
                  _material_availability after sale_order_id. -->
             <xpath expr="//field[@name='user_ids']" position="attributes">
                 <attribute name="string">Assignees</attribute>
             </xpath>
             <xpath expr="//field[@name='user_ids']" position="after">
                 <field name="helpdesk_ticket_id" string="Help Desk Ticket"/>
-                <field name="x_studio_created_date"/>
-                <field name="x_studio_repair_reason" invisible="True"/>
+                <field name="created_date"/>
+                <field name="repair_reason" invisible="True"/>
             </xpath>
             <xpath expr="//field[@name='sale_order_id']" position="attributes">
                 <attribute name="invisible">False</attribute>
                 <attribute name="string">Sales Orderr</attribute>
             </xpath>
             <xpath expr="//field[@name='sale_order_id']" position="after">
-                <field name="x_studio_priority"/>
-                <field name="x_studio_quotation_type"/>
-                <field name="x_studio_material_availability"/>
+                <field name="custom_reports_priority"/>
+                <field name="quotation_type"/>
+                <field name="material_availability"/>
             </xpath>
 
             <xpath expr="//notebook" position="inside">
@@ -62,10 +62,10 @@
                 <page string="Repair Image" name="repair_image">
                     <group>
                         <group>
-                            <field name="x_studio_repair_image_01" widget="image"/>
+                            <field name="repair_image_01" widget="image"/>
                         </group>
                         <group>
-                            <field name="x_studio_repair_image_02" widget="image"/>
+                            <field name="repair_image_02" widget="image"/>
                         </group>
                     </group>
                 </page>
@@ -73,29 +73,29 @@
                 <page string="Warranty Card" name="warranty_card">
                     <group>
                         <group>
-                            <field name="x_studio_warranty_card" widget="image"/>
+                            <field name="warranty_card" widget="image"/>
                         </group>
                         <group>
-                            <field name="x_studio_related_information" widget="image"/>
+                            <field name="related_information" widget="image"/>
                         </group>
                     </group>
                 </page>
                 <page string="Repair Diagnosis" name="repair_diagnosis" invisible="not helpdesk_ticket_id">
-                    <field name="x_studio_diagnosis_ids" nolabel="1" force_save="1">
+                    <field name="diagnosis_ids" nolabel="1" force_save="1">
                         <tree editable="bottom">
-                            <field name="x_studio_sequence" widget="handle"/>
-                            <field name="x_name" column_invisible="True"/>
-                            <field name="x_studio_condition" optional="show"/>
-                            <field name="x_studio_symptom_area" optional="show"/>
-                            <field name="x_studio_symptom_code" optional="show"/>
-                            <field name="x_studio_description" optional="show"/>
-                            <field name="x_studio_diagnosis_area" optional="show" required="1"/>
-                            <field name="x_studio_diagnosis_code" optional="show" required="1" domain="[('x_studio_diagnosis_area_1','=',x_studio_diagnosis_area)]"/>
-                            <field name="x_studio_reason" optional="show" required="1"/>
-                            <field name="x_studio_sub_reason" optional="show" required="1" domain="[('x_studio_reason_code','=',x_studio_reason)]"/>
-                            <field name="x_studio_resolution" optional="show" required="1"/>
-                            <field name="x_studio_repair_stage" optional="show" required="1"/>
-                            <field name="x_studio_task_id" column_invisible="True"/>
+                            <field name="sequence" widget="handle"/>
+                            <field name="name" column_invisible="True"/>
+                            <field name="condition" optional="show"/>
+                            <field name="symptom_area" optional="show"/>
+                            <field name="symptom_code" optional="show"/>
+                            <field name="description" optional="show"/>
+                            <field name="diagnosis_area" optional="show" required="1"/>
+                            <field name="diagnosis_code" optional="show" required="1" domain="[('diagnosis_area_1','=',diagnosis_area)]"/>
+                            <field name="reason" optional="show" required="1"/>
+                            <field name="sub_reason" optional="show" required="1" domain="[('reason_code','=',reason)]"/>
+                            <field name="resolution" optional="show" required="1"/>
+                            <field name="repair_stage" optional="show" required="1"/>
+                            <field name="task_id" column_invisible="True"/>
                         </tree>
                     </field>
                 </page>
@@ -127,7 +127,7 @@
     <field name="arch" type="xml">
 
       <xpath expr="//button[@name='action_view_so']" position="attributes">
-        <attribute name="invisible">(sale_order_id == False) or (x_studio_cancelled == True)</attribute>
+        <attribute name="invisible">(sale_order_id == False) or (cancelled == True)</attribute>
       </xpath>
 
     </field>

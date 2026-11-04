@@ -7,22 +7,22 @@
     <field name="priority">100</field>
     <field name="arch" type="xml">
       <xpath expr="//group[@name='studio_group_L0Ae5_left']" position="inside">
-        <field name="x_studio_vat_registration_status"/>
-        <field name="x_studio_vat_registration_number"/>
-        <field name="x_studio_vat_exempted_number"/>
+        <field name="vat_registration_status"/>
+        <field name="vat_registration_number"/>
+        <field name="vat_exempted_number"/>
       </xpath>
       <xpath expr="//group[@name='studio_group_L0Ae5_right']" position="inside">
-        <field name="x_studio_svat_registration_status"/>
-        <field name="x_studio_svat_registration_number"/>
+        <field name="svat_registration_status"/>
+        <field name="svat_registration_number"/>
       </xpath>
       <xpath expr="//group[@name='studio_group_SuozI_right']" position="inside">
-        <field name="x_studio_vendor_account"/>
-        <field name="x_studio_address"/>
+        <field name="vendor_account"/>
+        <field name="address"/>
       </xpath>
       <xpath expr="//group[@name='studio_group_yhybZ_left']" position="inside">
-        <field name="x_studio_mandatory_bank_guarantee"/>
-        <field name="x_studio_bank_guarantee_docs" filename="x_studio_bank_guarantee_docs_filename" widget="binary"/>
-        <field name="x_studio_bank_guarantee_docs_filename" invisible="1"/>
+        <field name="mandatory_bank_guarantee"/>
+        <field name="bank_guarantee_docs" filename="bank_guarantee_docs_filename" widget="binary"/>
+        <field name="bank_guarantee_docs_filename" invisible="1"/>
       </xpath>
     </field>
   </record>
@@ -33,11 +33,11 @@
     <field name="priority">100</field>
     <field name="arch" type="xml">
       <xpath expr="//field[@name='type']" position="after">
-        <field name="x_studio_address"/>
+        <field name="address"/>
       </xpath>
       <xpath expr="//field[@name='state_id']" position="after">
-        <field name="x_studio_vat_registration_number"/>
-        <field name="x_studio_svat_registration_number"/>
+        <field name="vat_registration_number"/>
+        <field name="svat_registration_number"/>
       </xpath>
     </field>
   </record>

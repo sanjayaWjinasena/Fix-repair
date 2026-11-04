@@ -43,6 +43,6 @@ Changing them changes behaviour, so they need a functional decision:
 
 - `models/project_task.py`: `rec.sale_order_id != False` (5 places): always True
 - `models/helpdesk_ticket.py`: `invoices.sale_order_id != False`: always True
-- `models/helpdesk_ticket.py`: `rec.x_studio_sale_order == True`: always False
+- `models/helpdesk_ticket.py`: `rec.sale_order == True`: always False
 
 The intended check is almost certainly `if rec.sale_order_id:`.

@@ -11,14 +11,14 @@ Other repos that use this model: `report BugFix-Studio-Misc.action_report_3447_t
 **Summary:**
 
 <!-- SUMMARY:model:repair.order -->
-Adds one checkbox, Confirm Draft Quotation (`x_studio_confirm_draft_quotation`), which is shown on the repair order form. The ported Studio form customization hides the standard Validate button unless the order is in draft. The repo also ships the Studio server actions "RR - Add Draft Quotation Confirm Button", "RR - Update SO in RO" and "RR - Notify Customer in RO End - Final" (with its -2 variant), plus the automation that creates a "Repair Completed Confirmation" activity, two repair.order window actions and the multi-company record rule.
+Adds one checkbox, Confirm Draft Quotation (`confirm_draft_quotation`), which is shown on the repair order form. The ported Studio form customization hides the standard Validate button unless the order is in draft. The repo also ships the Studio server actions "RR - Add Draft Quotation Confirm Button", "RR - Update SO in RO" and "RR - Notify Customer in RO End - Final" (with its -2 variant), plus the automation that creates a "Repair Completed Confirmation" activity, two repair.order window actions and the multi-company record rule.
 <!-- /SUMMARY -->
 
 **Fields (1):**
 
 | Field | Label | Type | Function | How it gets its value | Depends on | Used by |
 |---|---|---|---|---|---|---|
-| `x_studio_confirm_draft_quotation` | Confirm Draft Quotation | boolean | Flag on the repair order used by the 'Add Draft Quotation Confirm Button' server action and the repair form customizations to control the draft quotation confirm button. | stored |  | `server action Fix-repair.server_action_1814_rr_add_draft_quotation_confirm_button`<br>`view Fix-repair.view_4014_odoo_studio_repair_form_customization_e`<br>`view Fix-repair.view_4015_odoo_studio_repair_form_customization_button_e` |
+| `confirm_draft_quotation` | Confirm Draft Quotation | boolean | Flag on the repair order used by the 'Add Draft Quotation Confirm Button' server action and the repair form customizations to control the draft quotation confirm button. | stored |  | `server action Fix-repair.server_action_1814_rr_add_draft_quotation_confirm_button`<br>`view Fix-repair.view_4014_odoo_studio_repair_form_customization_e`<br>`view Fix-repair.view_4015_odoo_studio_repair_form_customization_button_e` |
 
 **Server actions (5):**
 
@@ -43,13 +43,13 @@ Adds one checkbox, Confirm Draft Quotation (`x_studio_confirm_draft_quotation`),
   </details>
 - **RR - Add Draft Quotation Confirm Button** (`server_action_1814_rr_add_draft_quotation_confirm_button`, type `code`)
   - Function: Ticks Confirm Draft Quotation on the repair order.
-  - Depends on: `model repair.order` (repair), `repair.order.x_studio_confirm_draft_quotation`
+  - Depends on: `model repair.order` (repair), `repair.order.confirm_draft_quotation`
   - Used by: — (not linked to a button, menu or automation)
   <details><summary>code (2 lines)</summary>
 
 ```python
 if record.id:
-    record["x_studio_confirm_draft_quotation"] = True
+    record["confirm_draft_quotation"] = True
 ```
   </details>
 - **RR - Notify Customer in RO End - Final** (`sa_f5_repair_order_rr_notify_customer_in_ro_end_final`, type `next_activity`)
@@ -128,8 +128,8 @@ if record.ticket_id.id:
 
 | Name | Record name | Type | What it changes | Function | Depends on | Used by |
 |---|---|---|---|---|---|---|
-| Odoo Studio: repair.form customization | `view_4014_odoo_studio_repair_form_customization_e` | form | after `//field[@name='tag_ids']`: add field x_studio_confirm_draft_quotation; after `//field[@name='product_packaging_id']`: add | Repair order form: adds a read-only 'Confirm Draft Quotation' field after Tags; a second change was emptied during porting and adds nothing. | `repair.order.x_studio_confirm_draft_quotation`<br>`view repair.view_repair_order_form` (repair) |  |
-| Odoo Studio: repair.form customization_button | `view_4015_odoo_studio_repair_form_customization_button_e` | form | inside `//form`: add field x_studio_confirm_draft_quotation; before `//header/button[@name='action_validate']`: add ; set invisible=state != 'draft' on `//header/button[@name='action_validate']` | Repair order form: adds a hidden Confirm Draft Quotation field and shows Validate only in draft; the original Studio button was stripped, leaving only stray text 'x_studio_confirm_draft_quotation' before Validate. | `repair.order.x_studio_confirm_draft_quotation`<br>`view repair.view_repair_order_form` (repair) |  |
+| Odoo Studio: repair.form customization | `view_4014_odoo_studio_repair_form_customization_e` | form | after `//field[@name='tag_ids']`: add field confirm_draft_quotation; after `//field[@name='product_packaging_id']`: add | Repair order form: adds a read-only 'Confirm Draft Quotation' field after Tags; a second change was emptied during porting and adds nothing. | `repair.order.confirm_draft_quotation`<br>`view repair.view_repair_order_form` (repair) |  |
+| Odoo Studio: repair.form customization_button | `view_4015_odoo_studio_repair_form_customization_button_e` | form | inside `//form`: add field confirm_draft_quotation; before `//header/button[@name='action_validate']`: add ; set invisible=state != 'draft' on `//header/button[@name='action_validate']` | Repair order form: adds a hidden Confirm Draft Quotation field and shows Validate only in draft; the original Studio button was stripped, leaving only stray text 'confirm_draft_quotation' before Validate. | `repair.order.confirm_draft_quotation`<br>`view repair.view_repair_order_form` (repair) |  |
 
 **Record rules (1):**
 

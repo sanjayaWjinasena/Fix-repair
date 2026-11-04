@@ -11,12 +11,12 @@
                  also injects this at runtime, but that runs AFTER
                  install-time XML validation. -->
             <xpath expr="//sheet" position="inside">
-                <field name="x_studio_helpdesk_ticket_id" invisible="1" string="Helpdesk Ticket (sentinel v269)"/>
+                <field name="helpdesk_ticket_id" invisible="1" string="Helpdesk Ticket (sentinel v269)"/>
             </xpath>
 
             <!-- Left column, after Receive From / Partner. -->
             <xpath expr="//field[@name='partner_id']" position="after">
-                <field name="x_studio_helpdesk_ticket_id" string="Helpdesk Ticket Id" invisible="not x_studio_helpdesk_ticket_id" readonly="1"/>
+                <field name="helpdesk_ticket_id" string="Helpdesk Ticket Id" invisible="not helpdesk_ticket_id" readonly="1"/>
                 <!-- v370: no second location_dest_id here. Clear-DB has only the standard field; this
                      copy made Destination Location show twice (bug sheet 15/Oct, Kapila) and caught
                      the Studio-ported attributes xpath meant for the standard field. -->
@@ -29,8 +29,8 @@
                  that div's parent group ensures our fields sit as
                  siblings at the group level, not inside a wrapper. -->
             <xpath expr="//label[@for='scheduled_date']/parent::*" position="inside">
-                <field name="date_done" string="Effective Date" invisible="not x_studio_helpdesk_ticket_id" readonly="1"/>
-                <field name="x_studio_ticket_sales_order" string="Ticket Sales Order" invisible="not x_studio_helpdesk_ticket_id" readonly="1"/>
+                <field name="date_done" string="Effective Date" invisible="not helpdesk_ticket_id" readonly="1"/>
+                <field name="ticket_sales_order" string="Ticket Sales Order" invisible="not helpdesk_ticket_id" readonly="1"/>
             </xpath>
         </field>
     </record>

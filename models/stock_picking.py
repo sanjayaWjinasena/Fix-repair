@@ -10,14 +10,14 @@ class StockPicking(models.Model):
     # Studio-created stamp linking a picking back to the helpdesk ticket
     # that spawned the repair flow. Declared in Python here so that:
     #   1. helpdesk.ticket.repair_picking_ids (One2many, inverse_name=
-    #      'x_studio_helpdesk_ticket_id') has an inverse field to hook
+    #      'helpdesk_ticket_id') has an inverse field to hook
     #      into at Python setup time — otherwise setup_nonrelated raises
     #      KeyError on fresh installs where Studio hasn't provisioned it.
     #   2. Fix-repair's write-side code stamps this reliably (see
     #      helpdesk_ticket.py, stock_return_picking.py).
     # Fresh installs get a plain m2o that behaves identically to what
     # Studio would have generated.
-    x_studio_helpdesk_ticket_id = fields.Many2one(
+    helpdesk_ticket_id = fields.Many2one(
         "helpdesk.ticket",
         string="Helpdesk Ticket",
         ondelete="set null",
@@ -26,9 +26,9 @@ class StockPicking(models.Model):
 
     # v253: written by _repair_studio_auto_create_repair_route on
     # helpdesk.ticket (see models/helpdesk_ticket.py:3008). Same target
-    # model as x_studio_helpdesk_ticket_id — kept as a separate field to
+    # model as helpdesk_ticket_id — kept as a separate field to
     # match Clear-DB's Studio schema verbatim (state=manual there).
-    x_studio_created_from_help_ticket = fields.Many2one(
+    created_from_help_ticket = fields.Many2one(
         "helpdesk.ticket",
         string="Created from Help Ticket",
         ondelete="set null",
@@ -38,7 +38,7 @@ class StockPicking(models.Model):
     # v253: the return-receipt anchor stamped on the auto-created
     # repair-route picking. Read by downstream repair-flow code to
     # locate the anchoring warehouse when composing follow-up pickings.
-    x_studio_return_receipt_location = fields.Many2one(
+    return_receipt_location = fields.Many2one(
         "stock.location",
         string="Return Receipt Location",
         ondelete="set null",
@@ -47,44 +47,44 @@ class StockPicking(models.Model):
 
     # v257: Studio fields the Fix-repair stock.picking view-arch hide
     # gate (see _get_view below) references. Without them declared,
-    # OWL's FormRenderer raises "Name 'x_studio_quotation_type' is not
+    # OWL's FormRenderer raises "Name 'quotation_type' is not
     # defined" when trying to evaluate the invisible expression.
     # Selection values verified verbatim against Clear-DB
     # (ir.model.fields.selection ids 3974-3976 / 4249-4251).
-    x_studio_quotation_type = fields.Selection(
+    quotation_type = fields.Selection(
         string="Quotation Type",
-        related="sale_id.x_studio_quotation_type",
+        related="sale_id.quotation_type",
         store=True,
         readonly=True,
     )
-    x_studio_quotation_type_2 = fields.Selection(
+    quotation_type_2 = fields.Selection(
         string="Quotation Type (2)",
-        related="sale_id.x_studio_quotation_type",
+        related="sale_id.quotation_type",
         store=True,
         readonly=True,
     )
     # Studio-created duplicate m2o's onto sale.order. Fix-repair reads
     # them from stock.picking._get_view's hide-gate loop and from the
     # payment/GL computes.
-    x_studio_sales_order = fields.Many2one(
+    sales_order = fields.Many2one(
         "sale.order",
         string="Sales Order (Studio)",
         ondelete="set null",
         index=True,
     )
-    x_studio_ticket_sales_order = fields.Many2one(
+    ticket_sales_order = fields.Many2one(
         "sale.order",
         string="Ticket Sales Order (Studio)",
         ondelete="set null",
         index=True,
     )
-    x_studio_type_of_operation = fields.Selection(
+    type_of_operation = fields.Selection(
         string="Type of Operation",
         related="picking_type_id.code",
         store=True,
         readonly=True,
     )
-    x_studio_validation = fields.Char(string="Validation")
+    validation = fields.Char(string="Validation")
 
     nuw_block_validate = fields.Boolean(
         compute="_compute_nuw_block_validate",
@@ -98,7 +98,7 @@ class StockPicking(models.Model):
 
     @api.depends(
         "sale_id",
-        "sale_id.x_repair_customer_pays",
+        "sale_id.repair_customer_pays",
         "sale_id.x_studio_rug_rejected",
         "sale_id.invoice_ids.state",
         "sale_id.invoice_ids.payment_state",
@@ -108,7 +108,7 @@ class StockPicking(models.Model):
         until an actual payment has landed on at least one non-
         cancelled invoice for the linked sale order.
 
-        Applies to any SO with x_repair_customer_pays=True (started as
+        Applies to any SO with repair_customer_pays=True (started as
         not-under-warranty) OR x_studio_rug_rejected=True (warranty
         repair fell through to customer-pays after the RUG cycle).
         Warranty-approved and non-Repair SOs pass through — this field
@@ -132,7 +132,7 @@ class StockPicking(models.Model):
         for picking in self:
             so = picking.sale_id
             customer_pays = bool(so) and (
-                so.x_repair_customer_pays or so.x_studio_rug_rejected
+                so.repair_customer_pays or so.x_studio_rug_rejected
             )
             if not customer_pays:
                 picking.nuw_block_validate = False
@@ -173,24 +173,24 @@ class StockPicking(models.Model):
                 fld.set("name", "nuw_block_validate")
                 fld.set("invisible", "1")
                 sheet.insert(0, fld)
-                # Load x_studio_helpdesk_ticket_id as an invisible field
+                # Load helpdesk_ticket_id as an invisible field
                 # so the broadened hide expression below can reference
                 # it. Movement transfers (internal factory / dispatch /
                 # return pickings) carry this linkage but often have no
-                # x_studio_quotation_type value, so the gate needs both
+                # quotation_type value, so the gate needs both
                 # sides.
                 ticket_fld = etree.Element("field")
-                ticket_fld.set("name", "x_studio_helpdesk_ticket_id")
+                ticket_fld.set("name", "helpdesk_ticket_id")
                 ticket_fld.set("invisible", "1")
                 sheet.insert(0, ticket_fld)
-                # v257: same treatment for x_studio_quotation_type — the
+                # v257: same treatment for quotation_type — the
                 # hide gate references it. On Clear-DB the field lives
                 # as state='manual' Studio and is fetched by default;
                 # on standalone we declare it as base and inject the
                 # sentinel so OWL's FormRenderer can evaluate the
                 # invisible expression.
                 qt_fld = etree.Element("field")
-                qt_fld.set("name", "x_studio_quotation_type")
+                qt_fld.set("name", "quotation_type")
                 qt_fld.set("invisible", "1")
                 sheet.insert(0, qt_fld)
                 break
@@ -235,12 +235,12 @@ class StockPicking(models.Model):
             #
             #   * DELIVERY pickings — created from a repair sale.order
             #     via Odoo's stock rules. These carry
-            #     x_studio_quotation_type='Repair' (mirrored from the SO
+            #     quotation_type='Repair' (mirrored from the SO
             #     via Studio automation at picking creation time).
             #   * MOVEMENT pickings — internal factory transfers,
             #     dispatches to sales centre, returns, etc. These are
-            #     stamped with x_studio_helpdesk_ticket_id linking back
-            #     to the ticket but often have no x_studio_quotation_type
+            #     stamped with helpdesk_ticket_id linking back
+            #     to the ticket but often have no quotation_type
             #     (they're not SO-driven).
             #
             # Original v177 gate covered only the first case; v182
@@ -250,21 +250,19 @@ class StockPicking(models.Model):
             # transfers are untouched.
             #
             # Fields stay on the model — computes that reference
-            # x_studio_quotation_type / x_studio_sales_order (e.g.
-            # x_studio_repair_payment_made) continue to fire because
+            # quotation_type / sales_order (e.g.
+            # repair_payment_made) continue to fire because
             # invisible only affects rendering.
-            hide_gate = (
-                "x_studio_quotation_type == 'Repair' or x_studio_helpdesk_ticket_id"
-            )
+            hide_gate = "quotation_type == 'Repair' or helpdesk_ticket_id"
             for fname in (
                 "origin",  # Source Document
-                "x_studio_sales_order",  # Sales Order (Studio duplicate of sale_id)
+                "sales_order",  # Sales Order (Studio duplicate of sale_id)
                 "picking_type_id",  # Operation Type
                 "picking_type_code",  # Type of Operation (standard selection)
-                "x_studio_type_of_operation",  # Type of Operation (Studio duplicate)
-                "x_studio_quotation_type",  # Quotation Type
+                "type_of_operation",  # Type of Operation (Studio duplicate)
+                "quotation_type",  # Quotation Type
                 "owner_id",  # Assign Owner
-                "x_studio_validation",  # Validation
+                "validation",  # Validation
             ):
                 for field_el in arch.xpath(f"//field[@name='{fname}']"):
                     field_el.set("invisible", hide_gate)
@@ -300,15 +298,13 @@ class StockPicking(models.Model):
             # not(ancestor::field): skip fields inside embedded views
             # (move_ids_without_package, move_line_ids etc.). Those
             # sub-rows are stock.move / stock.move.line — they don't
-            # have x_studio_quotation_type or x_studio_helpdesk_ticket_id,
+            # have quotation_type or helpdesk_ticket_id,
             # so stamping the picking-level lock expression on them
             # would raise "Name not defined" during list-cell
             # readonly eval. The qty_done / lot_id cells inside
             # move_line_ids stay editable so a mispopulated serial
             # can still be corrected pre-validate.
-            lock_gate = (
-                "x_studio_quotation_type == 'Repair' or x_studio_helpdesk_ticket_id"
-            )
+            lock_gate = "quotation_type == 'Repair' or helpdesk_ticket_id"
             for field_el in arch.xpath("//sheet//field[not(ancestor::field)]"):
                 if field_el.get("invisible") == "1":
                     continue
@@ -328,16 +324,16 @@ class StockPicking(models.Model):
         for rec in self:
             valid = False
             inv_found = False
-            tso = rec.x_studio_ticket_sales_order
+            tso = rec.ticket_sales_order
             so_amount = tso.amount_total if tso else 0
             inv_amount = 0
             if tso:
                 if tso.state == "cancel":
-                    created_ticket = rec.x_studio_created_from_help_ticket
-                    if created_ticket.x_studio_repair_complete_stage_updated:
+                    created_ticket = rec.created_from_help_ticket
+                    if created_ticket.repair_complete_stage_updated:
                         valid = False
-                    helpdesk_ticket = rec.x_studio_helpdesk_ticket_id
-                    if helpdesk_ticket.x_studio_repair_complete_stage_updated:
+                    helpdesk_ticket = rec.helpdesk_ticket_id
+                    if helpdesk_ticket.repair_complete_stage_updated:
                         valid = False
                 else:
                     if tso.x_studio_order_payment_method == "Cash":
@@ -350,7 +346,7 @@ class StockPicking(models.Model):
                                 "invoicing_legacy",
                             ):
                                 valid = True
-                            if tso.x_studio_rug_approved:
+                            if tso.rug_approved:
                                 valid = False
                         if so_amount > inv_amount:
                             valid = True
@@ -361,60 +357,54 @@ class StockPicking(models.Model):
                             valid = False
                         else:
                             valid = True
-            if (
-                rec.x_studio_created_from_help_ticket.x_studio_quick_repair_status
-                == "Quick Repair"
-            ):
+            if rec.created_from_help_ticket.quick_repair_status == "Quick Repair":
                 valid = False
-            if (
-                rec.x_studio_helpdesk_ticket_id.x_studio_quick_repair_status
-                == "Quick Repair"
-            ):
+            if rec.helpdesk_ticket_id.quick_repair_status == "Quick Repair":
                 valid = False
-            rec.x_studio_cash_full_payment_made = valid
+            rec.cash_full_payment_made = valid
 
     def _fix_repair_compute_fsm_task_done(self):
         for rec in self:
             value = False
-            ticket = rec.x_studio_created_from_help_ticket
+            ticket = rec.created_from_help_ticket
             if not ticket:
-                ticket = rec.x_studio_helpdesk_ticket_id
+                ticket = rec.helpdesk_ticket_id
             if ticket:
                 for line in ticket.fsm_task_ids:
-                    if line.fsm_done or line.x_studio_end_quick_repair:
+                    if line.fsm_done or line.end_quick_repair:
                         value = True
-            rec.x_studio_fsm_task_done = value
+            rec.fsm_task_done = value
 
     def _fix_repair_compute_fully_paid_so(self):
         for rec in self:
             value = False
-            ticket = rec.x_studio_created_from_help_ticket
+            ticket = rec.created_from_help_ticket
             if ticket:
-                so = ticket.x_studio_sale_order
+                so = ticket.sale_order
                 if so:
                     if so.partner_id.id:
                         if so.x_studio_order_payment_method == "Credit":
                             value = False
                         else:
-                            value = ticket.x_studio_fully_paid_so
+                            value = ticket.fully_paid_so
                 else:
-                    if ticket.x_studio_quick_repair_status == "Quick Repair":
+                    if ticket.quick_repair_status == "Quick Repair":
                         value = True
             else:
-                ticket = rec.x_studio_helpdesk_ticket_id
+                ticket = rec.helpdesk_ticket_id
                 if ticket:
-                    so = ticket.x_studio_sale_order
+                    so = ticket.sale_order
                     if so:
                         if so.partner_id.id:
                             if so.x_studio_order_payment_method == "Credit":
                                 value = False
                             else:
-                                value = ticket.x_studio_fully_paid_so
+                                value = ticket.fully_paid_so
                     else:
                         # Original Studio code had the Quick Repair check
                         # commented-out, unconditionally setting value = True.
                         value = True
-            rec.x_studio_fully_paid_so = value
+            rec.fully_paid_so = value
 
     def _fix_repair_compute_need_approval(self):
         for rec in self:
@@ -425,7 +415,7 @@ class StockPicking(models.Model):
             elif rec.picking_type_code == "outgoing":
                 if rec.origin:
                     val = True
-            rec.x_studio_need_approval = val
+            rec.need_approval = val
 
     def _fix_repair_compute_repair_payment_made(self):
         Payment = self.env["account.payment"].sudo()
@@ -435,12 +425,12 @@ class StockPicking(models.Model):
             if so:
                 if so.x_studio_order_payment_method == "Credit":
                     valid = True
-                elif so.x_studio_rug_approved:
+                elif so.rug_approved:
                     valid = True
                 else:
                     payment = Payment.search(
                         [
-                            ("x_studio_sales_order", "=", so.id),
+                            ("sales_order", "=", so.id),
                             ("state", "=", "posted"),
                         ],
                         limit=1,
@@ -452,7 +442,7 @@ class StockPicking(models.Model):
                             if inv.payment_state in ("in_payment", "partial", "paid"):
                                 valid = True
                                 break
-            rec.x_studio_repair_payment_made = valid
+            rec.repair_payment_made = valid
 
     def _fix_repair_compute_user_location_validation(self):
         # Preserves the original Studio flow verbatim — including the
@@ -468,11 +458,11 @@ class StockPicking(models.Model):
             valid = False
             valid2 = False
             loc = Location.browse()
-            if rec.x_studio_type_of_operation == "internal":
+            if rec.type_of_operation == "internal":
                 loc = Location.search(
                     [
                         ("id", "=", rec.location_dest_id.id),
-                        ("x_studio_users_internal_transfer", "ilike", self._uid),
+                        ("users_internal_transfer", "ilike", self._uid),
                         ("active", "=", True),
                         ("company_id", "=", company_id),
                     ],
@@ -483,12 +473,12 @@ class StockPicking(models.Model):
                 else:
                     valid = True
             else:
-                if rec.x_studio_type_of_operation == "outgoing":
-                    if rec.x_studio_created_from_help_ticket:
+                if rec.type_of_operation == "outgoing":
+                    if rec.created_from_help_ticket:
                         loc = Location.search(
                             [
                                 ("id", "=", rec.location_dest_id.id),
-                                ("x_studio_users_stock_location", "ilike", self._uid),
+                                ("users_stock_location", "ilike", self._uid),
                                 ("active", "=", True),
                                 ("company_id", "=", company_id),
                             ],
@@ -502,7 +492,7 @@ class StockPicking(models.Model):
                         loc = Location.search(
                             [
                                 ("id", "=", rec.location_id.id),
-                                ("x_studio_users_stock_location", "ilike", self._uid),
+                                ("users_stock_location", "ilike", self._uid),
                                 ("active", "=", True),
                                 ("company_id", "=", company_id),
                             ],
@@ -516,7 +506,7 @@ class StockPicking(models.Model):
                     loc = Location.search(
                         [
                             ("id", "=", rec.location_dest_id.id),
-                            ("x_studio_users_stock_location", "ilike", self._uid),
+                            ("users_stock_location", "ilike", self._uid),
                             ("active", "=", True),
                             ("company_id", "=", company_id),
                         ],
@@ -526,7 +516,7 @@ class StockPicking(models.Model):
                     valid = False
                 else:
                     valid = True
-            rec.x_studio_user_location_validation = valid
+            rec.user_location_validation = valid
             rec.x_studio_user_location_validation_2 = valid2
 
     def _fix_repair_compute_valid_factory_repair(self):
@@ -535,33 +525,33 @@ class StockPicking(models.Model):
             value2 = False
             value3 = False
             value4 = False
-            ticket = rec.x_studio_created_from_help_ticket
+            ticket = rec.created_from_help_ticket
             if ticket:
-                if ticket.x_studio_receive_at_factory:
+                if ticket.receive_at_factory:
                     value = True
-                if ticket.x_studio_job_location == "Factory Repair":
+                if ticket.job_location == "Factory Repair":
                     value2 = True
-                value3 = ticket.x_studio_receive_at_centre
+                value3 = ticket.receive_at_centre
                 if ticket.pickings_count > 1:
                     value4 = True
             else:
-                ticket = rec.x_studio_helpdesk_ticket_id
+                ticket = rec.helpdesk_ticket_id
                 if ticket:
-                    if ticket.x_studio_receive_at_factory:
+                    if ticket.receive_at_factory:
                         value = True
-                    if ticket.x_studio_job_location == "Factory Repair":
+                    if ticket.job_location == "Factory Repair":
                         value2 = True
-                    value3 = ticket.x_studio_receive_at_centre
+                    value3 = ticket.receive_at_centre
                     if ticket.pickings_count > 1:
                         value4 = True
             rec.x_studio_factory_repair = value2
             rec.x_studio_received_at_centre = value3
             rec.x_studio_picking_count = value4
-            rec.x_studio_valid_factory_repair = value
+            rec.valid_factory_repair = value
 
     def _fix_repair_compute_valid_transfer_lines(self):
         for rec in self:
-            rec.x_studio_valid_transfer_lines = bool(
+            rec.valid_transfer_lines = bool(
                 rec.move_line_ids_without_package or rec.move_ids_without_package
             )
 
@@ -581,42 +571,42 @@ class StockPicking(models.Model):
 
         delegations = [
             (
-                "x_studio_cash_full_payment_made",
-                "x_studio_ticket_sales_order",
+                "cash_full_payment_made",
+                "ticket_sales_order",
                 "self._fix_repair_compute_cash_full_payment_made()",
             ),
             (
-                "x_studio_fsm_task_done",
+                "fsm_task_done",
                 "fsm_task_ids",
                 "self._fix_repair_compute_fsm_task_done()",
             ),
             (
-                "x_studio_fully_paid_so",
-                "x_studio_quick_repair_status",
+                "fully_paid_so",
+                "quick_repair_status",
                 "self._fix_repair_compute_fully_paid_so()",
             ),
             (
-                "x_studio_need_approval",
+                "need_approval",
                 "picking_type_code == 'internal'",
                 "self._fix_repair_compute_need_approval()",
             ),
             (
-                "x_studio_repair_payment_made",
-                "x_studio_sales_order",
+                "repair_payment_made",
+                "sales_order",
                 "self._fix_repair_compute_repair_payment_made()",
             ),
             (
-                "x_studio_user_location_validation",
-                "x_studio_users_internal_transfer",
+                "user_location_validation",
+                "users_internal_transfer",
                 "self._fix_repair_compute_user_location_validation()",
             ),
             (
-                "x_studio_valid_factory_repair",
-                "x_studio_receive_at_factory",
+                "valid_factory_repair",
+                "receive_at_factory",
                 "self._fix_repair_compute_valid_factory_repair()",
             ),
             (
-                "x_studio_valid_transfer_lines",
+                "valid_transfer_lines",
                 "move_line_ids_without_package",
                 "self._fix_repair_compute_valid_transfer_lines()",
             ),
@@ -657,7 +647,7 @@ class StockPicking(models.Model):
         repair_so_ids = set()
         for picking in self.filtered(lambda p: p.state == "done" and p.sale_id):
             so = picking.sale_id
-            if so.x_studio_quotation_type == "Repair" and not so.x_studio_rug_rejected:
+            if so.quotation_type == "Repair" and not so.x_studio_rug_rejected:
                 repair_so_ids.add(so.id)
         return repair_so_ids
 
@@ -713,7 +703,7 @@ class StockPicking(models.Model):
         nuw_so_ids = set()
         for picking in self.filtered(lambda p: p.state == "done" and p.sale_id):
             so = picking.sale_id
-            if so.x_repair_customer_pays or so.x_studio_rug_rejected:
+            if so.repair_customer_pays or so.x_studio_rug_rejected:
                 nuw_so_ids.add(so.id)
         return nuw_so_ids
 
@@ -766,7 +756,7 @@ class StockPicking(models.Model):
         """── Path B: Return-to-customer handover pickings ──────────────────────."""
         # ── Path B: Return-to-customer handover pickings ──────────────────────
         # Pickings: Virtual/inventory location → Customer location.
-        # Primary match: picking.return_id.id == ticket.x_studio_pick_id
+        # Primary match: picking.return_id.id == ticket.pick_id
         # (the wizard stores the original RET picking on the ticket; the
         #  2nd return reverses it, so return_id points back to that picking).
         # Fallback: partner + company + stage (for pickings not via wizard).
@@ -806,7 +796,7 @@ class StockPicking(models.Model):
                         .sudo()
                         .search(
                             [
-                                ("x_studio_pick_id", "=", picking.return_id.id),
+                                ("pick_id", "=", picking.return_id.id),
                                 ("stage_id", "in", handover_stage_ids),
                                 ("company_id", "=", picking.company_id.id),
                             ],
@@ -822,7 +812,7 @@ class StockPicking(models.Model):
                                 ("partner_id", "=", picking.partner_id.id),
                                 ("stage_id", "in", handover_stage_ids),
                                 ("company_id", "=", picking.company_id.id),
-                                ("x_studio_rug_repair", "=", True),
+                                ("rug_repair", "=", True),
                             ],
                             limit=1,
                         )

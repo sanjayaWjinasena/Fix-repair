@@ -63,9 +63,9 @@ this module's Python source.
   advance-payment threshold on the payment wizard
 - `stock.picking`, `stock.return.picking`, `stock.location`,
   `stock.warehouse`, `stock.lot` — repair movement lifecycle
-- Five custom Studio catalogue models (`x_repair_accounts`,
-  `x_repair_reason`, `x_repair_reason_custom`, `x_repair_stages`,
-  `x_repair_sub_reason`)
+- Five custom Studio catalogue models (`repair_accounts`,
+  `repair_reason`, `repair_reason_custom`, `repair_stages`,
+  `repair_sub_reason`)
 
 **Out of scope (not touched):**
 
@@ -118,12 +118,12 @@ Fix-repair/
 │   ├── project_task.py             # 22 x_studio_* fields + repair-workflow
 │   │                                 view arch injection via _get_view
 │   ├── repair_master_data.py       # 5 catalogue models
-│   │                                 (x_repair_accounts, _reason,
+│   │                                 (repair_accounts, _reason,
 │   │                                  _reason_custom, _stages, _sub_reason)
 │   ├── res_config_settings.py      # Settings dropdown: Factory Repair Location
 │   ├── res_users.py                # 6 x_studio_* fields + super-user validator
 │   ├── sale_order.py               # SO workflow gates, Confirm predicates,
-│   │                                 x_repair_customer_pays, Studio compute
+│   │                                 repair_customer_pays, Studio compute
 │   │                                 delegation, RUG approve/reject buttons,
 │   │                                 single-full-invoice flow, tax_totals_json
 │   ├── stock_location.py           # 'repair' usage on stock.location
@@ -149,7 +149,7 @@ Fix-repair/
 ### 4.1 Repair movement lifecycle
 
 Every physical hop of the item is a stock movement stamped with
-`x_studio_helpdesk_ticket_id` so the ticket's Movements smart button
+`helpdesk_ticket_id` so the ticket's Movements smart button
 surfaces them.
 
 - **Receipt at branch:** the customer drop-off. `stock.return.picking`
@@ -190,13 +190,13 @@ rejected and the customer pays. Two flags:
 
 | Flag | Meaning |
 |---|---|
-| `x_repair_customer_pays` | True from the start (NUW — Not Under Warranty). Set by `project_task._sync_repair_flags` from `ticket.x_studio_rug_confirmed`. |
+| `repair_customer_pays` | True from the start (NUW — Not Under Warranty). Set by `project_task._sync_repair_flags` from `ticket.rug_confirmed`. |
 | `x_studio_rug_rejected` | Set later after the RUG cycle rejects a warranty repair. |
 
 Every "customer pays" check in the codebase reads the union:
-`order.x_repair_customer_pays or order.x_studio_rug_rejected`.
+`order.repair_customer_pays or order.x_studio_rug_rejected`.
 
-The NUW → `x_repair_customer_pays` migration is one-way and
+The NUW → `repair_customer_pays` migration is one-way and
 data-preserving. `_migrate_nuw_to_customer_pays_flag` runs on every
 install/upgrade, no-ops when nothing to migrate.
 
@@ -238,7 +238,7 @@ quotation_type by default; universal ones apply everywhere):
 | Bank Guarantee | Credit-payment | `x_studio_bank_guarantee_approved` |
 | Project Budget | Project | project inventory / budget headroom |
 | Credit Limit | Credit-payment | `partner_id.credit_limit` respected |
-| Customer signature | Reject-RUG + NUW | `x_customer_signed` set from portal |
+| Customer signature | Reject-RUG + NUW | `customer_signed` set from portal |
 | Stock availability | Repair | resupply-pool availability check |
 
 ### 4.7 Invoice creation (single full invoice for non-RUG)
@@ -320,14 +320,14 @@ verbatim from Studio into a Python method.
 
 ### 5.2 `helpdesk.ticket.type` (`models/helpdesk_type_stage.py`)
 
-- `x_studio_rug` — Boolean
-- `x_studio_rug_confirmed` — Boolean
-- `x_studio_with_serial_no` — Boolean
-- `x_studio_without_serial_no` — Boolean
+- `rug` — Boolean
+- `rug_confirmed` — Boolean
+- `with_serial_no` — Boolean
+- `without_serial_no` — Boolean
 
 ### 5.3 `helpdesk.stage` (`models/helpdesk_type_stage.py`)
 
-- `x_studio_company_id` — Many2one → `res.company` (multi-company routing)
+- `accounting_company_id` — Many2one → `res.company` (multi-company routing)
 
 ### 5.4 `project.task` (`models/project_task.py`)
 
@@ -339,7 +339,7 @@ valid_confirm_so / valid_confirm2_so / valid_delivered_so /
 valid_invoiced_so (all computes).
 
 **Leftover v162 (9 fields):** cancelled (related), created_date,
-diagnosis_ids (One2many to x_task_diagnosis), incomplete_delivery_available
+diagnosis_ids (One2many to task_diagnosis), incomplete_delivery_available
 (compute), priority, quotation_type (related), related_information
 (related), valid_diagnosis (compute), warranty_card (related).
 
@@ -348,7 +348,7 @@ diagnosis_ids (One2many to x_task_diagnosis), incomplete_delivery_available
 
 ### 5.5 `res.users` (`models/res_users.py`)
 
-- 4 location fields: `x_studio_source_location`, `_source_location_1`,
+- 4 location fields: `source_location`, `_source_location_1`,
   `_virtual_location`, `_virtual_location_1` (all Many2one → stock.location)
 - 2 super-user booleans: `x_studio_super_user`, `x_studio_super_user_melt_items`
 
@@ -356,10 +356,10 @@ diagnosis_ids (One2many to x_task_diagnosis), incomplete_delivery_available
 
 **Native additions:**
 
-- `x_repair_customer_pays` — Boolean, replaces NUW quotation type
+- `repair_customer_pays` — Boolean, replaces NUW quotation type
 - `tax_totals_json` — Char alias, computed from `tax_totals` via
   `json.dumps` (Studio's arch expects the Odoo-16 attribute name)
-- `x_repair_stock_ok` — Boolean compute (repair-scope stock availability)
+- `repair_stock_ok` — Boolean compute (repair-scope stock availability)
 - `ticket_repair_stage_state` — Char compute
 - Numerous native compute methods that back Studio compute strings
   after `_delegate_studio_computes_to_native` runs
@@ -371,11 +371,11 @@ inherited:
 
 | Model | Fields | Purpose |
 |---|---|---|
-| `x_repair_accounts` | `x_studio_company_id`, `x_studio_sequence` | Repair account catalogue |
-| `x_repair_reason` | Same | Repair reason master |
-| `x_repair_reason_custom` | Same | Customer-facing reason list |
-| `x_repair_stages` | Same | Repair sub-stages |
-| `x_repair_sub_reason` | Same | Sub-reason under each reason |
+| `repair_accounts` | `accounting_company_id`, `sequence` | Repair account catalogue |
+| `repair_reason` | Same | Repair reason master |
+| `repair_reason_custom` | Same | Customer-facing reason list |
+| `repair_stages` | Same | Repair sub-stages |
+| `repair_sub_reason` | Same | Sub-reason under each reason |
 
 ## 6. Python methods per model
 
@@ -419,8 +419,8 @@ actions):
 - `@api.model_create_multi create(vals_list)` — replaces automation 171 (seq)
 - `write(vals)` — repair-stage guards, serial → product/SO re-assert
 - `unlink()` — replaces automation 201 (Validate Cancelled Tickets)
-- `@api.onchange('ticket_type_id', 'x_studio_serial_number')` — replaces automation 178
-- `@api.onchange('x_studio_return_receipt_location')` — replaces automation 172
+- `@api.onchange('ticket_type_id', 'serial_number')` — replaces automation 178
+- `@api.onchange('return_receipt_location')` — replaces automation 172
 
 ### 6.2 `sale.order` (`models/sale_order.py`)
 
@@ -506,8 +506,8 @@ scope now have `active=False` on the DB (audit trail preserved):
 | Automation | Replacement |
 |---|---|
 | 171 RR - Auto Seq. No | `helpdesk.ticket._repair_seq_no_on_create_or_write` |
-| 172 RR - Auto Populate Repair Location | `@api.onchange('x_studio_return_receipt_location')` |
-| 178 RR - Auto Select Product for RUG | `@api.onchange('ticket_type_id', 'x_studio_serial_number')` |
+| 172 RR - Auto Populate Repair Location | `@api.onchange('return_receipt_location')` |
+| 178 RR - Auto Select Product for RUG | `@api.onchange('ticket_type_id', 'serial_number')` |
 | 201 RR - Validate Cancelled Tickets | `helpdesk.ticket.unlink()` hook |
 | 179 RR Auto Update Helpdesk Pipeline Status - 1 | `project.task.create()` |
 | 250 Super User Validate | `res.users.create() + write()` |
@@ -545,7 +545,7 @@ Injects onto the base sale.order form:
 - Create Invoice (purple) — rewired to `action_repair_create_invoice`
 - Create Invoice (percentage) — hidden on every Repair SO
 - Cancel / Set-to-Quotation / Send PRO-FORMA — hidden or gated
-- x_studio_order_payment_method / x_studio_quotation_type readonly rules
+- x_studio_order_payment_method / quotation_type readonly rules
 - RUG buttons (Request / Approve / Reject) — visibility + rewire
 - Re-estimate button injection
 - Ghost `x_studio_current_tot_amount` field stripping

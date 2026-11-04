@@ -118,12 +118,12 @@ Fix-repair/
 │   ├── project_task.py               # 22 x_studio_* fields + repair-workflow
 │   │                                 #   view arch overrides via _get_view
 │   ├── repair_master_data.py         # 5 catalogue models
-│   │                                 #   (x_repair_accounts / _reason /
+│   │                                 #   (repair_accounts / _reason /
 │   │                                 #    _reason_custom / _stages / _sub_reason)
 │   ├── res_config_settings.py        # per-company Factory Repair Location dropdown
 │   ├── res_users.py                  # 6 x_studio_* fields + _super_user_validate
 │   ├── sale_order.py                 # SO workflow gates, Confirm predicates,
-│   │                                 #   x_repair_customer_pays, tax_totals_json,
+│   │                                 #   repair_customer_pays, tax_totals_json,
 │   │                                 #   NUW elimination, delegated Studio computes
 │   ├── stock_location.py             # 'Repair' usage on stock.location + seeding
 │   ├── stock_lot.py                  # serial lot repair-workflow hooks
@@ -301,7 +301,7 @@ Repair quotation_type by default; universal ones apply everywhere):
 | Bank Guarantee | Credit-payment | `x_studio_bank_guarantee_approved` |
 | Project Budget | Project | project inventory / budget headroom |
 | Credit Limit | Credit-payment | `partner_id.credit_limit` respected |
-| Customer signature | Reject-RUG + NUW | `x_customer_signed` set from portal |
+| Customer signature | Reject-RUG + NUW | `customer_signed` set from portal |
 
 ### 5.7 Report ownership handover from BugFix-Sales
 
@@ -315,13 +315,13 @@ Repair quotation_type by default; universal ones apply everywhere):
 
 ### 5.8 NUW quotation type elimination
 
-- **Before**: `x_studio_quotation_type` had 3 values on sale.order —
+- **Before**: `quotation_type` had 3 values on sale.order —
   `Sales`, `Project`, `Repair`, and a legacy `Not Under Warranty`.
 - **After**: NUW value dropped from the selection; existing NUW SOs
   migrated to `quotation_type='Repair'` **+** new Boolean
-  `x_repair_customer_pays=True`.
+  `repair_customer_pays=True`.
 - All downstream customer-pays logic (RUG buttons, invoice classification,
-  hide/show rules) now reads `x_repair_customer_pays` directly.
+  hide/show rules) now reads `repair_customer_pays` directly.
 - Migration is data-preserving and idempotent: subsequent runs find no NUW
   records and no NUW selection value.
 
@@ -343,11 +343,11 @@ The 10 models Fix-repair claims ownership of:
 - `helpdesk.stage`
 - `project.task`
 - `res.users`
-- `x_repair_accounts`
-- `x_repair_reason`
-- `x_repair_reason_custom`
-- `x_repair_stages`
-- `x_repair_sub_reason`
+- `repair_accounts`
+- `repair_reason`
+- `repair_reason_custom`
+- `repair_stages`
+- `repair_sub_reason`
 
 `sale.order` is deliberately partially migrated — many Studio fields on it
 belong to workflows outside the helpdesk-repair scope and stay Studio-
@@ -379,8 +379,8 @@ on `helpdesk.ticket`. Migration behaviour is identical across all 8:
 4. Delete the corresponding `studio_customization` pin on each row.
 
 Compute strings from Studio were ported verbatim, including their side
-effects (e.g. `x_studio_valid_delivered_so` also writes
-`x_studio_valid_delivered_so2` inside its compute).
+effects (e.g. `valid_delivered_so` also writes
+`valid_delivered_so2` inside its compute).
 
 ### 6.2 Satellite field migrations
 
@@ -389,12 +389,12 @@ Beyond helpdesk.ticket, the same field-migration pattern was applied to:
 | Model | Field count | Purpose |
 |---|---|---|
 | `helpdesk.ticket.type` | 4 | RUG / RUG Confirmed / With serial / Without serial |
-| `helpdesk.stage` | 1 | `x_studio_company_id` (multi-company stage routing) |
+| `helpdesk.stage` | 1 | `accounting_company_id` (multi-company stage routing) |
 | `project.task` | 13 (Cluster 5) + 9 (leftover) | end_quick_repair, quick_repair_status_1, repair_image_01/02, repair_reason M2M, valid_* computes, cancelled/created_date/diagnosis_ids/incomplete_delivery_available/priority/quotation_type/related_information/valid_diagnosis/warranty_card |
 | `res.users` | 4 (locations) + 2 (super-user) | Source Location, Virtual Location + `_1` duplicates, `x_studio_super_user`, `x_studio_super_user_melt_items` |
 
 Location fields on `res.users` are the source of the `helpdesk.ticket.
-x_studio_source_location`-style related chain, so their migration completes
+source_location`-style related chain, so their migration completes
 the location field graph's Python ownership.
 
 ### 6.3 Custom Studio catalogue models
@@ -404,18 +404,18 @@ The 5 custom Studio models are now Python-owned via
 
 ```python
 class XRepairAccounts(models.Model):
-    _name = "x_repair_accounts"
+    _name = "repair_accounts"
     _inherit = ["mail.thread", "mail.activity.mixin"]
-    x_studio_company_id = fields.Many2one("res.company")
-    x_studio_sequence = fields.Integer()
+    accounting_company_id = fields.Many2one("res.company")
+    sequence = fields.Integer()
 
     def _jin_set_company_id(self):
         for record in self:
-            if not record.x_studio_company_id:
+            if not record.accounting_company_id:
                 company_id = self.env.context.get(
                     "allowed_company_ids", [self.env.user.company_id.id]
                 )[0]
-                record.x_studio_company_id = company_id
+                record.accounting_company_id = company_id
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -424,8 +424,8 @@ class XRepairAccounts(models.Model):
         return records
 ```
 
-Same shape for `x_repair_reason`, `x_repair_reason_custom`,
-`x_repair_stages`, `x_repair_sub_reason`.
+Same shape for `repair_reason`, `repair_reason_custom`,
+`repair_stages`, `repair_sub_reason`.
 
 The migration method
 `_migrate_studio_repair_master_data_to_base` uses raw SQL to flip
@@ -485,8 +485,8 @@ Replacement hooks:
 | Automation | Replaced by |
 |---|---|
 | 171 Repair Seq | `helpdesk.ticket._repair_seq_no_on_create_or_write` (create + write hooks) |
-| 172 Auto Populate Repair Location | `@api.onchange('x_studio_return_receipt_location')` |
-| 178 Auto Select Product for RUG | `@api.onchange('ticket_type_id', 'x_studio_serial_number')` |
+| 172 Auto Populate Repair Location | `@api.onchange('return_receipt_location')` |
+| 178 Auto Select Product for RUG | `@api.onchange('ticket_type_id', 'serial_number')` |
 | 201 Validate Cancelled Tickets | `unlink()` hook |
 | 250 Super User Validate | `res.users.create() + write()` |
 | 179 RR Auto Update Helpdesk Pipeline Status - 1 | `project.task.create()` |
@@ -563,27 +563,27 @@ The 11 fields:
 |---|---|---|
 | `res.users` | `x_studio_super_user` | Boolean |
 | `res.users` | `x_studio_super_user_melt_items` | Boolean |
-| `project.task` | `x_studio_cancelled` | Boolean related |
-| `project.task` | `x_studio_created_date` | Datetime |
-| `project.task` | `x_studio_diagnosis_ids` | One2many('x_task_diagnosis','x_studio_task_id') |
-| `project.task` | `x_studio_incomplete_delivery_available` | Boolean compute |
-| `project.task` | `x_studio_priority` | Selection (5 levels) |
-| `project.task` | `x_studio_quotation_type` | Selection related |
-| `project.task` | `x_studio_related_information` | Binary related |
-| `project.task` | `x_studio_valid_diagnosis` | Boolean compute |
-| `project.task` | `x_studio_warranty_card` | Binary related |
+| `project.task` | `cancelled` | Boolean related |
+| `project.task` | `created_date` | Datetime |
+| `project.task` | `diagnosis_ids` | One2many('task_diagnosis','task_id') |
+| `project.task` | `incomplete_delivery_available` | Boolean compute |
+| `project.task` | `custom_reports_priority` | Selection (5 levels) |
+| `project.task` | `quotation_type` | Selection related |
+| `project.task` | `related_information` | Binary related |
+| `project.task` | `valid_diagnosis` | Boolean compute |
+| `project.task` | `warranty_card` | Binary related |
 
 Two computes ported to `@api.depends` methods on `project.task`:
 
 ```python
-@api.depends("x_studio_diagnosis_ids")
-def _compute_x_studio_valid_diagnosis(self):
+@api.depends("diagnosis_ids")
+def _compute_valid_diagnosis(self):
     for rec in self:
-        rec.x_studio_valid_diagnosis = bool(rec.x_studio_diagnosis_ids)
+        rec.valid_diagnosis = bool(rec.diagnosis_ids)
 
 
 @api.depends("sale_order_id", "sale_order_id.state")
-def _compute_x_studio_incomplete_delivery_available(self):
+def _compute_incomplete_delivery_available(self):
     Picking = self.env["stock.picking"]
     for rec in self:
         valid = False
@@ -601,20 +601,20 @@ def _compute_x_studio_incomplete_delivery_available(self):
                     limit=1,
                 )
                 valid = not any_delivery
-        rec.x_studio_incomplete_delivery_available = valid
+        rec.incomplete_delivery_available = valid
 ```
 
 The `incomplete_delivery_available` compute dropped a no-op branch from
-Studio (`if state == 'cancel' → if x_studio_repair_completed_stage_updated
+Studio (`if state == 'cancel' → if repair_completed_stage_updated
 → valid = False` — but `valid` was already False, so the branch had no
 observable effect).
 
 Fields deliberately **not** migrated (out of helpdesk-repair scope):
 
-- `res.users`: `x_studio_attendance_administrator`, `x_studio_company_id`,
+- `res.users`: `x_studio_attendance_administrator`, `accounting_company_id`,
   `x_studio_recr_stages`, 2 m2m helpers, 2 stock location counters
-- `project.task`: `x_studio_payment_type`, `x_studio_starting_date`,
-  `x_task_id_sale_order_count`
+- `project.task`: `payment_type`, `starting_date`,
+  `task_id_sale_order_count`
 
 ---
 
@@ -662,56 +662,56 @@ the noted file.
 
 107 `x_studio_*` fields spread across the 8 clusters. Highlights:
 
-**Cluster 1 — RUG cycle:** `x_studio_rug_confirmed`, `x_studio_rug_approved`,
-`x_studio_rug_rejected`, `x_studio_rug_approval_status`, plus audit slots.
+**Cluster 1 — RUG cycle:** `rug_confirmed`, `rug_approved`,
+`x_studio_rug_rejected`, `rug_approval_status`, plus audit slots.
 
-**Cluster 2 — Repair location / stock:** `x_studio_repair_location`,
-`x_studio_return_receipt_location`, source / virtual location variants,
+**Cluster 2 — Repair location / stock:** `repair_location`,
+`return_receipt_location`, source / virtual location variants,
 plus pick / picking id fields.
 
-**Cluster 3 — Cancel / Reopen:** `x_studio_cancelled`,
-`x_studio_cancel_reason`, `x_studio_cancel_status`, `x_studio_cancel_by`,
+**Cluster 3 — Cancel / Reopen:** `cancelled`,
+`cancel_reason`, `cancel_status`, `x_studio_cancel_by`,
 `x_studio_cancel_date`, `x_studio_cancel_stage`, `x_studio_reopen`,
-`x_studio_reopen_status`, `x_studio_reopen_by`, `x_studio_reopen_date`,
-`x_studio_cancelled_2`.
+`reopen_status`, `x_studio_reopen_by`, `x_studio_reopen_date`,
+`cancelled_2`.
 
-**Cluster 4 — Stage-transition markers:** `x_studio_send_to_factory`,
+**Cluster 4 — Stage-transition markers:** `send_to_factory`,
 `x_studio_received_from_factory`, `x_studio_send_to_sales_centre`,
 `x_studio_received_from_sales_centre`, plus estimation / invoice /
-`x_studio_repair_complete_stage_updated` flags and the older
-`x_studio_handed_over`.
+`repair_complete_stage_updated` flags and the older
+`handed_over`.
 
 **Cluster 5 — Stage-validation computes (with side effects):**
-`x_studio_valid_confirmed_so`, `_valid_confirmed2_so`, `_valid_invoiced_so`,
+`valid_confirmed_so`, `_valid_confirmed2_so`, `_valid_invoiced_so`,
 `_valid_delivered_so`, `_task_status`, plus 5 simpler predicates. Each
 carries the Studio-verbatim compute including its stage writes and
 audit-slot writes.
 
-**Cluster 6 — Audit slots:** `x_studio_stage_date` + 10
+**Cluster 6 — Audit slots:** `stage_date` + 10
 `x_studio_created_by_N` / `_created_on_N` pairs + 4 factory + 4
 sales-centre shipment audit fields.
 
-**Cluster 7 — Serial / product:** `x_studio_serial_no`, `_serial_number`,
+**Cluster 7 — Serial / product:** `serial_no`, `_serial_number`,
 `_sn_updated`, `_repair_serial_created`, `_repair_reason` M2M,
 `_materials_used`, `_quantity`, `_unit_price`, `_items` M2M, `_qty`,
 `_sales_price`.
 
-**Cluster 8 — Diagnostic / misc:** `x_studio_branch`, `_city`, `_driver_name`,
+**Cluster 8 — Diagnostic / misc:** `branch`, `_city`, `_driver_name`,
 `_warranty_card`, `_stage_name`, `_tracking`, `_cccc`, `_cccc3`,
 `_sale_order`, `_material_availability`, `_re_estimate_count`,
-`_re_estimate_status`, `_x_x_studio_created_from_help_ticket_stock_picking_count`,
+`_re_estimate_status`, `_created_from_help_ticket_stock_picking_count`,
 plus siblings.
 
 ### 8.2 `helpdesk.ticket.type` (via `models/helpdesk_type_stage.py`)
 
-- `x_studio_rug` — Boolean
-- `x_studio_rug_confirmed` — Boolean
-- `x_studio_with_serial_no` — Boolean
-- `x_studio_without_serial_no` — Boolean
+- `rug` — Boolean
+- `rug_confirmed` — Boolean
+- `with_serial_no` — Boolean
+- `without_serial_no` — Boolean
 
 ### 8.3 `helpdesk.stage` (via `models/helpdesk_type_stage.py`)
 
-- `x_studio_company_id` — Many2one to `res.company` (multi-company routing)
+- `accounting_company_id` — Many2one to `res.company` (multi-company routing)
 
 Method: `_jin_set_company_id` + `@api.model_create_multi create()` hook.
 
@@ -719,21 +719,21 @@ Method: `_jin_set_company_id` + `@api.model_create_multi create()` hook.
 
 Cluster 5 (13):
 
-- `x_studio_end_quick_repair`, `x_studio_repair_image_01/02`,
-  `x_studio_repair_reason` (M2M), `x_studio_quick_repair_status_1`,
-  `x_studio_repair_completed_stage_updated` (related),
-  `x_studio_valid_delivered_so2`, `x_studio_fully_invoiced_so`,
-  `x_studio_material_availability`, `x_studio_valid_confirm_so`,
-  `x_studio_valid_confirm2_so`, `x_studio_valid_delivered_so`,
-  `x_studio_valid_invoiced_so`.
+- `end_quick_repair`, `repair_image_01/02`,
+  `repair_reason` (M2M), `quick_repair_status_1`,
+  `repair_completed_stage_updated` (related),
+  `valid_delivered_so2`, `fully_invoiced_so`,
+  `material_availability`, `valid_confirm_so`,
+  `valid_confirm2_so`, `valid_delivered_so`,
+  `valid_invoiced_so`.
 
 Leftover v162 (9):
 
-- `x_studio_cancelled` (related), `x_studio_created_date`,
-  `x_studio_diagnosis_ids` (O2m), `x_studio_incomplete_delivery_available`
-  (compute), `x_studio_priority`, `x_studio_quotation_type` (related),
-  `x_studio_related_information` (related), `x_studio_valid_diagnosis`
-  (compute), `x_studio_warranty_card` (related).
+- `cancelled` (related), `created_date`,
+  `diagnosis_ids` (O2m), `incomplete_delivery_available`
+  (compute), `custom_reports_priority`, `quotation_type` (related),
+  `related_information` (related), `valid_diagnosis`
+  (compute), `warranty_card` (related).
 
 Native additions (not Studio-migrated):
 
@@ -742,9 +742,9 @@ Native additions (not Studio-migrated):
 
 ### 8.5 `res.users` (via `models/res_users.py`)
 
-- `x_studio_source_location`, `x_studio_source_location_1` — Many2one to
+- `source_location`, `source_location_1` — Many2one to
   `stock.location`
-- `x_studio_virtual_location`, `x_studio_virtual_location_1` — same
+- `virtual_location`, `virtual_location_1` — same
 - `x_studio_super_user`, `x_studio_super_user_melt_items` — Boolean
 
 Method: `_super_user_validate` + create/write hooks.
@@ -753,7 +753,7 @@ Method: `_super_user_validate` + create/write hooks.
 
 Fix-repair-native:
 
-- `x_repair_customer_pays` — Boolean (NUW replacement)
+- `repair_customer_pays` — Boolean (NUW replacement)
 - `tax_totals_json` — Char alias computed from `tax_totals` via `json.dumps`
   (Studio-migrated arch expects the Odoo 16 attribute name)
 
@@ -764,12 +764,12 @@ one-line native calls.
 
 ### 8.7 Catalogue models (via `models/repair_master_data.py`)
 
-Each of the 5 models (`x_repair_accounts`, `x_repair_reason`,
-`x_repair_reason_custom`, `x_repair_stages`, `x_repair_sub_reason`)
+Each of the 5 models (`repair_accounts`, `repair_reason`,
+`repair_reason_custom`, `repair_stages`, `repair_sub_reason`)
 inherits `['mail.thread', 'mail.activity.mixin']` and declares:
 
-- `x_studio_company_id` — Many2one to `res.company`
-- `x_studio_sequence` — Integer
+- `accounting_company_id` — Many2one to `res.company`
+- `sequence` — Integer
 
 Method: `_jin_set_company_id` + `@api.model_create_multi create()` hook.
 
@@ -834,12 +834,12 @@ Every entry is a `(server_action_id, delegation_target)` pair from
 
 | ID | Model | Delegates to |
 |---|---|---|
-| 2666 | `x_repair_reason` | `_jin_set_company_id` |
-| 2667 | `x_repair_reason_custom` | `_jin_set_company_id` |
-| 2668 | `x_repair_sub_reason` | `_jin_set_company_id` |
-| 2670 | `x_repair_stages` | `_jin_set_company_id` |
+| 2666 | `repair_reason` | `_jin_set_company_id` |
+| 2667 | `repair_reason_custom` | `_jin_set_company_id` |
+| 2668 | `repair_sub_reason` | `_jin_set_company_id` |
+| 2670 | `repair_stages` | `_jin_set_company_id` |
 | 2760 | `helpdesk.stage` | `_jin_set_company_id` |
-| 2790 | `x_repair_accounts` | `_jin_set_company_id` |
+| 2790 | `repair_accounts` | `_jin_set_company_id` |
 | 2003 | `project.task` | `_repair_auto_update_helpdesk_pipeline_status_1` |
 | 2544 | `res.users` | `_super_user_validate` |
 
@@ -878,20 +878,20 @@ Every entry: `(automation_id, replaced_by_python_hook)`.
 | ID | Automation name | Replacement |
 |---|---|---|
 | 171 | RR - Auto Seq. No | `helpdesk.ticket._repair_seq_no_on_create_or_write` (create + write) |
-| 172 | RR - Auto Populate Repair Location | `@api.onchange('x_studio_return_receipt_location')` |
-| 178 | RR - Auto Select Product for RUG | `@api.onchange('ticket_type_id', 'x_studio_serial_number')` |
+| 172 | RR - Auto Populate Repair Location | `@api.onchange('return_receipt_location')` |
+| 178 | RR - Auto Select Product for RUG | `@api.onchange('ticket_type_id', 'serial_number')` |
 | 201 | RR - Validate Cancelled Tickets | `helpdesk.ticket.unlink()` hook |
 | 179 | RR - Auto Update Helpdesk Pipeline Status - 1 | `project.task.create()` |
 | 250 | Super User Validate | `res.users.create() + write()` |
-| 302 | JIN Company Id in Repair Reason | `x_repair_reason.create()` |
-| 303 | JIN Company Id in Repair Reason - Customer | `x_repair_reason_custom.create()` |
-| 304 | JIN Company Id in Repair Sub Reason | `x_repair_sub_reason.create()` |
-| 306 | JIN Company Id in Repair Stages | `x_repair_stages.create()` |
+| 302 | JIN Company Id in Repair Reason | `repair_reason.create()` |
+| 303 | JIN Company Id in Repair Reason - Customer | `repair_reason_custom.create()` |
+| 304 | JIN Company Id in Repair Sub Reason | `repair_sub_reason.create()` |
+| 306 | JIN Company Id in Repair Stages | `repair_stages.create()` |
 | 329 | JIN Company Id in Helpdesk Stage | `helpdesk.stage.create()` |
-| 331 | JIN Company Id in Repair Accounts | `x_repair_accounts.create()` |
+| 331 | JIN Company Id in Repair Accounts | `repair_accounts.create()` |
 
 Plus a separate deactivation for `RR - Auto Select Product for RUG
-Repairs-33` (unconditionally cleared `product_id` when `x_studio_serial_no`
+Repairs-33` (unconditionally cleared `product_id` when `serial_no`
 changed; superseded by `_onchange_serial_no_product`).
 
 ---
@@ -1039,8 +1039,8 @@ Solution: `json.dumps({'en_US': arch})` + `::jsonb` cast in the
 
 ### 12.5 Studio compute strings can reference non-existent fields
 
-The Studio compute for `x_studio_incomplete_delivery_available` referenced
-`x_studio_repair_completed_stage_updated` on `helpdesk.ticket` — a field
+The Studio compute for `incomplete_delivery_available` referenced
+`repair_completed_stage_updated` on `helpdesk.ticket` — a field
 that doesn't exist there (only on `project.task` as a related). Studio's
 runtime evaluated the `AttributeError` as `False` silently. The branch
 guarded by that check was a no-op (assigned `valid = False` when it was

@@ -7,15 +7,15 @@ class StockReturnPicking(models.TransientModel):
 
     # v256: Studio fields ported verbatim from Clear-DB. Read by
     # _compute_moves_locations below (company-1 branch reads
-    # x_studio_suggested_location_id, other-company branch reads
+    # suggested_location_id, other-company branch reads
     # _1 variant). Declared as base state so standalone has them.
     # Clear-DB keeps them state='manual' owned by studio_customization.
-    x_studio_suggested_location_id = fields.Many2one(
+    suggested_location_id = fields.Many2one(
         "stock.location",
         string="Suggested Location",
         ondelete="set null",
     )
-    x_studio_suggested_location_id_1 = fields.Many2one(
+    suggested_location_id_1 = fields.Many2one(
         "stock.location",
         string="Suggested Location (Company 2)",
         ondelete="set null",
@@ -24,20 +24,20 @@ class StockReturnPicking(models.TransientModel):
     # ticket-type filters copied by Clear-DB workflows into the
     # wizard's default context. No Fix-repair Python reads them
     # today, but declaring here keeps parity with Clear-DB's schema.
-    x_studio_repair_normal_with_serial_no = fields.Boolean(
+    repair_normal_with_serial_no = fields.Boolean(
         string="Repair – Normal with Serial No",
     )
-    x_studio_repair_normal_without_serial_no = fields.Boolean(
+    repair_normal_without_serial_no = fields.Boolean(
         string="Repair – Normal without Serial No",
     )
-    x_studio_repair_rug = fields.Boolean(
+    repair_rug = fields.Boolean(
         string="Repair – RUG",
     )
 
     # Marker written to a phantom's `origin` field so we can find (and
     # reuse) the phantom on a subsequent wizard open instead of building
     # a fresh one every time. Uses `origin` rather than
-    # x_studio_helpdesk_ticket_id because that field surfaces on the
+    # helpdesk_ticket_id because that field surfaces on the
     # ticket's Delivery smart button — we deliberately keep the phantom
     # invisible to end users.
     _FIX_REPAIR_PHANTOM_MARKER = "fix_repair:return-phantom"
@@ -131,7 +131,7 @@ class StockReturnPicking(models.TransientModel):
             return defaults
 
         ticket = self.env["helpdesk.ticket"].browse(ticket_id)
-        serial = ticket.x_studio_serial_no
+        serial = ticket.serial_no
         product = ticket.product_id or (serial and serial.product_id)
         if not (serial and product):
             return defaults
@@ -173,9 +173,7 @@ class StockReturnPicking(models.TransientModel):
         # repair SO that the FSM task creates later is the SO that owns
         # all these movements; project_task._bind_ticket_pickings_to_so
         # re-points them once that SO exists.
-        repair_loc = (
-            ticket.x_studio_virtual_location_1 or ticket.x_studio_virtual_location
-        )
+        repair_loc = ticket.virtual_location_1 or ticket.virtual_location
         if not repair_loc:
             warehouse = (
                 self.env["stock.warehouse"]
@@ -196,7 +194,7 @@ class StockReturnPicking(models.TransientModel):
         # sort first in the company. Keeping the type scoped to the RRL
         # warehouse means BR-NE/RET/XXXX reads as 'Branch warehouse -
         # Nuwara-Eliya: Receipts' — matching its own <WH> prefix.
-        rrl = ticket.x_studio_return_receipt_location
+        rrl = ticket.return_receipt_location
         target_warehouse = rrl.warehouse_id if rrl else False
         pt_domain = [
             ("code", "=", "outgoing"),
@@ -242,9 +240,9 @@ class StockReturnPicking(models.TransientModel):
 
         now = fields.Datetime.now()
         # Phantom outgoing left intentionally unstamped on
-        # x_studio_helpdesk_ticket_id: it exists only so the wizard has
+        # helpdesk_ticket_id: it exists only so the wizard has
         # a source to reverse. _bind_ticket_pickings_to_so searches by
-        # x_studio_helpdesk_ticket_id, so leaving that stamp off keeps
+        # helpdesk_ticket_id, so leaving that stamp off keeps
         # the phantom out of the repair SO's Delivery smart button. The
         # `origin` marker lets us find the phantom for reuse without
         # surfacing it anywhere the user can see it. The real return
@@ -320,7 +318,7 @@ class StockReturnPicking(models.TransientModel):
             # Detect whether the wizard is opened from a repair ticket. The
             # Return button passes default_ticket_id directly; the Dispatch
             # button passes only default_picking_id, so we follow the picking
-            # back to its ticket (via picking_ids m2m or x_studio_pick_id).
+            # back to its ticket (via picking_ids m2m or pick_id).
             related_ticket = self.env["helpdesk.ticket"]
             if ticket_id:
                 related_ticket = self.env["helpdesk.ticket"].sudo().browse(ticket_id)
@@ -332,7 +330,7 @@ class StockReturnPicking(models.TransientModel):
                         [
                             "|",
                             ("picking_ids", "in", [picking_id_ctx]),
-                            ("x_studio_pick_id", "=", picking_id_ctx),
+                            ("pick_id", "=", picking_id_ctx),
                         ],
                         limit=1,
                     )
@@ -396,10 +394,7 @@ class StockReturnPicking(models.TransientModel):
         for wizard in self:
             if not wizard.ticket_id:
                 continue
-            if not (
-                wizard.x_studio_repair_rug
-                or wizard.x_studio_repair_normal_with_serial_no
-            ):
+            if not (wizard.repair_rug or wizard.repair_normal_with_serial_no):
                 continue
             active_company_id = (
                 self.env.context.get("allowed_company_ids", [self.env.company.id])
@@ -408,9 +403,9 @@ class StockReturnPicking(models.TransientModel):
             # Symmetric with automation 174 and _compute_moves_locations:
             # company 1 uses the base field, all others use the _1 variant.
             if active_company_id == 1:
-                suggested = wizard.x_studio_suggested_location_id
+                suggested = wizard.suggested_location_id
             else:
-                suggested = wizard.x_studio_suggested_location_id_1
+                suggested = wizard.suggested_location_id_1
             # Skip if the ticket has no suggested location -- the ticket
             # is under-configured and a UserError here would just be noise.
             if not suggested:
@@ -456,10 +451,10 @@ class StockReturnPicking(models.TransientModel):
         watched = {
             "location_id",
             "ticket_id",
-            "x_studio_repair_rug",
-            "x_studio_repair_normal_with_serial_no",
-            "x_studio_suggested_location_id",
-            "x_studio_suggested_location_id_1",
+            "repair_rug",
+            "repair_normal_with_serial_no",
+            "suggested_location_id",
+            "suggested_location_id_1",
         }
         if watched & set(vals or ()):
             self._fix_repair_validate_return_location()
@@ -498,13 +493,10 @@ class StockReturnPicking(models.TransientModel):
             # sister-field for a user profile that carried the other
             # company's per-company variant.
             if active_company_id == 1:
-                suggested = (
-                    wizard.x_studio_suggested_location_id or wizard.original_location_id
-                )
+                suggested = wizard.suggested_location_id or wizard.original_location_id
             else:
                 suggested = (
-                    wizard.x_studio_suggested_location_id_1
-                    or wizard.original_location_id
+                    wizard.suggested_location_id_1 or wizard.original_location_id
                 )
             if suggested:
                 wizard.location_id = suggested
@@ -529,7 +521,7 @@ class StockReturnPicking(models.TransientModel):
                     [
                         "|",
                         ("picking_ids", "in", self.picking_id.ids),
-                        ("x_studio_pick_id", "=", self.picking_id.id),
+                        ("pick_id", "=", self.picking_id.id),
                     ],
                     limit=1,
                 )
@@ -547,9 +539,9 @@ class StockReturnPicking(models.TransientModel):
         # stamp the ticket on the picking via the Studio link so we can
         # find every ticket-related picking deterministically later.
         if ticket:
-            new_picking.sudo().write({"x_studio_helpdesk_ticket_id": ticket.id})
-            if ticket.x_studio_return_receipt_location:
-                loc = ticket.x_studio_return_receipt_location
+            new_picking.sudo().write({"helpdesk_ticket_id": ticket.id})
+            if ticket.return_receipt_location:
+                loc = ticket.return_receipt_location
                 ret_name = self._next_warehouse_ret_name(loc.warehouse_id)
                 if ret_name:
                     new_picking.sudo().write({"name": ret_name})
@@ -561,7 +553,7 @@ class StockReturnPicking(models.TransientModel):
             # action_received_at_sales_centre when that fires, but Centre
             # Repair skips that step — without this write, Centre Repair
             # Dispatch would launch the wizard with no picking_id.
-            self.ticket_id.sudo().write({"x_studio_pick_id": new_picking_id})
+            self.ticket_id.sudo().write({"pick_id": new_picking_id})
 
             new_picking.move_ids.write(
                 {
@@ -569,7 +561,7 @@ class StockReturnPicking(models.TransientModel):
                     "sale_line_id": False,
                 }
             )
-            serial = self.ticket_id.x_studio_serial_no
+            serial = self.ticket_id.serial_no
             if serial:
                 if new_picking.move_line_ids:
                     new_picking.move_line_ids.write({"lot_id": serial.id})

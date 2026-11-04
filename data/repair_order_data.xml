@@ -23,7 +23,7 @@
     <field name="state">code</field>
     <field name="usage">ir_actions_server</field>
     <field name="code"><![CDATA[if record.id:
-  record['x_studio_confirm_draft_quotation'] = True
+  record['confirm_draft_quotation'] = True
   ]]></field>
   </record>
   <record id="server_action_1820_rr_notify_customer_in_ro_end_final_2" model="ir.actions.server">

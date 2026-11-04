@@ -18,12 +18,12 @@
                      doesn't see them without static sentinels. Fix-
                      repair sale_order._get_view runtime-injects some
                      of these too — belt-and-braces here. -->
-                <field name="x_studio_rug_approved" invisible="1"/>
-                <field name="x_studio_rug_request_sent" invisible="1"/>
+                <field name="rug_approved" invisible="1"/>
+                <field name="rug_request_sent" invisible="1"/>
                 <field name="x_studio_rug_rejected" invisible="1"/>
-                <field name="x_studio_quotation_type" invisible="1"/>
-                <field name="x_repair_customer_pays" invisible="1"/>
-                <field name="x_repair_stock_ok" invisible="1"/>
+                <field name="quotation_type" invisible="1"/>
+                <field name="repair_customer_pays" invisible="1"/>
+                <field name="repair_stock_ok" invisible="1"/>
             </xpath>
 
             <!-- Place three buttons after action_confirm in the header:
@@ -32,9 +32,9 @@
                  non-customer-pays. Request button hidden once sent or
                  resolved; Approve/Reject hidden until request is sent. -->
             <xpath expr="//button[@name='action_confirm'][last()]" position="after">
-                <button name="%(BugFix-Sales.server_action_1980_rr_request_rug_approval)d" type="action" string="Request RUG Approval" class="btn-primary" invisible="(x_studio_quotation_type != 'Repair') or (x_repair_customer_pays) or (state not in ['draft', 'sent']) or (x_studio_rug_request_sent == True) or (x_studio_rug_rejected == True) or (x_studio_rug_approved == True) or (not x_repair_stock_ok)"/>
-                <button name="action_approve_rug_direct" type="object" string="Approve RUG" class="btn-primary" invisible="(x_studio_quotation_type != 'Repair') or (x_repair_customer_pays) or (state not in ['draft', 'sent']) or (x_studio_rug_request_sent == False) or (x_studio_rug_rejected == True) or (x_studio_rug_approved == True)"/>
-                <button name="action_reject_rug_direct" type="object" string="Reject RUG" class="btn-primary" invisible="(x_studio_quotation_type != 'Repair') or (x_repair_customer_pays) or (state not in ['draft', 'sent']) or (x_studio_rug_request_sent == False) or (x_studio_rug_rejected == True) or (x_studio_rug_approved == True)"/>
+                <button name="%(BugFix-Sales.server_action_1980_rr_request_rug_approval)d" type="action" string="Request RUG Approval" class="btn-primary" invisible="(quotation_type != 'Repair') or (repair_customer_pays) or (state not in ['draft', 'sent']) or (rug_request_sent == True) or (x_studio_rug_rejected == True) or (rug_approved == True) or (not repair_stock_ok)"/>
+                <button name="action_approve_rug_direct" type="object" string="Approve RUG" class="btn-primary" invisible="(quotation_type != 'Repair') or (repair_customer_pays) or (state not in ['draft', 'sent']) or (rug_request_sent == False) or (x_studio_rug_rejected == True) or (rug_approved == True)"/>
+                <button name="action_reject_rug_direct" type="object" string="Reject RUG" class="btn-primary" invisible="(quotation_type != 'Repair') or (repair_customer_pays) or (state not in ['draft', 'sent']) or (rug_request_sent == False) or (x_studio_rug_rejected == True) or (rug_approved == True)"/>
             </xpath>
         </field>
     </record>

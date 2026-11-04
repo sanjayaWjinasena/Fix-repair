@@ -91,10 +91,7 @@ class AccountPaymentRegister(models.TransientModel):
             #                            manually we still want to
             #                            advance the ticket on payment)
             for order in orders.filtered(
-                lambda o: (
-                    o.x_studio_quotation_type == "Repair"
-                    and not o.x_studio_rug_approved
-                )
+                lambda o: o.quotation_type == "Repair" and not o.rug_approved
             ):
                 task = order.sudo().task_id or self.env["project.task"].sudo().search(
                     [("sale_order_id", "=", order.id)], limit=1
@@ -114,7 +111,7 @@ class AccountPaymentRegister(models.TransientModel):
         percentage on x_minimum_sales_margin.
 
         Applies to every account.move on this wizard whose linked
-        sale.order carries x_repair_customer_pays=True or
+        sale.order carries repair_customer_pays=True or
         x_studio_rug_rejected=True. RUG-approved (warranty) repair
         SOs and non-Repair SOs pass through untouched.
 
@@ -142,7 +139,7 @@ class AccountPaymentRegister(models.TransientModel):
             for invoice in invoices:
                 orders = invoice.invoice_line_ids.mapped("sale_line_ids.order_id")
                 non_rug = orders.filtered(
-                    lambda o: o.x_repair_customer_pays or o.x_studio_rug_rejected
+                    lambda o: o.repair_customer_pays or o.x_studio_rug_rejected
                 )
                 for order in non_rug:
                     # v275: read the % from res.company.x_studio_advance_payment_

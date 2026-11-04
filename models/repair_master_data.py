@@ -8,17 +8,17 @@ class XRepairAccounts(models.Model):
     company).
     """
 
-    _name = "x_repair_accounts"
+    _name = "repair_accounts"
     _description = "Repair Accounts"
     _inherit = ["mail.thread", "mail.activity.mixin"]
-    _rec_name = "x_name"
-    _order = "x_studio_sequence, id"
+    _rec_name = "name"
+    _order = "sequence, id"
 
-    x_active = fields.Boolean(string="Active", default=True)
-    x_name = fields.Char(string="Name")
-    x_studio_company_id = fields.Many2one("res.company", string="Company")
-    x_studio_rug_account = fields.Many2one("account.account", string="RUG Account")
-    x_studio_sequence = fields.Integer(string="Sequence")
+    active = fields.Boolean(string="Active", default=True)
+    name = fields.Char(string="Name")
+    accounting_company_id = fields.Many2one("res.company", string="Company")
+    rug_account = fields.Many2one("account.account", string="RUG Account")
+    sequence = fields.Integer(string="Sequence")
 
     def _jin_set_company_id(self):
         """Studio server action id 2790 native port."""
@@ -26,7 +26,7 @@ class XRepairAccounts(models.Model):
             company_id = self.env.context.get(
                 "allowed_company_ids", [self.env.user.company_id.id]
             )[0]
-            record.x_studio_company_id = company_id
+            record.accounting_company_id = company_id
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -38,21 +38,21 @@ class XRepairAccounts(models.Model):
 
 class XRepairReason(models.Model):
     """Master catalogue of repair reasons. Referenced by
-    project.task's x_studio_repair_reason M2M and by
-    x_repair_sub_reason's x_studio_reason_code M2o.
+    project.task's repair_reason M2M and by
+    repair_sub_reason's reason_code M2o.
     """
 
-    _name = "x_repair_reason"
+    _name = "repair_reason"
     _description = "Repair Reason"
     _inherit = ["mail.thread", "mail.activity.mixin"]
-    _rec_name = "x_name"
-    _order = "x_studio_sequence, id"
+    _rec_name = "name"
+    _order = "sequence, id"
 
-    x_active = fields.Boolean(string="Active", default=True)
-    x_color = fields.Integer(string="Color")
-    x_name = fields.Char(string="Repair Reason")
-    x_studio_company_id = fields.Many2one("res.company", string="Company")
-    x_studio_sequence = fields.Integer(string="Sequence")
+    active = fields.Boolean(string="Active", default=True)
+    color = fields.Integer(string="Color")
+    name = fields.Char(string="Repair Reason")
+    accounting_company_id = fields.Many2one("res.company", string="Company")
+    sequence = fields.Integer(string="Sequence")
 
     def _jin_set_company_id(self):
         """Studio server action id 2666 native port."""
@@ -60,7 +60,7 @@ class XRepairReason(models.Model):
             company_id = self.env.context.get(
                 "allowed_company_ids", [self.env.user.company_id.id]
             )[0]
-            record.x_studio_company_id = company_id
+            record.accounting_company_id = company_id
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -72,21 +72,21 @@ class XRepairReason(models.Model):
 
 class XRepairReasonCustom(models.Model):
     """Customer-facing repair reason catalogue. Referenced by
-    helpdesk.ticket's x_studio_repair_reason M2M. Parallel to
-    x_repair_reason but presented to end customers.
+    helpdesk.ticket's repair_reason M2M. Parallel to
+    repair_reason but presented to end customers.
     """
 
-    _name = "x_repair_reason_custom"
+    _name = "repair_reason_custom"
     _description = "Repair Reason - Customer"
     _inherit = ["mail.thread", "mail.activity.mixin"]
-    _rec_name = "x_name"
-    _order = "x_studio_sequence, id"
+    _rec_name = "name"
+    _order = "sequence, id"
 
-    x_active = fields.Boolean(string="Active", default=True)
-    x_color = fields.Integer(string="Color")
-    x_name = fields.Char(string="Repair Reason")
-    x_studio_company_id = fields.Many2one("res.company", string="Company")
-    x_studio_sequence = fields.Integer(string="Sequence")
+    active = fields.Boolean(string="Active", default=True)
+    color = fields.Integer(string="Color")
+    name = fields.Char(string="Repair Reason")
+    accounting_company_id = fields.Many2one("res.company", string="Company")
+    sequence = fields.Integer(string="Sequence")
 
     def _jin_set_company_id(self):
         """Studio server action id 2667 native port."""
@@ -94,7 +94,7 @@ class XRepairReasonCustom(models.Model):
             company_id = self.env.context.get(
                 "allowed_company_ids", [self.env.user.company_id.id]
             )[0]
-            record.x_studio_company_id = company_id
+            record.accounting_company_id = company_id
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -110,17 +110,17 @@ class XRepairStages(models.Model):
     references from other migrated models.
     """
 
-    _name = "x_repair_stages"
+    _name = "repair_stages"
     _description = "Repair Stages"
     _inherit = ["mail.thread", "mail.activity.mixin"]
-    _rec_name = "x_name"
-    _order = "x_studio_sequence, id"
+    _rec_name = "name"
+    _order = "sequence, id"
 
-    x_active = fields.Boolean(string="Active", default=True)
-    x_name = fields.Char(string="Repair Stage")
-    x_studio_company_id = fields.Many2one("res.company", string="Company")
-    x_studio_description = fields.Char(string="Description")
-    x_studio_sequence = fields.Integer(string="Sequence")
+    active = fields.Boolean(string="Active", default=True)
+    name = fields.Char(string="Repair Stage")
+    accounting_company_id = fields.Many2one("res.company", string="Company")
+    description = fields.Char(string="Description")
+    sequence = fields.Integer(string="Sequence")
 
     def _jin_set_company_id(self):
         """Studio server action id 2670 native port."""
@@ -128,7 +128,7 @@ class XRepairStages(models.Model):
             company_id = self.env.context.get(
                 "allowed_company_ids", [self.env.user.company_id.id]
             )[0]
-            record.x_studio_company_id = company_id
+            record.accounting_company_id = company_id
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -140,23 +140,23 @@ class XRepairStages(models.Model):
 
 class XRepairSubReason(models.Model):
     """Sub-reasons under a repair reason. Each row links to a
-    parent x_repair_reason via x_studio_reason_code.
+    parent repair_reason via reason_code.
     """
 
-    _name = "x_repair_sub_reason"
+    _name = "repair_sub_reason"
     _description = "Repair Sub Reason"
     _inherit = ["mail.thread", "mail.activity.mixin"]
-    _rec_name = "x_name"
-    _order = "x_studio_sequence, id"
+    _rec_name = "name"
+    _order = "sequence, id"
 
-    x_active = fields.Boolean(string="Active", default=True)
-    x_name = fields.Char(string="Sub Reason Code")
-    x_studio_company_id = fields.Many2one("res.company", string="Company")
-    x_studio_reason_code = fields.Many2one(
-        "x_repair_reason",
+    active = fields.Boolean(string="Active", default=True)
+    name = fields.Char(string="Sub Reason Code")
+    accounting_company_id = fields.Many2one("res.company", string="Company")
+    reason_code = fields.Many2one(
+        "repair_reason",
         string="Reason Code",
     )
-    x_studio_sequence = fields.Integer(string="Sequence")
+    sequence = fields.Integer(string="Sequence")
 
     def _jin_set_company_id(self):
         """Studio server action id 2668 native port."""
@@ -164,7 +164,7 @@ class XRepairSubReason(models.Model):
             company_id = self.env.context.get(
                 "allowed_company_ids", [self.env.user.company_id.id]
             )[0]
-            record.x_studio_company_id = company_id
+            record.accounting_company_id = company_id
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -180,8 +180,8 @@ class XRepairSubReason(models.Model):
 #
 # These 6 catalogues are pure lookup tables — no company scoping,
 # no automations, no server actions. On Clear-DB they exist as
-# Studio-manual models used by project.task.x_studio_diagnosis_ids
-# / x_task_diagnosis to categorise a repair diagnosis by area,
+# Studio-manual models used by project.task.diagnosis_ids
+# / task_diagnosis to categorise a repair diagnosis by area,
 # code, symptom, condition, and resolution. Porting them here
 # unblocks the eventual project.task view port (Chunk 5) which
 # references these via m2o traversal.
@@ -190,114 +190,114 @@ class XRepairSubReason(models.Model):
 
 class XConditions(models.Model):
     """Repair-condition catalogue. Referenced by
-    x_task_diagnosis.x_studio_condition (m2o)."""
+    task_diagnosis.condition (m2o)."""
 
-    _name = "x_conditions"
+    _name = "conditions"
     _description = "Conditions"
     _inherit = ["mail.thread", "mail.activity.mixin"]
-    _rec_name = "x_name"
-    _order = "x_studio_sequence, id"
+    _rec_name = "name"
+    _order = "sequence, id"
 
-    x_active = fields.Boolean(string="Active", default=True)
-    x_name = fields.Char(string="Condition")
-    x_studio_description = fields.Char(string="Description")
-    x_studio_sequence = fields.Integer(string="Sequence")
-    x_studio_company_id = fields.Many2one("res.company", string="Company")
+    active = fields.Boolean(string="Active", default=True)
+    name = fields.Char(string="Condition")
+    description = fields.Char(string="Description")
+    sequence = fields.Integer(string="Sequence")
+    accounting_company_id = fields.Many2one("res.company", string="Company")
 
 
 class XDiagnosisAreas(models.Model):
     """Diagnosis-area catalogue. Referenced by
-    x_task_diagnosis.x_studio_diagnosis_area (m2o) and by
-    x_diagnosis_codes.x_studio_diagnosis_area_1."""
+    task_diagnosis.diagnosis_area (m2o) and by
+    diagnosis_codes.diagnosis_area_1."""
 
-    _name = "x_diagnosis_areas"
+    _name = "diagnosis_areas"
     _description = "Diagnosis Areas"
     _inherit = ["mail.thread", "mail.activity.mixin"]
-    _rec_name = "x_name"
-    _order = "x_studio_sequence, id"
+    _rec_name = "name"
+    _order = "sequence, id"
 
-    x_active = fields.Boolean(string="Active", default=True)
-    x_name = fields.Char(string="Diagnosis Area")
-    x_studio_description = fields.Char(string="Description")
-    x_studio_sequence = fields.Integer(string="Sequence")
-    x_studio_company_id = fields.Many2one("res.company", string="Company")
+    active = fields.Boolean(string="Active", default=True)
+    name = fields.Char(string="Diagnosis Area")
+    description = fields.Char(string="Description")
+    sequence = fields.Integer(string="Sequence")
+    accounting_company_id = fields.Many2one("res.company", string="Company")
 
 
 class XDiagnosisCodes(models.Model):
     """Diagnosis-code catalogue. Each code belongs to one area.
-    Referenced by x_task_diagnosis.x_studio_diagnosis_code (m2o)."""
+    Referenced by task_diagnosis.diagnosis_code (m2o)."""
 
-    _name = "x_diagnosis_codes"
+    _name = "diagnosis_codes"
     _description = "Diagnosis Codes"
     _inherit = ["mail.thread", "mail.activity.mixin"]
-    _rec_name = "x_name"
-    _order = "x_studio_sequence, id"
+    _rec_name = "name"
+    _order = "sequence, id"
 
-    x_active = fields.Boolean(string="Active", default=True)
-    x_name = fields.Char(string="Diagnosis Code")
-    x_studio_description = fields.Char(string="Description")
-    x_studio_sequence = fields.Integer(string="Sequence")
-    x_studio_diagnosis_area_1 = fields.Many2one(
-        "x_diagnosis_areas",
+    active = fields.Boolean(string="Active", default=True)
+    name = fields.Char(string="Diagnosis Code")
+    description = fields.Char(string="Description")
+    sequence = fields.Integer(string="Sequence")
+    diagnosis_area_1 = fields.Many2one(
+        "diagnosis_areas",
         string="Diagnosis Area",
     )
-    x_studio_company_id = fields.Many2one("res.company", string="Company")
+    accounting_company_id = fields.Many2one("res.company", string="Company")
 
 
 class XSymptomAreas(models.Model):
     """Symptom-area catalogue. Referenced by
-    x_task_diagnosis.x_studio_symptom_area (m2o) and by
-    x_symptom_codes.x_studio_symptom_area."""
+    task_diagnosis.symptom_area (m2o) and by
+    symptom_codes.symptom_area."""
 
-    _name = "x_symptom_areas"
+    _name = "symptom_areas"
     _description = "Symptom Areas"
     _inherit = ["mail.thread", "mail.activity.mixin"]
-    _rec_name = "x_name"
-    _order = "x_studio_sequence, id"
+    _rec_name = "name"
+    _order = "sequence, id"
 
-    x_active = fields.Boolean(string="Active", default=True)
-    x_name = fields.Char(string="Symptom Area")
-    x_studio_description = fields.Char(string="Description")
-    x_studio_sequence = fields.Integer(string="Sequence")
-    x_studio_company_id = fields.Many2one("res.company", string="Company")
+    active = fields.Boolean(string="Active", default=True)
+    name = fields.Char(string="Symptom Area")
+    description = fields.Char(string="Description")
+    sequence = fields.Integer(string="Sequence")
+    accounting_company_id = fields.Many2one("res.company", string="Company")
 
 
 class XSymptomCodes(models.Model):
     """Symptom-code catalogue. Each code belongs to one area.
-    Referenced by x_task_diagnosis.x_studio_symptom_code (m2o)."""
+    Referenced by task_diagnosis.symptom_code (m2o)."""
 
-    _name = "x_symptom_codes"
+    _name = "symptom_codes"
     _description = "Symptom Codes"
     _inherit = ["mail.thread", "mail.activity.mixin"]
-    _rec_name = "x_name"
-    _order = "x_studio_sequence, id"
+    _rec_name = "name"
+    _order = "sequence, id"
 
-    x_active = fields.Boolean(string="Active", default=True)
-    x_name = fields.Char(string="Symptom Code")
-    x_studio_description = fields.Char(string="Description")
-    x_studio_sequence = fields.Integer(string="Sequence")
-    x_studio_symptom_area = fields.Many2one(
-        "x_symptom_areas",
+    active = fields.Boolean(string="Active", default=True)
+    name = fields.Char(string="Symptom Code")
+    description = fields.Char(string="Description")
+    sequence = fields.Integer(string="Sequence")
+    symptom_area = fields.Many2one(
+        "symptom_areas",
         string="Symptom Area",
     )
-    x_studio_company_id = fields.Many2one("res.company", string="Company")
+    accounting_company_id = fields.Many2one("res.company", string="Company")
 
 
 class XResolutions(models.Model):
     """Resolution catalogue. Referenced by
-    x_task_diagnosis.x_studio_resolution (m2o)."""
+    task_diagnosis.resolution (m2o)."""
 
-    _name = "x_resolutions"
+    _name = "resolutions"
     _description = "Resolutions"
     _inherit = ["mail.thread", "mail.activity.mixin"]
-    _rec_name = "x_name"
-    _order = "x_studio_sequence, id"
+    _rec_name = "name"
+    _order = "sequence, id"
 
-    x_active = fields.Boolean(string="Active", default=True)
-    x_name = fields.Char(string="Resolution")
-    x_studio_description = fields.Char(string="Description")
-    x_studio_sequence = fields.Integer(string="Sequence")
-    x_studio_company_id = fields.Many2one("res.company", string="Company")
+    active = fields.Boolean(string="Active", default=True)
+    name = fields.Char(string="Resolution")
+    description = fields.Char(string="Description")
+    sequence = fields.Integer(string="Sequence")
+    accounting_company_id = fields.Many2one("res.company", string="Company")
 
 
 class _RepairMasterDataMigration(models.AbstractModel):
@@ -311,24 +311,24 @@ class _RepairMasterDataMigration(models.AbstractModel):
     Idempotent. DB tables and existing data preserved.
     """
 
-    _name = "x_repair_master_data.migration"
+    _name = "repair_master_data.migration"
     _description = "Repair Master Data — Studio→Python migration helper"
 
     @api.model
     def _migrate_studio_repair_master_data_to_base(self):
         model_names = [
-            "x_repair_accounts",
-            "x_repair_reason",
-            "x_repair_reason_custom",
-            "x_repair_stages",
-            "x_repair_sub_reason",
+            "repair_accounts",
+            "repair_reason",
+            "repair_reason_custom",
+            "repair_stages",
+            "repair_sub_reason",
             # v241 chunk 1a additions
-            "x_conditions",
-            "x_diagnosis_areas",
-            "x_diagnosis_codes",
-            "x_symptom_areas",
-            "x_symptom_codes",
-            "x_resolutions",
+            "conditions",
+            "diagnosis_areas",
+            "diagnosis_codes",
+            "symptom_areas",
+            "symptom_codes",
+            "resolutions",
         ]
         Model = self.env["ir.model"].sudo()
         Field = self.env["ir.model.fields"].sudo()
@@ -360,7 +360,7 @@ class _RepairMasterDataMigration(models.AbstractModel):
         # ORM write internally calls pool.descendants(patched_models,
         # '_inherits'), which tries pool.models[name] and KeyError's
         # with:
-        #   KeyError: 'x_repair_reason_custom'
+        #   KeyError: 'repair_reason_custom'
         # Same raw-SQL workaround as for ir.model — direct UPDATE
         # bypasses the descendants traversal and the registry lookup.
         field_rows = Field.search([("model", "in", model_names)])
@@ -398,7 +398,7 @@ class _RepairMasterDataMigration(models.AbstractModel):
         # can't associate the ir.model row with our Python classes
         # at load time — the ir.model row exists with state='base'
         # but the class never registers into pool.models, producing
-        # KeyError('x_repair_accounts') on any RPC call to it.
+        # KeyError('repair_accounts') on any RPC call to it.
         #
         # Naming convention matches what Odoo auto-generates:
         #   ir.model row       → 'model_' + model.replace('.', '_')

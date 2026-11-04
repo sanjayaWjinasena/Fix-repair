@@ -15,13 +15,13 @@ from . import stock_location
 from . import stock_lot
 from . import stock_picking
 from . import stock_warehouse
-from . import x_task_diagnosis
+from . import task_diagnosis
 
-from . import x_conditions
-from . import x_diagnosis_areas
-from . import x_diagnosis_codes
-from . import x_resolutions
-from . import x_symptom_areas
-from . import x_symptom_codes
+from . import conditions
+from . import diagnosis_areas
+from . import diagnosis_codes
+from . import resolutions
+from . import symptom_areas
+from . import symptom_codes
 from . import studio_computes
 from . import hide_dev_extras

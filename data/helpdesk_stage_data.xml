@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Migrate x_studio_company_id on helpdesk.stage from Studio to
+    <!-- Migrate accounting_company_id on helpdesk.stage from Studio to
          Python-owned. Master data used by the Cluster 5 stage-
          validation computes to pick the right stage id per company.
          Idempotent. -->

@@ -79,10 +79,10 @@ record._repair_validate_cancelled_on_unlink()
     <field name="binding_view_types">list,form</field>
   </record>
     <!-- Migrate every SO with quotation_type='Not Under Warranty' to
-         quotation_type='Repair' + x_repair_customer_pays=True, then
+         quotation_type='Repair' + repair_customer_pays=True, then
          drop the 'Not Under Warranty' selection value from the Studio
          field so it no longer appears in the dropdown. All downstream
-         customer-pays logic now reads the x_repair_customer_pays flag
+         customer-pays logic now reads the repair_customer_pays flag
          directly. Idempotent — subsequent runs find no NUW records
          and no NUW selection value. -->
     <!-- upgrade-testing: writes data, not run on this branch: <function model="sale.order" name="_migrate_nuw_to_customer_pays_flag"/> -->
@@ -93,8 +93,8 @@ record._repair_validate_cancelled_on_unlink()
     <function model="helpdesk.ticket" name="_migrate_studio_rug_cluster_to_base"/>
     <!-- Complete Cluster 2 (Repair location / stock) Studio-to-Python
          migration: same treatment for the nine location/stock fields
-         on helpdesk.ticket (x_studio_repair_location,
-         x_studio_return_receipt_location, source / virtual location
+         on helpdesk.ticket (repair_location,
+         return_receipt_location, source / virtual location
          variants, and pick/picking id fields). Idempotent. -->
     <function model="helpdesk.ticket" name="_migrate_studio_location_cluster_to_base"/>
     <!-- Complete Cluster 3 (Cancel / Reopen lifecycle) Studio-to-Python
@@ -106,14 +106,14 @@ record._repair_validate_cancelled_on_unlink()
          migration: same treatment for the ten Boolean stage-flip
          guards on helpdesk.ticket (send/receive to/from factory and
          centre, estimation/invoice/repair stage-updated flags, plus
-         x_studio_handed_over whose Python override predates the
+         handed_over whose Python override predates the
          cluster migration). Idempotent. -->
     <function model="helpdesk.ticket" name="_migrate_studio_stage_marker_cluster_to_base"/>
     <!-- Complete Cluster 5 (Stage-validation computes) Studio-to-Python
          migration: same treatment for the ten computed Boolean fields
          whose compute strings were ported verbatim from Studio,
          including the side-effecting stage writes and audit-slot
-         writes (x_studio_valid_confirmed_so, valid_confirmed2_so,
+         writes (valid_confirmed_so, valid_confirmed2_so,
          valid_invoiced_so, valid_delivered_so, task_status, plus the
          simple valid_confirm_return / valid_return /
          user_location_validation / fsm_task_done / fully_paid_so
@@ -121,7 +121,7 @@ record._repair_validate_cancelled_on_unlink()
     <function model="helpdesk.ticket" name="_migrate_studio_stage_validation_cluster_to_base"/>
     <!-- Complete Cluster 6 (Audit slots) Studio-to-Python migration:
          same treatment for the 29 simple writable audit fields —
-         x_studio_stage_date, 10 x_studio_created_by_N / _created_on_N
+         stage_date, 10 x_studio_created_by_N / _created_on_N
          pairs, and the four factory + four sales-centre shipment
          audit fields. Idempotent. -->
     <function model="helpdesk.ticket" name="_migrate_studio_audit_cluster_to_base"/>
@@ -138,7 +138,7 @@ record._repair_validate_cancelled_on_unlink()
          Studio-related utility fields (stage_name, tracking, cccc/
          cccc3), computed fields (sale_order, material_availability,
          re_estimate_count/status), and the double-x-prefix
-         x_x_studio_created_from_help_ticket_stock_picking_count.
+         created_from_help_ticket_stock_picking_count.
          Idempotent. -->
     <function model="helpdesk.ticket" name="_migrate_studio_misc_cluster_to_base"/>
     <!-- Rewrite the four Studio server actions that back the
@@ -219,7 +219,7 @@ record._repair_validate_cancelled_on_unlink()
          to Fix-repair with stable slugs. -->
     <function model="helpdesk.ticket" name="_repin_delegated_server_actions_to_native"/>
     <!-- Deactivates the Studio automation "RR - Auto Select Product for RUG Repairs-33"
-         which unconditionally clears product_id when x_studio_serial_no changes,
+         which unconditionally clears product_id when serial_no changes,
          overwriting our Python onchange. Clearing logic is in _onchange_serial_no_product. -->
     <function model="helpdesk.ticket" name="_deactivate_clearing_serial_automation"/>
     <record id="action_repair_auto_create_route" model="ir.actions.server">
@@ -253,7 +253,7 @@ We have pleasure in advising you that the <t t-out="object.product_id.display_na
 (IF THIS UNIT IS NOT COLLECTED WITHIN 2 WEEKS OF LETTER STORAGE CHARGE OF RS 15/- PER DAY WILL BE LEVIED.)</p><p style="caret-color:#37352f;position:relative;box-sizing:border-box;margin-bottom: 0px;"><br/></p><p style="box-sizing:border-box;margin-bottom: 0px;">  
  </p><p style="box-sizing:border-box;margin-bottom: 0px;">
 
-The balance due Rs. <t t-out="object.x_studio_balance_due" style="box-sizing:border-box;"> </t> should be paid in cash prior to collection (IF PAYMENT IS MADE BY CHEQUE, THE PUMP CAN BE COLLECTED ONLY ON REALIZATION OF THE CHEQUE) </p><p style="box-sizing:border-box;margin-bottom: 0px;"><br/></p><p style="box-sizing:border-box;margin-bottom: 0px;">When calling to make final payment and collecting the pump our reservation deposit number and our machinery report number <t t-out="object.display_name" style="box-sizing:border-box;"> </t>  must be surrendered. (IF EITHER OR BOTH OF RECEIPTS ARE LOST, OT CANNOT BE SURRENDERED, AN AFFIDAVIT MUST BE SUBMITTED.) </p><p style="box-sizing:border-box;margin-bottom: 0px;"><br/></p><p style="box-sizing:border-box;margin-bottom: 0px;">If the pump is to be handed over to a representative, please send through him/her letter authorizing us to hand over the pump to him/her. His/her specimen signature and national identity card should be certified by you. </p><p style="box-sizing:border-box;margin-bottom: 0px;"><br/></p><p style="box-sizing:border-box;margin-bottom: 0px;">Assuring your of our best attention </p><p style="box-sizing:border-box;margin-bottom: 0px;"><br/></p><p style="box-sizing:border-box;margin-bottom: 0px;">Yours faithfully,
+The balance due Rs. <t t-out="object.balance_due" style="box-sizing:border-box;"> </t> should be paid in cash prior to collection (IF PAYMENT IS MADE BY CHEQUE, THE PUMP CAN BE COLLECTED ONLY ON REALIZATION OF THE CHEQUE) </p><p style="box-sizing:border-box;margin-bottom: 0px;"><br/></p><p style="box-sizing:border-box;margin-bottom: 0px;">When calling to make final payment and collecting the pump our reservation deposit number and our machinery report number <t t-out="object.display_name" style="box-sizing:border-box;"> </t>  must be surrendered. (IF EITHER OR BOTH OF RECEIPTS ARE LOST, OT CANNOT BE SURRENDERED, AN AFFIDAVIT MUST BE SUBMITTED.) </p><p style="box-sizing:border-box;margin-bottom: 0px;"><br/></p><p style="box-sizing:border-box;margin-bottom: 0px;">If the pump is to be handed over to a representative, please send through him/her letter authorizing us to hand over the pump to him/her. His/her specimen signature and national identity card should be certified by you. </p><p style="box-sizing:border-box;margin-bottom: 0px;"><br/></p><p style="box-sizing:border-box;margin-bottom: 0px;">Assuring your of our best attention </p><p style="box-sizing:border-box;margin-bottom: 0px;"><br/></p><p style="box-sizing:border-box;margin-bottom: 0px;">Yours faithfully,
 
 </p><p style="margin:0px 0 12px 0;box-sizing:border-box;"/><p style="margin:0px 0 12px 0;box-sizing:border-box;"/><p style="box-sizing:border-box;margin-bottom: 0px;"><br/></p><p style="margin:0px 0 12px 0;box-sizing:border-box;"/></field>
     </record>
@@ -288,7 +288,7 @@ The balance due Rs. <t t-out="object.x_studio_balance_due" style="box-sizing:bor
 
 type </span>pumping unit No <span style="color: #444b5a;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff"><t t-out="object.product_id.display_name" style="box-sizing:border-box;"> </t></span>
 
- repaired on the above references and job number. We note that you have not responded to our email dated  <t t-out="object.x_studio_created_on_8" style="box-sizing:border-box;"> </t> and requesting you to collect same.<br/><br/><br/>Since we are unable to store this pumping unit any longer, we must finally request you to make payment of Rs. <t t-out="object.x_studio_balance_due" style="box-sizing:border-box;"> </t><span style="color: #444b5a;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff"> </span>in cash and remove same from our workshop within 2 weeks of this letter. (PLEASE NOTE THAT A STORAGGE CHARGE OF RS 15/- PER DAY WILL BE LEVIED FROM <t t-out="object.x_studio_created_on_8" style="box-sizing:border-box;"> </t> IN ADDITION TO THE REPAIR CHARGE. )<br/><br/>When calling to make final payment and collecting the pump our reservation deposit receipt number <t t-out="object.name" style="box-sizing:border-box;"> </t>   OR BOTH OF THESE RECEIPTS ARE LOST, OR CANNOT BE SURRENDERED AN AFFIDAVIT MUST BE SUBMITTED. )<br/><br/><br/>If the pump is to be handed over to a representative, please send through him a letter authorizing us to hand over the pump to him/her. His/her specimen signature and national identity card number should be certified by you.<br/><br/>If the pump is not collected within 2 weeks of this letter, it will be considered to be abandoned and will be destroyed.<br/>Yours faithfully,<br/><span style="font-size: 13px"><strong style="box-sizing:border-box;font-weight: bolder"><br/><br/><br/>Jinasena Ltd</strong></span><br/><br/><strong style="box-sizing:border-box;font-weight: bolder"><br/><br/><br/><br/><br/>Repairs Department</strong>
+ repaired on the above references and job number. We note that you have not responded to our email dated  <t t-out="object.created_on_8" style="box-sizing:border-box;"> </t> and requesting you to collect same.<br/><br/><br/>Since we are unable to store this pumping unit any longer, we must finally request you to make payment of Rs. <t t-out="object.balance_due" style="box-sizing:border-box;"> </t><span style="color: #444b5a;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff"> </span>in cash and remove same from our workshop within 2 weeks of this letter. (PLEASE NOTE THAT A STORAGGE CHARGE OF RS 15/- PER DAY WILL BE LEVIED FROM <t t-out="object.created_on_8" style="box-sizing:border-box;"> </t> IN ADDITION TO THE REPAIR CHARGE. )<br/><br/>When calling to make final payment and collecting the pump our reservation deposit receipt number <t t-out="object.name" style="box-sizing:border-box;"> </t>   OR BOTH OF THESE RECEIPTS ARE LOST, OR CANNOT BE SURRENDERED AN AFFIDAVIT MUST BE SUBMITTED. )<br/><br/><br/>If the pump is to be handed over to a representative, please send through him a letter authorizing us to hand over the pump to him/her. His/her specimen signature and national identity card number should be certified by you.<br/><br/>If the pump is not collected within 2 weeks of this letter, it will be considered to be abandoned and will be destroyed.<br/>Yours faithfully,<br/><span style="font-size: 13px"><strong style="box-sizing:border-box;font-weight: bolder"><br/><br/><br/>Jinasena Ltd</strong></span><br/><br/><strong style="box-sizing:border-box;font-weight: bolder"><br/><br/><br/><br/><br/>Repairs Department</strong>
 
 <br/></p></field>
     </record>
@@ -303,7 +303,7 @@ type </span>pumping unit No <span style="color: #444b5a;font-size: 13px;font-s
       <field name="auto_delete" eval="True"/>
       <field name="body_html" type="html"><p style="margin:0px 0 12px 0;box-sizing:border-box;">
 
-<span style="color: #444b5a;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff">Customer Name : <t t-out="object.partner_id.display_name" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t></span></p><p style="margin:0px 0 12px 0;box-sizing:border-box;"><span style="color: #444b5a;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff"/><span style="color: #000000;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff">CENTRIC PUMPS HANDED IN FOR REPAIRS - FINAL NOTICE</span><br/><br/>Dear Sir/Madam ,</p><p style="margin:0px 0 12px 0;box-sizing:border-box;"><br/>We refer to the "CENTRIC" type <t t-out="object.product_id.display_name" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t> given to us for repairs and our quotation dated <t t-out="object.x_studio_sale_order.create_date" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t> .It is noted with regret that you have not responded to this quotation to date. We now wish to inform you that this quotation is no longer valid and e are not in a position to store this pump in our stores.<br/></p><p style="margin:0px 0 12px 0;box-sizing:border-box;">Due to limited space we have, we must make an urgent request to you, to make necessary arrangements to collect same within 10 days of this e-mail, in which event, we shall not be responsible for this item after the stipulated time period.</p><p style="margin:0px 0 12px 0;box-sizing:border-box;">When calling to collect same, please ensure to produce the repair receipt issued to you at the time the pump was handed over to us.  <br/><br/><br/><br/>Yours faithfully,<br/><span style="font-size: 13px"><strong style="box-sizing:border-box;font-weight: bolder"><br/><br/><br/>Jinasena Ltd</strong></span><br/><br/><strong style="box-sizing:border-box;font-weight: bolder"><br/><br/><br/><br/><br/>Repairs Department</strong>
+<span style="color: #444b5a;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff">Customer Name : <t t-out="object.partner_id.display_name" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t></span></p><p style="margin:0px 0 12px 0;box-sizing:border-box;"><span style="color: #444b5a;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff"/><span style="color: #000000;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff">CENTRIC PUMPS HANDED IN FOR REPAIRS - FINAL NOTICE</span><br/><br/>Dear Sir/Madam ,</p><p style="margin:0px 0 12px 0;box-sizing:border-box;"><br/>We refer to the "CENTRIC" type <t t-out="object.product_id.display_name" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t> given to us for repairs and our quotation dated <t t-out="object.sale_order.create_date" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t> .It is noted with regret that you have not responded to this quotation to date. We now wish to inform you that this quotation is no longer valid and e are not in a position to store this pump in our stores.<br/></p><p style="margin:0px 0 12px 0;box-sizing:border-box;">Due to limited space we have, we must make an urgent request to you, to make necessary arrangements to collect same within 10 days of this e-mail, in which event, we shall not be responsible for this item after the stipulated time period.</p><p style="margin:0px 0 12px 0;box-sizing:border-box;">When calling to collect same, please ensure to produce the repair receipt issued to you at the time the pump was handed over to us.  <br/><br/><br/><br/>Yours faithfully,<br/><span style="font-size: 13px"><strong style="box-sizing:border-box;font-weight: bolder"><br/><br/><br/>Jinasena Ltd</strong></span><br/><br/><strong style="box-sizing:border-box;font-weight: bolder"><br/><br/><br/><br/><br/>Repairs Department</strong>
 
 <br/></p></field>
     </record>
@@ -318,7 +318,7 @@ type </span>pumping unit No <span style="color: #444b5a;font-size: 13px;font-s
       <field name="auto_delete" eval="True"/>
       <field name="body_html" type="html"><p style="box-sizing:border-box;margin-bottom: 0px;">Customer Name :<t t-out="object.partner_id.display_name" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t> </p><p style="margin:0px 0 12px 0;box-sizing:border-box;"/><p style="box-sizing:border-box;margin-bottom: 0px;">NOTICE OF SCRAPPAGE</p><p style="box-sizing:border-box;margin-bottom: 0px;"><br/></p><p style="box-sizing:border-box;margin-bottom: 0px;">Dear Sir/Madam ,
 </p><p style="box-sizing:border-box;margin-bottom: 0px;">  
-</p><p style="margin:0px 0 12px 0;box-sizing:border-box;"/><p style="box-sizing:border-box;margin-bottom: 0px;"><br/></p><p style="box-sizing:border-box;margin-bottom: 0px;">We refer to the "CENTRIC" type <t t-out="object.product_id.display_name" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t>  water pump handed over to us on <t t-out="object.x_studio_created_on_1" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t> under the reference number <t t-out="object.name" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t> and regret to note that in spite of ready for collection notices sent to you on <t t-out="object.create_date" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t> &amp; XXXX &amp; XXXX, you have failed to respond positively.</p><p style="box-sizing:border-box;margin-bottom: 0px;"><br/>
+</p><p style="margin:0px 0 12px 0;box-sizing:border-box;"/><p style="box-sizing:border-box;margin-bottom: 0px;"><br/></p><p style="box-sizing:border-box;margin-bottom: 0px;">We refer to the "CENTRIC" type <t t-out="object.product_id.display_name" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t>  water pump handed over to us on <t t-out="object.created_on_1" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t> under the reference number <t t-out="object.name" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t> and regret to note that in spite of ready for collection notices sent to you on <t t-out="object.create_date" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t> &amp; XXXX &amp; XXXX, you have failed to respond positively.</p><p style="box-sizing:border-box;margin-bottom: 0px;"><br/>
 
 </p><p style="box-sizing:border-box;margin-bottom: 0px;"><span style="color: #000000;font-size: 13px;font-style: normal;font-weight: 400;background-color: rgba(1, 126, 132, 0.1)"><br/></span><span style="box-sizing:border-box;background-color:#f6f6f6;color: #000000; font-size: 13px; font-style: normal; font-weight: 400;" class="bg-o-color-3">We regret to note that continue to ignore our notices and can only assume that you are no longer interested in this pump and accordingly we have scrapped this item.<br/><br/><br/>Therefore, please be informed that we are no longer responsible for this item.</span>
 
@@ -339,7 +339,7 @@ type </span>pumping unit No <span style="color: #444b5a;font-size: 13px;font-s
 
 <span style="color: #444b5a;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff">Customer Name : <t t-out="object.partner_id.display_name" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t></span></p><p style="margin:0px 0 12px 0;box-sizing:border-box;"><span style="color: #444b5a;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff">REMINDER</span><br/><br/>Dear Sir/Madam ,<br/><span style="font-size: 13px">We refer to the <span style="color: #444b5a;font-size: 13px;font-style: normal;font-weight: 400;background-color: #ffffff">"CENTRIC"</span>
 
-type <t t-out="object.product_id.display_name" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t></span> pumping unit No <t t-out="object.x_studio_serial_no.display_name" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t> repaired on the above references and job number. We note that you have not responded to our letter dated <t t-out="object.create_date" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t>   and requesting you to collect same.<br/><br/><br/>Due to limited sapce for holding " Awaiting collection pumps " in colombo and therefore we must take an urgent request to you to make necessary arrangements to collect same from our repair department at Colombo.</p><p style="margin:0px 0 12px 0;box-sizing:border-box;"><br/>When calling to collect please ensure that you have all necessary documents including the repair receipt issued to you at the time the pump was handed over to us.<br/><br/><br/>In the event that the pump is not collected within 10 days of this letter we will be transferring this pump to our warehouse in Ekala and the pump can only be collected by you from our warehouse after making payment (if any) at our colombo office.</p><p style="margin:0px 0 12px 0;box-sizing:border-box;">To avoid the resultant inconvinience to you, plea ensure you pay close attention to this communication.<br/><br/></p><p style="margin:0px 0 12px 0;box-sizing:border-box;">Yours faithfully,<br/><span style="font-size: 13px"><strong style="box-sizing:border-box;font-weight: bolder"><br/><br/><br/>Jinasena Ltd</strong></span><br/><br/><strong style="box-sizing:border-box;font-weight: bolder"><br/><br/><br/><br/><br/>Repairs Department</strong>
+type <t t-out="object.product_id.display_name" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t></span> pumping unit No <t t-out="object.serial_no.display_name" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t> repaired on the above references and job number. We note that you have not responded to our letter dated <t t-out="object.create_date" style="box-sizing:border-box;" contenteditable="false" data-oe-t-inline="true" oe-keep-contenteditable=""> </t>   and requesting you to collect same.<br/><br/><br/>Due to limited sapce for holding " Awaiting collection pumps " in colombo and therefore we must take an urgent request to you to make necessary arrangements to collect same from our repair department at Colombo.</p><p style="margin:0px 0 12px 0;box-sizing:border-box;"><br/>When calling to collect please ensure that you have all necessary documents including the repair receipt issued to you at the time the pump was handed over to us.<br/><br/><br/>In the event that the pump is not collected within 10 days of this letter we will be transferring this pump to our warehouse in Ekala and the pump can only be collected by you from our warehouse after making payment (if any) at our colombo office.</p><p style="margin:0px 0 12px 0;box-sizing:border-box;">To avoid the resultant inconvinience to you, plea ensure you pay close attention to this communication.<br/><br/></p><p style="margin:0px 0 12px 0;box-sizing:border-box;">Yours faithfully,<br/><span style="font-size: 13px"><strong style="box-sizing:border-box;font-weight: bolder"><br/><br/><br/>Jinasena Ltd</strong></span><br/><br/><strong style="box-sizing:border-box;font-weight: bolder"><br/><br/><br/><br/><br/>Repairs Department</strong>
 
 <br/></p></field>
     </record>
@@ -641,7 +641,7 @@ record._repair_studio_user_location_validation()
     <field name="active" eval="False"/>
     <field name="model_id" ref="helpdesk.model_helpdesk_ticket"/>
     <field name="trigger">on_unlink</field>
-    <field name="filter_domain">[["x_studio_cancelled","=",True]]</field>
+    <field name="filter_domain">[["cancelled","=",True]]</field>
     <field name="action_server_ids" eval="[(6, 0, [ref('Fix-repair.server_action_2222_rr_validate_cancelled_tickets')])]"/>
   </record>
   <record id="base_automation_240_slowness_test" model="base.automation">
@@ -668,38 +668,38 @@ record._repair_studio_user_location_validation()
     <field name="action_server_ids" eval="[(6, 0, [ref('Fix-repair.server_action_2558_user_location_validation_helpdesk')])]"/>
   </record>
     <data noupdate="1">
-    <!-- DROPPED default_7_res_partner_x_studio_vat_registration_status: selection default (defer to user via UI) -->
-<!-- DROPPED default_8_res_partner_x_studio_svat_registration_status: selection default (defer to user via UI) -->
-<record id="default_298_helpdesk_ticket_x_studio_pick_id" model="ir.default">
-      <field name="field_id" ref="Fix-repair.field_helpdesk_ticket__x_studio_pick_id"/>
+    <!-- DROPPED default_7_res_partner_vat_registration_status: selection default (defer to user via UI) -->
+<!-- DROPPED default_8_res_partner_svat_registration_status: selection default (defer to user via UI) -->
+<record id="default_298_helpdesk_ticket_pick_id" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_helpdesk_ticket__pick_id"/>
       <field name="json_value">"0"</field>
     </record>
     <record id="default_301_helpdesk_ticket_name" model="ir.default">
       <field name="field_id" ref="Fix-repair.field_helpdesk_ticket__name"/>
       <field name="json_value">"New"</field>
     </record>
-    <!-- DROPPED default_360_helpdesk_ticket_x_studio_cancel_status: selection default (defer to user via UI) -->
-<!-- DROPPED default_361_helpdesk_ticket_x_studio_reopen_status: selection default (defer to user via UI) -->
-<!-- DROPPED default_368_helpdesk_ticket_x_studio_re_estimate_status: selection default (defer to user via UI) -->
-<record id="default_369_helpdesk_ticket_x_studio_re_estimate_count" model="ir.default">
-      <field name="field_id" ref="Fix-repair.field_helpdesk_ticket__x_studio_re_estimate_count"/>
+    <!-- DROPPED default_360_helpdesk_ticket_cancel_status: selection default (defer to user via UI) -->
+<!-- DROPPED default_361_helpdesk_ticket_reopen_status: selection default (defer to user via UI) -->
+<!-- DROPPED default_368_helpdesk_ticket_re_estimate_status: selection default (defer to user via UI) -->
+<record id="default_369_helpdesk_ticket_re_estimate_count" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_helpdesk_ticket__re_estimate_count"/>
       <field name="json_value">"0"</field>
     </record>
-    <!-- DROPPED default_372_helpdesk_ticket_x_studio_quick_repair_status: selection default (defer to user via UI) -->
-    <record id="default_360_helpdesk_ticket_x_studio_cancel_status" model="ir.default">
-      <field name="field_id" ref="Fix-repair.field_helpdesk_ticket__x_studio_cancel_status"/>
+    <!-- DROPPED default_372_helpdesk_ticket_quick_repair_status: selection default (defer to user via UI) -->
+    <record id="default_360_helpdesk_ticket_cancel_status" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_helpdesk_ticket__cancel_status"/>
       <field name="json_value">"None"</field>
     </record>
-    <record id="default_361_helpdesk_ticket_x_studio_reopen_status" model="ir.default">
-      <field name="field_id" ref="Fix-repair.field_helpdesk_ticket__x_studio_reopen_status"/>
+    <record id="default_361_helpdesk_ticket_reopen_status" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_helpdesk_ticket__reopen_status"/>
       <field name="json_value">"None"</field>
     </record>
-    <record id="default_368_helpdesk_ticket_x_studio_re_estimate_status" model="ir.default">
-      <field name="field_id" ref="Fix-repair.field_helpdesk_ticket__x_studio_re_estimate_status"/>
+    <record id="default_368_helpdesk_ticket_re_estimate_status" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_helpdesk_ticket__re_estimate_status"/>
       <field name="json_value">"None"</field>
     </record>
-    <record id="default_372_helpdesk_ticket_x_studio_quick_repair_status" model="ir.default">
-      <field name="field_id" ref="Fix-repair.field_helpdesk_ticket__x_studio_quick_repair_status"/>
+    <record id="default_372_helpdesk_ticket_quick_repair_status" model="ir.default">
+      <field name="field_id" ref="Fix-repair.field_helpdesk_ticket__quick_repair_status"/>
       <field name="json_value">"None"</field>
     </record>
     </data>

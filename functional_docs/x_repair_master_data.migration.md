@@ -1,14 +1,14 @@
-# Fix-repair — `x_repair_master_data.migration`
+# Fix-repair — `repair_master_data.migration`
 
 [← back to Functional_Documentation.md](../Functional_Documentation.md)
 
-### `x_repair_master_data.migration` — Repair Master Data — Studio→Python migration helper
+### `repair_master_data.migration` — Repair Master Data — Studio→Python migration helper
 
 *Created by this repo.* Python: `models/repair_master_data.py`.
 
 **Summary:**
 
-<!-- SUMMARY:model:x_repair_master_data.migration -->
+<!-- SUMMARY:model:repair_master_data.migration -->
 A technical abstract model with no records. Its single method, `_migrate_studio_repair_master_data_to_base`, moves the repair catalogue models and their fields from Studio to this module: it changes the model and field rows from state 'manual' to 'base' and removes the `studio_customization` XML IDs. The method can be run more than once safely, and the existing tables and data are kept.
 <!-- /SUMMARY -->
 

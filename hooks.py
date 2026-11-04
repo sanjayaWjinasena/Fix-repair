@@ -36,20 +36,20 @@ _STUDIO_DEPENDENT_VIEW_FILES = []
 # Kept in sync with models/res_partner.py.
 _PORTED_PARTNER_FIELDS = (
     # bank guarantee documents
-    "x_studio_bank_guarantee_docs",
-    "x_studio_bank_guarantee_docs_filename",
-    "x_studio_mandatory_bank_guarantee",
+    "bank_guarantee_docs",
+    "bank_guarantee_docs_filename",
+    "mandatory_bank_guarantee",
     # vendor master
-    "x_studio_vendor_account",
-    "x_studio_vendor_name",
-    "x_studio_address",
+    "vendor_account",
+    "vendor_name",
+    "address",
     # VAT / SVAT compliance
-    "x_studio_vat_registered",
-    "x_studio_vat_registration_number",
-    "x_studio_vat_registration_status",
-    "x_studio_vat_exempted_number",
-    "x_studio_svat_registration_number",
-    "x_studio_svat_registration_status",
+    "vat_registered",
+    "vat_registration_number",
+    "vat_registration_status",
+    "vat_exempted_number",
+    "svat_registration_number",
+    "svat_registration_status",
 )
 
 
@@ -248,7 +248,7 @@ def seed_default_stock_location_users(env):
     dropdown on helpdesk.ticket has non-empty options out of the box.
 
     Background: the Return Receipt dropdown's domain is
-      [('x_studio_users_stock_location', 'in', user_id)]
+      [('users_stock_location', 'in', user_id)]
     plus Odoo's implicit multi-company filter. On a fresh Fix-repair
     install the m2m is empty → dropdown returns 0 results → users can't
     complete a repair ticket without first manually configuring
@@ -289,14 +289,14 @@ def seed_default_stock_location_users(env):
 
     changed = 0
     for loc in default_locs:
-        if admin_user in loc.x_studio_users_stock_location:
+        if admin_user in loc.users_stock_location:
             continue
-        loc.x_studio_users_stock_location = [(4, admin_user.id)]
+        loc.users_stock_location = [(4, admin_user.id)]
         changed += 1
 
     _logger.info(
         "Fix-repair: linked admin (uid=%d) to %d default internal "
-        "stock.location record(s) via x_studio_users_stock_location.",
+        "stock.location record(s) via users_stock_location.",
         admin_user.id,
         changed,
     )
@@ -307,7 +307,7 @@ def seed_admin_repair_location_defaults(env):
     internal user that has them unset.
 
     `_repair_studio_auto_create_repair_route` (helpdesk_ticket.py:2958)
-    reads `x_studio_virtual_location` and `x_studio_source_location` on
+    reads `virtual_location` and `source_location` on
     the current user; if either is False it raises UserError and the
     auto-create-route action can't run. On a fresh standalone install
     every user has both fields empty because Fix-repair only declares
@@ -335,8 +335,8 @@ def seed_admin_repair_location_defaults(env):
     location_by_company = {}
     changed_users = 0
     for user in internal_users:
-        needs_virtual = not user.x_studio_virtual_location
-        needs_source = not user.x_studio_source_location
+        needs_virtual = not user.virtual_location
+        needs_source = not user.source_location
         if not (needs_virtual or needs_source):
             continue
         company = user.company_id
@@ -355,9 +355,9 @@ def seed_admin_repair_location_defaults(env):
             continue
         vals = {}
         if needs_virtual:
-            vals["x_studio_virtual_location"] = default_loc.id
+            vals["virtual_location"] = default_loc.id
         if needs_source:
-            vals["x_studio_source_location"] = default_loc.id
+            vals["source_location"] = default_loc.id
         if vals:
             user.write(vals)
             changed_users += 1
@@ -371,11 +371,11 @@ def seed_admin_repair_location_defaults(env):
 def seed_repair_return_receipt_locations(env):
     """v254: flag every warehouse's main stock location
     (`stock.warehouse.lot_stock_id`) as
-    `x_studio_repair_return_location=True`.
+    `repair_return_location=True`.
 
     Clear-DB pattern: only stock.locations carrying this bool are
     considered valid targets for the ticket's
-    `x_studio_return_receipt_location` m2o. The delegate
+    `return_receipt_location` m2o. The delegate
     `_repair_studio_auto_create_repair_route` then searches for an
     outgoing `stock.picking.type` where `default_location_src_id`
     equals the ticket's chosen return-receipt location. The default
@@ -395,14 +395,13 @@ def seed_repair_return_receipt_locations(env):
         loc = wh.lot_stock_id
         if not loc:
             continue
-        if loc.x_studio_repair_return_location:
+        if loc.repair_return_location:
             continue
-        loc.x_studio_repair_return_location = True
+        loc.repair_return_location = True
         changed += 1
 
     _logger.info(
-        "Fix-repair: flagged %d warehouse Stock location(s) as "
-        "x_studio_repair_return_location.",
+        "Fix-repair: flagged %d warehouse Stock location(s) as repair_return_location.",
         changed,
     )
 
@@ -637,9 +636,9 @@ def assign_names_to_stale_new_tickets(env):
 # framework query_insert / query_update — no cr.execute in our code.
 # (model, field, value, label, sequence)
 _FIELD_SELECTIONS = [
-    ("helpdesk.ticket", "x_studio_tracking", "serial", "By Unique Serial Number", 10),
-    ("helpdesk.ticket", "x_studio_tracking", "lot", "By Lots", 1),
-    ("helpdesk.ticket", "x_studio_tracking", "none", "No Tracking", 2),
+    ("helpdesk.ticket", "repair_tracking", "serial", "By Unique Serial Number", 10),
+    ("helpdesk.ticket", "repair_tracking", "lot", "By Lots", 1),
+    ("helpdesk.ticket", "repair_tracking", "none", "No Tracking", 2),
 ]
 
 

@@ -2,13 +2,13 @@
     # upgrade-testing branch: data files below are commented out - this branch installs
     # functions only, no data is seeded.
     "name": "Jinasena : Module : Repair",
-    "version": "17.0.1.0.371",
+    "version": "17.0.1.0.372",
     "summary": "Enhancements to the Customer Care - Repair helpdesk workflow",
     "author": "Jinasena Agricultural Machinery (Pvt) Ltd.",
     "category": "Helpdesk",
     "license": "LGPL-3",
     # v299: added `repair` to depends — models/repair_order.py ports
-    # x_studio_confirm_draft_quotation onto repair.order. Without this
+    # confirm_draft_quotation onto repair.order. Without this
     # dep the _inherit target isn't in the registry when Fix-repair
     # loads on a fresh install.
     "depends": [
@@ -26,8 +26,8 @@
     ],
     "post_init_hook": "post_init_hook",
     # v292: added studio_usermodel_migration to depends.
-    # helpdesk_ticket.py declares related fields (x_studio_source_location,
-    # x_studio_virtual_location, etc.) that traverse user_id -> res.users.
+    # helpdesk_ticket.py declares related fields (source_location,
+    # virtual_location, etc.) that traverse user_id -> res.users.
     # Those res.users fields were moved from Fix-repair's own res_users.py
     # to studio_usermodel_migration in v0.0.7 of that module, but the
     # manifest dep was never updated. Without this dep, Odoo's topological

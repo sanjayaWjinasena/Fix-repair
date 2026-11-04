@@ -5,11 +5,11 @@ v284: port of Studio automation 241 / server action 2427
 
 Clear-DB code (on_change on account.payment):
     if record.state == 'draft':
-      if record.x_studio_quotation_type == 'Repair':
+      if record.quotation_type == 'Repair':
         sum_total = 0
         so_value = 0
         payment = env['account.payment'].search([
-            ('x_studio_sales_order', '=', record.x_studio_sales_order.id),
+            ('sales_order', '=', record.sales_order.id),
             ('state', '=', 'posted')])
         if payment:
           for total in payment:
@@ -17,7 +17,7 @@ Clear-DB code (on_change on account.payment):
 
         min_magin = record.company_id
         if min_magin:
-          so_value = round(record.x_studio_sales_order.amount_total
+          so_value = round(record.sales_order.amount_total
                            * (min_magin.x_studio_advance_payment_/100), 2)
 
         if so_value > (record.amount + sum_total):
@@ -28,7 +28,7 @@ bypass the account.payment.register wizard (which Fix-repair already
 gates via _validate_repair_advance_threshold). Same threshold math,
 different entry point.
 
-Fields x_studio_sales_order + x_studio_quotation_type live on
+Fields sales_order + quotation_type live on
 account.payment (declared in BugFix-Sales v45). Company advance %
 lives on res.company.x_studio_advance_payment_ (BugFix-Sales v22
 config-cutover proxy).
@@ -41,7 +41,7 @@ from odoo.exceptions import UserError
 class AccountPayment(models.Model):
     _inherit = "account.payment"
 
-    @api.onchange("amount", "x_studio_sales_order", "x_studio_quotation_type", "state")
+    @api.onchange("amount", "sales_order", "quotation_type", "state")
     def _fix_repair_onchange_validate_advance_pct(self):
         """Studio automation 241 port. Block the form-editing user
         when the draft payment they're building on a Repair SO would
@@ -51,7 +51,7 @@ class AccountPayment(models.Model):
         Guards on:
           * state == 'draft'        (only during payment build-up)
           * quotation_type == 'Repair'
-          * x_studio_sales_order set (need SO to compute threshold)
+          * sales_order set (need SO to compute threshold)
           * company advance_payment_ > 0 (min % actually configured)
 
         No recursion guard needed: onchange is form-scoped and the
@@ -60,9 +60,9 @@ class AccountPayment(models.Model):
         for payment in self:
             if payment.state != "draft":
                 continue
-            if payment.x_studio_quotation_type != "Repair":
+            if payment.quotation_type != "Repair":
                 continue
-            so = payment.x_studio_sales_order
+            so = payment.sales_order
             if not so:
                 continue
             company = payment.company_id
@@ -75,7 +75,7 @@ class AccountPayment(models.Model):
                 .sudo()
                 .search(
                     [
-                        ("x_studio_sales_order", "=", so.id),
+                        ("sales_order", "=", so.id),
                         ("state", "=", "posted"),
                         ("id", "!=", payment.id or 0),
                     ]

@@ -61,11 +61,11 @@ Five Studio-created models are now Python-owned and declared in
 
 | Model | Purpose | Model state | Python file | Studio pin | Status |
 |---|---|---|---|---|---|
-| `x_repair_accounts` | Repair account catalogue (COGS / RUG etc.) | `base` | `models/repair_master_data.py` | Removed → Fix-repair | ✅ Python-owned, 🧹 |
-| `x_repair_reason` | Repair reason master list | `base` | `models/repair_master_data.py` | Removed → Fix-repair | ✅ Python-owned, 🧹 |
-| `x_repair_reason_custom` | Customer-facing reason list | `base` | `models/repair_master_data.py` | Removed → Fix-repair | ✅ Python-owned, 🧹 |
-| `x_repair_stages` | Repair sub-stages (Studio-side pipeline) | `base` | `models/repair_master_data.py` | Removed → Fix-repair | ✅ Python-owned, 🧹 |
-| `x_repair_sub_reason` | Sub-reason under each reason | `base` | `models/repair_master_data.py` | Removed → Fix-repair | ✅ Python-owned, 🧹 |
+| `repair_accounts` | Repair account catalogue (COGS / RUG etc.) | `base` | `models/repair_master_data.py` | Removed → Fix-repair | ✅ Python-owned, 🧹 |
+| `repair_reason` | Repair reason master list | `base` | `models/repair_master_data.py` | Removed → Fix-repair | ✅ Python-owned, 🧹 |
+| `repair_reason_custom` | Customer-facing reason list | `base` | `models/repair_master_data.py` | Removed → Fix-repair | ✅ Python-owned, 🧹 |
+| `repair_stages` | Repair sub-stages (Studio-side pipeline) | `base` | `models/repair_master_data.py` | Removed → Fix-repair | ✅ Python-owned, 🧹 |
+| `repair_sub_reason` | Sub-reason under each reason | `base` | `models/repair_master_data.py` | Removed → Fix-repair | ✅ Python-owned, 🧹 |
 
 All 5 also gained a `_jin_set_company_id` method + `@api.model_create_multi
 create()` hook (previously handled by 6 base automations, now Python).
@@ -97,10 +97,10 @@ Declared in `models/helpdesk_ticket.py`.
 
 | Field | Type | Status |
 |---|---|---|
-| `x_studio_rug` | Boolean | ✅ 🧹 |
-| `x_studio_rug_confirmed` | Boolean | ✅ 🧹 |
-| `x_studio_with_serial_no` | Boolean | ✅ 🧹 |
-| `x_studio_without_serial_no` | Boolean | ✅ 🧹 |
+| `rug` | Boolean | ✅ 🧹 |
+| `rug_confirmed` | Boolean | ✅ 🧹 |
+| `with_serial_no` | Boolean | ✅ 🧹 |
+| `without_serial_no` | Boolean | ✅ 🧹 |
 
 Declared in `models/helpdesk_type_stage.py`.
 
@@ -108,7 +108,7 @@ Declared in `models/helpdesk_type_stage.py`.
 
 | Field | Type | Status |
 |---|---|---|
-| `x_studio_company_id` | Many2one → `res.company` (multi-company routing) | ✅ 🧹 |
+| `accounting_company_id` | Many2one → `res.company` (multi-company routing) | ✅ 🧹 |
 
 Method: `_jin_set_company_id` + `create()` hook.
 
@@ -116,27 +116,27 @@ Method: `_jin_set_company_id` + `create()` hook.
 
 | Field | Type | Status |
 |---|---|---|
-| `x_studio_end_quick_repair` | Boolean | ✅ 🧹 |
-| `x_studio_repair_image_01`/`_02` | Binary | ✅ 🧹 |
-| `x_studio_repair_reason` | M2M → `x_repair_reason` | ✅ 🧹 |
-| `x_studio_quick_repair_status_1` | Selection | ✅ 🧹 |
-| `x_studio_repair_completed_stage_updated` | Boolean (related) | ✅ 🧹 |
-| `x_studio_valid_delivered_so2` | Boolean | ✅ 🧹 |
-| `x_studio_fully_invoiced_so` | Boolean (compute) | ✅ 🧹 |
-| `x_studio_material_availability` | Selection (compute) | ✅ 🧹 |
-| `x_studio_valid_confirm_so` | Boolean (compute) | ✅ 🧹 |
-| `x_studio_valid_confirm2_so` | Boolean (compute) | ✅ 🧹 |
-| `x_studio_valid_delivered_so` | Boolean (compute) | ✅ 🧹 |
-| `x_studio_valid_invoiced_so` | Boolean (compute) | ✅ 🧹 |
-| `x_studio_cancelled` (v162) | Boolean (related) | ✅ 🧹 |
-| `x_studio_created_date` (v162) | Datetime | ✅ 🧹 |
-| `x_studio_diagnosis_ids` (v162) | O2m → `x_task_diagnosis` | ✅ 🧹 |
-| `x_studio_incomplete_delivery_available` (v162) | Boolean (compute) | ✅ 🧹 |
-| `x_studio_priority` (v162) | Selection | ✅ 🧹 |
-| `x_studio_quotation_type` (v162) | Selection (related) | ✅ 🧹 |
-| `x_studio_related_information` (v162) | Binary (related) | ✅ 🧹 |
-| `x_studio_valid_diagnosis` (v162) | Boolean (compute) | ✅ 🧹 |
-| `x_studio_warranty_card` (v162) | Binary (related) | ✅ 🧹 |
+| `end_quick_repair` | Boolean | ✅ 🧹 |
+| `repair_image_01`/`_02` | Binary | ✅ 🧹 |
+| `repair_reason` | M2M → `repair_reason` | ✅ 🧹 |
+| `quick_repair_status_1` | Selection | ✅ 🧹 |
+| `repair_completed_stage_updated` | Boolean (related) | ✅ 🧹 |
+| `valid_delivered_so2` | Boolean | ✅ 🧹 |
+| `fully_invoiced_so` | Boolean (compute) | ✅ 🧹 |
+| `material_availability` | Selection (compute) | ✅ 🧹 |
+| `valid_confirm_so` | Boolean (compute) | ✅ 🧹 |
+| `valid_confirm2_so` | Boolean (compute) | ✅ 🧹 |
+| `valid_delivered_so` | Boolean (compute) | ✅ 🧹 |
+| `valid_invoiced_so` | Boolean (compute) | ✅ 🧹 |
+| `cancelled` (v162) | Boolean (related) | ✅ 🧹 |
+| `created_date` (v162) | Datetime | ✅ 🧹 |
+| `diagnosis_ids` (v162) | O2m → `task_diagnosis` | ✅ 🧹 |
+| `incomplete_delivery_available` (v162) | Boolean (compute) | ✅ 🧹 |
+| `custom_reports_priority` (v162) | Selection | ✅ 🧹 |
+| `quotation_type` (v162) | Selection (related) | ✅ 🧹 |
+| `related_information` (v162) | Binary (related) | ✅ 🧹 |
+| `valid_diagnosis` (v162) | Boolean (compute) | ✅ 🧹 |
+| `warranty_card` (v162) | Binary (related) | ✅ 🧹 |
 
 Declared in `models/project_task.py`.
 
@@ -144,10 +144,10 @@ Declared in `models/project_task.py`.
 
 | Field | Type | Status |
 |---|---|---|
-| `x_studio_source_location` | Many2one → `stock.location` | ✅ 🧹 |
-| `x_studio_source_location_1` | Many2one → `stock.location` | ✅ 🧹 |
-| `x_studio_virtual_location` | Many2one → `stock.location` | ✅ 🧹 |
-| `x_studio_virtual_location_1` | Many2one → `stock.location` | ✅ 🧹 |
+| `source_location` | Many2one → `stock.location` | ✅ 🧹 |
+| `source_location_1` | Many2one → `stock.location` | ✅ 🧹 |
+| `virtual_location` | Many2one → `stock.location` | ✅ 🧹 |
+| `virtual_location_1` | Many2one → `stock.location` | ✅ 🧹 |
 | `x_studio_super_user` (v162) | Boolean | ✅ 🧹 |
 | `x_studio_super_user_melt_items` (v162) | Boolean | ✅ 🧹 |
 
@@ -222,15 +222,15 @@ metrics) and are deliberately not migrated:
 | Field | Model | Actual purpose |
 |---|---|---|
 | `x_studio_attendance_administrator` | res.users | HR attendance admin flag |
-| `x_studio_company_id` | res.users | Studio's own company-scope helper on users |
+| `accounting_company_id` | res.users | Studio's own company-scope helper on users |
 | `x_studio_many2many_field_Q50dg` | res.users | Studio-anonymous m2m — recruitment area |
 | `x_studio_many2many_field_bQRSA` | res.users | Studio-anonymous m2m — recruitment area |
 | `x_x_studio_users_internal_transfer_stock_location_count` | res.users | Stock-location stat helper |
 | `x_x_studio_users_stock_location_stock_location_count` | res.users | Stock-location stat helper |
 | `x_studio_recr_stages` | res.users | HR recruitment stages |
-| `x_studio_payment_type` | project.task | General payment-method flag |
-| `x_studio_starting_date` | project.task | General task start date |
-| `x_task_id_sale_order_count` | project.task | Generic sales-order count helper |
+| `payment_type` | project.task | General payment-method flag |
+| `starting_date` | project.task | General task start date |
+| `task_id_sale_order_count` | project.task | Generic sales-order count helper |
 
 **Verdict:** ➖ Out of scope. These will migrate if/when the other
 workflows they support get their own Fix-repair-style module.
@@ -249,8 +249,8 @@ to False.
 | ID | Name | Replaced by |
 |---|---|---|
 | 171 | RR - Auto Seq. No | `helpdesk.ticket._repair_seq_no_on_create_or_write` (create + write) |
-| 172 | RR - Auto Populate Repair Location | `@api.onchange('x_studio_return_receipt_location')` |
-| 178 | RR - Auto Select Product for RUG | `@api.onchange('ticket_type_id', 'x_studio_serial_number')` |
+| 172 | RR - Auto Populate Repair Location | `@api.onchange('return_receipt_location')` |
+| 178 | RR - Auto Select Product for RUG | `@api.onchange('ticket_type_id', 'serial_number')` |
 | 201 | RR - Validate Cancelled Tickets | `helpdesk.ticket.unlink()` hook |
 
 ### 5.2 Ancillary-model automations (8)
@@ -259,12 +259,12 @@ to False.
 |---|---|---|
 | 179 | RR - Auto Update Helpdesk Pipeline Status - 1 | `project.task.create()` |
 | 250 | Super User Validate | `res.users.create() + write()` |
-| 302 | JIN Company Id in Repair Reason | `x_repair_reason.create()` |
-| 303 | JIN Company Id in Repair Reason - Customer | `x_repair_reason_custom.create()` |
-| 304 | JIN Company Id in Repair Sub Reason | `x_repair_sub_reason.create()` |
-| 306 | JIN Company Id in Repair Stages | `x_repair_stages.create()` |
+| 302 | JIN Company Id in Repair Reason | `repair_reason.create()` |
+| 303 | JIN Company Id in Repair Reason - Customer | `repair_reason_custom.create()` |
+| 304 | JIN Company Id in Repair Sub Reason | `repair_sub_reason.create()` |
+| 306 | JIN Company Id in Repair Stages | `repair_stages.create()` |
 | 329 | JIN Company Id in Helpdesk Stage | `helpdesk.stage.create()` |
-| 331 | JIN Company Id in Repair Accounts | `x_repair_accounts.create()` |
+| 331 | JIN Company Id in Repair Accounts | `repair_accounts.create()` |
 
 ### 5.3 Historical / cleanup (6)
 
@@ -297,11 +297,11 @@ Highlights:
 | helpdesk.stage | form (5964), tree (4611) | ✅ 🧹 |
 | project.task | form (3019, 4620, 4730), tree (4775), cohort (4894) | ✅ 🧹 |
 | res.users | form (2392), tree (2391) | ✅ 🧹 |
-| `x_repair_accounts` | primary form/tree/search + 2 Studio overlays | ✅ 🧹 |
-| `x_repair_reason` | primary form/tree/search + 1 overlay | ✅ 🧹 |
-| `x_repair_reason_custom` | primary form/tree/search + 1 overlay | ✅ 🧹 |
-| `x_repair_stages` | primary form/tree/search + 1 overlay | ✅ 🧹 |
-| `x_repair_sub_reason` | primary form/tree/search + 1 overlay | ✅ 🧹 |
+| `repair_accounts` | primary form/tree/search + 2 Studio overlays | ✅ 🧹 |
+| `repair_reason` | primary form/tree/search + 1 overlay | ✅ 🧹 |
+| `repair_reason_custom` | primary form/tree/search + 1 overlay | ✅ 🧹 |
+| `repair_stages` | primary form/tree/search + 1 overlay | ✅ 🧹 |
+| `repair_sub_reason` | primary form/tree/search + 1 overlay | ✅ 🧹 |
 
 ### Post-migration arch cleanup on view 3019 (project.task form)
 

@@ -1,6 +1,6 @@
 """repair.order Studio-field port (v299).
 
-Clear-DB has a single Studio-created `x_studio_confirm_draft_quotation`
+Clear-DB has a single Studio-created `confirm_draft_quotation`
 boolean on the stock `repair.order` model. This file ports it so
 `ir.model.fields` on a fresh install matches Clear-DB verbatim
 (state='base' after this module loads).
@@ -18,6 +18,6 @@ from odoo import fields, models
 class RepairOrder(models.Model):
     _inherit = "repair.order"
 
-    x_studio_confirm_draft_quotation = fields.Boolean(
+    confirm_draft_quotation = fields.Boolean(
         string="Confirm Draft Quotation",
     )

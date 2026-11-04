@@ -4,9 +4,9 @@ v279: port of Studio automation 193 / server action 2144
 'RR - Sales Price For RUG Items'.
 
 Clear-DB code:
-    if record.x_studio_quotation_type == 'Repair':
+    if record.quotation_type == 'Repair':
       original_price = record.price_unit
-      if record.x_studio_rug_confirmed == True:
+      if record.rug_confirmed == True:
         record.write({'price_unit': record.product_template_id.standard_price,
                       'x_studio_price_unit_original': original_price})
 
@@ -17,12 +17,12 @@ previous price in x_studio_price_unit_original (audit trail for the
 customer-facing quote before RUG locked it).
 
 Fix-repair's sale_order.py already resets prices when the HEADER
-x_studio_rug_approved flips True (a later stage). This line-side
+rug_approved flips True (a later stage). This line-side
 override catches the earlier trigger (rug_confirmed) AND handles
 lines added AFTER rug_confirmed — the header-side write() only fires
 when the flag flips, not on subsequent line adds.
 
-Fields x_studio_quotation_type / x_studio_rug_confirmed live on the
+Fields quotation_type / rug_confirmed live on the
 parent sale.order (declared in BugFix-Sales), not on the line — the
 override navigates via record.order_id. x_studio_price_unit_original
 is declared on sale.order.line by BugFix-Sales v43.
@@ -49,9 +49,9 @@ class SaleOrderLine(models.Model):
             order = line.order_id
             if not order:
                 continue
-            if order.x_studio_quotation_type != "Repair":
+            if order.quotation_type != "Repair":
                 continue
-            if not getattr(order, "x_studio_rug_confirmed", False):
+            if not getattr(order, "rug_confirmed", False):
                 continue
             product = line.product_template_id
             if not product:
@@ -112,9 +112,9 @@ class SaleOrderLine(models.Model):
             order = line.order_id
             if not order:
                 continue
-            if order.x_studio_quotation_type != "Repair":
+            if order.quotation_type != "Repair":
                 continue
             if not order.x_studio_unlocked:
                 continue
             line.x_studio_re_estimated = True
-            line.x_studio_count_1 = order.x_studio_re_estimate_count + 1
+            line.x_studio_count_1 = order.re_estimate_count + 1

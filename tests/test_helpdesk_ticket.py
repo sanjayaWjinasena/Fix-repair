@@ -20,7 +20,7 @@ class TestHelpdeskTicketActions(TransactionCase):
 
     def test_dispatch_without_collection_shows_message(self):
         """Dispatch before collection raises a UserError, not a NameError."""
-        self.ticket.x_studio_pick_id = False
+        self.ticket.pick_id = False
         with self.assertRaises(UserError):
             self.ticket.fix_repair_action_direct_dispatch()
 

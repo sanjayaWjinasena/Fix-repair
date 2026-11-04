@@ -58,7 +58,7 @@ class AccountMove(models.Model):
     # Customer Invoice' automation port. Both live on account.move on
     # Clear-DB (state=manual, owned by studio_customization).
     #
-    # x_studio_rug_confirmed: mirror of the linked sale.order's RUG
+    # rug_confirmed: mirror of the linked sale.order's RUG
     #   confirmation flag. Computed by walking invoice_origin →
     #   sale.order (same pattern as is_rug_invoice above). Not a
     #   `related` because x_studio_sale_id lives in the optional
@@ -66,35 +66,33 @@ class AccountMove(models.Model):
     #   it without expanding the tree, and Odoo's setup_related bails
     #   at load time when the source field isn't yet registered.
     #   Compute is stored so search domains work.
-    x_studio_rug_confirmed = fields.Boolean(
+    rug_confirmed = fields.Boolean(
         string="RUG Confirmed",
-        compute="_compute_x_studio_rug_confirmed",
+        compute="_compute_rug_confirmed",
         store=True,
         readonly=True,
     )
 
     @api.depends("invoice_origin", "move_type")
-    def _compute_x_studio_rug_confirmed(self):
+    def _compute_rug_confirmed(self):
         for move in self:
             if not move.invoice_origin:
-                move.x_studio_rug_confirmed = False
+                move.rug_confirmed = False
                 continue
             so = (
                 self.env["sale.order"]
                 .sudo()
                 .search([("name", "=", move.invoice_origin)], limit=1)
             )
-            move.x_studio_rug_confirmed = bool(
-                so and getattr(so, "x_studio_rug_confirmed", False)
-            )
+            move.rug_confirmed = bool(so and getattr(so, "rug_confirmed", False))
 
-    # x_studio_rug_acc_updated: True once the salesperson has clicked
+    # rug_acc_updated: True once the salesperson has clicked
     # the 'Change to RUG Account' button on the invoice. Fix-repair's
     # action_change_to_rug_account (below) sets this to True after
     # writing the RUG account onto the product lines. Studio's
     # automation 215 uses it (along with rug_confirmed) as the gate
     # for firing the auto-settlement on write.
-    x_studio_rug_acc_updated = fields.Boolean(
+    rug_acc_updated = fields.Boolean(
         string="RUG Account Updated",
     )
 
@@ -117,8 +115,8 @@ class AccountMove(models.Model):
             # "Change to RUG Account" button stays hidden, and
             # _rug_auto_settle is a no-op on action_post.
             move.is_rug_invoice = (
-                so.x_studio_quotation_type == "Repair"
-                and not so.x_repair_customer_pays
+                so.quotation_type == "Repair"
+                and not so.repair_customer_pays
                 and not so.x_studio_rug_rejected
             )
 
@@ -130,11 +128,11 @@ class AccountMove(models.Model):
         created on that account already)."""
         for move in self:
             config = (
-                self.env["x_repair_accounts"]
+                self.env["repair_accounts"]
                 .sudo()
-                .search([("x_studio_company_id", "=", move.company_id.id)], limit=1)
+                .search([("accounting_company_id", "=", move.company_id.id)], limit=1)
             )
-            rug_account = config.x_studio_rug_account if config else False
+            rug_account = config.rug_account if config else False
             product_lines = move.invoice_line_ids.filtered(
                 lambda line: line.display_type not in ("line_section", "line_note")
             )
@@ -171,10 +169,10 @@ class AccountMove(models.Model):
             # the RUG is still confirmed. If it's been rejected the customer
             # pays the invoice and we want Register Payment available again.
             #
-            # Previously referenced x_studio_rug_confirmed / x_studio_rug_rejected
+            # Previously referenced rug_confirmed / x_studio_rug_rejected
             # directly — those fields live on sale.order, not account.move.
             # On dev env's account.move form, OWL couldn't resolve them
-            # ("Name 'x_studio_rug_confirmed' is not defined") and the entire
+            # ("Name 'rug_confirmed' is not defined") and the entire
             # invoice form crashed to render. Switched to is_rug_invoice which
             # is a proper account.move field (compute above) that already
             # encodes the same predicate: Repair quotation type, not customer-
@@ -235,11 +233,11 @@ class AccountMove(models.Model):
     def action_change_to_rug_account(self):
         for move in self:
             config = (
-                self.env["x_repair_accounts"]
+                self.env["repair_accounts"]
                 .sudo()
-                .search([("x_studio_company_id", "=", move.company_id.id)], limit=1)
+                .search([("accounting_company_id", "=", move.company_id.id)], limit=1)
             )
-            if not config or not config.x_studio_rug_account:
+            if not config or not config.rug_account:
                 raise UserError(
                     _(
                         "No RUG account configured for company '%(company)s'. "
@@ -247,7 +245,7 @@ class AccountMove(models.Model):
                         company=move.company_id.name,
                     )
                 )
-            rug_account = config.x_studio_rug_account
+            rug_account = config.rug_account
             product_lines = move.invoice_line_ids.filtered(
                 lambda line: line.display_type not in ("line_section", "line_note")
             )
@@ -255,7 +253,7 @@ class AccountMove(models.Model):
             # v280 — mirror Studio's rug_acc_updated flag so automation
             # 215's port (write() override below) can gate on the same
             # signal it did on Clear-DB.
-            move.x_studio_rug_acc_updated = True
+            move.rug_acc_updated = True
 
     def action_post(self):
         res = super().action_post()
@@ -303,12 +301,12 @@ class AccountMove(models.Model):
         # writes. Studio's automation only fires meaningfully when the
         # user (or an upstream automation) sets rug_acc_updated=True on
         # a posted RUG invoice. Match that intent precisely.
-        if vals.get("x_studio_rug_acc_updated") is not True:
+        if vals.get("rug_acc_updated") is not True:
             return res
         for move in self:
             if move.state != "posted":
                 continue
-            if not (move.x_studio_rug_confirmed and move.x_studio_rug_acc_updated):
+            if not (move.rug_confirmed and move.rug_acc_updated):
                 continue
             if move.move_type != "out_invoice":
                 continue
@@ -371,13 +369,13 @@ class AccountMove(models.Model):
             return
 
         config = (
-            self.env["x_repair_accounts"]
+            self.env["repair_accounts"]
             .sudo()
-            .search([("x_studio_company_id", "=", self.company_id.id)], limit=1)
+            .search([("accounting_company_id", "=", self.company_id.id)], limit=1)
         )
-        if not config or not config.x_studio_rug_account:
+        if not config or not config.rug_account:
             return
-        rug_account = config.x_studio_rug_account
+        rug_account = config.rug_account
 
         invoice_rug_lines = self.line_ids.filtered(
             lambda line: line.account_id == rug_account

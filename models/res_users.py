@@ -25,10 +25,10 @@ class ResUsers(models.Model):
         studio_usermodel_migration.
         """
         cluster = [
-            "x_studio_source_location",
-            "x_studio_source_location_1",
-            "x_studio_virtual_location",
-            "x_studio_virtual_location_1",
+            "source_location",
+            "source_location_1",
+            "virtual_location",
+            "virtual_location_1",
         ]
         Field = self.env["ir.model.fields"].sudo()
         rows = Field.search(
@@ -71,7 +71,7 @@ class ResUsersGap(models.Model):
     # STRIPPED x_studio_char_field_169HD: related field chain not resolvable on target
     # STRIPPED x_studio_char_field_vHXsn: related field chain not resolvable on target
     # STRIPPED x_studio_char_field_zMp65: related field chain not resolvable on target
-    # STRIPPED x_studio_created_date: related field chain not resolvable on target
+    # STRIPPED created_date: related field chain not resolvable on target
     # STRIPPED x_studio_created_date_1: related field chain not resolvable on target
     # STRIPPED x_studio_credit_limit: related field chain not resolvable on target
     # STRIPPED x_studio_customer_group1: related field chain not resolvable on target

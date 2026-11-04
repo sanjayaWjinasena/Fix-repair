@@ -2,7 +2,7 @@ from odoo import fields, models
 
 
 class XResolutionsGap(models.Model):
-    _inherit = "x_resolutions"
+    _inherit = "resolutions"
 
-    x_active = fields.Boolean(string="Active")
-    x_name = fields.Char(string="Resolution")
+    active = fields.Boolean(string="Active")
+    name = fields.Char(string="Resolution")

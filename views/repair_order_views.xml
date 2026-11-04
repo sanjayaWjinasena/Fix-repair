@@ -37,7 +37,7 @@
       <field name="arch" type="xml">
         <data>
   <xpath expr="//field[@name='tag_ids']" position="after">
-    <field name="x_studio_confirm_draft_quotation" string="Confirm Draft Quotation" force_save="True" readonly="1"/>
+    <field name="confirm_draft_quotation" string="Confirm Draft Quotation" force_save="True" readonly="1"/>
   </xpath>
   <xpath expr="//field[@name='product_packaging_id']" position="after">
     <!-- STRIPPED price_unit not on repair.order --></xpath>
@@ -53,7 +53,7 @@
       <field name="mode">extension</field>
       <field name="arch" type="xml">
         <data>
-    <xpath expr="//form" position="inside"><field name="x_studio_confirm_draft_quotation" invisible="1"/></xpath><xpath expr="//header/button[@name='action_validate']" position="before"> x_studio_confirm_draft_quotation
+    <xpath expr="//form" position="inside"><field name="confirm_draft_quotation" invisible="1"/></xpath><xpath expr="//header/button[@name='action_validate']" position="before"> confirm_draft_quotation
       <!-- STRIPPED action button aid=1814 unresolvable -->
     </xpath>
     

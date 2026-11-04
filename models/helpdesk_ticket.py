@@ -37,13 +37,13 @@ class HelpdeskTicket(models.Model):
         store=True,
     )
 
-    # Override the Studio-defined x_studio_handed_over compute to:
+    # Override the Studio-defined handed_over compute to:
     #   1. Remove the stage-write side effect (caused timeouts on list views)
     #   2. Remove the user-context company bug (was using allowed_company_ids[0]
     #      instead of rec.company_id, moving company-2 tickets to stage 13)
     # Stage transitions are now handled entirely by stock_picking._action_done.
-    x_studio_handed_over = fields.Boolean(
-        compute="_compute_x_studio_handed_over",
+    handed_over = fields.Boolean(
+        compute="_compute_handed_over",
         store=False,
     )
 
@@ -60,46 +60,46 @@ class HelpdeskTicket(models.Model):
 
     # Repair Under Warranty — read from the ticket type's warranty flag.
     # True when the ticket type is configured as an under-warranty repair.
-    x_studio_rug_repair = fields.Boolean(
+    rug_repair = fields.Boolean(
         string="Repair Under Warranty",
-        related="ticket_type_id.x_studio_rug",
+        related="ticket_type_id.rug",
         store=True,
         readonly=True,
     )
 
     # RUG Confirmed — read from the ticket type's rug_confirmed flag.
     # True once the ticket type's RUG has been confirmed at setup time.
-    x_studio_rug_confirmed = fields.Boolean(
+    rug_confirmed = fields.Boolean(
         string="RUG Confirmed",
-        related="ticket_type_id.x_studio_rug_confirmed",
+        related="ticket_type_id.rug_confirmed",
         store=True,
         readonly=True,
     )
 
     # RUG Approved — set to True by the "Approve RUG" flow on the linked
     # sale.order (action_approve_rug_direct on Fix-repair sale.order).
-    x_studio_rug_approved = fields.Boolean(
+    rug_approved = fields.Boolean(
         string="RUG Approved",
     )
 
     # RUG Request Sent — set to True when the salesperson clicks "Request
     # RUG Approval" on the linked sale.order.
-    x_studio_rug_request_sent = fields.Boolean(
+    rug_request_sent = fields.Boolean(
         string="RUG Request Sent",
     )
 
     # Normal Repair (With Serial No) — related from the ticket type.
-    x_studio_normal_repair_with_serial_no = fields.Boolean(
+    normal_repair_with_serial_no = fields.Boolean(
         string="Normal Repair (With Serial No)",
-        related="ticket_type_id.x_studio_with_serial_no",
+        related="ticket_type_id.with_serial_no",
         store=True,
         readonly=True,
     )
 
     # Normal Repair (Without Serial No) — related from the ticket type.
-    x_studio_normal_repair_without_serial_no = fields.Boolean(
+    normal_repair_without_serial_no = fields.Boolean(
         string="Normal Repair (Without Serial No)",
-        related="ticket_type_id.x_studio_without_serial_no",
+        related="ticket_type_id.without_serial_no",
         store=True,
         readonly=True,
     )
@@ -109,21 +109,21 @@ class HelpdeskTicket(models.Model):
     # tuples with distinct keys) because Studio's compute wrote the
     # human-readable strings directly, and downstream references
     # (search filters, view invisible expressions) match by string.
-    x_studio_rug_approval_status = fields.Selection(
+    rug_approval_status = fields.Selection(
         selection=[
             ("Pending RUG Approval", "Pending RUG Approval"),
             ("RUG Approved", "RUG Approved"),
             ("RUG Rejected", "RUG Rejected"),
         ],
         string="RUG Approval Status",
-        compute="_compute_x_studio_rug_approval_status",
+        compute="_compute_rug_approval_status",
     )
 
     @api.depends(
-        "fsm_task_ids.sale_order_id.x_studio_rug_approved",
+        "fsm_task_ids.sale_order_id.rug_approved",
         "fsm_task_ids.sale_order_id.x_studio_rug_rejected",
     )
-    def _compute_x_studio_rug_approval_status(self):
+    def _compute_rug_approval_status(self):
         # Preserves Studio's original iteration behaviour: iterates all
         # linked fsm tasks and updates val for each task that has an SO.
         # No `break`, so if multiple tasks exist the LAST one determines
@@ -133,11 +133,11 @@ class HelpdeskTicket(models.Model):
             for task in ticket.fsm_task_ids:
                 so = task.sale_order_id
                 if so:
-                    if so.x_studio_rug_approved:
+                    if so.rug_approved:
                         val = "RUG Approved"
                     elif so.x_studio_rug_rejected:
                         val = "RUG Rejected"
-            ticket.x_studio_rug_approval_status = val
+            ticket.rug_approval_status = val
 
     # ─────────────────────────────────────────────────────────────────
     # Cluster 2 — Repair location / stock
@@ -150,36 +150,36 @@ class HelpdeskTicket(models.Model):
     # Repair Location — where the repair physically happens. Set by
     # RR-Auto Populate Repair Location automation (or user-editable).
     # For centre repairs it's the branch's stock location.
-    x_studio_repair_location = fields.Many2one(
+    repair_location = fields.Many2one(
         "stock.location",
         string="Repair Location",
     )
 
     # Return Receipt Location — where returned items are received back
     # after a repair round-trip (used by the Return picking flow).
-    x_studio_return_receipt_location = fields.Many2one(
+    return_receipt_location = fields.Many2one(
         "stock.location",
         string="Return Receipt Location",
     )
 
     # Source Location — mirrored from the assigned user's home stock
     # location (per-user default source for repair pickings).
-    x_studio_source_location = fields.Many2one(
+    source_location = fields.Many2one(
         "stock.location",
         string="Source Location",
-        related="user_id.x_studio_source_location",
+        related="user_id.source_location",
         store=True,
         readonly=True,
     )
 
     # Source Location (duplicate slot — appears to be a Studio-created
     # copy from an earlier iteration). Kept for schema compatibility;
-    # currently reads from user_id.x_studio_source_location_1 which is
+    # currently reads from user_id.source_location_1 which is
     # itself a Studio-owned res.users field.
-    x_studio_source_location_1 = fields.Many2one(
+    source_location_1 = fields.Many2one(
         "stock.location",
         string="Source Location",
-        related="user_id.x_studio_source_location_1",
+        related="user_id.source_location_1",
         store=True,
         readonly=True,
     )
@@ -187,19 +187,19 @@ class HelpdeskTicket(models.Model):
     # Virtual Location — mirrored from the assigned user. Used as the
     # in-transit / staging location for repair pickings on the user's
     # branch.
-    x_studio_virtual_location = fields.Many2one(
+    virtual_location = fields.Many2one(
         "stock.location",
         string="Virtual Location",
-        related="user_id.x_studio_virtual_location",
+        related="user_id.virtual_location",
         store=True,
         readonly=True,
     )
 
     # Virtual Location (duplicate slot — Studio copy).
-    x_studio_virtual_location_1 = fields.Many2one(
+    virtual_location_1 = fields.Many2one(
         "stock.location",
         string="Virtual Location",
-        related="user_id.x_studio_virtual_location_1",
+        related="user_id.virtual_location_1",
         store=True,
         readonly=True,
     )
@@ -207,23 +207,23 @@ class HelpdeskTicket(models.Model):
     # Virtual Location Id — integer form of the virtual location's id,
     # used by legacy Studio automations that expect an integer rather
     # than a Many2one recordset.
-    x_studio_virtual_location_id = fields.Integer(
+    virtual_location_id = fields.Integer(
         string="Virtual Location Id",
-        related="user_id.x_studio_virtual_location.id",
+        related="user_id.virtual_location.id",
         store=True,
         readonly=True,
     )
 
     # Pick Id — integer FK to a stock.picking. Historically kept as
     # integer (not a Many2one) by Studio for reasons lost to time.
-    # The Many2one variant lives in x_studio_picking_id below.
-    x_studio_pick_id = fields.Integer(
+    # The Many2one variant lives in picking_id below.
+    pick_id = fields.Integer(
         string="Pick Id",
     )
 
     # Picking Id — proper Many2one to the linked stock.picking. Written
     # by the Fix-repair picking-creation flow.
-    x_studio_picking_id = fields.Many2one(
+    picking_id = fields.Many2one(
         "stock.picking",
         string="Picking Id",
     )
@@ -237,25 +237,25 @@ class HelpdeskTicket(models.Model):
 
     # Cancelled flag — set to True by Studio's cancel automation when
     # a ticket is moved to a cancelled stage.
-    x_studio_cancelled = fields.Boolean(
+    cancelled = fields.Boolean(
         string="Cancelled",
     )
 
     # Cancelled (duplicate slot — Studio-created copy). Kept for
     # schema compatibility.
-    x_studio_cancelled_2 = fields.Boolean(
+    cancelled_2 = fields.Boolean(
         string="Cancelled-2",
     )
 
     # Cancel Reason — free-text explanation entered by the user
     # closing the ticket.
-    x_studio_cancel_reason = fields.Text(
+    cancel_reason = fields.Text(
         string="Cancel Reason",
     )
 
     # Cancel Status — selection flag surfaced on the ticket list view.
     # Two values: 'None' (default) and 'Cancelled'.
-    x_studio_cancel_status = fields.Selection(
+    cancel_status = fields.Selection(
         selection=[
             ("None", "None"),
             ("Cancelled", "Cancelled"),
@@ -264,32 +264,32 @@ class HelpdeskTicket(models.Model):
     )
 
     # Cancelled By — user who initiated the cancellation.
-    x_studio_cancelled_by = fields.Many2one(
+    cancelled_by = fields.Many2one(
         "res.users",
         string="Cancelled By",
     )
 
     # Cancelled Date — timestamp of the cancellation action.
-    x_studio_cancelled_date = fields.Datetime(
+    cancelled_date = fields.Datetime(
         string="Cancelled Date",
     )
 
     # Cancelled Stage Id — the helpdesk stage the ticket was in when
     # it got cancelled (so reopen can restore it).
-    x_studio_cancelled_stage_id = fields.Many2one(
+    cancelled_stage_id = fields.Many2one(
         "helpdesk.stage",
         string="Cancelled Stage Id",
     )
 
     # Reopened flag — set to True when a cancelled ticket is
     # reactivated.
-    x_studio_reopened = fields.Boolean(
+    reopened = fields.Boolean(
         string="Reopened",
     )
 
     # Reopen Status — selection flag surfaced on list view.
     # Two values: 'None' (default) and 'Reopened'.
-    x_studio_reopen_status = fields.Selection(
+    reopen_status = fields.Selection(
         selection=[
             ("None", "None"),
             ("Reopened", "Reopened"),
@@ -298,13 +298,13 @@ class HelpdeskTicket(models.Model):
     )
 
     # Reopened By — user who reopened the ticket.
-    x_studio_reopened_by = fields.Many2one(
+    reopened_by = fields.Many2one(
         "res.users",
         string="Reopened By",
     )
 
     # Reopened Date — timestamp of the reopen action.
-    x_studio_reopened_date = fields.Datetime(
+    reopened_date = fields.Datetime(
         string="Reopened Date",
     )
 
@@ -315,61 +315,61 @@ class HelpdeskTicket(models.Model):
     # corresponding stage transition. Read by Fix-repair's stage
     # advancement guards (stock_picking._action_done, project_task
     # auto-sync) to avoid re-firing a transition that already ran.
-    # x_studio_handed_over is not here — it's already Python-defined
+    # handed_over is not here — it's already Python-defined
     # earlier in this class (compute, store=False) and gets folded
     # into the migration function below for state-flip safety.
 
     # Send to Factory — set when the ticket is dispatched to the
     # factory for repair (transition from Diagnosis onwards).
-    x_studio_send_to_factory = fields.Boolean(
+    send_to_factory = fields.Boolean(
         string="Send to Factory",
     )
 
     # Receive at Factory — set when the factory acknowledges receipt.
-    x_studio_receive_at_factory = fields.Boolean(
+    receive_at_factory = fields.Boolean(
         string="Receive at Factory",
     )
 
     # Send to Centre — set when the repaired item is dispatched back
     # from the factory to the sales centre.
-    x_studio_send_to_centre = fields.Boolean(
+    send_to_centre = fields.Boolean(
         string="Send to Centre",
     )
 
     # Receive at Centre — set when the sales centre acknowledges
     # receiving the item back from the factory.
-    x_studio_receive_at_centre = fields.Boolean(
+    receive_at_centre = fields.Boolean(
         string="Receive at Centre",
     )
 
     # Estimation Sent Stage Updated — set once the ticket has moved
     # to 'Estimation Sent to Customer' stage. Prevents the transition
     # firing twice for the same SO.
-    x_studio_estimation_sent_stage_updated = fields.Boolean(
+    estimation_sent_stage_updated = fields.Boolean(
         string="Estimation Sent Stage Updated",
     )
 
     # Estimation Approved Stage Updated — set once the ticket has
     # moved to 'Estimation Approval Received' stage.
-    x_studio_estimation_approved_stage_updated = fields.Boolean(
+    estimation_approved_stage_updated = fields.Boolean(
         string="Estimation Approved Stage Updated",
     )
 
     # Invoice Stage Updated — set once the invoice-related stage
     # transition has fired.
-    x_studio_invoice_stage_updated = fields.Boolean(
+    invoice_stage_updated = fields.Boolean(
         string="Invoice Stage Updated",
     )
 
     # Repair Started Stage Updated — set once the ticket has moved
     # to 'Repair Started' stage.
-    x_studio_repair_started_stage_updated = fields.Boolean(
+    repair_started_stage_updated = fields.Boolean(
         string="Repair Started Stage Updated",
     )
 
     # Repair Complete Stage Updated — set once the ticket has moved
     # to 'Repair Completed' stage.
-    x_studio_repair_complete_stage_updated = fields.Boolean(
+    repair_complete_stage_updated = fields.Boolean(
         string="Repair Complete Stage Updated",
     )
 
@@ -379,94 +379,94 @@ class HelpdeskTicket(models.Model):
     # Verbatim ports of the Studio compute strings. Side effects
     # preserved exactly: stage writes, audit-slot writes,
     # datetime.datetime.now() usage, self._uid audit, and the
-    # x_studio_items / x_studio_qty / x_studio_sales_price copy-out
+    # items / qty / sales_price copy-out
     # pattern in the delivered/task-status flows. Behaviour identical
     # to Studio; only ownership moves to Python.
 
-    x_studio_fsm_task_done = fields.Boolean(
+    fsm_task_done = fields.Boolean(
         string="FSM Task Done",
-        compute="_compute_x_studio_fsm_task_done",
+        compute="_compute_fsm_task_done",
         store=False,
         readonly=True,
     )
 
     @api.depends("fsm_task_ids")
-    def _compute_x_studio_fsm_task_done(self):
+    def _compute_fsm_task_done(self):
         for rec in self:
             task_status = False
             for line in rec.fsm_task_ids:
                 if line.fsm_done:
                     task_status = True
-                if line.x_studio_end_quick_repair:
+                if line.end_quick_repair:
                     task_status = True
-            rec["x_studio_fsm_task_done"] = task_status
+            rec["fsm_task_done"] = task_status
 
-    x_studio_fully_paid_so = fields.Boolean(
+    fully_paid_so = fields.Boolean(
         string="Fully Paid SO",
-        compute="_compute_x_studio_fully_paid_so",
+        compute="_compute_fully_paid_so",
         store=False,
         readonly=True,
     )
 
     @api.depends("fsm_task_ids")
-    def _compute_x_studio_fully_paid_so(self):
+    def _compute_fully_paid_so(self):
         for rec in self:
             valid = False
             for invoices in rec.fsm_task_ids:
-                if invoices.x_studio_fully_invoiced_so:
+                if invoices.fully_invoiced_so:
                     valid = True
-                if invoices.x_studio_end_quick_repair:
+                if invoices.end_quick_repair:
                     valid = True
-            rec["x_studio_fully_paid_so"] = valid
+            rec["fully_paid_so"] = valid
 
-    x_studio_valid_confirm_return = fields.Boolean(
+    valid_confirm_return = fields.Boolean(
         string="Valid Confirm Return",
-        compute="_compute_x_studio_valid_confirm_return",
+        compute="_compute_valid_confirm_return",
         store=False,
         readonly=True,
     )
 
     @api.depends("picking_ids")
-    def _compute_x_studio_valid_confirm_return(self):
+    def _compute_valid_confirm_return(self):
         for rec in self:
             valid = False
             for line in rec.picking_ids:
                 if line.state == "done":
                     valid = True
-            rec["x_studio_valid_confirm_return"] = valid
+            rec["valid_confirm_return"] = valid
 
-    x_studio_valid_return = fields.Boolean(
+    valid_return = fields.Boolean(
         string="Valid Return",
-        compute="_compute_x_studio_valid_return",
+        compute="_compute_valid_return",
         store=False,
         readonly=True,
     )
 
     @api.depends("picking_ids")
-    def _compute_x_studio_valid_return(self):
+    def _compute_valid_return(self):
         for rec in self:
             valid = False
             for line in rec.picking_ids:
                 if line.state != "cancel":
                     valid = True
-            rec["x_studio_valid_return"] = valid
+            rec["valid_return"] = valid
 
-    x_studio_user_location_validation = fields.Boolean(
+    user_location_validation = fields.Boolean(
         string="User Location Validation",
-        compute="_compute_x_studio_user_location_validation",
+        compute="_compute_user_location_validation",
         store=False,
         readonly=True,
     )
 
-    @api.depends("x_studio_return_receipt_location")
-    def _compute_x_studio_user_location_validation(self):
+    @api.depends("return_receipt_location")
+    def _compute_user_location_validation(self):
         for rec in self:
             valid = False
-            if rec.x_studio_return_receipt_location:
+            if rec.return_receipt_location:
                 loc = self.env["stock.location"].search(
                     [
-                        ("id", "=", rec.x_studio_return_receipt_location.id),
-                        ("x_studio_users_stock_location", "ilike", self._uid),
+                        ("id", "=", rec.return_receipt_location.id),
+                        ("users_stock_location", "ilike", self._uid),
                         ("active", "=", True),
                     ],
                     limit=1,
@@ -475,17 +475,17 @@ class HelpdeskTicket(models.Model):
                     valid = False
                 else:
                     valid = True
-            rec["x_studio_user_location_validation"] = valid
+            rec["user_location_validation"] = valid
 
-    x_studio_valid_confirmed_so = fields.Boolean(
+    valid_confirmed_so = fields.Boolean(
         string="Valid Confirmed SO",
-        compute="_compute_x_studio_valid_confirmed_so",
+        compute="_compute_valid_confirmed_so",
         store=False,
         readonly=True,
     )
 
     @api.depends("fsm_task_ids")
-    def _compute_x_studio_valid_confirmed_so(self):
+    def _compute_valid_confirmed_so(self):
         for rec in self:
             company_ids = rec.env.context.get(
                 "allowed_company_ids", [rec.env.user.company_id.id]
@@ -493,29 +493,29 @@ class HelpdeskTicket(models.Model):
             company = self.env["res.company"].browse(company_ids[0])
             valid = False
             for invoices in rec.fsm_task_ids:
-                if invoices.x_studio_valid_confirm_so:
+                if invoices.valid_confirm_so:
                     valid = True
             if valid:
-                if not rec.x_studio_estimation_sent_stage_updated:
-                    rec["x_studio_estimation_sent_stage_updated"] = True
+                if not rec.estimation_sent_stage_updated:
+                    rec["estimation_sent_stage_updated"] = True
                     if company.id == 1:
                         rec["stage_id"] = 10
                     else:
                         rec["stage_id"] = 29
-                    rec["x_studio_stage_date"] = datetime.datetime.now()
-                    rec["x_studio_created_by_4"] = self._uid
-                    rec["x_studio_created_on_4"] = datetime.datetime.now()
-            rec["x_studio_valid_confirmed_so"] = valid
+                    rec["stage_date"] = datetime.datetime.now()
+                    rec["created_by_4"] = self._uid
+                    rec["created_on_4"] = datetime.datetime.now()
+            rec["valid_confirmed_so"] = valid
 
-    x_studio_valid_confirmed2_so = fields.Boolean(
+    valid_confirmed2_so = fields.Boolean(
         string="Valid Confirmed2 SO",
-        compute="_compute_x_studio_valid_confirmed2_so",
+        compute="_compute_valid_confirmed2_so",
         store=False,
         readonly=True,
     )
 
     @api.depends("fsm_task_ids")
-    def _compute_x_studio_valid_confirmed2_so(self):
+    def _compute_valid_confirmed2_so(self):
         for rec in self:
             company_ids = rec.env.context.get(
                 "allowed_company_ids", [rec.env.user.company_id.id]
@@ -523,29 +523,29 @@ class HelpdeskTicket(models.Model):
             company = self.env["res.company"].browse(company_ids[0])
             valid = False
             for invoices in rec.fsm_task_ids:
-                if invoices.x_studio_valid_confirm2_so:
+                if invoices.valid_confirm2_so:
                     valid = True
             if valid:
-                if not rec.x_studio_estimation_approved_stage_updated:
-                    rec["x_studio_estimation_approved_stage_updated"] = True
+                if not rec.estimation_approved_stage_updated:
+                    rec["estimation_approved_stage_updated"] = True
                     if company.id == 1:
                         rec["stage_id"] = 12
                     else:
                         rec["stage_id"] = 31
-                    rec["x_studio_stage_date"] = datetime.datetime.now()
-                    rec["x_studio_created_by_5"] = self._uid
-                    rec["x_studio_created_on_5"] = datetime.datetime.now()
-            rec["x_studio_valid_confirmed2_so"] = valid
+                    rec["stage_date"] = datetime.datetime.now()
+                    rec["created_by_5"] = self._uid
+                    rec["created_on_5"] = datetime.datetime.now()
+            rec["valid_confirmed2_so"] = valid
 
-    x_studio_valid_invoiced_so = fields.Boolean(
+    valid_invoiced_so = fields.Boolean(
         string="Valid Invoiced SO",
-        compute="_compute_x_studio_valid_invoiced_so",
+        compute="_compute_valid_invoiced_so",
         store=False,
         readonly=True,
     )
 
     @api.depends("fsm_task_ids")
-    def _compute_x_studio_valid_invoiced_so(self):
+    def _compute_valid_invoiced_so(self):
         for rec in self:
             company_ids = rec.env.context.get(
                 "allowed_company_ids", [rec.env.user.company_id.id]
@@ -556,30 +556,30 @@ class HelpdeskTicket(models.Model):
                 if invoices.sale_order_id.x_studio_order_payment_method == "Credit":
                     valid = False
                 else:
-                    if invoices.x_studio_valid_invoiced_so:
+                    if invoices.valid_invoiced_so:
                         valid = True
             if valid:
-                if not rec.x_studio_repair_complete_stage_updated:
-                    if not rec.x_studio_invoice_stage_updated:
+                if not rec.repair_complete_stage_updated:
+                    if not rec.invoice_stage_updated:
                         if company.id == 1:
                             rec["stage_id"] = 3
                         else:
                             rec["stage_id"] = 22
-                        rec["x_studio_stage_date"] = datetime.datetime.now()
-                        rec["x_studio_created_by_6"] = self._uid
-                        rec["x_studio_created_on_6"] = datetime.datetime.now()
-                        rec["x_studio_invoice_stage_updated"] = True
-            rec["x_studio_valid_invoiced_so"] = valid
+                        rec["stage_date"] = datetime.datetime.now()
+                        rec["created_by_6"] = self._uid
+                        rec["created_on_6"] = datetime.datetime.now()
+                        rec["invoice_stage_updated"] = True
+            rec["valid_invoiced_so"] = valid
 
-    x_studio_valid_delivered_so = fields.Boolean(
+    valid_delivered_so = fields.Boolean(
         string="Valid Delivered SO",
-        compute="_compute_x_studio_valid_delivered_so",
+        compute="_compute_valid_delivered_so",
         store=False,
         readonly=True,
     )
 
     @api.depends("fsm_task_ids")
-    def _compute_x_studio_valid_delivered_so(self):
+    def _compute_valid_delivered_so(self):
         for rec in self:
             company_ids = rec.env.context.get(
                 "allowed_company_ids", [rec.env.user.company_id.id]
@@ -588,24 +588,24 @@ class HelpdeskTicket(models.Model):
             valid = False
             valid2 = False
             for invoices in rec.fsm_task_ids:
-                if invoices.x_studio_valid_delivered_so:
+                if invoices.valid_delivered_so:
                     valid = True
-                if invoices.x_studio_valid_delivered_so2:
+                if invoices.valid_delivered_so2:
                     valid2 = True
             if valid2:
-                if not rec.x_studio_repair_complete_stage_updated:
+                if not rec.repair_complete_stage_updated:
                     if company.id == 1:
                         rec["stage_id"] = 9
                     else:
                         rec["stage_id"] = 28
-                    rec["x_studio_stage_date"] = datetime.datetime.now()
-                    rec["x_studio_created_by_8"] = self._uid
-                    rec["x_studio_created_on_8"] = datetime.datetime.now()
-                    rec["x_studio_repair_complete_stage_updated"] = True
+                    rec["stage_date"] = datetime.datetime.now()
+                    rec["created_by_8"] = self._uid
+                    rec["created_on_8"] = datetime.datetime.now()
+                    rec["repair_complete_stage_updated"] = True
 
                     so_items = self.env["sale.order.line"].search(
                         [
-                            ("order_id", "=", rec.x_studio_sale_order.id),
+                            ("order_id", "=", rec.sale_order.id),
                         ]
                     )
                     if so_items:
@@ -617,31 +617,31 @@ class HelpdeskTicket(models.Model):
                                 tot_item_ids.append(items.product_id.id)
                                 qty.append(items.product_uom_qty)
                                 prices.append(items.price_unit)
-                        rec["x_studio_items"] = [(6, 0, tot_item_ids)]
-                        rec["x_studio_qty"] = qty
-                        rec["x_studio_sales_price"] = prices
+                        rec["items"] = [(6, 0, tot_item_ids)]
+                        rec["qty"] = qty
+                        rec["sales_price"] = prices
             else:
                 if valid:
-                    if not rec.x_studio_repair_started_stage_updated:
+                    if not rec.repair_started_stage_updated:
                         if company.id == 1:
                             rec["stage_id"] = 11
                         else:
                             rec["stage_id"] = 30
-                        rec["x_studio_stage_date"] = datetime.datetime.now()
-                        rec["x_studio_created_by_7"] = self._uid
-                        rec["x_studio_created_on_7"] = datetime.datetime.now()
-                        rec["x_studio_repair_started_stage_updated"] = True
-            rec["x_studio_valid_delivered_so"] = valid
+                        rec["stage_date"] = datetime.datetime.now()
+                        rec["created_by_7"] = self._uid
+                        rec["created_on_7"] = datetime.datetime.now()
+                        rec["repair_started_stage_updated"] = True
+            rec["valid_delivered_so"] = valid
 
-    x_studio_task_status = fields.Boolean(
+    task_status = fields.Boolean(
         string="Task Status",
-        compute="_compute_x_studio_task_status",
+        compute="_compute_task_status",
         store=False,
         readonly=True,
     )
 
     @api.depends("fsm_task_ids")
-    def _compute_x_studio_task_status(self):
+    def _compute_task_status(self):
         for rec in self:
             company_ids = rec.env.context.get(
                 "allowed_company_ids", [rec.env.user.company_id.id]
@@ -651,24 +651,24 @@ class HelpdeskTicket(models.Model):
             for line in rec.fsm_task_ids:
                 if line.fsm_done:
                     task_status = True
-                if line.x_studio_end_quick_repair:
+                if line.end_quick_repair:
                     task_status = True
 
             if not task_status:
-                if rec.x_studio_sale_order == True:
-                    if rec.x_studio_sale_order.state == "cancel":
+                if rec.sale_order == True:
+                    if rec.sale_order.state == "cancel":
                         task_status = True
                     else:
                         delivery1 = self.env["stock.picking"].search(
                             [
-                                ("sale_id", "=", rec.x_studio_sale_order.id),
+                                ("sale_id", "=", rec.sale_order.id),
                             ],
                             limit=1,
                         )
                         if delivery1:
                             delivery = self.env["stock.picking"].search(
                                 [
-                                    ("sale_id", "=", rec.x_studio_sale_order.id),
+                                    ("sale_id", "=", rec.sale_order.id),
                                     ("state", "not in", ["done", "cancel"]),
                                 ],
                                 limit=1,
@@ -681,19 +681,19 @@ class HelpdeskTicket(models.Model):
                             task_status = False
 
             if task_status:
-                if not rec.x_studio_repair_complete_stage_updated:
+                if not rec.repair_complete_stage_updated:
                     if company.id == 1:
                         rec["stage_id"] = 9
                     else:
                         rec["stage_id"] = 28
-                    rec["x_studio_stage_date"] = datetime.datetime.now()
-                    rec["x_studio_created_by_8"] = self._uid
-                    rec["x_studio_created_on_8"] = datetime.datetime.now()
-                    rec["x_studio_repair_complete_stage_updated"] = True
+                    rec["stage_date"] = datetime.datetime.now()
+                    rec["created_by_8"] = self._uid
+                    rec["created_on_8"] = datetime.datetime.now()
+                    rec["repair_complete_stage_updated"] = True
 
                     so_items = self.env["sale.order.line"].search(
                         [
-                            ("order_id", "=", rec.x_studio_sale_order.id),
+                            ("order_id", "=", rec.sale_order.id),
                         ]
                     )
                     if so_items:
@@ -705,11 +705,11 @@ class HelpdeskTicket(models.Model):
                                 tot_item_ids.append(items.product_id.id)
                                 qty.append(items.product_uom_qty)
                                 prices.append(items.price_unit)
-                        rec["x_studio_items"] = [(6, 0, tot_item_ids)]
-                        rec["x_studio_qty"] = qty
-                        rec["x_studio_sales_price"] = prices
+                        rec["items"] = [(6, 0, tot_item_ids)]
+                        rec["qty"] = qty
+                        rec["sales_price"] = prices
 
-            rec["x_studio_task_status"] = task_status
+            rec["task_status"] = task_status
 
     # ─────────────────────────────────────────────────────────────────
     # Cluster 6 — Audit slots
@@ -721,40 +721,40 @@ class HelpdeskTicket(models.Model):
     # automations elsewhere. Kept as-is (numbered slots are ugly but
     # Studio's automations reference them by name).
 
-    x_studio_stage_date = fields.Datetime(string="Stage Date")
+    stage_date = fields.Datetime(string="Stage Date")
 
-    x_studio_created_by_1 = fields.Many2one("res.users", string="Created By 1")
-    x_studio_created_on_1 = fields.Datetime(string="Created On 1")
-    x_studio_created_by_2 = fields.Many2one("res.users", string="Created By 2")
-    x_studio_created_on_2 = fields.Datetime(string="Created On 2")
-    x_studio_created_by_3 = fields.Many2one("res.users", string="Created By 3")
-    x_studio_created_on_3 = fields.Datetime(string="Created On 3")
-    x_studio_created_by_4 = fields.Many2one("res.users", string="Created By 4")
-    x_studio_created_on_4 = fields.Datetime(string="Created On 4")
-    x_studio_created_by_5 = fields.Many2one("res.users", string="Created By 5")
-    x_studio_created_on_5 = fields.Datetime(string="Created On 5")
-    x_studio_created_by_6 = fields.Many2one("res.users", string="Created By 6")
-    x_studio_created_on_6 = fields.Datetime(string="Created On 6")
-    x_studio_created_by_7 = fields.Many2one("res.users", string="Created By 7")
-    x_studio_created_on_7 = fields.Datetime(string="Created On 7")
-    x_studio_created_by_8 = fields.Many2one("res.users", string="Created By 8")
-    x_studio_created_on_8 = fields.Datetime(string="Created On 8")
-    x_studio_created_by_9 = fields.Many2one("res.users", string="Created By 9")
-    x_studio_created_on_9 = fields.Datetime(string="Created On 9")
-    x_studio_created_by_10 = fields.Many2one("res.users", string="Created By 10")
-    x_studio_created_on_10 = fields.Datetime(string="Created On 10")
+    created_by_1 = fields.Many2one("res.users", string="Created By 1")
+    created_on_1 = fields.Datetime(string="Created On 1")
+    created_by_2 = fields.Many2one("res.users", string="Created By 2")
+    created_on_2 = fields.Datetime(string="Created On 2")
+    created_by_3 = fields.Many2one("res.users", string="Created By 3")
+    created_on_3 = fields.Datetime(string="Created On 3")
+    created_by_4 = fields.Many2one("res.users", string="Created By 4")
+    created_on_4 = fields.Datetime(string="Created On 4")
+    created_by_5 = fields.Many2one("res.users", string="Created By 5")
+    created_on_5 = fields.Datetime(string="Created On 5")
+    created_by_6 = fields.Many2one("res.users", string="Created By 6")
+    created_on_6 = fields.Datetime(string="Created On 6")
+    created_by_7 = fields.Many2one("res.users", string="Created By 7")
+    created_on_7 = fields.Datetime(string="Created On 7")
+    created_by_8 = fields.Many2one("res.users", string="Created By 8")
+    created_on_8 = fields.Datetime(string="Created On 8")
+    created_by_9 = fields.Many2one("res.users", string="Created By 9")
+    created_on_9 = fields.Datetime(string="Created On 9")
+    created_by_10 = fields.Many2one("res.users", string="Created By 10")
+    created_on_10 = fields.Datetime(string="Created On 10")
 
     # Factory shipment audit (sent to factory / received at factory)
-    x_studio_f_shipped_by = fields.Many2one("res.users", string="Shipped By")
-    x_studio_f_shipped_date = fields.Datetime(string="Shipped Date")
-    x_studio_f_received_by = fields.Many2one("res.users", string="Received By")
-    x_studio_f_received_date = fields.Datetime(string="Received Date")
+    f_shipped_by = fields.Many2one("res.users", string="Shipped By")
+    f_shipped_date = fields.Datetime(string="Shipped Date")
+    f_received_by = fields.Many2one("res.users", string="Received By")
+    f_received_date = fields.Datetime(string="Received Date")
 
     # Sales-centre shipment audit (sent from factory / received at centre)
-    x_studio_s_shipped_by = fields.Many2one("res.users", string="Shipped By")
-    x_studio_s_shipped_date = fields.Datetime(string="Shipped Date")
-    x_studio_s_received_by = fields.Many2one("res.users", string="Received By")
-    x_studio_s_received_date = fields.Datetime(string="Received Date")
+    s_shipped_by = fields.Many2one("res.users", string="Shipped By")
+    s_shipped_date = fields.Datetime(string="Shipped Date")
+    s_received_by = fields.Many2one("res.users", string="Received By")
+    s_received_date = fields.Datetime(string="Received Date")
 
     # ─────────────────────────────────────────────────────────────────
     # Cluster 7 — Serial number / product
@@ -762,57 +762,60 @@ class HelpdeskTicket(models.Model):
     # Serial-lot references, repair reasons, and the product/qty/
     # price snapshot fields that Cluster 5's task_status compute
     # writes to. Duplicate slots preserved for schema compatibility.
-    # Related chains walk through x_studio_sale_order (Studio-owned
+    # Related chains walk through sale_order (Studio-owned
     # until Cluster 8) — Odoo resolves the chain at runtime by field
     # name, so the migration order is irrelevant.
 
     # Serial Number — primary lot/serial for the item under repair.
-    x_studio_serial_no = fields.Many2one(
+    serial_no = fields.Many2one(
         "stock.lot",
         string="Serial Number",
     )
 
     # Serial Number-11 — duplicate slot from an earlier Studio
     # iteration. Kept for schema compatibility.
-    x_studio_serial_number = fields.Many2one(
+    serial_number = fields.Many2one(
         "stock.lot",
         string="Serial Number-11",
     )
 
     # SN Updated — flag set to True once the serial number has been
     # confirmed / edited by the repair user.
-    x_studio_sn_updated = fields.Boolean(
+    sn_updated = fields.Boolean(
         string="SN Updated",
     )
 
     # Repair Serial Created — flag set when a new stock.lot has been
     # created as part of the repair flow.
-    x_studio_repair_serial_created = fields.Boolean(
+    repair_serial_created = fields.Boolean(
         string="Repair Serial Created",
     )
 
     # Repair Reason — many-to-many onto the Studio-managed
-    # x_repair_reason_custom catalogue.
-    x_studio_repair_reason = fields.Many2many(
-        "x_repair_reason_custom",
+    # repair_reason_custom catalogue.
+    repair_reason = fields.Many2many(
+        "repair_reason_custom",
+        relation="helpdesk_ticket_x_repair_reason_custom_rel",
+        column1="helpdesk_ticket_id",
+        column2="x_repair_reason_custom_id",
         string="Repair Reason",
     )
 
     # Materials Used — first product from the linked SO's first
     # order line. Related chain walks Many2one -> One2many -> M2o;
     # Odoo returns the first match (Studio's semantics).
-    x_studio_materials_used = fields.Many2one(
+    materials_used = fields.Many2one(
         "product.product",
         string="Materials Used ",
-        related="x_studio_sale_order.order_line.product_id",
+        related="sale_order.order_line.product_id",
         store=True,
         readonly=True,
     )
 
     # Quantity — first order line's product_uom_qty (same chain).
-    x_studio_quantity = fields.Float(
+    quantity = fields.Float(
         string="Quantity",
-        related="x_studio_sale_order.order_line.product_uom_qty",
+        related="sale_order.order_line.product_uom_qty",
         store=True,
         readonly=True,
     )
@@ -821,9 +824,9 @@ class HelpdeskTicket(models.Model):
     # traverses O2M via first record). Stored as Char in Studio's
     # schema despite the source being Float; kept as Char here for
     # 1:1 compatibility.
-    x_studio_unit_price = fields.Char(
+    unit_price = fields.Char(
         string="Unit Price",
-        related="x_studio_sale_order.pricelist_id.item_ids.price",
+        related="sale_order.pricelist_id.item_ids.price",
         store=False,
         readonly=True,
     )
@@ -831,7 +834,7 @@ class HelpdeskTicket(models.Model):
     # Items — Many2many snapshot of all products on the linked SO.
     # Written by the Cluster 5 task_status / valid_delivered_so
     # compute side effects.
-    x_studio_items = fields.Many2many(
+    items = fields.Many2many(
         "product.product",
         string="Items",
     )
@@ -839,13 +842,13 @@ class HelpdeskTicket(models.Model):
     # Qty — Char snapshot of the SO lines' quantities. Written by
     # Cluster 5 as the string representation of a Python list of
     # floats (e.g. "[1.0, 2.0]") — Studio behaviour preserved.
-    x_studio_qty = fields.Char(
+    qty = fields.Char(
         string="Qty",
     )
 
     # Sales Price — Char snapshot of the SO lines' unit prices.
-    # Same Python-list-as-string pattern as x_studio_qty.
-    x_studio_sales_price = fields.Char(
+    # Same Python-list-as-string pattern as qty.
+    sales_price = fields.Char(
         string="Sales Price",
     )
 
@@ -859,11 +862,11 @@ class HelpdeskTicket(models.Model):
     # and the double-x-prefix picking count field. All preserved
     # 1:1 with Studio names, ttypes, selections, and compute logic.
 
-    x_studio_balance_due = fields.Float(
+    balance_due = fields.Float(
         string="Balance Due",
     )
 
-    x_studio_branch = fields.Selection(
+    branch = fields.Selection(
         selection=[
             ("Colombo", "Colombo"),
             ("Gampah", "Gampah"),
@@ -874,7 +877,7 @@ class HelpdeskTicket(models.Model):
     # CCCC — related from ticket_type_id.name. Studio auto-generated
     # name suggests it was a test / rename artefact. Kept for schema
     # compatibility.
-    x_studio_cccc = fields.Char(
+    cccc = fields.Char(
         string="CCCC",
         related="ticket_type_id.name",
         store=True,
@@ -882,7 +885,7 @@ class HelpdeskTicket(models.Model):
     )
 
     # CCCC3 — Studio auto-generated related to stage_id.
-    x_studio_cccc3 = fields.Many2one(
+    cccc3 = fields.Many2one(
         "helpdesk.stage",
         string="CCCC3",
         related="stage_id",
@@ -890,7 +893,7 @@ class HelpdeskTicket(models.Model):
         readonly=True,
     )
 
-    x_studio_city = fields.Selection(
+    city = fields.Selection(
         selection=[
             ("Gampaha", "Gampaha"),
             ("Colombo", "Colombo"),
@@ -899,11 +902,11 @@ class HelpdeskTicket(models.Model):
         string="City",
     )
 
-    x_studio_driver_name = fields.Char(
+    driver_name = fields.Char(
         string="Driver Name",
     )
 
-    x_studio_job_location = fields.Selection(
+    job_location = fields.Selection(
         selection=[
             ("Centre Repair", "Centre Repair"),
             ("Factory Repair", "Factory Repair"),
@@ -911,29 +914,29 @@ class HelpdeskTicket(models.Model):
         string="Job Location",
     )
 
-    x_studio_material_availability = fields.Selection(
+    material_availability = fields.Selection(
         selection=[
             ("Material Not Ready", "Material Not Ready"),
             ("Material Ready", "Material Ready"),
         ],
         string="Material Availability",
-        compute="_compute_x_studio_material_availability",
+        compute="_compute_material_availability",
         store=False,
         readonly=True,
     )
 
     @api.depends("fsm_task_ids")
-    def _compute_x_studio_material_availability(self):
+    def _compute_material_availability(self):
         for rec in self:
             val = "Material Not Ready"
             for invoices in rec.fsm_task_ids:
-                val = invoices.x_studio_material_availability
-            rec["x_studio_material_availability"] = val
+                val = invoices.material_availability
+            rec["material_availability"] = val
 
     # Tested OK — Studio-defined selection with 'Quick Repair' key
     # mapped to 'Tested OK' display. Studio row has an empty compute
     # string; effectively a stored readonly field with no auto-compute.
-    x_studio_quick_repair_status = fields.Selection(
+    quick_repair_status = fields.Selection(
         selection=[
             ("None", "None"),
             ("Quick Repair", "Tested OK"),
@@ -943,45 +946,45 @@ class HelpdeskTicket(models.Model):
         readonly=True,
     )
 
-    x_studio_re_estimate_count = fields.Integer(
+    re_estimate_count = fields.Integer(
         string="Re-estimate Count",
-        compute="_compute_x_studio_re_estimate_count",
+        compute="_compute_re_estimate_count",
         store=False,
         readonly=True,
     )
 
     @api.depends("fsm_task_ids")
-    def _compute_x_studio_re_estimate_count(self):
+    def _compute_re_estimate_count(self):
         for rec in self:
             val = 0
             for invoices in rec.fsm_task_ids:
-                val = invoices.sale_order_id.x_studio_re_estimate_count
-            rec["x_studio_re_estimate_count"] = val
+                val = invoices.sale_order_id.re_estimate_count
+            rec["re_estimate_count"] = val
 
-    x_studio_re_estimate_status = fields.Selection(
+    re_estimate_status = fields.Selection(
         selection=[
             ("None", "None"),
             ("Re-estimated", "Re-estimated"),
         ],
         string="Re-estimate Status",
-        compute="_compute_x_studio_re_estimate_status",
+        compute="_compute_re_estimate_status",
         store=False,
         readonly=True,
     )
 
     @api.depends("fsm_task_ids")
-    def _compute_x_studio_re_estimate_status(self):
+    def _compute_re_estimate_status(self):
         for rec in self:
             val = "None"
             for invoices in rec.fsm_task_ids:
-                if invoices.sale_order_id.x_studio_re_estimate_count > 0:
+                if invoices.sale_order_id.re_estimate_count > 0:
                     val = "Re-estimated"
-            rec["x_studio_re_estimate_status"] = val
+            rec["re_estimate_status"] = val
 
     # Studio-generated "New Related Field" one2many — related to
     # project_id.task_ids. Auto-named by Studio (FNjnC / QuqN1
     # suffixes are UUID fragments).
-    x_studio_related_field_FNjnC = fields.One2many(
+    related_field_FNjnC = fields.One2many(
         "project.task",
         string="New Related Field",
         related="project_id.task_ids",
@@ -989,14 +992,14 @@ class HelpdeskTicket(models.Model):
         readonly=True,
     )
 
-    x_studio_related_field_QuqN1 = fields.Integer(
+    related_field_QuqN1 = fields.Integer(
         string="New Related Field",
         related="project_id.task_ids.helpdesk_ticket_id.id",
         store=True,
         readonly=True,
     )
 
-    x_studio_related_information = fields.Binary(
+    related_information = fields.Binary(
         string="Related Information",
     )
 
@@ -1004,63 +1007,63 @@ class HelpdeskTicket(models.Model):
     # linked fsm tasks (Studio's LAST-match semantics preserved:
     # loop overwrites `so` each iteration, so the last task with an
     # SO wins).
-    x_studio_sale_order = fields.Many2one(
+    sale_order = fields.Many2one(
         "sale.order",
         string="Sales Order",
-        compute="_compute_x_studio_sale_order",
+        compute="_compute_sale_order",
         store=False,
         readonly=True,
     )
 
     @api.depends("fsm_task_ids")
-    def _compute_x_studio_sale_order(self):
+    def _compute_sale_order(self):
         for rec in self:
             so = False
             for invoices in rec.fsm_task_ids:
                 if invoices.sale_order_id != False:
                     so = invoices.sale_order_id.id
-            rec["x_studio_sale_order"] = so
+            rec["sale_order"] = so
 
-    x_studio_stage_name = fields.Char(
+    stage_name = fields.Char(
         string="Stage Name",
         related="stage_id.name",
         store=True,
         readonly=True,
     )
 
-    x_studio_tracking = fields.Selection(
+    repair_tracking = fields.Selection(
         string="Tracking",
         related="product_id.tracking",
         store=False,
         readonly=True,
     )
 
-    x_studio_vehicle_details = fields.Char(
+    vehicle_details = fields.Char(
         string="Vehicle Details",
     )
 
-    x_studio_warranty_card = fields.Binary(
+    warranty_card = fields.Binary(
         string="Warranty Card",
     )
 
     # Double-x-prefix Studio field (Odoo added an extra `x_` at some
     # rename step; the field name is now literally `x_x_studio_...`).
     # Counts stock.picking records that reference this ticket via
-    # x_studio_created_from_help_ticket. Compute preserved verbatim.
-    x_x_studio_created_from_help_ticket_stock_picking_count = fields.Integer(
+    # created_from_help_ticket. Compute preserved verbatim.
+    created_from_help_ticket_stock_picking_count = fields.Integer(
         string="Created from Help Ticket count",
-        compute="_compute_x_x_studio_created_from_help_ticket_stock_picking_count",
+        compute="_compute_created_from_help_ticket_stock_picking_count",
         store=False,
     )
 
-    def _compute_x_x_studio_created_from_help_ticket_stock_picking_count(self):
+    def _compute_created_from_help_ticket_stock_picking_count(self):
         for record in self:
-            record["x_x_studio_created_from_help_ticket_stock_picking_count"] = (
-                self.env["stock.picking"].search_count(
-                    [
-                        ("x_studio_created_from_help_ticket", "=", record.id),
-                    ]
-                )
+            record["created_from_help_ticket_stock_picking_count"] = self.env[
+                "stock.picking"
+            ].search_count(
+                [
+                    ("created_from_help_ticket", "=", record.id),
+                ]
             )
 
     @api.model
@@ -1085,13 +1088,13 @@ class HelpdeskTicket(models.Model):
         Idempotent: subsequent runs find nothing to update.
         """
         cluster1 = [
-            "x_studio_rug_repair",
-            "x_studio_rug_confirmed",
-            "x_studio_rug_approved",
-            "x_studio_rug_request_sent",
-            "x_studio_normal_repair_with_serial_no",
-            "x_studio_normal_repair_without_serial_no",
-            "x_studio_rug_approval_status",
+            "rug_repair",
+            "rug_confirmed",
+            "rug_approved",
+            "rug_request_sent",
+            "normal_repair_with_serial_no",
+            "normal_repair_without_serial_no",
+            "rug_approval_status",
         ]
         Field = self.env["ir.model.fields"].sudo()
         rows = Field.search(
@@ -1130,15 +1133,15 @@ class HelpdeskTicket(models.Model):
         Data / DB columns preserved.
         """
         cluster2 = [
-            "x_studio_repair_location",
-            "x_studio_return_receipt_location",
-            "x_studio_source_location",
-            "x_studio_source_location_1",
-            "x_studio_virtual_location",
-            "x_studio_virtual_location_1",
-            "x_studio_virtual_location_id",
-            "x_studio_pick_id",
-            "x_studio_picking_id",
+            "repair_location",
+            "return_receipt_location",
+            "source_location",
+            "source_location_1",
+            "virtual_location",
+            "virtual_location_1",
+            "virtual_location_id",
+            "pick_id",
+            "picking_id",
         ]
         Field = self.env["ir.model.fields"].sudo()
         rows = Field.search(
@@ -1165,7 +1168,7 @@ class HelpdeskTicket(models.Model):
     @api.model
     def _migrate_studio_stage_marker_cluster_to_base(self):
         """Cluster 4 (Stage-transition markers) migration. Ten
-        Boolean flags including x_studio_handed_over (which was
+        Boolean flags including handed_over (which was
         already Python-defined earlier for its compute override —
         listed here so its ir.model.fields row also flips to
         state='base').
@@ -1175,16 +1178,16 @@ class HelpdeskTicket(models.Model):
           2. drop studio_customization ir.model.data pins
         """
         cluster4 = [
-            "x_studio_send_to_factory",
-            "x_studio_receive_at_factory",
-            "x_studio_send_to_centre",
-            "x_studio_receive_at_centre",
-            "x_studio_estimation_sent_stage_updated",
-            "x_studio_estimation_approved_stage_updated",
-            "x_studio_invoice_stage_updated",
-            "x_studio_repair_started_stage_updated",
-            "x_studio_repair_complete_stage_updated",
-            "x_studio_handed_over",
+            "send_to_factory",
+            "receive_at_factory",
+            "send_to_centre",
+            "receive_at_centre",
+            "estimation_sent_stage_updated",
+            "estimation_approved_stage_updated",
+            "invoice_stage_updated",
+            "repair_started_stage_updated",
+            "repair_complete_stage_updated",
+            "handed_over",
         ]
         Field = self.env["ir.model.fields"].sudo()
         rows = Field.search(
@@ -1220,16 +1223,16 @@ class HelpdeskTicket(models.Model):
           2. drop studio_customization ir.model.data pins
         """
         cluster5 = [
-            "x_studio_fsm_task_done",
-            "x_studio_fully_paid_so",
-            "x_studio_valid_confirm_return",
-            "x_studio_valid_return",
-            "x_studio_user_location_validation",
-            "x_studio_valid_confirmed_so",
-            "x_studio_valid_confirmed2_so",
-            "x_studio_valid_invoiced_so",
-            "x_studio_valid_delivered_so",
-            "x_studio_task_status",
+            "fsm_task_done",
+            "fully_paid_so",
+            "valid_confirm_return",
+            "valid_return",
+            "user_location_validation",
+            "valid_confirmed_so",
+            "valid_confirmed2_so",
+            "valid_invoiced_so",
+            "valid_delivered_so",
+            "task_status",
         ]
         Field = self.env["ir.model.fields"].sudo()
         rows = Field.search(
@@ -1257,7 +1260,7 @@ class HelpdeskTicket(models.Model):
     def _migrate_studio_audit_cluster_to_base(self):
         """Cluster 6 (Audit slots) migration. 29 simple writable
         stored fields: 10 numbered created_by pairs + 10 created_on
-        pairs, x_studio_stage_date, and the four factory + four
+        pairs, stage_date, and the four factory + four
         sales-centre shipment audit fields.
 
         Same idempotent pattern as previous clusters:
@@ -1265,35 +1268,35 @@ class HelpdeskTicket(models.Model):
           2. drop studio_customization ir.model.data pins
         """
         cluster6 = [
-            "x_studio_stage_date",
-            "x_studio_created_by_1",
-            "x_studio_created_on_1",
-            "x_studio_created_by_2",
-            "x_studio_created_on_2",
-            "x_studio_created_by_3",
-            "x_studio_created_on_3",
-            "x_studio_created_by_4",
-            "x_studio_created_on_4",
-            "x_studio_created_by_5",
-            "x_studio_created_on_5",
-            "x_studio_created_by_6",
-            "x_studio_created_on_6",
-            "x_studio_created_by_7",
-            "x_studio_created_on_7",
-            "x_studio_created_by_8",
-            "x_studio_created_on_8",
-            "x_studio_created_by_9",
-            "x_studio_created_on_9",
-            "x_studio_created_by_10",
-            "x_studio_created_on_10",
-            "x_studio_f_shipped_by",
-            "x_studio_f_shipped_date",
-            "x_studio_f_received_by",
-            "x_studio_f_received_date",
-            "x_studio_s_shipped_by",
-            "x_studio_s_shipped_date",
-            "x_studio_s_received_by",
-            "x_studio_s_received_date",
+            "stage_date",
+            "created_by_1",
+            "created_on_1",
+            "created_by_2",
+            "created_on_2",
+            "created_by_3",
+            "created_on_3",
+            "created_by_4",
+            "created_on_4",
+            "created_by_5",
+            "created_on_5",
+            "created_by_6",
+            "created_on_6",
+            "created_by_7",
+            "created_on_7",
+            "created_by_8",
+            "created_on_8",
+            "created_by_9",
+            "created_on_9",
+            "created_by_10",
+            "created_on_10",
+            "f_shipped_by",
+            "f_shipped_date",
+            "f_received_by",
+            "f_received_date",
+            "s_shipped_by",
+            "s_shipped_date",
+            "s_received_by",
+            "s_received_date",
         ]
         Field = self.env["ir.model.fields"].sudo()
         rows = Field.search(
@@ -1327,17 +1330,17 @@ class HelpdeskTicket(models.Model):
         Same idempotent pattern.
         """
         cluster7 = [
-            "x_studio_serial_no",
-            "x_studio_serial_number",
-            "x_studio_sn_updated",
-            "x_studio_repair_serial_created",
-            "x_studio_repair_reason",
-            "x_studio_materials_used",
-            "x_studio_quantity",
-            "x_studio_unit_price",
-            "x_studio_items",
-            "x_studio_qty",
-            "x_studio_sales_price",
+            "serial_no",
+            "serial_number",
+            "sn_updated",
+            "repair_serial_created",
+            "repair_reason",
+            "materials_used",
+            "quantity",
+            "unit_price",
+            "items",
+            "qty",
+            "sales_price",
         ]
         Field = self.env["ir.model.fields"].sudo()
         rows = Field.search(
@@ -1370,26 +1373,26 @@ class HelpdeskTicket(models.Model):
         Same idempotent pattern as previous clusters.
         """
         cluster8 = [
-            "x_studio_balance_due",
-            "x_studio_branch",
-            "x_studio_cccc",
-            "x_studio_cccc3",
-            "x_studio_city",
-            "x_studio_driver_name",
-            "x_studio_job_location",
-            "x_studio_material_availability",
-            "x_studio_quick_repair_status",
-            "x_studio_re_estimate_count",
-            "x_studio_re_estimate_status",
-            "x_studio_related_field_FNjnC",
-            "x_studio_related_field_QuqN1",
-            "x_studio_related_information",
-            "x_studio_sale_order",
-            "x_studio_stage_name",
-            "x_studio_tracking",
-            "x_studio_vehicle_details",
-            "x_studio_warranty_card",
-            "x_x_studio_created_from_help_ticket_stock_picking_count",
+            "balance_due",
+            "branch",
+            "cccc",
+            "cccc3",
+            "city",
+            "driver_name",
+            "job_location",
+            "material_availability",
+            "quick_repair_status",
+            "re_estimate_count",
+            "re_estimate_status",
+            "related_field_FNjnC",
+            "related_field_QuqN1",
+            "related_information",
+            "sale_order",
+            "stage_name",
+            "repair_tracking",
+            "vehicle_details",
+            "warranty_card",
+            "created_from_help_ticket_stock_picking_count",
         ]
         Field = self.env["ir.model.fields"].sudo()
         rows = Field.search(
@@ -1427,17 +1430,17 @@ class HelpdeskTicket(models.Model):
         Data / DB columns preserved.
         """
         cluster3 = [
-            "x_studio_cancelled",
-            "x_studio_cancelled_2",
-            "x_studio_cancel_reason",
-            "x_studio_cancel_status",
-            "x_studio_cancelled_by",
-            "x_studio_cancelled_date",
-            "x_studio_cancelled_stage_id",
-            "x_studio_reopened",
-            "x_studio_reopen_status",
-            "x_studio_reopened_by",
-            "x_studio_reopened_date",
+            "cancelled",
+            "cancelled_2",
+            "cancel_reason",
+            "cancel_status",
+            "cancelled_by",
+            "cancelled_date",
+            "cancelled_stage_id",
+            "reopened",
+            "reopen_status",
+            "reopened_by",
+            "reopened_date",
         ]
         Field = self.env["ir.model.fields"].sudo()
         rows = Field.search(
@@ -1518,13 +1521,13 @@ class HelpdeskTicket(models.Model):
     # cancelled orders never produce invoices.
     is_so_cancelled = fields.Boolean(compute="_compute_is_so_cancelled")
 
-    # Every stock.picking stamped with x_studio_helpdesk_ticket_id == self.id.
+    # Every stock.picking stamped with helpdesk_ticket_id == self.id.
     # Powers the Movements smart button on the ticket form. Source-of-truth
     # for "every transfer that happened for this repair", regardless of
     # whether a sale order was ever linked.
     repair_picking_ids = fields.One2many(
         "stock.picking",
-        "x_studio_helpdesk_ticket_id",
+        "helpdesk_ticket_id",
         string="Movements",
     )
     repair_picking_count = fields.Integer(compute="_compute_repair_picking_count")
@@ -1542,17 +1545,17 @@ class HelpdeskTicket(models.Model):
     # (Customer, Product, Priority, Job Location, Warranty details,
     # etc.) becomes locked so a completed physical movement can't
     # be paired with silently rewritten intake data.
-    x_ticket_locked = fields.Boolean(
-        compute="_compute_x_ticket_locked",
+    ticket_locked = fields.Boolean(
+        compute="_compute_ticket_locked",
         help="True once at least one linked movement transfer has been "
         "validated. Freezes the ticket form so the intake data "
         "stays a truthful record of the state at first movement.",
     )
 
     @api.depends("repair_picking_ids.state")
-    def _compute_x_ticket_locked(self):
+    def _compute_ticket_locked(self):
         for ticket in self:
-            ticket.x_ticket_locked = any(
+            ticket.ticket_locked = any(
                 p.state == "done" for p in ticket.repair_picking_ids
             )
 
@@ -1563,8 +1566,8 @@ class HelpdeskTicket(models.Model):
             "type": "ir.actions.act_window",
             "res_model": "stock.picking",
             "view_mode": "tree,form",
-            "domain": [("x_studio_helpdesk_ticket_id", "=", self.id)],
-            "context": {"default_x_studio_helpdesk_ticket_id": self.id},
+            "domain": [("helpdesk_ticket_id", "=", self.id)],
+            "context": {"default_helpdesk_ticket_id": self.id},
         }
 
     def fix_repair_action_direct_return(self):
@@ -1618,13 +1621,13 @@ class HelpdeskTicket(models.Model):
             "default_ticket_id",
             (self.repair_stage_state == "new" and self.id) or False,
         )
-        # x_studio_pick_id is an integer on helpdesk.ticket (Studio),
+        # pick_id is an integer on helpdesk.ticket (Studio),
         # NOT a many2one — carries the raw picking id (0 when unset).
-        # The v199 header-button context passed it as `x_studio_pick_id
+        # The v199 header-button context passed it as `pick_id
         # or False`, treating the integer 0 as falsy. Mirror that here.
         ctx.setdefault(
             "default_picking_id",
-            self.x_studio_pick_id or False,
+            self.pick_id or False,
         )
         ctx.setdefault("default_partner_id", self.partner_id.id)
         ctx.setdefault("default_company_id", self.company_id.id)
@@ -1671,15 +1674,15 @@ class HelpdeskTicket(models.Model):
         "Return Location should be equal to Suggested Return Location"
         check. We mirror that here: ticket_id is left unset on the
         wizard, and our _create_returns override finds the ticket via
-        its picking_id → x_studio_pick_id fallback so the resulting
+        its picking_id → pick_id fallback so the resulting
         picking still gets renamed to <WH>/RET/xxxxx and stamped.
 
         Precondition: the ticket must already have a stored return
-        picking (x_studio_pick_id set to the earlier RET). Without one,
+        picking (pick_id set to the earlier RET). Without one,
         there's nothing to reverse.
         """
         self.ensure_one()
-        if not self.x_studio_pick_id:
+        if not self.pick_id:
             raise UserError(
                 _(
                     "Dispatch requires the item to have been collected "
@@ -1697,7 +1700,7 @@ class HelpdeskTicket(models.Model):
         # interactive Dispatch button's context, which also passed
         # default_ticket_id: False for stage != 'new'.
         ctx.pop("default_ticket_id", None)
-        ctx.setdefault("default_picking_id", self.x_studio_pick_id)
+        ctx.setdefault("default_picking_id", self.pick_id)
         ctx.setdefault("default_partner_id", self.partner_id.id)
         ctx.setdefault("default_company_id", self.company_id.id)
 
@@ -1758,19 +1761,18 @@ class HelpdeskTicket(models.Model):
             ticket.so_fully_paid = all_paid
 
     @api.depends(
-        "fsm_task_ids.x_studio_quick_repair_status_1",
-        "fsm_task_ids.x_studio_end_quick_repair",
+        "fsm_task_ids.quick_repair_status_1",
+        "fsm_task_ids.end_quick_repair",
     )
     def _compute_is_tested_ok(self):
         # "Tested OK" on a project.task is a Studio selection value
-        # x_studio_quick_repair_status_1 == 'Quick Repair' (the label
+        # quick_repair_status_1 == 'Quick Repair' (the label
         # displayed in the UI is "Tested OK"). The Studio automations
-        # also flip x_studio_end_quick_repair to True on the same event,
+        # also flip end_quick_repair to True on the same event,
         # so either marker counts.
         for ticket in self:
             ticket.is_tested_ok = any(
-                t.x_studio_quick_repair_status_1 == "Quick Repair"
-                or t.x_studio_end_quick_repair
+                t.quick_repair_status_1 == "Quick Repair" or t.end_quick_repair
                 for t in ticket.fsm_task_ids
             )
 
@@ -1800,11 +1802,9 @@ class HelpdeskTicket(models.Model):
             ticket.repair_stage_state = mapping.get(name, "other")
 
     @api.depends("picking_ids")
-    def _compute_x_studio_handed_over(self):
+    def _compute_handed_over(self):
         for rec in self:
-            rec.x_studio_handed_over = (
-                sum(1 for p in rec.picking_ids if p.state == "done") > 1
-            )
+            rec.handed_over = sum(1 for p in rec.picking_ids if p.state == "done") > 1
 
     def _compute_task_done(self):
         for ticket in self:
@@ -1821,7 +1821,7 @@ class HelpdeskTicket(models.Model):
                 > 0
             )
 
-    @api.depends("picking_ids", "x_studio_serial_no")
+    @api.depends("picking_ids", "serial_no")
     def _compute_has_return_picking(self):
         for ticket in self:
             if ticket.picking_ids:
@@ -1830,8 +1830,8 @@ class HelpdeskTicket(models.Model):
             # Without Serial No tickets have no sale order → picking_ids is always
             # empty. Fall back to checking whether the serial has already been
             # collected (incoming move from a customer location, done state).
-            serial = ticket.x_studio_serial_no
-            if serial and ticket.x_studio_normal_repair_without_serial_no:
+            serial = ticket.serial_no
+            if serial and ticket.normal_repair_without_serial_no:
                 cust_locs = (
                     self.env["stock.location"]
                     .sudo()
@@ -1854,12 +1854,12 @@ class HelpdeskTicket(models.Model):
             else:
                 ticket.has_return_picking = False
 
-    @api.onchange("x_studio_serial_no")
+    @api.onchange("serial_no")
     def _onchange_serial_no_product(self):
-        if self.x_studio_serial_no and self.x_studio_serial_no.product_id:
-            self.product_id = self.x_studio_serial_no.product_id
-            self.sale_order_id = self._get_so_from_serial(self.x_studio_serial_no)
-        elif not self.x_studio_serial_no:
+        if self.serial_no and self.serial_no.product_id:
+            self.product_id = self.serial_no.product_id
+            self.sale_order_id = self._get_so_from_serial(self.serial_no)
+        elif not self.serial_no:
             self.product_id = False
             self.sale_order_id = False
 
@@ -1903,21 +1903,21 @@ class HelpdeskTicket(models.Model):
         )
 
     def _post_write_serial_product_sync(self, vals):
-        """Re-assert product_id and sale_order_id from x_studio_serial_no after
+        """Re-assert product_id and sale_order_id from serial_no after
         super().write() runs. Studio automations that clear these fields fire
         inside super().write(), so this overrides them. Context flag prevents
         infinite recursion."""
-        if "x_studio_serial_no" not in vals:
+        if "serial_no" not in vals:
             return
         if self.env.context.get("_syncing_serial_product"):
             return
         for rec in self:
-            if not (rec.x_studio_serial_no and rec.x_studio_serial_no.product_id):
+            if not (rec.serial_no and rec.serial_no.product_id):
                 continue
             updates = {}
-            if rec.product_id != rec.x_studio_serial_no.product_id:
-                updates["product_id"] = rec.x_studio_serial_no.product_id.id
-            so = rec._get_so_from_serial(rec.x_studio_serial_no)
+            if rec.product_id != rec.serial_no.product_id:
+                updates["product_id"] = rec.serial_no.product_id.id
+            so = rec._get_so_from_serial(rec.serial_no)
             if so and rec.sale_order_id != so:
                 updates["sale_order_id"] = so.id
             if updates:
@@ -1927,9 +1927,9 @@ class HelpdeskTicket(models.Model):
     def _deactivate_clearing_serial_automation(self):
         """Deactivate automation 243 ('RR - Auto Select Product for RUG Repairs-33')
         which unconditionally clears product_id/lot_id/sale_order_id whenever
-        x_studio_serial_no changes — even when a valid serial is selected.
+        serial_no changes — even when a valid serial is selected.
 
-        Search by x_studio_serial_no field ID (26809) in on_change_field_ids, NOT
+        Search by serial_no field ID (26809) in on_change_field_ids, NOT
         by name, so renamed copies are also caught. Using field ID avoids
         accidentally deactivating automation 172 ('RR - Auto Select Product for
         RUG Repairs') which triggers on ticket_type_id and correctly auto-populates
@@ -1941,7 +1941,7 @@ class HelpdeskTicket(models.Model):
             .search(
                 [
                     ("model", "=", "helpdesk.ticket"),
-                    ("name", "=", "x_studio_serial_no"),
+                    ("name", "=", "serial_no"),
                 ],
                 limit=1,
             )
@@ -1962,7 +1962,7 @@ class HelpdeskTicket(models.Model):
 
         to_deactivate = self.env["base.automation"].sudo()
         for auto in automations:
-            # Only deactivate automations that fire specifically on x_studio_serial_no.
+            # Only deactivate automations that fire specifically on serial_no.
             # Automation 172 fires on ticket_type_id (field 22830), so it is safe.
             if serial_field.id in auto.on_change_field_ids.ids:
                 to_deactivate |= auto
@@ -2018,32 +2018,32 @@ class HelpdeskTicket(models.Model):
         for sheet in arch.xpath("//sheet"):
             for fname in (
                 "has_return_picking",
-                "x_studio_normal_repair_without_serial_no",
-                "x_studio_job_location",
+                "normal_repair_without_serial_no",
+                "job_location",
                 "so_fully_paid",
                 "is_tested_ok",
                 "is_so_cancelled",
                 "task_done",
                 "has_ready_dispatch_picking",
-                # v1 on Fields-disable branch: x_ticket_locked
+                # v1 on Fields-disable branch: ticket_locked
                 # flips True once any repair-flow picking on this
                 # ticket has been validated (state='done'). Used
                 # by the readonly loop below to freeze every
                 # editable field on the form so the intake data
                 # captured before first movement stays a truthful
                 # record.
-                "x_ticket_locked",
+                "ticket_locked",
                 # v232: fields referenced by the header-button
                 # invisible= expressions written further down.
                 # Client-side modifier eval requires these to
                 # appear in the view so their values are fetched.
-                "x_studio_rug_repair",
-                "x_studio_rug_confirmed",
-                "x_studio_valid_return",
-                "x_studio_serial_no",
-                "x_studio_repair_reason",
-                "x_studio_warranty_card",
-                "x_studio_pick_id",
+                "rug_repair",
+                "rug_confirmed",
+                "valid_return",
+                "serial_no",
+                "repair_reason",
+                "warranty_card",
+                "pick_id",
                 "repair_stage_state",
                 "use_fsm",
                 "fsm_task_count",
@@ -2053,19 +2053,19 @@ class HelpdeskTicket(models.Model):
                 # partner_email etc.). Owl's modifier evaluator
                 # crashes with "Name '<field>' is not defined" if
                 # any of them isn't in the composed arch.
-                "x_studio_rug_approved",
-                "x_studio_rug_request_sent",
-                "x_studio_repair_serial_created",
-                "x_studio_cancelled",
-                "x_studio_stage_name",
-                "x_studio_valid_confirm_return",
+                "rug_approved",
+                "rug_request_sent",
+                "repair_serial_created",
+                "cancelled",
+                "stage_name",
+                "valid_confirm_return",
                 # v295: fields referenced by the Customer Name /
                 # Serial Number / Product / Valid Return / Lot
                 # invisible+readonly expressions further down.
-                # `x_studio_tracking` gates the Serial visibility;
+                # `repair_tracking` gates the Serial visibility;
                 # the three `use_*` helpdesk.team booleans gate the
                 # Product / Valid Return / Lot cluster.
-                "x_studio_tracking",
+                "repair_tracking",
                 "use_credit_notes",
                 "use_product_returns",
                 "use_product_repairs",
@@ -2112,7 +2112,7 @@ class HelpdeskTicket(models.Model):
         # elements. Only data fields get the readonly gate.
         #
         # Preserves any existing readonly expression per field
-        # via "(existing) or x_ticket_locked" so field-specific
+        # via "(existing) or ticket_locked" so field-specific
         # readonly gates (Studio's own, or product_id /
         # user_id above) keep firing before the ticket-level
         # freeze kicks in.
@@ -2121,7 +2121,7 @@ class HelpdeskTicket(models.Model):
         # fields nested in another field's embedded view (one2many
         # sub-lists for messages, followers, fsm_task_ids etc.).
         # Subrecords are on other models that don't have
-        # x_ticket_locked — stamping the expression on them would
+        # ticket_locked — stamping the expression on them would
         # raise "Name not defined" when Odoo's ListRenderer
         # evaluates it per-cell (owl lifecycle crash).
         for field_el in arch.xpath("//sheet//field[not(ancestor::field)]"):
@@ -2131,7 +2131,7 @@ class HelpdeskTicket(models.Model):
             if field_el.get("invisible") == "1":
                 continue
             existing = field_el.get("readonly", "")
-            extra = "x_ticket_locked"
+            extra = "ticket_locked"
             field_el.set(
                 "readonly",
                 f"({existing}) or {extra}" if existing else extra,
@@ -2139,13 +2139,13 @@ class HelpdeskTicket(models.Model):
 
         # product_id: manually selectable (serial-tracked products only) for
         # the "Without Serial No" ticket type; readonly for all other types
-        # where product is auto-populated from x_studio_serial_no.
+        # where product is auto-populated from serial_no.
         for field in arch.xpath("//field[@name='product_id']"):
-            field.set("readonly", "not x_studio_normal_repair_without_serial_no")
+            field.set("readonly", "not normal_repair_without_serial_no")
             field.set(
                 "domain",
                 "[('tracking', '=', 'serial')] "
-                "if x_studio_normal_repair_without_serial_no else []",
+                "if normal_repair_without_serial_no else []",
             )
 
         # Assigned-to user: always readonly. The Assign to Me button is the
@@ -2185,29 +2185,29 @@ class HelpdeskTicket(models.Model):
         #     the Return button hidden.
         #   • Serial number is NOT required for the Without Serial No
         #     type — that flow generates the serial via the Create Serial
-        #     No button, which needs to be clickable before x_studio_serial_no
+        #     No button, which needs to be clickable before serial_no
         #     can be populated.
         #   • Warranty card is required only on RUG-confirmed tickets.
         for field in arch.xpath("//field[@name='ticket_type_id']"):
             field.set("required", "user_id")
         for fname in (
             "partner_id",
-            "x_studio_job_location",
-            "x_studio_repair_reason",
+            "job_location",
+            "repair_reason",
             "product_id",
         ):
             for field in arch.xpath(f"//field[@name='{fname}']"):
                 field.set("required", "ticket_type_id")
-        for field in arch.xpath("//field[@name='x_studio_serial_no']"):
+        for field in arch.xpath("//field[@name='serial_no']"):
             field.set(
                 "required",
-                "ticket_type_id and not x_studio_normal_repair_without_serial_no",
+                "ticket_type_id and not normal_repair_without_serial_no",
             )
 
     def _fix_repair_get_view_part_4(self, arch):
         """Part of _get_view."""
-        for field in arch.xpath("//field[@name='x_studio_warranty_card']"):
-            field.set("required", "x_studio_rug_confirmed")
+        for field in arch.xpath("//field[@name='warranty_card']"):
+            field.set("required", "rug_confirmed")
 
         # Create Serial No button — Without Serial No type only, once product is set
         # and no serial has been created yet.
@@ -2224,12 +2224,10 @@ class HelpdeskTicket(models.Model):
             btn.set("class", "btn-primary")
             # Visible only on Without-Serial-No tickets that have a
             # product set AND no serial linked yet. Hides as soon as
-            # x_studio_serial_no is populated (after a click).
+            # serial_no is populated (after a click).
             btn.set(
                 "invisible",
-                "not x_studio_normal_repair_without_serial_no "
-                "or not product_id "
-                "or x_studio_serial_no",
+                "not normal_repair_without_serial_no or not product_id or serial_no",
             )
             header.insert(0, btn)
             break
@@ -2239,17 +2237,17 @@ class HelpdeskTicket(models.Model):
             field.set(
                 "domain",
                 "[('team_ids', 'in', [team_id]), "
-                "'|', ('x_studio_company_id', '=', company_id), "
-                "('x_studio_company_id', '=', False)]",
+                "'|', ('accounting_company_id', '=', company_id), "
+                "('accounting_company_id', '=', False)]",
             )
 
         # Return Receipt Location: only show stock.locations where the
         # ticket's Assigned-to user appears in Users (Stock Location).
         # When the ticket is unassigned, show all locations.
-        for field in arch.xpath("//field[@name='x_studio_return_receipt_location']"):
+        for field in arch.xpath("//field[@name='return_receipt_location']"):
             field.set(
                 "domain",
-                "[('x_studio_users_stock_location', 'in', user_id)] if user_id else []",
+                "[('users_stock_location', 'in', user_id)] if user_id else []",
             )
 
         # Change to RUG: visible on External-not-RUG tickets (rug_repair=True,
@@ -2262,9 +2260,9 @@ class HelpdeskTicket(models.Model):
             btn.set("class", "btn-secondary")
             btn.set(
                 "invisible",
-                "not x_studio_rug_repair or "
-                "x_studio_rug_confirmed or "
-                "not x_studio_serial_no or "
+                "not rug_repair or "
+                "rug_confirmed or "
+                "not serial_no or "
                 "repair_stage_state not in ('new', 'sent_to_factory', "
                 "'received_at_factory')",
             )
@@ -2288,7 +2286,7 @@ class HelpdeskTicket(models.Model):
             btn.set(
                 "invisible",
                 "not task_done or "
-                "x_studio_job_location == 'Centre Repair' or "
+                "job_location == 'Centre Repair' or "
                 "repair_stage_state in ('sent_to_sales_centre', "
                 "'received_at_sales_centre', 'other') or "
                 "(repair_stage_state == 'estimation_sent_to_customer' "
@@ -2300,9 +2298,9 @@ class HelpdeskTicket(models.Model):
             existing = btn.get("invisible", "")
             btn.set(
                 "invisible",
-                f"({existing}) or x_studio_job_location == 'Centre Repair'"
+                f"({existing}) or job_location == 'Centre Repair'"
                 if existing
-                else "x_studio_job_location == 'Centre Repair'",
+                else "job_location == 'Centre Repair'",
             )
 
         # Send to Factory: verbatim from Clear-DB Studio arch —
@@ -2316,31 +2314,31 @@ class HelpdeskTicket(models.Model):
                 "invisible",
                 "repair_stage_state != 'new' or "
                 "not has_return_picking or "
-                "x_studio_job_location != 'Factory Repair'",
+                "job_location != 'Factory Repair'",
             )
 
         # Plan Intervention:
         #   Factory Repair → show at Received at Factory (item arrived at factory).
         #   Centre Repair  → show in New stage once the item has been collected
         # (has_return_picking), skipping the factory trip entirely.
-        # RUG tickets additionally require x_studio_valid_return before proceeding.
+        # RUG tickets additionally require valid_return before proceeding.
         for btn in arch.xpath("//button[@name='action_generate_fsm_task']"):
             btn.set(
                 "invisible",
                 "not use_fsm or "
                 "fsm_task_count > 0 or "
-                "(x_studio_rug_repair and not x_studio_valid_return) or "
-                "(x_studio_job_location == 'Factory Repair' and "
+                "(rug_repair and not valid_return) or "
+                "(job_location == 'Factory Repair' and "
                 "repair_stage_state != 'received_at_factory') or "
-                "(x_studio_job_location == 'Centre Repair' and "
+                "(job_location == 'Centre Repair' and "
                 "(repair_stage_state != 'new' or not "
                 "has_return_picking)) or "
-                "not x_studio_job_location",
+                "not job_location",
             )
         # Return button — same action 195, two distinct popup behaviours:
         # New stage:                 default_ticket_id=id → wizard shows Sale Order
         # group so user selects which delivery to reverse
-        # Received at Sales Centre:  default_picking_id=x_studio_pick_id, no
+        # Received at Sales Centre:  default_picking_id=pick_id, no
         # ticket_id
         # → Sale Order group hidden, items pre-load from
         # the picking; return location defaults to Customers
@@ -2362,12 +2360,12 @@ class HelpdeskTicket(models.Model):
         #     equivalent to Received at Sales Centre for that flow).
         ship_back_cond = (
             "(repair_stage_state == 'received_at_sales_centre' "
-            "or (x_studio_job_location == 'Centre Repair' "
+            "or (job_location == 'Centre Repair' "
             "and repair_stage_state == 'repair_completed'))"
         )
         btn_context = (
             "{'default_ticket_id': (repair_stage_state == 'new' and id) or False, "
-            "'default_picking_id': x_studio_pick_id or False, "
+            "'default_picking_id': pick_id or False, "
             "'default_partner_id': partner_id, "
             f"'default_location_id': ({ship_back_cond} and {cust_loc_id}) or False, "
             "'default_company_id': company_id}"
@@ -2420,11 +2418,11 @@ class HelpdeskTicket(models.Model):
                 "has_return_picking or "
                 "not partner_id or "
                 "not ticket_type_id or "
-                "not x_studio_job_location or "
-                "not x_studio_repair_reason or "
-                "not x_studio_serial_no or "
+                "not job_location or "
+                "not repair_reason or "
+                "not serial_no or "
                 "not product_id or "
-                "(x_studio_rug_confirmed and not x_studio_warranty_card)",
+                "(rug_confirmed and not warranty_card)",
             )
             btn.set("context", btn_context)
             # Retarget the Return button from action 195 (which opens
@@ -2445,7 +2443,7 @@ class HelpdeskTicket(models.Model):
             # v215 change: was action 195 (opens the standard wizard);
             # now points at fix_repair_action_direct_dispatch which
             # reproduces the interactive Dispatch context (ticket_id
-            # unset, picking_id = x_studio_pick_id, location_id
+            # unset, picking_id = pick_id, location_id
             # deferred to super's compute = Customers) programmatically.
             dispatch = etree.Element("button")
             dispatch.set("name", "fix_repair_action_direct_dispatch")
@@ -2476,13 +2474,13 @@ class HelpdeskTicket(models.Model):
                 " and not is_tested_ok "
                 " and not is_so_cancelled) or "
                 "not ("
-                "(x_studio_job_location == 'Factory Repair' and "
+                "(job_location == 'Factory Repair' and "
                 "repair_stage_state == 'received_at_sales_centre') or "
-                "(x_studio_job_location == 'Centre Repair' and "
+                "(job_location == 'Centre Repair' and "
                 "repair_stage_state == 'repair_completed') or "
-                "(x_studio_normal_repair_with_serial_no and "
+                "(normal_repair_with_serial_no and "
                 "repair_stage_state == 'received_at_sales_centre') or "
-                "(x_studio_job_location == 'Centre Repair' and "
+                "(job_location == 'Centre Repair' and "
                 "is_so_cancelled and task_done and repair_stage_state == "
                 "'estimation_sent_to_customer')"
                 ")",
@@ -2495,7 +2493,7 @@ class HelpdeskTicket(models.Model):
         # is_issued is a virtual field with a _search that queries move lines.
         serial_domain = "[('is_issued', '=', True)]"
         serial_options = "{'no_create': True, 'no_quick_create': True}"
-        for field in arch.xpath("//field[@name='x_studio_serial_no']"):
+        for field in arch.xpath("//field[@name='serial_no']"):
             field.set("domain", serial_domain)
             field.set("options", serial_options)
         for field in arch.xpath("//field[@name='lot_id']"):
@@ -2506,8 +2504,8 @@ class HelpdeskTicket(models.Model):
         """sale_order_id exists in the arch as invisible="1" (hidden input used b."""
         # sale_order_id exists in the arch as invisible="1" (hidden input used
         # by helpdesk_sale onchange machinery). Reposition it to appear right
-        # after x_studio_serial_no as a visible readonly field.
-        serial_nodes = arch.xpath("//field[@name='x_studio_serial_no']")
+        # after serial_no as a visible readonly field.
+        serial_nodes = arch.xpath("//field[@name='serial_no']")
         so_nodes = arch.xpath("//field[@name='sale_order_id']")
         if serial_nodes and so_nodes:
             so_node = so_nodes[0]
@@ -2540,7 +2538,7 @@ class HelpdeskTicket(models.Model):
         # where every sibling module's own inherits have already
         # been applied.
         #
-        # Every readonly expression appends `or x_ticket_locked` so
+        # Every readonly expression appends `or ticket_locked` so
         # the ticket-lock freeze (see readonly loop above) still
         # applies to these newly-visible fields — they were added
         # after that loop ran.
@@ -2590,14 +2588,14 @@ class HelpdeskTicket(models.Model):
             tt.set("required", "user_id")
             tt.set(
                 "readonly",
-                "x_studio_rug_approved == True or "
-                "x_studio_rug_request_sent == True or "
-                "x_studio_repair_serial_created == True or "
-                "x_studio_valid_return == True or "
-                "x_studio_cancelled == True or "
+                "rug_approved == True or "
+                "rug_request_sent == True or "
+                "repair_serial_created == True or "
+                "valid_return == True or "
+                "cancelled == True or "
                 "not user_id or "
-                'x_studio_stage_name != "New" or '
-                "x_ticket_locked",
+                'stage_name != "New" or '
+                "ticket_locked",
             )
             user_id_slots[0].addnext(tt)
 
@@ -2631,10 +2629,10 @@ class HelpdeskTicket(models.Model):
             # when True (matching Clear-DB's `X != True` invisible
             # expression). Each doubles as its own indicator badge.
             for bool_name in (
-                "x_studio_rug_repair",
-                "x_studio_rug_confirmed",
-                "x_studio_normal_repair_with_serial_no",
-                "x_studio_normal_repair_without_serial_no",
+                "rug_repair",
+                "rug_confirmed",
+                "normal_repair_with_serial_no",
+                "normal_repair_without_serial_no",
             ):
                 new_fields.append(
                     _reposition_or_create(
@@ -2651,18 +2649,18 @@ class HelpdeskTicket(models.Model):
             # the field here.
             new_fields.append(
                 _reposition_or_create(
-                    "x_studio_return_receipt_location",
+                    "return_receipt_location",
                     options="{'no_create': True}",
                     required="user_id",
                     force_save="1",
                     readonly=(
-                        "x_studio_rug_approved == True or "
-                        "x_studio_rug_request_sent == True or "
-                        "x_studio_valid_confirm_return == True or "
-                        "x_studio_repair_serial_created == True or "
-                        "x_studio_cancelled == True or "
+                        "rug_approved == True or "
+                        "rug_request_sent == True or "
+                        "valid_confirm_return == True or "
+                        "repair_serial_created == True or "
+                        "cancelled == True or "
                         "not user_id or "
-                        "x_ticket_locked"
+                        "ticket_locked"
                     ),
                 )
             )
@@ -2671,7 +2669,7 @@ class HelpdeskTicket(models.Model):
             # always readonly on the form.
             new_fields.append(
                 _reposition_or_create(
-                    "x_studio_repair_location",
+                    "repair_location",
                     force_save="1",
                     readonly="True",
                 )
@@ -2681,15 +2679,15 @@ class HelpdeskTicket(models.Model):
             # locked once the ticket leaves New (or is cancelled).
             new_fields.append(
                 _reposition_or_create(
-                    "x_studio_repair_reason",
+                    "repair_reason",
                     widget="many2many_tags",
                     required="user_id",
                     force_save="1",
                     readonly=(
-                        "x_studio_cancelled == True or "
+                        "cancelled == True or "
                         "not user_id or "
-                        'x_studio_stage_name != "New" or '
-                        "x_ticket_locked"
+                        'stage_name != "New" or '
+                        "ticket_locked"
                     ),
                 )
             )
@@ -2699,10 +2697,10 @@ class HelpdeskTicket(models.Model):
             # Factory Repair Details notebook visibility below.
             new_fields.append(
                 _reposition_or_create(
-                    "x_studio_job_location",
-                    required="x_studio_valid_confirm_return == True",
+                    "job_location",
+                    required="valid_confirm_return == True",
                     force_save="0",
-                    readonly="x_ticket_locked",
+                    readonly="ticket_locked",
                 )
             )
 
@@ -2718,14 +2716,14 @@ class HelpdeskTicket(models.Model):
             tag_el.set("invisible", "True")
 
             re_count = _reposition_or_create(
-                "x_studio_re_estimate_count",
+                "re_estimate_count",
                 widget="many2one_reference",
                 options="{'enable_formatting': false}",
                 force_save="1",
                 readonly="True",
             )
             re_status = _reposition_or_create(
-                "x_studio_re_estimate_status",
+                "re_estimate_status",
                 force_save="1",
                 readonly="True",
             )
@@ -2751,9 +2749,7 @@ class HelpdeskTicket(models.Model):
             existing_ro = p_el.get("readonly", "")
             p_el.set(
                 "readonly",
-                f"({existing_ro}) or x_ticket_locked"
-                if existing_ro
-                else "x_ticket_locked",
+                f"({existing_ro}) or ticket_locked" if existing_ro else "ticket_locked",
             )
 
             p_email = _reposition_or_create(
@@ -2761,11 +2757,11 @@ class HelpdeskTicket(models.Model):
                 string="Email",
                 force_save="1",
                 readonly=(
-                    "x_studio_cancelled == True or "
+                    "cancelled == True or "
                     "not user_id or "
-                    'x_studio_stage_name == "Handed Over to Customer" or '
-                    'x_studio_stage_name == "Cancelled" or '
-                    "x_ticket_locked"
+                    'stage_name == "Handed Over to Customer" or '
+                    'stage_name == "Cancelled" or '
+                    "ticket_locked"
                 ),
             )
             p_el.addnext(p_email)
@@ -2797,7 +2793,7 @@ class HelpdeskTicket(models.Model):
                 "page",
                 string="Factory Repair Details",
                 name="studio_page_2qc",
-                invisible=("x_studio_job_location != 'Factory Repair'"),
+                invisible=("job_location != 'Factory Repair'"),
             )
 
             # Group row 1: Sales Centre + Factory transfer details
@@ -2808,10 +2804,10 @@ class HelpdeskTicket(models.Model):
                 string="Repair Transfer Details (Sales Centre)",
             )
             for fname, _label in (
-                ("x_studio_s_shipped_date", "Shipped Date"),
-                ("x_studio_s_shipped_by", "Shipped By"),
-                ("x_studio_s_received_date", "Received Date"),
-                ("x_studio_s_received_by", "Received By"),
+                ("s_shipped_date", "Shipped Date"),
+                ("s_shipped_by", "Shipped By"),
+                ("s_received_date", "Received Date"),
+                ("s_received_by", "Received By"),
             ):
                 etree.SubElement(
                     sc_group,
@@ -2826,10 +2822,10 @@ class HelpdeskTicket(models.Model):
                 string="Repair Transfer Details (Factory)",
             )
             for fname, _label in (
-                ("x_studio_f_shipped_date", "Shipped Date"),
-                ("x_studio_f_shipped_by", "Shipped By"),
-                ("x_studio_f_received_date", "Received Date"),
-                ("x_studio_f_received_by", "Received By"),
+                ("f_shipped_date", "Shipped Date"),
+                ("f_shipped_by", "Shipped By"),
+                ("f_received_date", "Received Date"),
+                ("f_received_by", "Received By"),
             ):
                 etree.SubElement(
                     fac_group,
@@ -2847,8 +2843,8 @@ class HelpdeskTicket(models.Model):
                 string="Delivery Details",
             )
             for fname in (
-                "x_studio_driver_name",
-                "x_studio_vehicle_details",
+                "driver_name",
+                "vehicle_details",
             ):
                 etree.SubElement(
                     del_left,
@@ -2866,9 +2862,9 @@ class HelpdeskTicket(models.Model):
         # v295: additional Clear-DB customer-block visible fields.
         # Layers on top of v293:
         #   - partner_name  (Customer Name) — right before partner_email
-        #   - x_studio_serial_no  (Serial Number) — after email_cc
+        #   - serial_no  (Serial Number) — after email_cc
         #   - product_id  (Product) — after sale_line_id
-        #   - x_studio_valid_return  (Valid Return) — after product_id
+        #   - valid_return  (Valid Return) — after product_id
         #   - lot_id  (Lot/Serial Number) — after valid_return
         # Matches the Clear-DB view 4012 xpaths that couldn't be
         # ported to XML because their target elements live in
@@ -2882,16 +2878,14 @@ class HelpdeskTicket(models.Model):
                 "partner_name",
                 invisible="partner_id",
                 force_save="1",
-                readonly=(
-                    "x_studio_cancelled == True or not user_id or x_ticket_locked"
-                ),
+                readonly=("cancelled == True or not user_id or ticket_locked"),
             )
             # addnext puts p_name immediately after partner_id.
             # partner_email (added in v293) stays after — result:
             # partner_id → partner_name → partner_email.
             partner_id_nodes[0].addnext(p_name)
 
-        # ---- Serial Number (x_studio_serial_no) visible ----------
+        # ---- Serial Number (serial_no) visible ----------
         # Clear-DB slots it after email_cc. On envs where email_cc
         # isn't in the arch (older helpdesk fork) fall back to
         # partner_phone.
@@ -2910,19 +2904,19 @@ class HelpdeskTicket(models.Model):
                 break
         if serial_anchor is not None:
             sn = _reposition_or_create(
-                "x_studio_serial_no",
-                invisible='product_id and x_studio_tracking != "serial"',
+                "serial_no",
+                invisible='product_id and repair_tracking != "serial"',
                 force_save="1",
                 readonly=(
-                    "x_studio_rug_approved == True or "
-                    "x_studio_rug_request_sent == True or "
-                    "x_studio_normal_repair_without_serial_no == True or "
+                    "rug_approved == True or "
+                    "rug_request_sent == True or "
+                    "normal_repair_without_serial_no == True or "
                     "not ticket_type_id or "
-                    'x_studio_stage_name != "New" or '
-                    "x_studio_valid_return == True or "
-                    "x_studio_cancelled == True or "
+                    'stage_name != "New" or '
+                    "valid_return == True or "
+                    "cancelled == True or "
                     "not user_id or "
-                    "x_ticket_locked"
+                    "ticket_locked"
                 ),
             )
             # Re-apply the domain+options the earlier serial-domain
@@ -2937,7 +2931,7 @@ class HelpdeskTicket(models.Model):
             # block set on the sentinel.
             sn.set(
                 "required",
-                "ticket_type_id and not x_studio_normal_repair_without_serial_no",
+                "ticket_type_id and not normal_repair_without_serial_no",
             )
             serial_anchor.addnext(sn)
 
@@ -2960,31 +2954,29 @@ class HelpdeskTicket(models.Model):
                 ),
                 required="ticket_type_id",
                 force_save="0",
-                readonly=(
-                    "not x_studio_normal_repair_without_serial_no or x_ticket_locked"
-                ),
+                readonly=("not normal_repair_without_serial_no or ticket_locked"),
                 domain=(
                     "[('tracking', '=', 'serial')] "
-                    "if x_studio_normal_repair_without_serial_no "
+                    "if normal_repair_without_serial_no "
                     "else []"
                 ),
             )
             sale_line_nodes[0].addnext(prod)
 
-            # ---- Valid Return (x_studio_valid_return) ------------
+            # ---- Valid Return (valid_return) ------------
             vr = _reposition_or_create(
-                "x_studio_valid_return",
+                "valid_return",
                 invisible=(
-                    "x_studio_rug_repair == True or "
-                    "x_studio_serial_no or "
-                    "x_studio_normal_repair_with_serial_no == True or "
-                    "x_studio_normal_repair_without_serial_no == True or "
+                    "rug_repair == True or "
+                    "serial_no or "
+                    "normal_repair_with_serial_no == True or "
+                    "normal_repair_without_serial_no == True or "
                     "(not use_credit_notes and "
                     "not use_product_returns and "
                     "not use_product_repairs)"
                 ),
                 force_save="1",
-                readonly=("x_studio_rug_repair == True or x_ticket_locked"),
+                readonly=("rug_repair == True or ticket_locked"),
             )
             prod_now = arch.xpath("//field[@name='product_id']")
             if prod_now:
@@ -2994,16 +2986,16 @@ class HelpdeskTicket(models.Model):
             lot = _reposition_or_create(
                 "lot_id",
                 invisible=(
-                    "x_studio_rug_repair == True or "
-                    "x_studio_serial_no or "
-                    "x_studio_normal_repair_with_serial_no == True or "
-                    "x_studio_normal_repair_without_serial_no == True or "
+                    "rug_repair == True or "
+                    "serial_no or "
+                    "normal_repair_with_serial_no == True or "
+                    "normal_repair_without_serial_no == True or "
                     "(not use_credit_notes and "
                     "not use_product_returns and "
                     "not use_product_repairs)"
                 ),
                 force_save="1",
-                readonly=("x_studio_rug_repair == True or x_ticket_locked"),
+                readonly=("rug_repair == True or ticket_locked"),
             )
             # Re-apply the serial-lot domain+options that the
             # earlier serial-domain block set on the sentinel.
@@ -3012,7 +3004,7 @@ class HelpdeskTicket(models.Model):
                 "options",
                 "{'no_create': True, 'no_quick_create': True}",
             )
-            vr_now = arch.xpath("//field[@name='x_studio_valid_return']")
+            vr_now = arch.xpath("//field[@name='valid_return']")
             if vr_now:
                 vr_now[0].addnext(lot)
 
@@ -3056,9 +3048,9 @@ class HelpdeskTicket(models.Model):
         )
         self.write(
             {
-                "x_studio_serial_no": lot.id,
+                "serial_no": lot.id,
                 "lot_id": lot.id,
-                "x_studio_repair_serial_created": True,
+                "repair_serial_created": True,
             }
         )
 
@@ -3075,8 +3067,8 @@ class HelpdeskTicket(models.Model):
                     ("name", "=", name),
                     ("team_ids", "in", self.team_id.ids),
                     "|",
-                    ("x_studio_company_id", "=", self.company_id.id),
-                    ("x_studio_company_id", "=", False),
+                    ("accounting_company_id", "=", self.company_id.id),
+                    ("accounting_company_id", "=", False),
                 ],
                 limit=1,
             )
@@ -3113,8 +3105,8 @@ class HelpdeskTicket(models.Model):
                         ("name", "=", stage_name),
                         ("team_ids", "in", ticket.team_id.ids),
                         "|",
-                        ("x_studio_company_id", "=", ticket.company_id.id),
-                        ("x_studio_company_id", "=", False),
+                        ("accounting_company_id", "=", ticket.company_id.id),
+                        ("accounting_company_id", "=", False),
                     ],
                     limit=1,
                 )
@@ -3147,7 +3139,7 @@ class HelpdeskTicket(models.Model):
            that target 'Repair Completed' on tickets that have already
            been there (one-way milestone).
         2. Serial -> product/SO re-assertion: after super().write runs,
-           re-apply product_id and sale_order_id from x_studio_serial_no
+           re-apply product_id and sale_order_id from serial_no
            so Studio automations that clear them are overridden.
         """
         # 1. Repair Completed regression guard
@@ -3194,8 +3186,8 @@ class HelpdeskTicket(models.Model):
         self.write(
             {
                 "stage_id": stage.id,
-                "x_studio_s_shipped_date": fields.Datetime.now(),
-                "x_studio_s_shipped_by": self.env.uid,
+                "s_shipped_date": fields.Datetime.now(),
+                "s_shipped_by": self.env.uid,
             }
         )
 
@@ -3206,8 +3198,8 @@ class HelpdeskTicket(models.Model):
         self.write(
             {
                 "stage_id": stage.id,
-                "x_studio_f_received_date": fields.Datetime.now(),
-                "x_studio_f_received_by": self.env.uid,
+                "f_received_date": fields.Datetime.now(),
+                "f_received_by": self.env.uid,
             }
         )
 
@@ -3236,10 +3228,8 @@ class HelpdeskTicket(models.Model):
         src_loc = self._current_item_location()
         if not src_loc:
             return False
-        if self.x_studio_job_location == "Centre Repair":
-            dest_loc = (
-                self.x_studio_virtual_location_1 or self.x_studio_virtual_location
-            )
+        if self.job_location == "Centre Repair":
+            dest_loc = self.virtual_location_1 or self.virtual_location
         else:
             factory = self._get_factory_repair_location()
             dest_loc = (
@@ -3257,9 +3247,9 @@ class HelpdeskTicket(models.Model):
         if not src_loc:
             return False
 
-        job_loc = self.x_studio_job_location
+        job_loc = self.job_location
         if job_loc == "Centre Repair":
-            anchor = self.x_studio_return_receipt_location
+            anchor = self.return_receipt_location
             wh = anchor.warehouse_id if anchor else False
         elif job_loc == "Factory Repair":
             factory = self._get_factory_repair_location()
@@ -3277,7 +3267,7 @@ class HelpdeskTicket(models.Model):
     def _current_item_location(self):
         """Where the item physically sits right now: destination of the
         most recent picking stamped to this ticket. Falls back to
-        x_studio_repair_location when no movement exists yet (e.g. the
+        repair_location when no movement exists yet (e.g. the
         ticket was opened straight into Send to Factory without a
         prior return)."""
         self.ensure_one()
@@ -3285,18 +3275,18 @@ class HelpdeskTicket(models.Model):
             self.env["stock.picking"]
             .sudo()
             .search(
-                [("x_studio_helpdesk_ticket_id", "=", self.id)],
+                [("helpdesk_ticket_id", "=", self.id)],
                 order="date_done desc, id desc",
                 limit=1,
             )
         )
-        return last.location_dest_id or self.x_studio_repair_location
+        return last.location_dest_id or self.repair_location
 
     def _create_send_to_factory_picking(self):
         """current location -> Repair Location's warehouse/Intransit."""
         self.ensure_one()
         src_loc = self._current_item_location()
-        repair_loc = self.x_studio_repair_location
+        repair_loc = self.repair_location
         if not (src_loc and repair_loc and repair_loc.warehouse_id):
             return False
         intransit = repair_loc.warehouse_id._ensure_intransit_location()
@@ -3305,7 +3295,7 @@ class HelpdeskTicket(models.Model):
     def _create_send_to_sales_centre_picking(self):
         """current location (factory/Intransit) -> centre/Intransit.
 
-        Centre = x_studio_return_receipt_location.warehouse_id, i.e. the
+        Centre = return_receipt_location.warehouse_id, i.e. the
         warehouse that originally received the customer's item.
 
         v273: same-warehouse fallback (see
@@ -3316,7 +3306,7 @@ class HelpdeskTicket(models.Model):
         """
         self.ensure_one()
         src_loc = self._current_item_location()
-        anchor = self.x_studio_return_receipt_location
+        anchor = self.return_receipt_location
         if not (src_loc and anchor and anchor.warehouse_id):
             return False
         wh = anchor.warehouse_id
@@ -3331,7 +3321,7 @@ class HelpdeskTicket(models.Model):
         """current location (factory Intransit) -> centre virtual repair loc."""
         self.ensure_one()
         src_loc = self._current_item_location()
-        dest_loc = self.x_studio_virtual_location_1 or self.x_studio_virtual_location
+        dest_loc = self.virtual_location_1 or self.virtual_location
         if not (src_loc and dest_loc) or src_loc == dest_loc:
             return False
         return self._create_repair_transfer(src_loc, dest_loc)
@@ -3389,14 +3379,14 @@ class HelpdeskTicket(models.Model):
 
     def _create_repair_transfer(self, source_loc, dest_loc):
         """Create a state='done' internal picking for self.product_id +
-        self.x_studio_serial_no from source_loc to dest_loc. Stamps the
-        picking with x_studio_helpdesk_ticket_id so it surfaces under
+        self.serial_no from source_loc to dest_loc. Stamps the
+        picking with helpdesk_ticket_id so it surfaces under
         the ticket's Movements smart button. Deliberately does NOT
         write sale_id / sale_line_id / group_id / origin — repair-flow
         pickings live on the ticket, not on the repair sale order.
         """
         self.ensure_one()
-        serial = self.x_studio_serial_no
+        serial = self.serial_no
         product = self.product_id or (serial and serial.product_id)
         if not (product and source_loc and dest_loc):
             return False
@@ -3454,7 +3444,7 @@ class HelpdeskTicket(models.Model):
         # is active in context (e.g. inside action_fsm_validate). That
         # makes the picking show up on the task's SO Delivery smart
         # button, which we don't want — repair-flow pickings live on the
-        # ticket via x_studio_helpdesk_ticket_id, not on the SO.
+        # ticket via helpdesk_ticket_id, not on the SO.
         # Strip default_group_id from the env so the auto-binding hook
         # has nothing to use.
         env_no_group = self.env(context={**self.env.context, "default_group_id": False})
@@ -3469,7 +3459,7 @@ class HelpdeskTicket(models.Model):
                     "location_dest_id": dest_loc.id,
                     "company_id": self.company_id.id,
                     "date_done": now,
-                    "x_studio_helpdesk_ticket_id": self.id,
+                    "helpdesk_ticket_id": self.id,
                     "group_id": False,
                 }
             )
@@ -3528,8 +3518,8 @@ class HelpdeskTicket(models.Model):
         self.write(
             {
                 "stage_id": stage.id,
-                "x_studio_f_shipped_date": fields.Datetime.now(),
-                "x_studio_f_shipped_by": self.env.uid,
+                "f_shipped_date": fields.Datetime.now(),
+                "f_shipped_by": self.env.uid,
             }
         )
 
@@ -3542,9 +3532,7 @@ class HelpdeskTicket(models.Model):
             # customer's item to the repair virtual location.  Stored so the
             # "Return to Customer" popup (action 195 at this stage) can
             # pre-load the picking via default_picking_id.
-            repair_loc = (
-                ticket.x_studio_virtual_location_1 or ticket.x_studio_virtual_location
-            )
+            repair_loc = ticket.virtual_location_1 or ticket.virtual_location
             domain = [
                 ("partner_id", "=", ticket.partner_id.id),
                 ("company_id", "=", ticket.company_id.id),
@@ -3561,9 +3549,9 @@ class HelpdeskTicket(models.Model):
             ticket.write(
                 {
                     "stage_id": stage.id,
-                    "x_studio_s_received_date": fields.Datetime.now(),
-                    "x_studio_s_received_by": self.env.uid,
-                    "x_studio_pick_id": pick.id if pick else 0,
+                    "s_received_date": fields.Datetime.now(),
+                    "s_received_by": self.env.uid,
+                    "pick_id": pick.id if pick else 0,
                 }
             )
 
@@ -3610,15 +3598,13 @@ class HelpdeskTicket(models.Model):
     def _repair_populate_repair_location(self):
         """Replaces server action id 2000 (automation 178
         'RR - Auto Populate Repair Location'). Mirrors
-        x_studio_return_receipt_location onto x_studio_repair_location.
+        return_receipt_location onto repair_location.
         """
         for record in self:
-            if record.x_studio_return_receipt_location:
-                record.x_studio_repair_location = (
-                    record.x_studio_return_receipt_location
-                )
+            if record.return_receipt_location:
+                record.repair_location = record.return_receipt_location
             else:
-                record.x_studio_repair_location = False
+                record.repair_location = False
 
     def _repair_validate_cancelled_on_unlink(self):
         """Replaces server action id 2222 (automation 201
@@ -3626,7 +3612,7 @@ class HelpdeskTicket(models.Model):
         tickets flagged as cancelled.
         """
         for record in self:
-            if record.x_studio_cancelled:
+            if record.cancelled:
                 raise UserError(_("Cancelled tickets can not be deleted."))
 
     def _repair_auto_select_product_for_rug(self):
@@ -3640,7 +3626,7 @@ class HelpdeskTicket(models.Model):
         Behaviour ported verbatim from Studio.
         """
         for record in self:
-            if record.x_studio_serial_no:
+            if record.serial_no:
                 company_id = self.env.context.get(
                     "allowed_company_ids", [self.env.user.company_id.id]
                 )[0]
@@ -3654,8 +3640,8 @@ class HelpdeskTicket(models.Model):
                 )
                 trans_line = self.env["stock.move.line"].search(
                     [
-                        ("product_id", "=", record.x_studio_serial_no.product_id.id),
-                        ("lot_id", "=", record.x_studio_serial_no.id),
+                        ("product_id", "=", record.serial_no.product_id.id),
+                        ("lot_id", "=", record.serial_no.id),
                         ("picking_code", "=", "outgoing"),
                         ("location_dest_id", "=", cust_location.id),
                         ("company_id", "=", company.id),
@@ -3672,24 +3658,24 @@ class HelpdeskTicket(models.Model):
                     )
                     if so:
                         record.sale_order_id = so.id
-                        record.x_studio_picking_id = trans_line.picking_id.id
-                        record.x_studio_pick_id = trans_line.picking_id.id
+                        record.picking_id = trans_line.picking_id.id
+                        record.pick_id = trans_line.picking_id.id
 
-                record.product_id = record.x_studio_serial_no.product_id.id
-                record.lot_id = record.x_studio_serial_no.id
+                record.product_id = record.serial_no.product_id.id
+                record.lot_id = record.serial_no.id
 
-                if record.x_studio_normal_repair_without_serial_no:
+                if record.normal_repair_without_serial_no:
                     record.sale_order_id = False
             else:
-                if record.x_studio_normal_repair_without_serial_no:
+                if record.normal_repair_without_serial_no:
                     record.sale_order_id = False
-                    record.x_studio_picking_id = False
-                    record.x_studio_pick_id = False
+                    record.picking_id = False
+                    record.pick_id = False
                     record.lot_id = False
                 else:
                     record.sale_order_id = False
-                    record.x_studio_picking_id = False
-                    record.x_studio_pick_id = False
+                    record.picking_id = False
+                    record.pick_id = False
                     record.product_id = False
                     record.lot_id = False
 
@@ -3721,7 +3707,7 @@ class HelpdeskTicket(models.Model):
             company = self.env["res.company"].browse(company_id)
             factory_location = self.env["stock.location"].search(
                 [
-                    ("x_studio_repair_factory_location", "=", True),
+                    ("repair_factory_location", "=", True),
                 ],
                 limit=1,
             )
@@ -3732,13 +3718,13 @@ class HelpdeskTicket(models.Model):
             now = datetime.datetime.now()
             record.write(
                 {
-                    "x_studio_repair_location": factory_location.id,
-                    "x_studio_send_to_factory": True,
-                    "x_studio_s_shipped_date": now,
-                    "x_studio_s_shipped_by": self.env.uid,
-                    "x_studio_stage_date": now,
-                    "x_studio_created_by_1": self.env.uid,
-                    "x_studio_created_on_1": now,
+                    "repair_location": factory_location.id,
+                    "send_to_factory": True,
+                    "s_shipped_date": now,
+                    "s_shipped_by": self.env.uid,
+                    "stage_date": now,
+                    "created_by_1": self.env.uid,
+                    "created_on_1": now,
                     "stage_id": 5 if company.id == 1 else 24,
                 }
             )
@@ -3755,12 +3741,12 @@ class HelpdeskTicket(models.Model):
             now = datetime.datetime.now()
             record.write(
                 {
-                    "x_studio_receive_at_factory": True,
-                    "x_studio_f_received_date": now,
-                    "x_studio_f_received_by": self.env.uid,
-                    "x_studio_stage_date": now,
-                    "x_studio_created_by_2": self.env.uid,
-                    "x_studio_created_on_2": now,
+                    "receive_at_factory": True,
+                    "f_received_date": now,
+                    "f_received_by": self.env.uid,
+                    "stage_date": now,
+                    "created_by_2": self.env.uid,
+                    "created_on_2": now,
                     "stage_id": 6 if company.id == 1 else 25,
                 }
             )
@@ -3777,12 +3763,12 @@ class HelpdeskTicket(models.Model):
             now = datetime.datetime.now()
             record.write(
                 {
-                    "x_studio_send_to_centre": True,
-                    "x_studio_f_shipped_date": now,
-                    "x_studio_f_shipped_by": self.env.uid,
-                    "x_studio_stage_date": now,
-                    "x_studio_created_by_9": self.env.uid,
-                    "x_studio_created_on_9": now,
+                    "send_to_centre": True,
+                    "f_shipped_date": now,
+                    "f_shipped_by": self.env.uid,
+                    "stage_date": now,
+                    "created_by_9": self.env.uid,
+                    "created_on_9": now,
                     "stage_id": 7 if company.id == 1 else 26,
                 }
             )
@@ -3799,12 +3785,12 @@ class HelpdeskTicket(models.Model):
             now = datetime.datetime.now()
             record.write(
                 {
-                    "x_studio_receive_at_centre": True,
-                    "x_studio_s_received_date": now,
-                    "x_studio_s_received_by": self.env.uid,
-                    "x_studio_stage_date": now,
-                    "x_studio_created_by_10": self.env.uid,
-                    "x_studio_created_on_10": now,
+                    "receive_at_centre": True,
+                    "s_received_date": now,
+                    "s_received_by": self.env.uid,
+                    "stage_date": now,
+                    "created_by_10": self.env.uid,
+                    "created_on_10": now,
                     "stage_id": 8 if company.id == 1 else 27,
                 }
             )
@@ -3818,17 +3804,17 @@ class HelpdeskTicket(models.Model):
                 "allowed_company_ids", [self.env.user.company_id.id]
             )[0]
             company = self.env["res.company"].browse(company_id)
-            if not record.x_studio_cancel_reason:
+            if not record.cancel_reason:
                 raise UserError(_("Cancel reason must be specified."))
             record.write(
                 {
-                    "x_studio_cancelled_stage_id": record.stage_id.id,
+                    "cancelled_stage_id": record.stage_id.id,
                     "stage_id": 4 if company.id == 1 else 23,
-                    "x_studio_cancelled": True,
-                    "x_studio_reopened": False,
-                    "x_studio_cancelled_by": self.env.uid,
-                    "x_studio_cancelled_date": datetime.datetime.now(),
-                    "x_studio_cancel_status": "Cancelled",
+                    "cancelled": True,
+                    "reopened": False,
+                    "cancelled_by": self.env.uid,
+                    "cancelled_date": datetime.datetime.now(),
+                    "cancel_status": "Cancelled",
                 }
             )
 
@@ -3839,13 +3825,13 @@ class HelpdeskTicket(models.Model):
                 continue
             record.write(
                 {
-                    "stage_id": record.x_studio_cancelled_stage_id.id,
-                    "x_studio_cancelled": False,
-                    "x_studio_reopened": True,
-                    "x_studio_cancelled_stage_id": False,
-                    "x_studio_reopened_by": self.env.uid,
-                    "x_studio_reopened_date": datetime.datetime.now(),
-                    "x_studio_reopen_status": "Reopened",
+                    "stage_id": record.cancelled_stage_id.id,
+                    "cancelled": False,
+                    "reopened": True,
+                    "cancelled_stage_id": False,
+                    "reopened_by": self.env.uid,
+                    "reopened_date": datetime.datetime.now(),
+                    "reopen_status": "Reopened",
                 }
             )
 
@@ -3875,27 +3861,27 @@ class HelpdeskTicket(models.Model):
             company = self.env["res.company"].browse(company_id)
 
             if company.id == 1:
-                if not record.x_studio_virtual_location:
+                if not record.virtual_location:
                     raise UserError(
                         _("Virtual Location must be setup for Current Logged in User.")
                     )
-                if not record.x_studio_source_location:
+                if not record.source_location:
                     raise UserError(
                         _("Source Location must be setup for Current Logged in User.")
                     )
-                source_loc = record.x_studio_source_location.id
+                source_loc = record.source_location.id
             else:
-                if not record.x_studio_virtual_location_1:
+                if not record.virtual_location_1:
                     raise UserError(
                         _("Virtual Location must be setup for Current Logged in User.")
                     )
-                if not record.x_studio_source_location_1:
+                if not record.source_location_1:
                     raise UserError(
                         _("Source Location must be setup for Current Logged in User.")
                     )
-                source_loc = record.x_studio_source_location_1.id
+                source_loc = record.source_location_1.id
 
-            record.x_studio_repair_serial_created = True
+            record.repair_serial_created = True
             dest_loc = self.env["stock.location"].search(
                 [
                     ("usage", "=", "customer"),
@@ -3910,7 +3896,7 @@ class HelpdeskTicket(models.Model):
                     (
                         "default_location_src_id",
                         "=",
-                        record.x_studio_return_receipt_location.id,
+                        record.return_receipt_location.id,
                     ),
                     ("code", "=", "outgoing"),
                     ("company_id", "=", company.id),
@@ -3924,8 +3910,8 @@ class HelpdeskTicket(models.Model):
 
             prod_move = self.env["stock.picking"].create(
                 {
-                    "x_studio_created_from_help_ticket": record.id,
-                    "x_studio_helpdesk_ticket_id": record.id,
+                    "created_from_help_ticket": record.id,
+                    "helpdesk_ticket_id": record.id,
                     "picking_type_id": opt_type.id,
                     "location_id": source_loc,
                     "location_dest_id": dest_loc.id,
@@ -3978,8 +3964,8 @@ class HelpdeskTicket(models.Model):
                 )
                 update_prod_move.write({"state": "done"})
 
-            record.x_studio_picking_id = prod_move.id
-            record.x_studio_pick_id = prod_move.id
+            record.picking_id = prod_move.id
+            record.pick_id = prod_move.id
 
     # ─────────────────────────────────────────────────────────────────
     # Studio server actions — Python delegations (Tier 4: emails)
@@ -4055,10 +4041,10 @@ class HelpdeskTicket(models.Model):
         """Shared helper for Studio server actions 1990 and 2450.
         Both are variants of 1989 that drop the ('company_id', ...)
         filter from the outgoing stock.move.line search domain.
-        2450 additionally flips x_studio_sn_updated=True at the end.
+        2450 additionally flips sn_updated=True at the end.
         """
         for record in self:
-            if record.x_studio_serial_no:
+            if record.serial_no:
                 company_id = self.env.context.get(
                     "allowed_company_ids", [self.env.user.company_id.id]
                 )[0]
@@ -4072,8 +4058,8 @@ class HelpdeskTicket(models.Model):
                 )
                 trans_line = self.env["stock.move.line"].search(
                     [
-                        ("product_id", "=", record.x_studio_serial_no.product_id.id),
-                        ("lot_id", "=", record.x_studio_serial_no.id),
+                        ("product_id", "=", record.serial_no.product_id.id),
+                        ("lot_id", "=", record.serial_no.id),
                         ("picking_code", "=", "outgoing"),
                         ("location_dest_id", "=", cust_location.id),
                     ],
@@ -4089,29 +4075,29 @@ class HelpdeskTicket(models.Model):
                     )
                     if so:
                         record.sale_order_id = so.id
-                        record.x_studio_picking_id = trans_line.picking_id.id
-                        record.x_studio_pick_id = trans_line.picking_id.id
+                        record.picking_id = trans_line.picking_id.id
+                        record.pick_id = trans_line.picking_id.id
 
-                record.product_id = record.x_studio_serial_no.product_id.id
-                record.lot_id = record.x_studio_serial_no.id
+                record.product_id = record.serial_no.product_id.id
+                record.lot_id = record.serial_no.id
 
-                if record.x_studio_normal_repair_without_serial_no:
+                if record.normal_repair_without_serial_no:
                     record.sale_order_id = False
             else:
-                if record.x_studio_normal_repair_without_serial_no:
+                if record.normal_repair_without_serial_no:
                     record.sale_order_id = False
-                    record.x_studio_picking_id = False
-                    record.x_studio_pick_id = False
+                    record.picking_id = False
+                    record.pick_id = False
                     record.lot_id = False
                 else:
                     record.sale_order_id = False
-                    record.x_studio_picking_id = False
-                    record.x_studio_pick_id = False
+                    record.picking_id = False
+                    record.pick_id = False
                     record.product_id = False
                     record.lot_id = False
 
             if sn_updated:
-                record.x_studio_sn_updated = True
+                record.sn_updated = True
 
     def _repair_auto_select_product_for_rug_2(self):
         """Studio server action id 1990 native port."""
@@ -4129,11 +4115,11 @@ class HelpdeskTicket(models.Model):
             record.write(
                 {
                     "sale_order_id": False,
-                    "x_studio_picking_id": False,
-                    "x_studio_pick_id": False,
+                    "picking_id": False,
+                    "pick_id": False,
                     "product_id": False,
                     "lot_id": False,
-                    "x_studio_sn_updated": False,
+                    "sn_updated": False,
                 }
             )
 
@@ -4146,11 +4132,11 @@ class HelpdeskTicket(models.Model):
                 record.write(
                     {
                         "sale_order_id": False,
-                        "x_studio_picking_id": False,
-                        "x_studio_pick_id": False,
+                        "picking_id": False,
+                        "pick_id": False,
                         "product_id": False,
                         "lot_id": False,
-                        "x_studio_serial_no": False,
+                        "serial_no": False,
                     }
                 )
 
@@ -4166,18 +4152,18 @@ class HelpdeskTicket(models.Model):
                 "allowed_company_ids", [self.env.user.company_id.id]
             )[0]
             company = self.env["res.company"].browse(company_id)
-            if not record.x_studio_cancel_reason:
+            if not record.cancel_reason:
                 raise UserError(_("Cancel reason must be specified."))
             now = datetime.datetime.now()
             record.write(
                 {
-                    "x_studio_repair_complete_stage_updated": True,
+                    "repair_complete_stage_updated": True,
                     "stage_id": 9 if company.id == 1 else 28,
-                    "x_studio_stage_date": now,
-                    "x_studio_created_by_8": self.env.uid,
-                    "x_studio_created_on_8": now,
-                    "x_studio_cancelled_2": True,
-                    "x_studio_cancel_status": "Cancelled",
+                    "stage_date": now,
+                    "created_by_8": self.env.uid,
+                    "created_on_8": now,
+                    "cancelled_2": True,
+                    "cancel_status": "Cancelled",
                 }
             )
 
@@ -4188,7 +4174,7 @@ class HelpdeskTicket(models.Model):
         original in x_studio_price_unit_original), and flips
         ticket_type_id to 1 (the RUG type)."""
         for record in self:
-            if not record.x_studio_warranty_card:
+            if not record.warranty_card:
                 raise UserError(_("Warranty Card Document must be Uploaded!"))
             for sos in record.fsm_task_ids:
                 so = self.env["sale.order"].search(
@@ -4217,11 +4203,11 @@ class HelpdeskTicket(models.Model):
         for record in self:
             if self.env.uid == 1:
                 continue
-            if record.x_studio_user_location_validation:
-                warehouse = str(record.x_studio_return_receipt_location.complete_name)
+            if record.user_location_validation:
+                warehouse = str(record.return_receipt_location.complete_name)
                 loc = self.env["stock.location"].search(
                     [
-                        ("x_studio_users_stock_location", "ilike", self.env.uid),
+                        ("users_stock_location", "ilike", self.env.uid),
                         ("active", "=", True),
                     ]
                 )
@@ -4294,33 +4280,33 @@ class HelpdeskTicket(models.Model):
 
     def unlink(self):
         """Replaces automation 201 'RR - Validate Cancelled Tickets'
-        (on_unlink, filter_domain=[('x_studio_cancelled','=',True)]).
+        (on_unlink, filter_domain=[('cancelled','=',True)]).
 
         The _repair_validate_cancelled_on_unlink method already
-        checks x_studio_cancelled per-record, so the filter domain
+        checks cancelled per-record, so the filter domain
         guard is implicit — non-cancelled tickets pass through.
         """
         self._repair_validate_cancelled_on_unlink()
         return super().unlink()
 
-    @api.onchange("ticket_type_id", "x_studio_serial_number")
+    @api.onchange("ticket_type_id", "serial_number")
     def _onchange_repair_auto_select_product_for_rug(self):
         """Replaces automation 172 'RR - Auto Select Product for RUG
         Repairs' (on_change, on_change_field_ids=[ticket_type_id,
-        x_studio_serial_number]).
+        serial_number]).
 
-        Note: the automation triggers on x_studio_serial_number
+        Note: the automation triggers on serial_number
         (the duplicate slot), but the underlying logic reads
-        x_studio_serial_no (the primary field). Both are preserved
+        serial_no (the primary field). Both are preserved
         verbatim from Studio.
         """
         self._repair_auto_select_product_for_rug()
 
-    @api.onchange("x_studio_return_receipt_location")
+    @api.onchange("return_receipt_location")
     def _onchange_repair_populate_repair_location(self):
         """Replaces automation 178 'RR - Auto Populate Repair
         Location' (on_change, on_change_field_ids=[
-        x_studio_return_receipt_location]).
+        return_receipt_location]).
         """
         self._repair_populate_repair_location()
 
@@ -4358,12 +4344,12 @@ class HelpdeskTicket(models.Model):
 
         Automations deactivated:
           329 'JIN Company Id in Helpdesk Stage'    → helpdesk.stage.create()
-          331 'JIN Company Id in Repair Accounts'   → x_repair_accounts.create()
-          302 'JIN Company Id in Repair Reason'     → x_repair_reason.create()
+          331 'JIN Company Id in Repair Accounts'   → repair_accounts.create()
+          302 'JIN Company Id in Repair Reason'     → repair_reason.create()
           303 'JIN Company Id in Repair Reason - Customer'
-                                                    → x_repair_reason_custom.create()
-          306 'JIN Company Id in Repair Stages'     → x_repair_stages.create()
-          304 'JIN Company Id in Repair Sub Reason' → x_repair_sub_reason.create()
+                                                    → repair_reason_custom.create()
+          306 'JIN Company Id in Repair Stages'     → repair_stages.create()
+          304 'JIN Company Id in Repair Sub Reason' → repair_sub_reason.create()
           179 'RR Auto Update Helpdesk Pipeline Status - 1'
                                                     → project.task.create()
           250 'Super User Validate'                 → res.users.create()/write()
@@ -4391,8 +4377,8 @@ class HelpdeskTicket(models.Model):
         v162 adds real Python declarations in res_users.py and
         project_task.py (ttype, related chain, store, selection
         choices, and the two @api.depends computes for
-        x_studio_valid_diagnosis and
-        x_studio_incomplete_delivery_available, ported from
+        valid_diagnosis and
+        incomplete_delivery_available, ported from
         Studio's compute strings), so the state flip below now
         resolves cleanly.
 
@@ -4414,15 +4400,15 @@ class HelpdeskTicket(models.Model):
                 "x_studio_super_user_melt_items",
             ),
             "project.task": (
-                "x_studio_cancelled",
-                "x_studio_created_date",
-                "x_studio_diagnosis_ids",
-                "x_studio_incomplete_delivery_available",
-                "x_studio_priority",
-                "x_studio_quotation_type",
-                "x_studio_related_information",
-                "x_studio_valid_diagnosis",
-                "x_studio_warranty_card",
+                "cancelled",
+                "created_date",
+                "diagnosis_ids",
+                "incomplete_delivery_available",
+                "custom_reports_priority",
+                "quotation_type",
+                "related_information",
+                "valid_diagnosis",
+                "warranty_card",
             ),
         }
         Field = self.env["ir.model.fields"].sudo()
@@ -4546,11 +4532,11 @@ class HelpdeskTicket(models.Model):
             still get injected after //field[@name=
             'personal_stage_type_id'].
           - user_ids → 'Assignees' rename and helpdesk_ticket_id /
-            x_studio_created_date / x_studio_repair_reason fields
+            created_date / repair_reason fields
             still land after //field[@name='user_ids'].
           - sale_order_id visibility flip + 'Sales Orderr' label +
-            the x_studio_priority / x_studio_quotation_type /
-            x_studio_material_availability trio still land after
+            the custom_reports_priority / quotation_type /
+            material_availability trio still land after
             //field[@name='sale_order_id'].
           - The 3 Studio notebook pages (Repair Image, Warranty
             Card, Repair Diagnosis) still land inside //notebook.
@@ -4577,62 +4563,62 @@ class HelpdeskTicket(models.Model):
         clean_arch = """<data>
   <!-- fix_repair:sanitized-v190 -->
   <xpath expr="//field[@name='personal_stage_type_id']" position="after">
-    <button type="action" name="2316" string="Tested OK" class="btn-primary" invisible="material_line_product_count &gt; 0 or x_studio_cancelled == True or not helpdesk_ticket_id or x_studio_end_quick_repair == True"/>
+    <button type="action" name="2316" string="Tested OK" class="btn-primary" invisible="material_line_product_count &gt; 0 or cancelled == True or not helpdesk_ticket_id or end_quick_repair == True"/>
   </xpath>
   <xpath expr="//field[@name='user_ids']" position="attributes">
     <attribute name="string">Assignees</attribute>
   </xpath>
   <xpath expr="//field[@name='user_ids']" position="after">
     <field name="helpdesk_ticket_id" string="Help Desk Ticket"/>
-    <field name="x_studio_created_date"/>
-    <field name="x_studio_repair_reason" invisible="True"/>
+    <field name="created_date"/>
+    <field name="repair_reason" invisible="True"/>
   </xpath>
   <xpath expr="//field[@name='sale_order_id']" position="attributes">
     <attribute name="invisible">False</attribute>
     <attribute name="string">Sales Orderr</attribute>
   </xpath>
   <xpath expr="//field[@name='sale_order_id']" position="after">
-    <field name="x_studio_priority"/>
-    <field name="x_studio_quotation_type"/>
-    <field name="x_studio_material_availability"/>
+    <field name="custom_reports_priority"/>
+    <field name="quotation_type"/>
+    <field name="material_availability"/>
   </xpath>
   <xpath expr="//notebook" position="inside">
     <page string="Repair Image" name="studio_page_8ci_1ik1qk8tm">
       <group name="studio_group_8ci">
         <group name="studio_group_8ci_left">
-          <field name="x_studio_repair_image_01" widget="tablet_image"/>
+          <field name="repair_image_01" widget="tablet_image"/>
         </group>
         <group name="studio_group_8ci_right">
-          <field name="x_studio_repair_image_02" widget="tablet_image"/>
+          <field name="repair_image_02" widget="tablet_image"/>
         </group>
       </group>
     </page>
     <page string="Warranty Card" name="studio_page_8db_1ik1r0ore">
       <group name="studio_group_8db">
         <group name="studio_group_8db_left">
-          <field name="x_studio_warranty_card" widget="image"/>
+          <field name="warranty_card" widget="image"/>
         </group>
         <group name="studio_group_8db_right">
-          <field name="x_studio_related_information" widget="image"/>
+          <field name="related_information" widget="image"/>
         </group>
       </group>
     </page>
     <page string="Repair Diagnosis" name="studio_page_M5qFQ" invisible="helpdesk_ticket_id == False">
-      <field name="x_studio_diagnosis_ids" force_save="True" required="helpdesk_ticket_id != False">
+      <field name="diagnosis_ids" force_save="True" required="helpdesk_ticket_id != False">
         <tree editable="bottom">
-          <field name="x_studio_sequence" widget="handle"/>
-          <field name="x_name" column_invisible="True"/>
-          <field name="x_studio_condition" optional="show" column_invisible="True"/>
-          <field name="x_studio_symptom_area" optional="show" column_invisible="True"/>
-          <field name="x_studio_symptom_code" optional="show" column_invisible="True"/>
-          <field name="x_studio_description" optional="show"/>
-          <field name="x_studio_diagnosis_area" optional="show" required="1"/>
-          <field name="x_studio_diagnosis_code" optional="show" required="1" domain="[[&quot;x_studio_diagnosis_area_1&quot;,&quot;=&quot;,x_studio_diagnosis_area]]"/>
-          <field name="x_studio_reason" optional="show" required="1"/>
-          <field name="x_studio_sub_reason" optional="show" required="1" domain="[[&quot;x_studio_reason_code&quot;,&quot;=&quot;,x_studio_reason]]"/>
-          <field name="x_studio_resolution" optional="show" required="1"/>
-          <field name="x_studio_repair_stage" optional="show" required="1"/>
-          <field optional="show" name="x_studio_task_id" string="Task Id" invisible="1" column_invisible="True"/>
+          <field name="sequence" widget="handle"/>
+          <field name="name" column_invisible="True"/>
+          <field name="condition" optional="show" column_invisible="True"/>
+          <field name="symptom_area" optional="show" column_invisible="True"/>
+          <field name="symptom_code" optional="show" column_invisible="True"/>
+          <field name="description" optional="show"/>
+          <field name="diagnosis_area" optional="show" required="1"/>
+          <field name="diagnosis_code" optional="show" required="1" domain="[[&quot;diagnosis_area_1&quot;,&quot;=&quot;,diagnosis_area]]"/>
+          <field name="reason" optional="show" required="1"/>
+          <field name="sub_reason" optional="show" required="1" domain="[[&quot;reason_code&quot;,&quot;=&quot;,reason]]"/>
+          <field name="resolution" optional="show" required="1"/>
+          <field name="repair_stage" optional="show" required="1"/>
+          <field optional="show" name="task_id" string="Task Id" invisible="1" column_invisible="True"/>
         </tree>
       </field>
     </page>
@@ -4696,11 +4682,11 @@ class HelpdeskTicket(models.Model):
             "helpdesk.stage",
             "project.task",
             "res.users",
-            "x_repair_accounts",
-            "x_repair_reason",
-            "x_repair_reason_custom",
-            "x_repair_stages",
-            "x_repair_sub_reason",
+            "repair_accounts",
+            "repair_reason",
+            "repair_reason_custom",
+            "repair_stages",
+            "repair_sub_reason",
         )
         Data = self.env["ir.model.data"].sudo()
         Report = self.env["ir.actions.report"].sudo()
@@ -4812,11 +4798,11 @@ class HelpdeskTicket(models.Model):
             "helpdesk.stage",
             "project.task",
             "res.users",
-            "x_repair_accounts",
-            "x_repair_reason",
-            "x_repair_reason_custom",
-            "x_repair_stages",
-            "x_repair_sub_reason",
+            "repair_accounts",
+            "repair_reason",
+            "repair_reason_custom",
+            "repair_stages",
+            "repair_sub_reason",
         )
         Data = self.env["ir.model.data"].sudo()
         Report = self.env["ir.actions.report"].sudo()
@@ -4930,11 +4916,11 @@ class HelpdeskTicket(models.Model):
             "project.task",
             "res.users",
             "res.config.settings",
-            "x_repair_accounts",
-            "x_repair_reason",
-            "x_repair_reason_custom",
-            "x_repair_stages",
-            "x_repair_sub_reason",
+            "repair_accounts",
+            "repair_reason",
+            "repair_reason_custom",
+            "repair_stages",
+            "repair_sub_reason",
         )
         Data = self.env["ir.model.data"].sudo()
         View = self.env["ir.ui.view"].sudo()
@@ -4989,7 +4975,7 @@ class HelpdeskTicket(models.Model):
         Same shape as _repair_studio_auto_create_repair_route above,
         but additionally creates a new stock.lot from the
         'repair.serial.seq' sequence and attaches it as
-        x_studio_serial_no / lot_id on the ticket + as lot_id on
+        serial_no / lot_id on the ticket + as lot_id on
         the created stock.move.line.
         """
         for record in self:
@@ -5001,25 +4987,25 @@ class HelpdeskTicket(models.Model):
             company = self.env["res.company"].browse(company_id)
 
             if company.id == 1:
-                if not record.x_studio_virtual_location:
+                if not record.virtual_location:
                     raise UserError(
                         _("Virtual Location must be setup for Current Logged in User.")
                     )
-                if not record.x_studio_source_location:
+                if not record.source_location:
                     raise UserError(
                         _("Source Location must be setup for Current Logged in User.")
                     )
-                source_loc = record.x_studio_source_location.id
+                source_loc = record.source_location.id
             else:
-                if not record.x_studio_virtual_location_1:
+                if not record.virtual_location_1:
                     raise UserError(
                         _("Virtual Location must be setup for Current Logged in User.")
                     )
-                if not record.x_studio_source_location_1:
+                if not record.source_location_1:
                     raise UserError(
                         _("Source Location must be setup for Current Logged in User.")
                     )
-                source_loc = record.x_studio_source_location_1.id
+                source_loc = record.source_location_1.id
 
             seq = (
                 self.env["ir.sequence"]
@@ -5034,9 +5020,9 @@ class HelpdeskTicket(models.Model):
                     "company_id": company.id,
                 }
             )
-            record.x_studio_serial_no = rep_serial.id
+            record.serial_no = rep_serial.id
             record.lot_id = rep_serial.id
-            record.x_studio_repair_serial_created = True
+            record.repair_serial_created = True
 
             dest_loc = self.env["stock.location"].search(
                 [
@@ -5052,7 +5038,7 @@ class HelpdeskTicket(models.Model):
                     (
                         "default_location_src_id",
                         "=",
-                        record.x_studio_return_receipt_location.id,
+                        record.return_receipt_location.id,
                     ),
                     ("code", "=", "outgoing"),
                     ("company_id", "=", company.id),
@@ -5066,8 +5052,8 @@ class HelpdeskTicket(models.Model):
 
             prod_move = self.env["stock.picking"].create(
                 {
-                    "x_studio_created_from_help_ticket": record.id,
-                    "x_studio_helpdesk_ticket_id": record.id,
+                    "created_from_help_ticket": record.id,
+                    "helpdesk_ticket_id": record.id,
                     "picking_type_id": opt_type.id,
                     "location_id": source_loc,
                     "location_dest_id": dest_loc.id,
@@ -5114,15 +5100,15 @@ class HelpdeskTicket(models.Model):
                         "product_uom_id": record.product_id.uom_id.id,
                         "location_id": update_prod_move.location_id.id,
                         "location_dest_id": update_prod_move.location_dest_id.id,
-                        "lot_id": record.x_studio_serial_no.id,
+                        "lot_id": record.serial_no.id,
                         "qty_done": 1.00,
                         "company_id": company.id,
                     }
                 )
                 update_prod_move.write({"state": "done"})
 
-            record.x_studio_picking_id = prod_move.id
-            record.x_studio_pick_id = prod_move.id
+            record.picking_id = prod_move.id
+            record.pick_id = prod_move.id
 
     @api.model
     def _delegate_studio_server_actions_to_native(self):
@@ -5151,7 +5137,7 @@ class HelpdeskTicket(models.Model):
             ),
             (
                 2000,
-                "x_studio_return_receipt_location",
+                "return_receipt_location",
                 "record._repair_populate_repair_location()",
             ),
             (
@@ -5167,22 +5153,22 @@ class HelpdeskTicket(models.Model):
             # Tier 2 — repair-workflow buttons
             (
                 2001,
-                "x_studio_repair_factory_location",
+                "repair_factory_location",
                 "record._repair_studio_send_to_factory()",
             ),
             (
                 2002,
-                "x_studio_created_by_2",
+                "created_by_2",
                 "record._repair_studio_receive_at_factory()",
             ),
             (
                 2007,
-                "x_studio_created_by_9",
+                "created_by_9",
                 "record._repair_studio_send_to_sales_centre()",
             ),
             (
                 2006,
-                "x_studio_created_by_10",
+                "created_by_10",
                 "record._repair_studio_receive_at_sales_centre()",
             ),
             (
@@ -5190,7 +5176,7 @@ class HelpdeskTicket(models.Model):
                 "Cancel reason must be specified",
                 "record._repair_studio_cancel_repair()",
             ),
-            (2221, "x_studio_reopen_status", "record._repair_studio_reopen_repair()"),
+            (2221, "reopen_status", "record._repair_studio_reopen_repair()"),
             # Tier 3 — heavy compute (route + serial creation)
             (
                 1993,
@@ -5218,12 +5204,12 @@ class HelpdeskTicket(models.Model):
             ),
             (
                 2450,
-                "x_studio_sn_updated'] = True",
+                "sn_updated'] = True",
                 "record._repair_auto_select_product_for_rug_22()",
             ),
             (
                 2451,
-                "x_studio_sn_updated'] = False",
+                "sn_updated'] = False",
                 "record._repair_auto_select_product_for_rug_33()",
             ),
             (
@@ -5231,7 +5217,7 @@ class HelpdeskTicket(models.Model):
                 "record.ticket_type_id:",
                 "record._repair_auto_select_product_for_rug_4()",
             ),
-            (2343, "x_studio_cancelled_2", "record._repair_studio_cancel_repair_2()"),
+            (2343, "cancelled_2", "record._repair_studio_cancel_repair_2()"),
             (
                 2159,
                 "Warranty Card Document must be Uploaded",
@@ -5254,14 +5240,14 @@ class HelpdeskTicket(models.Model):
             ),
             # Tier 6 — actions on non-ticket models
             #  6 "JIN Company Id" on the 5 catalogue models +
-            #  helpdesk.stage (all identical: set x_studio_company_id
+            #  helpdesk.stage (all identical: set accounting_company_id
             #  from current company context).
-            (2666, "x_studio_company_id", "record._jin_set_company_id()"),
-            (2667, "x_studio_company_id", "record._jin_set_company_id()"),
-            (2668, "x_studio_company_id", "record._jin_set_company_id()"),
-            (2670, "x_studio_company_id", "record._jin_set_company_id()"),
-            (2760, "x_studio_company_id", "record._jin_set_company_id()"),
-            (2790, "x_studio_company_id", "record._jin_set_company_id()"),
+            (2666, "accounting_company_id", "record._jin_set_company_id()"),
+            (2667, "accounting_company_id", "record._jin_set_company_id()"),
+            (2668, "accounting_company_id", "record._jin_set_company_id()"),
+            (2670, "accounting_company_id", "record._jin_set_company_id()"),
+            (2760, "accounting_company_id", "record._jin_set_company_id()"),
+            (2790, "accounting_company_id", "record._jin_set_company_id()"),
             # project.task pipeline promotion on task-create
             (
                 2003,
@@ -5275,7 +5261,7 @@ class HelpdeskTicket(models.Model):
             # validation guards).
             (
                 2316,
-                "x_studio_end_quick_repair",
+                "end_quick_repair",
                 "record._repair_studio_end_quick_repair()",
             ),
             (
@@ -5290,7 +5276,7 @@ class HelpdeskTicket(models.Model):
             ),
             (
                 2219,
-                "x_studio_valid_diagnosis",
+                "valid_diagnosis",
                 "record._repair_studio_validate_diagnosis_lines()",
             ),
         ]

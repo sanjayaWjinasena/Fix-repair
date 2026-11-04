@@ -22,26 +22,26 @@ class StockLocation(models.Model):
     # ownership to Fix-repair — see _migrate_studio_stock_location_cluster.
 
     # Flags: mark a stock.location for a specific repair-flow role
-    x_studio_finished_good_location = fields.Boolean(
+    finished_good_location = fields.Boolean(
         string="Finished Good Location",
     )
-    x_studio_repair_factory_location = fields.Boolean(
+    repair_factory_location = fields.Boolean(
         string="Repair Factory Location",
     )
-    x_studio_repair_return_location = fields.Boolean(
+    repair_return_location = fields.Boolean(
         string="Repair Return Location",
     )
-    x_studio_temp_location = fields.Boolean(
+    temp_location = fields.Boolean(
         string="Temp Location",
     )
 
     # Chained locations used by the repair-flow picking routing
-    x_studio_return_receipt_location = fields.Many2one(
+    return_receipt_location = fields.Many2one(
         "stock.location",
         string="Return Receipt Location",
         ondelete="set null",
     )
-    x_studio_return_sequence = fields.Many2one(
+    return_sequence = fields.Many2one(
         "ir.sequence",
         string="Return Sequence",
         ondelete="set null",
@@ -49,15 +49,15 @@ class StockLocation(models.Model):
 
     # User-scope m2m — Fix-repair's helpdesk_ticket._get_view and
     # stock_picking domain filters read these via
-    # ('x_studio_users_stock_location', 'in', user_id) / ilike self._uid.
-    x_studio_users_stock_location = fields.Many2many(
+    # ('users_stock_location', 'in', user_id) / ilike self._uid.
+    users_stock_location = fields.Many2many(
         "res.users",
         relation="stock_location_users_stock_location_rel",
         column1="location_id",
         column2="user_id",
         string="Users (Stock Location)",
     )
-    x_studio_users_internal_transfer = fields.Many2many(
+    users_internal_transfer = fields.Many2many(
         "res.users",
         relation="stock_location_users_internal_transfer_rel",
         column1="location_id",
@@ -72,7 +72,7 @@ class StockLocation(models.Model):
     # referenced by Studio view arch; no Python consumer today, but
     # declared so install-time view validation and future Studio arch
     # ports (Clear-DB upgrade) resolve cleanly.
-    x_studio_many2many_field_7kpUe = fields.Many2many(
+    many2many_field_7kpUe = fields.Many2many(
         "res.users",
         relation="stock_location_users_scope_7kpue_rel",
         column1="location_id",

@@ -7,10 +7,10 @@
         <field name="priority">50</field>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='name']" position="after">
-                <field name="x_studio_rug"/>
-                <field name="x_studio_rug_confirmed"/>
-                <field name="x_studio_with_serial_no"/>
-                <field name="x_studio_without_serial_no"/>
+                <field name="rug"/>
+                <field name="rug_confirmed"/>
+                <field name="with_serial_no"/>
+                <field name="without_serial_no"/>
             </xpath>
         </field>
     </record>
@@ -28,10 +28,10 @@
         <field name="priority">50</field>
         <field name="arch" type="xml">
             <xpath expr="//tree[1]/field[@name='name']" position="after">
-                <field name="x_studio_rug" optional="show" string="RUG"/>
-                <field name="x_studio_rug_confirmed" optional="show" string="RUG Confirmed"/>
-                <field name="x_studio_with_serial_no" optional="show" string="With Serial No"/>
-                <field name="x_studio_without_serial_no" optional="show" string="Without Serial No"/>
+                <field name="rug" optional="show" string="RUG"/>
+                <field name="rug_confirmed" optional="show" string="RUG Confirmed"/>
+                <field name="with_serial_no" optional="show" string="With Serial No"/>
+                <field name="without_serial_no" optional="show" string="Without Serial No"/>
             </xpath>
         </field>
     </record>
@@ -45,10 +45,10 @@
       <field name="arch" type="xml">
         <data>
   <xpath expr="//tree[1]/field[@name='name']" position="after">
-    <field optional="show" name="x_studio_rug" string="RUG"/>
-    <field optional="show" name="x_studio_rug_confirmed" string="RUG Confirmed"/>
-    <field optional="show" name="x_studio_with_serial_no" string="With Serial No"/>
-    <field optional="show" name="x_studio_without_serial_no" string="Without Serial No"/>
+    <field optional="show" name="rug" string="RUG"/>
+    <field optional="show" name="rug_confirmed" string="RUG Confirmed"/>
+    <field optional="show" name="with_serial_no" string="With Serial No"/>
+    <field optional="show" name="without_serial_no" string="Without Serial No"/>
     <field name="id" optional="show" column_invisible="1"/>
   </xpath>
 </data>

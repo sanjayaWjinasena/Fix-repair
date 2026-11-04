@@ -17,10 +17,10 @@
 
     Fix-repair's _get_view / button-visibility logic keys off these
     4 flags:
-      - RUG buttons visible when ticket_type_id.x_studio_rug == True
-      - Warranty Card required when x_studio_rug_confirmed
-      - Serial No required when x_studio_with_serial_no
-      - Create Serial button visible when x_studio_without_serial_no
+      - RUG buttons visible when ticket_type_id.rug == True
+      - Warranty Card required when rug_confirmed
+      - Serial No required when with_serial_no
+      - Create Serial button visible when without_serial_no
 
     Without these seed rows, a fresh Fix-repair install has no way to
     reach the RUG / repair-flow-branching states — users would need to
@@ -37,26 +37,26 @@
     <record id="ticket_type_rug" model="helpdesk.ticket.type">
         <field name="name">Repair - Under Warranty - RUG</field>
         <field name="sequence">10</field>
-        <field name="x_studio_rug" eval="True"/>
-        <field name="x_studio_rug_confirmed" eval="True"/>
+        <field name="rug" eval="True"/>
+        <field name="rug_confirmed" eval="True"/>
     </record>
 
     <record id="ticket_type_external_not_rug" model="helpdesk.ticket.type">
         <field name="name">Repair - Under Warranty -  External not RUG</field>
         <field name="sequence">10</field>
-        <field name="x_studio_rug" eval="True"/>
+        <field name="rug" eval="True"/>
     </record>
 
     <record id="ticket_type_not_under_warranty_with_serial" model="helpdesk.ticket.type">
         <field name="name">Repair - Not Under Warranty (With Serial No)</field>
         <field name="sequence">10</field>
-        <field name="x_studio_with_serial_no" eval="True"/>
+        <field name="with_serial_no" eval="True"/>
     </record>
 
     <record id="ticket_type_not_under_warranty_without_serial" model="helpdesk.ticket.type">
         <field name="name">Repair - Not Under Warranty (Without Serial No)</field>
         <field name="sequence">10</field>
-        <field name="x_studio_without_serial_no" eval="True"/>
+        <field name="without_serial_no" eval="True"/>
     </record>
 
 </odoo>
