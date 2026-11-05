@@ -2,7 +2,7 @@
     # upgrade-testing branch: data files below are commented out - this branch installs
     # functions only, no data is seeded.
     "name": "Jinasena : Module : Repair",
-    "version": "17.0.1.0.372",
+    "version": "17.0.1.0.373",
     "summary": "Enhancements to the Customer Care - Repair helpdesk workflow",
     "author": "Jinasena Agricultural Machinery (Pvt) Ltd.",
     "category": "Helpdesk",
@@ -98,9 +98,11 @@
         "views/res_partner_views.xml",
         "views/fix_repair_templates.xml",
         "views/fix_repair_menus.xml",
+        # repair ticket / repair serial numbers (repair.seq, repair.serial.seq): a company-less template per
+        # code; per-company copies come from hooks.seed_repair_sequences_per_company (install / migration)
+        "data/repair_sequence_data.xml",
         # Not loaded on this branch:
         # 'data/repair_stage_data.xml',  # upgrade-testing: data, not shipped
-        # 'data/repair_sequence_data.xml',  # upgrade-testing: data, not shipped
         # 'data/helpdesk_ticket_type_seed_data.xml',  # upgrade-testing: data, not shipped
         # 'data/repair_diagnosis_seed_data.xml',  # upgrade-testing: data, not shipped
         # '_disabled/views/res_partner_hide_dev_extras.xml',
