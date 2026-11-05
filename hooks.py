@@ -601,12 +601,11 @@ def assign_names_to_stale_new_tickets(env):
     renamed = 0
     for ticket in stale:
         # Company-scoped next_by_code — must match the ticket's own
-        # company_id, not env.company, otherwise a multi-company
+        # company_id (next_by_code reads env.company, so with_company,
+        # not a company_id context key), otherwise a multi-company
         # backfill run under the SUPERUSER's context would draw all
         # numbers from the SUPERUSER's active company.
-        seq = Sequence.with_context(
-            company_id=ticket.company_id.id,
-        ).next_by_code("repair.seq")
+        seq = Sequence.with_company(ticket.company_id).next_by_code("repair.seq")
         if not seq:
             _logger.warning(
                 "Fix-repair: repair.seq unresolved for company %s "

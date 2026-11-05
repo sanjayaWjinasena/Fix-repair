@@ -5009,7 +5009,7 @@ class HelpdeskTicket(models.Model):
 
             seq = (
                 self.env["ir.sequence"]
-                .with_context(company_id=company.id)
+                .with_company(company)
                 .next_by_code("repair.serial.seq")
             )
 
