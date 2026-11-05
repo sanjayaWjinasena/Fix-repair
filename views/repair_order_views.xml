@@ -36,12 +36,13 @@
       <field name="mode">extension</field>
       <field name="arch" type="xml">
         <data>
-  <xpath expr="//field[@name='tag_ids']" position="after">
-    <field name="confirm_draft_quotation" string="Confirm Draft Quotation" force_save="True" readonly="1"/>
-  </xpath>
-  <xpath expr="//field[@name='product_packaging_id']" position="after">
-    <!-- STRIPPED price_unit not on repair.order --></xpath>
-</data>
+          <xpath expr="//field[@name='tag_ids']" position="after">
+            <field name="confirm_draft_quotation" string="Confirm Draft Quotation" force_save="True" readonly="1"/>
+          </xpath>
+          <xpath expr="//field[@name='product_packaging_id']" position="after">
+            <field name="price_unit" optional="show"/>
+          </xpath>
+        </data>
       </field>
     </record>
     <record id="view_4015_odoo_studio_repair_form_customization_button_e" model="ir.ui.view">
@@ -53,14 +54,14 @@
       <field name="mode">extension</field>
       <field name="arch" type="xml">
         <data>
-    <xpath expr="//form" position="inside"><field name="confirm_draft_quotation" invisible="1"/></xpath><xpath expr="//header/button[@name='action_validate']" position="before"> confirm_draft_quotation
-      <!-- STRIPPED action button aid=1814 unresolvable -->
-    </xpath>
-    
-    <xpath expr="//header/button[@name='action_validate']" position="attributes">
-      <attribute name="invisible">state != 'draft'</attribute></xpath>
-    
-    </data>
+            <xpath expr="//header/button[@name='action_validate']" position="before"> confirm_draft_quotation
+              <button type="action" name="%(Fix-repair.server_action_1814_rr_add_draft_quotation_confirm_button)d" string="Confirm Draft Quotation" class="btn-primary" invisible="confirm_draft_quotation == True"/>
+            </xpath>
+
+            <xpath expr="//header/button[@name='action_validate']" position="attributes">
+              <attribute name="invisible">state != 'draft'</attribute></xpath>
+
+            </data>
       </field>
     </record>
 </odoo>
