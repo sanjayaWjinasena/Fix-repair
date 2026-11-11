@@ -7,12 +7,12 @@ here is the remainder — bank-guarantee docs, vendor master, and VAT/SVAT
 tax compliance.
 
 Deliberately NOT ported here (blocked by Studio-only target models):
-  - x_studio_customer_group (m2o -> x_customer_group, Studio-only model)
-  - x_studio_vendor_group  (m2o -> x_vendor_group,  Studio-only model)
-  - x_studio_group_type    (stored related through x_studio_customer_group)
+  - customer_group (m2o -> customer_group, Studio-only model)
+  - vendor_group  (m2o -> vendor_group,  Studio-only model)
+  - group_type    (stored related through customer_group)
 
-Porting those would require also declaring x_customer_group /
-x_vendor_group as Python models — separate scope.
+Porting those would require also declaring customer_group /
+vendor_group as Python models — separate scope.
 """
 
 from odoo import fields, models
@@ -32,7 +32,7 @@ class ResPartner(models.Model):
         string="Mandatory Bank Guarantee",
     )
 
-    # --- Vendor master (skips x_studio_vendor_group by design) ------------
+    # --- Vendor master (skips vendor_group by design) ------------
     vendor_account = fields.Many2one(
         "res.partner",
         string="Vendor Account",

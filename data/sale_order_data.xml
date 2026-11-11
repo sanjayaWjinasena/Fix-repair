@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!-- Fix Studio server action "Create Advance Payment" that passes record.id
-         (sale.order id) into x_studio_project_no_1 (Many2one → project.project),
-         causing a FK violation. Replaces it with record.x_studio_project_no.id. -->
+         (sale.order id) into project_no_1 (Many2one → project.project),
+         causing a FK violation. Replaces it with record.project_no.id. -->
     <function model="sale.order" name="_fix_advance_payment_project_field"/>
     <!-- Ensure the two 'Advance Payment' journals have inbound Manual
          payment method lines. Odoo 17's account.payment validation

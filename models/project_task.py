@@ -239,14 +239,14 @@ class ProjectTask(models.Model):
         """Part of _compute_valid_invoiced_so."""
         if rec.sale_order_id.id:
             if (
-                rec.sale_order_id.x_studio_order_payment_method == "Credit"
+                rec.sale_order_id.order_payment_method == "Credit"
                 or rec.sale_order_id.rug_approved
             ):
                 if rec.repair_completed_stage_updated:
                     if rec.sale_order_id.state == "cancel":
                         valid = True
                     else:
-                        if rec.sale_order_id.x_studio_order_payment_method == "Credit":
+                        if rec.sale_order_id.order_payment_method == "Credit":
                             valid = True
                         else:
                             if rec.sale_order_id.rug_approved:
@@ -343,7 +343,7 @@ class ProjectTask(models.Model):
     # workflows on the same project.task record.
     payment_type = fields.Selection(
         string="Payment Type",
-        related="partner_id.x_studio_payment_method",
+        related="partner_id.payment_method",
         store=True,
         readonly=True,
     )

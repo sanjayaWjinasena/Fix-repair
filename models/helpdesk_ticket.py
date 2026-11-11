@@ -121,7 +121,7 @@ class HelpdeskTicket(models.Model):
 
     @api.depends(
         "fsm_task_ids.sale_order_id.rug_approved",
-        "fsm_task_ids.sale_order_id.x_studio_rug_rejected",
+        "fsm_task_ids.sale_order_id.rug_rejected",
     )
     def _compute_rug_approval_status(self):
         # Preserves Studio's original iteration behaviour: iterates all
@@ -135,7 +135,7 @@ class HelpdeskTicket(models.Model):
                 if so:
                     if so.rug_approved:
                         val = "RUG Approved"
-                    elif so.x_studio_rug_rejected:
+                    elif so.rug_rejected:
                         val = "RUG Rejected"
             ticket.rug_approval_status = val
 
@@ -553,7 +553,7 @@ class HelpdeskTicket(models.Model):
             company = self.env["res.company"].browse(company_ids[0])
             valid = False
             for invoices in rec.fsm_task_ids:
-                if invoices.sale_order_id.x_studio_order_payment_method == "Credit":
+                if invoices.sale_order_id.order_payment_method == "Credit":
                     valid = False
                 else:
                     if invoices.valid_invoiced_so:
@@ -1977,7 +1977,7 @@ class HelpdeskTicket(models.Model):
     def _jin_is_repair_ticket(self):
         """A ticket of a Repair Team, or with no team yet (the Repair flow stays the default)."""
         self.ensure_one()
-        return not self.team_id or self.team_id.x_jin_repair_team
+        return not self.team_id or self.team_id.repair_team
 
     @api.model
     def _jin_is_repair_form_view(self, view):
@@ -1997,18 +1997,18 @@ class HelpdeskTicket(models.Model):
         if (
             general_menu
             and "team_id" in fields_list
-            and (not team or team.x_jin_repair_team)
+            and (not team or team.repair_team)
         ):
             team = Team.search(
                 [
-                    ("x_jin_repair_team", "=", False),
+                    ("repair_team", "=", False),
                     ("company_id", "in", self.env.companies.ids),
                 ],
                 limit=1,
             )
             res["team_id"] = team.id or False
         # 'New' is the Repair numbering sentinel (repair.seq); a general ticket starts with an empty subject.
-        if (general_menu or (team and not team.x_jin_repair_team)) and res.get(
+        if (general_menu or (team and not team.repair_team)) and res.get(
             "name"
         ) == "New":
             res["name"] = False
@@ -4233,7 +4233,7 @@ class HelpdeskTicket(models.Model):
         """Studio server action id 2159 native port. Requires the
         warranty card to be uploaded, rewrites each linked SO line's
         price_unit to the product's standard_price (saving the
-        original in x_studio_price_unit_original), and flips
+        original in price_unit_original), and flips
         ticket_type_id to 1 (the RUG type)."""
         for record in self:
             if not record.warranty_card:
@@ -4251,7 +4251,7 @@ class HelpdeskTicket(models.Model):
                         so_line.write(
                             {
                                 "price_unit": so_line.product_template_id.standard_price,
-                                "x_studio_price_unit_original": original_price,
+                                "price_unit_original": original_price,
                             }
                         )
             record.write({"ticket_type_id": 1})
@@ -4460,8 +4460,8 @@ class HelpdeskTicket(models.Model):
         """
         clusters = {
             "res.users": (
-                "x_studio_super_user",
-                "x_studio_super_user_melt_items",
+                "super_user",
+                "super_user_melt_items",
             ),
             "project.task": (
                 "cancelled",
@@ -5319,7 +5319,7 @@ class HelpdeskTicket(models.Model):
                 "record._repair_auto_update_helpdesk_pipeline_status_1()",
             ),
             # res.users super-user permission validation
-            (2544, "x_studio_super_user_melt_items", "record._super_user_validate()"),
+            (2544, "super_user_melt_items", "record._super_user_validate()"),
             # Tier 7 — remaining Studio project.task repair actions
             # (End Quick Repair button + diagnosis/image/diagnosis-line
             # validation guards).

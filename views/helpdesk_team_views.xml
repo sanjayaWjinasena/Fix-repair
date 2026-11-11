@@ -82,7 +82,7 @@
     <field name="arch" type="xml">
       <xpath expr="//setting[.//field[@name='use_product_repairs']]" position="after">
         <setting id="jin_repair_team" help="Tickets open in the Repair ticket form (repair fields, rules and buttons). Off: Odoo's standard ticket form.">
-          <field name="x_jin_repair_team"/>
+          <field name="repair_team"/>
         </setting>
       </xpath>
     </field>

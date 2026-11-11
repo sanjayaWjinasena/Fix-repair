@@ -148,8 +148,8 @@ Declared in `models/project_task.py`.
 | `source_location_1` | Many2one → `stock.location` | ✅ 🧹 |
 | `virtual_location` | Many2one → `stock.location` | ✅ 🧹 |
 | `virtual_location_1` | Many2one → `stock.location` | ✅ 🧹 |
-| `x_studio_super_user` (v162) | Boolean | ✅ 🧹 |
-| `x_studio_super_user_melt_items` (v162) | Boolean | ✅ 🧹 |
+| `super_user` (v162) | Boolean | ✅ 🧹 |
+| `super_user_melt_items` (v162) | Boolean | ✅ 🧹 |
 
 Method: `_super_user_validate` + create/write hooks.
 Declared in `models/res_users.py`.
@@ -221,13 +221,13 @@ metrics) and are deliberately not migrated:
 
 | Field | Model | Actual purpose |
 |---|---|---|
-| `x_studio_attendance_administrator` | res.users | HR attendance admin flag |
+| `attendance_administrator` | res.users | HR attendance admin flag |
 | `accounting_company_id` | res.users | Studio's own company-scope helper on users |
-| `x_studio_many2many_field_Q50dg` | res.users | Studio-anonymous m2m — recruitment area |
-| `x_studio_many2many_field_bQRSA` | res.users | Studio-anonymous m2m — recruitment area |
-| `x_x_studio_users_internal_transfer_stock_location_count` | res.users | Stock-location stat helper |
-| `x_x_studio_users_stock_location_stock_location_count` | res.users | Stock-location stat helper |
-| `x_studio_recr_stages` | res.users | HR recruitment stages |
+| `many2many_field_Q50dg` | res.users | Studio-anonymous m2m — recruitment area |
+| `many2many_field_bQRSA` | res.users | Studio-anonymous m2m — recruitment area |
+| `users_internal_transfer_stock_location_count` | res.users | Stock-location stat helper |
+| `users_stock_location_stock_location_count` | res.users | Stock-location stat helper |
+| `recr_stages` | res.users | HR recruitment stages |
 | `payment_type` | project.task | General payment-method flag |
 | `starting_date` | project.task | General task start date |
 | `task_id_sale_order_count` | project.task | Generic sales-order count helper |
@@ -383,7 +383,7 @@ Out-of-scope Studio artefacts still on the DB and deliberately left alone:
 - The 10 out-of-scope fields listed in [section 4](#4-fields-left-as-studio-manual-out-of-scope)
 - Studio views / actions / menus / reports on models outside the 10
   scope models (e.g. `x_material_request_*`, `x_purchase_request_*`,
-  `x_custom_reports*`, `hr_expense`, etc.)
+  `custom_reports*`, `hr_expense`, etc.)
 - The `studio_customization` module itself, still installed
 
 Every one of these is untouched because it's not helpdesk-repair

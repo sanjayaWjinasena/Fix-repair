@@ -64,7 +64,7 @@
     <field name="priority">60</field>
     <field name="arch" type="xml">
       <xpath expr="//field[@name='name']" position="after">
-        <field name="x_jin_repair_type" optional="show"/>
+        <field name="repair_type" optional="show"/>
       </xpath>
     </field>
   </record>
@@ -75,7 +75,7 @@
     <field name="priority">60</field>
     <field name="arch" type="xml">
       <xpath expr="//field[@name='name']" position="after">
-        <field name="x_jin_repair_type"/>
+        <field name="repair_type"/>
       </xpath>
     </field>
   </record>

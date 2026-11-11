@@ -18,7 +18,7 @@ Clear-DB code (on_change on account.payment):
         min_magin = record.company_id
         if min_magin:
           so_value = round(record.sales_order.amount_total
-                           * (min_magin.x_studio_advance_payment_/100), 2)
+                           * (min_magin.advance_payment_/100), 2)
 
         if so_value > (record.amount + sum_total):
           raise UserError('Payment is not within the minimum precentage.')
@@ -30,7 +30,7 @@ different entry point.
 
 Fields sales_order + quotation_type live on
 account.payment (declared in BugFix-Sales v45). Company advance %
-lives on res.company.x_studio_advance_payment_ (BugFix-Sales v22
+lives on res.company.advance_payment_ (BugFix-Sales v22
 config-cutover proxy).
 """
 
@@ -66,7 +66,7 @@ class AccountPayment(models.Model):
             if not so:
                 continue
             company = payment.company_id
-            pct = getattr(company, "x_studio_advance_payment_", 0.0) or 0.0
+            pct = getattr(company, "advance_payment_", 0.0) or 0.0
             if pct <= 0:
                 continue
             # Sum every already-posted payment against this same SO.

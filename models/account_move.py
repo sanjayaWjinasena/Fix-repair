@@ -15,7 +15,7 @@ class AccountMoveLine(models.Model):
 
     def _fix_repair_compute_credit_limit_2(self):
         for rec in self:
-            rec.x_studio_credit_limit_2 = rec.partner_id.credit_limit or 0
+            rec.credit_limit_2 = rec.partner_id.credit_limit or 0
 
     @api.model
     def _delegate_studio_computes_to_native(self):
@@ -25,7 +25,7 @@ class AccountMoveLine(models.Model):
 
         delegations = [
             (
-                "x_studio_credit_limit_2",
+                "credit_limit_2",
                 "credit_limit",
                 "self._fix_repair_compute_credit_limit_2()",
             ),
@@ -61,7 +61,7 @@ class AccountMove(models.Model):
     # rug_confirmed: mirror of the linked sale.order's RUG
     #   confirmation flag. Computed by walking invoice_origin →
     #   sale.order (same pattern as is_rug_invoice above). Not a
-    #   `related` because x_studio_sale_id lives in the optional
+    #   `related` because sale_id lives in the optional
     #   `studio_migrations` module — Fix-repair can't hard-depend on
     #   it without expanding the tree, and Odoo's setup_related bails
     #   at load time when the source field isn't yet registered.
@@ -117,7 +117,7 @@ class AccountMove(models.Model):
             move.is_rug_invoice = (
                 so.quotation_type == "Repair"
                 and not so.repair_customer_pays
-                and not so.x_studio_rug_rejected
+                and not so.rug_rejected
             )
 
     @api.depends("invoice_line_ids.account_id", "company_id")
@@ -169,7 +169,7 @@ class AccountMove(models.Model):
             # the RUG is still confirmed. If it's been rejected the customer
             # pays the invoice and we want Register Payment available again.
             #
-            # Previously referenced rug_confirmed / x_studio_rug_rejected
+            # Previously referenced rug_confirmed / rug_rejected
             # directly — those fields live on sale.order, not account.move.
             # On dev env's account.move form, OWL couldn't resolve them
             # ("Name 'rug_confirmed' is not defined") and the entire
@@ -272,7 +272,7 @@ class AccountMove(models.Model):
 
         Clear-DB code (paraphrased):
             if rug_confirmed AND rug_acc_updated AND state=='posted':
-              so = env['sale.order'].search([('id','=', x_studio_sale_id.id),
+              so = env['sale.order'].search([('id','=', sale_id.id),
                                              ('state','=','done')], limit=1)
               if so:
                   record['payment_state'] = 'in_payment'
@@ -316,12 +316,12 @@ class AccountMove(models.Model):
             # removed sale.order.state='done' -- the native lock
             # semantic moved to a Boolean field `locked` (same v285
             # gap that broke the Track Lock trio's port). Prefer
-            # x_studio_sale_id (Studio's direct m2o link declared by
+            # sale_id (Studio's direct m2o link declared by
             # studio_migrations) when present; fall back to
             # invoice_origin lookup for envs without studio_migrations.
             so = False
-            if hasattr(move, "x_studio_sale_id") and move.x_studio_sale_id:
-                so = move.x_studio_sale_id
+            if hasattr(move, "sale_id") and move.sale_id:
+                so = move.sale_id
             elif move.invoice_origin:
                 so = (
                     self.env["sale.order"]

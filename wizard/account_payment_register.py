@@ -108,15 +108,15 @@ class AccountPaymentRegister(models.TransientModel):
         """Block payment registration on non-RUG repair invoices when
         the cumulative amount paid after this payment posts would
         fall below the company's configured advance-payment
-        percentage on x_minimum_sales_margin.
+        percentage on minimum_sales_margin.
 
         Applies to every account.move on this wizard whose linked
         sale.order carries repair_customer_pays=True or
-        x_studio_rug_rejected=True. RUG-approved (warranty) repair
+        rug_rejected=True. RUG-approved (warranty) repair
         SOs and non-Repair SOs pass through untouched.
 
         Threshold lookup is company-scoped: read the
-        x_minimum_sales_margin row for the SO's own company_id.
+        minimum_sales_margin row for the SO's own company_id.
         Skip validation when no row exists for that company or the
         advance-payment percentage is 0 — those cases mean 'no
         minimum configured'.
@@ -139,18 +139,18 @@ class AccountPaymentRegister(models.TransientModel):
             for invoice in invoices:
                 orders = invoice.invoice_line_ids.mapped("sale_line_ids.order_id")
                 non_rug = orders.filtered(
-                    lambda o: o.repair_customer_pays or o.x_studio_rug_rejected
+                    lambda o: o.repair_customer_pays or o.rug_rejected
                 )
                 for order in non_rug:
-                    # v275: read the % from res.company.x_studio_advance_payment_
+                    # v275: read the % from res.company.advance_payment_
                     # (BugFix-Sales v22 cutover: proxy field backed by
                     # ir.config_parameter key
                     # 'bugfix_sales.advance_payment_pct.<company_id>').
-                    # The old x_minimum_sales_margin Studio model isn't
-                    # declared on standalone dev env — env['x_minimum_sales_margin']
+                    # The old minimum_sales_margin Studio model isn't
+                    # declared on standalone dev env — env['minimum_sales_margin']
                     # raised KeyError. Reading via the company proxy is
                     # portable across Clear-DB + dev.
-                    pct = order.company_id.x_studio_advance_payment_ or 0.0
+                    pct = order.company_id.advance_payment_ or 0.0
                     if pct <= 0:
                         continue
                     threshold = round(order.amount_total * pct / 100.0, 2)

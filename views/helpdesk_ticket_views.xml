@@ -631,7 +631,7 @@
     <field name="name">General Tickets</field>
     <field name="res_model">helpdesk.ticket</field>
     <field name="view_mode">tree,kanban,form,activity</field>
-    <field name="domain">['|', ('team_id', '=', False), ('team_id.x_jin_repair_team', '=', False)]</field>
+    <field name="domain">['|', ('team_id', '=', False), ('team_id.repair_team', '=', False)]</field>
     <field name="context">{'jin_general_ticket': True}</field>
     <field name="help" type="html">
       <p class="o_view_nocontent_smiling_face">No general tickets yet</p>
@@ -665,11 +665,11 @@
     <field name="priority">90</field>
     <field name="arch" type="xml">
       <xpath expr="//field[@name='ticket_type_id']" position="attributes">
-        <attribute name="domain">[('x_jin_repair_type', '=', False)]</attribute>
+        <attribute name="domain">[('repair_type', '=', False)]</attribute>
       </xpath>
       <!-- a ticket in a Repair team must use the Repair form (its rules and buttons) -->
       <xpath expr="//field[@name='team_id']" position="attributes">
-        <attribute name="domain">[('x_jin_repair_team', '=', False)]</attribute>
+        <attribute name="domain">[('repair_team', '=', False)]</attribute>
       </xpath>
     </field>
   </record>
@@ -680,10 +680,10 @@
     <field name="priority">200</field>
     <field name="arch" type="xml">
       <xpath expr="//field[@name='ticket_type_id']" position="attributes">
-        <attribute name="domain">[('x_jin_repair_type', '=', True)]</attribute>
+        <attribute name="domain">[('repair_type', '=', True)]</attribute>
       </xpath>
       <xpath expr="//field[@name='team_id']" position="attributes">
-        <attribute name="domain">[('x_jin_repair_team', '=', True)]</attribute>
+        <attribute name="domain">[('repair_team', '=', True)]</attribute>
       </xpath>
     </field>
   </record>

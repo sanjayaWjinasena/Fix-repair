@@ -71,7 +71,7 @@ class SaleOrder(models.Model):
         "partner_invoice_id.credit_limit",
         "amount_total",
         "partner_id",
-        "x_studio_order_payment_method",
+        "order_payment_method",
     )
     def _compute_over_credit(self):
         self._fix_repair_compute_over_credit()
@@ -81,35 +81,35 @@ class SaleOrder(models.Model):
         "partner_invoice_id.credit_limit",
         "amount_total",
         "partner_id",
-        "x_studio_order_payment_method",
+        "order_payment_method",
     )
     def _compute_over_credit_amount(self):
         self._fix_repair_compute_over_credit_amount()
 
     @api.depends(
         "partner_invoice_id.credit",
-        "partner_invoice_id.x_studio_bank_guarantee_amount",
+        "partner_invoice_id.bank_guarantee_amount",
         "amount_total",
         "partner_id",
-        "x_studio_order_payment_method",
-        "x_studio_valid_bank_guarantee",
+        "order_payment_method",
+        "valid_bank_guarantee",
     )
     def _compute_over_bank_guarantee(self):
         self._fix_repair_compute_over_bank_guarantee()
 
     @api.depends(
         "partner_invoice_id.credit",
-        "partner_invoice_id.x_studio_bank_guarantee_amount",
+        "partner_invoice_id.bank_guarantee_amount",
         "amount_total",
         "partner_id",
-        "x_studio_order_payment_method",
-        "x_studio_valid_bank_guarantee",
+        "order_payment_method",
+        "valid_bank_guarantee",
     )
     def _compute_over_bank_guarantee_amount(self):
         self._fix_repair_compute_over_bank_guarantee_amount()
 
     @api.depends(
-        "partner_id", "x_studio_order_payment_method", "x_studio_valid_bank_guarantee"
+        "partner_id", "order_payment_method", "valid_bank_guarantee"
     )
     def _compute_guarantee_status(self):
         self._fix_repair_compute_guarantee_status()
@@ -117,7 +117,7 @@ class SaleOrder(models.Model):
     @api.depends(
         "partner_invoice_id.total_overdue",
         "partner_id",
-        "x_studio_order_payment_method",
+        "order_payment_method",
     )
     def _compute_overdue(self):
         self._fix_repair_compute_overdue()

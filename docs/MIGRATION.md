@@ -282,9 +282,9 @@ claim is rejected and the customer pays. Behaviours added:
 - **`payment_account_id`** (Outstanding Receipts) also seeded on the method
   lines
 - **Studio "Create Advance Payment" server action fix**: was passing
-  `record.id` (a sale.order id) into `x_studio_project_no_1` (a
+  `record.id` (a sale.order id) into `project_no_1` (a
   Many2one → project.project) causing a FK violation. Rewritten to pass
-  `record.x_studio_project_no.id`.
+  `record.project_no.id`.
 
 ### 5.6 Confirm-button validation stack
 
@@ -298,7 +298,7 @@ Repair quotation_type by default; universal ones apply everywhere):
 | Expired quotation | universal | `date_order` still within validity window |
 | Over-commission | Sales + Project | commission % not exceeded |
 | Margin-exceed | Sales + Project | negative-margin lines require override |
-| Bank Guarantee | Credit-payment | `x_studio_bank_guarantee_approved` |
+| Bank Guarantee | Credit-payment | `bank_guarantee_approved` |
 | Project Budget | Project | project inventory / budget headroom |
 | Credit Limit | Credit-payment | `partner_id.credit_limit` respected |
 | Customer signature | Reject-RUG + NUW | `customer_signed` set from portal |
@@ -391,7 +391,7 @@ Beyond helpdesk.ticket, the same field-migration pattern was applied to:
 | `helpdesk.ticket.type` | 4 | RUG / RUG Confirmed / With serial / Without serial |
 | `helpdesk.stage` | 1 | `accounting_company_id` (multi-company stage routing) |
 | `project.task` | 13 (Cluster 5) + 9 (leftover) | end_quick_repair, quick_repair_status_1, repair_image_01/02, repair_reason M2M, valid_* computes, cancelled/created_date/diagnosis_ids/incomplete_delivery_available/priority/quotation_type/related_information/valid_diagnosis/warranty_card |
-| `res.users` | 4 (locations) + 2 (super-user) | Source Location, Virtual Location + `_1` duplicates, `x_studio_super_user`, `x_studio_super_user_melt_items` |
+| `res.users` | 4 (locations) + 2 (super-user) | Source Location, Virtual Location + `_1` duplicates, `super_user`, `super_user_melt_items` |
 
 Location fields on `res.users` are the source of the `helpdesk.ticket.
 source_location`-style related chain, so their migration completes
@@ -561,8 +561,8 @@ The 11 fields:
 
 | Model | Field | Type |
 |---|---|---|
-| `res.users` | `x_studio_super_user` | Boolean |
-| `res.users` | `x_studio_super_user_melt_items` | Boolean |
+| `res.users` | `super_user` | Boolean |
+| `res.users` | `super_user_melt_items` | Boolean |
 | `project.task` | `cancelled` | Boolean related |
 | `project.task` | `created_date` | Datetime |
 | `project.task` | `diagnosis_ids` | One2many('task_diagnosis','task_id') |
@@ -611,8 +611,8 @@ observable effect).
 
 Fields deliberately **not** migrated (out of helpdesk-repair scope):
 
-- `res.users`: `x_studio_attendance_administrator`, `accounting_company_id`,
-  `x_studio_recr_stages`, 2 m2m helpers, 2 stock location counters
+- `res.users`: `attendance_administrator`, `accounting_company_id`,
+  `recr_stages`, 2 m2m helpers, 2 stock location counters
 - `project.task`: `payment_type`, `starting_date`,
   `task_id_sale_order_count`
 
@@ -663,7 +663,7 @@ the noted file.
 107 `x_studio_*` fields spread across the 8 clusters. Highlights:
 
 **Cluster 1 — RUG cycle:** `rug_confirmed`, `rug_approved`,
-`x_studio_rug_rejected`, `rug_approval_status`, plus audit slots.
+`rug_rejected`, `rug_approval_status`, plus audit slots.
 
 **Cluster 2 — Repair location / stock:** `repair_location`,
 `return_receipt_location`, source / virtual location variants,
@@ -745,7 +745,7 @@ Native additions (not Studio-migrated):
 - `source_location`, `source_location_1` — Many2one to
   `stock.location`
 - `virtual_location`, `virtual_location_1` — same
-- `x_studio_super_user`, `x_studio_super_user_melt_items` — Boolean
+- `super_user`, `super_user_melt_items` — Boolean
 
 Method: `_super_user_validate` + create/write hooks.
 
@@ -1018,7 +1018,7 @@ Manifested in v159/v160 — 11 fields were flipped to `base` without
 adding declarations. Result:
 
 ```
-Field "x_studio_super_user_melt_items" does not exist in model "res.users"
+Field "super_user_melt_items" does not exist in model "res.users"
 ```
 
 v161 rolled state back to `manual` as a hotfix. v162 did the proper

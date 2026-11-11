@@ -191,10 +191,10 @@ rejected and the customer pays. Two flags:
 | Flag | Meaning |
 |---|---|
 | `repair_customer_pays` | True from the start (NUW — Not Under Warranty). Set by `project_task._sync_repair_flags` from `ticket.rug_confirmed`. |
-| `x_studio_rug_rejected` | Set later after the RUG cycle rejects a warranty repair. |
+| `rug_rejected` | Set later after the RUG cycle rejects a warranty repair. |
 
 Every "customer pays" check in the codebase reads the union:
-`order.repair_customer_pays or order.x_studio_rug_rejected`.
+`order.repair_customer_pays or order.rug_rejected`.
 
 The NUW → `repair_customer_pays` migration is one-way and
 data-preserving. `_migrate_nuw_to_customer_pays_flag` runs on every
@@ -219,8 +219,8 @@ install/upgrade, no-ops when nothing to migrate.
 - `payment_account_id` (Outstanding Receipts) also seeded on the
   method lines
 - Studio's "Create Advance Payment" action was passing `record.id`
-  into `x_studio_project_no_1` (a Many2one → project.project), causing
-  FK violations. Rewritten to pass `record.x_studio_project_no.id`.
+  into `project_no_1` (a Many2one → project.project), causing
+  FK violations. Rewritten to pass `record.project_no.id`.
 
 ### 4.6 Confirm-button validation stack
 
@@ -235,7 +235,7 @@ quotation_type by default; universal ones apply everywhere):
 | Expired quotation | universal | `date_order` still within validity window |
 | Over-commission | Sales + Project | commission % not exceeded |
 | Margin-exceed | Sales + Project | negative-margin lines require override |
-| Bank Guarantee | Credit-payment | `x_studio_bank_guarantee_approved` |
+| Bank Guarantee | Credit-payment | `bank_guarantee_approved` |
 | Project Budget | Project | project inventory / budget headroom |
 | Credit Limit | Credit-payment | `partner_id.credit_limit` respected |
 | Customer signature | Reject-RUG + NUW | `customer_signed` set from portal |
@@ -350,7 +350,7 @@ diagnosis_ids (One2many to task_diagnosis), incomplete_delivery_available
 
 - 4 location fields: `source_location`, `_source_location_1`,
   `_virtual_location`, `_virtual_location_1` (all Many2one → stock.location)
-- 2 super-user booleans: `x_studio_super_user`, `x_studio_super_user_melt_items`
+- 2 super-user booleans: `super_user`, `super_user_melt_items`
 
 ### 5.6 `sale.order` (`models/sale_order.py`)
 
@@ -545,10 +545,10 @@ Injects onto the base sale.order form:
 - Create Invoice (purple) — rewired to `action_repair_create_invoice`
 - Create Invoice (percentage) — hidden on every Repair SO
 - Cancel / Set-to-Quotation / Send PRO-FORMA — hidden or gated
-- x_studio_order_payment_method / quotation_type readonly rules
+- order_payment_method / quotation_type readonly rules
 - RUG buttons (Request / Approve / Reject) — visibility + rewire
 - Re-estimate button injection
-- Ghost `x_studio_current_tot_amount` field stripping
+- Ghost `current_tot_amount` field stripping
 
 ### `project.task.py._get_view`
 

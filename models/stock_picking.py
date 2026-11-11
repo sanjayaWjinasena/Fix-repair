@@ -99,7 +99,7 @@ class StockPicking(models.Model):
     @api.depends(
         "sale_id",
         "sale_id.repair_customer_pays",
-        "sale_id.x_studio_rug_rejected",
+        "sale_id.rug_rejected",
         "sale_id.invoice_ids.state",
         "sale_id.invoice_ids.payment_state",
     )
@@ -109,7 +109,7 @@ class StockPicking(models.Model):
         cancelled invoice for the linked sale order.
 
         Applies to any SO with repair_customer_pays=True (started as
-        not-under-warranty) OR x_studio_rug_rejected=True (warranty
+        not-under-warranty) OR rug_rejected=True (warranty
         repair fell through to customer-pays after the RUG cycle).
         Warranty-approved and non-Repair SOs pass through — this field
         stays False for them.
@@ -132,7 +132,7 @@ class StockPicking(models.Model):
         for picking in self:
             so = picking.sale_id
             customer_pays = bool(so) and (
-                so.repair_customer_pays or so.x_studio_rug_rejected
+                so.repair_customer_pays or so.rug_rejected
             )
             if not customer_pays:
                 picking.nuw_block_validate = False
@@ -341,7 +341,7 @@ class StockPicking(models.Model):
                     if helpdesk_ticket.repair_complete_stage_updated:
                         valid = False
                 else:
-                    if tso.x_studio_order_payment_method == "Cash":
+                    if tso.order_payment_method == "Cash":
                         for inv in tso.invoice_ids:
                             inv_amount += inv.amount_total
                             if inv.payment_state in (
@@ -388,7 +388,7 @@ class StockPicking(models.Model):
                 so = ticket.sale_order
                 if so:
                     if so.partner_id.id:
-                        if so.x_studio_order_payment_method == "Credit":
+                        if so.order_payment_method == "Credit":
                             value = False
                         else:
                             value = ticket.fully_paid_so
@@ -401,7 +401,7 @@ class StockPicking(models.Model):
                     so = ticket.sale_order
                     if so:
                         if so.partner_id.id:
-                            if so.x_studio_order_payment_method == "Credit":
+                            if so.order_payment_method == "Credit":
                                 value = False
                             else:
                                 value = ticket.fully_paid_so
@@ -428,7 +428,7 @@ class StockPicking(models.Model):
             valid = False
             so = rec.sale_id
             if so:
-                if so.x_studio_order_payment_method == "Credit":
+                if so.order_payment_method == "Credit":
                     valid = True
                 elif so.rug_approved:
                     valid = True
@@ -522,7 +522,7 @@ class StockPicking(models.Model):
                 else:
                     valid = True
             rec.user_location_validation = valid
-            rec.x_studio_user_location_validation_2 = valid2
+            rec.user_location_validation_2 = valid2
 
     def _fix_repair_compute_valid_factory_repair(self):
         for rec in self:
@@ -549,9 +549,9 @@ class StockPicking(models.Model):
                     value3 = ticket.receive_at_centre
                     if ticket.pickings_count > 1:
                         value4 = True
-            rec.x_studio_factory_repair = value2
-            rec.x_studio_received_at_centre = value3
-            rec.x_studio_picking_count = value4
+            rec.factory_repair = value2
+            rec.received_at_centre = value3
+            rec.picking_count = value4
             rec.valid_factory_repair = value
 
     def _fix_repair_compute_valid_transfer_lines(self):
@@ -652,7 +652,7 @@ class StockPicking(models.Model):
         repair_so_ids = set()
         for picking in self.filtered(lambda p: p.state == "done" and p.sale_id):
             so = picking.sale_id
-            if so.quotation_type == "Repair" and not so.x_studio_rug_rejected:
+            if so.quotation_type == "Repair" and not so.rug_rejected:
                 repair_so_ids.add(so.id)
         return repair_so_ids
 
@@ -708,7 +708,7 @@ class StockPicking(models.Model):
         nuw_so_ids = set()
         for picking in self.filtered(lambda p: p.state == "done" and p.sale_id):
             so = picking.sale_id
-            if so.repair_customer_pays or so.x_studio_rug_rejected:
+            if so.repair_customer_pays or so.rug_rejected:
                 nuw_so_ids.add(so.id)
         return nuw_so_ids
 

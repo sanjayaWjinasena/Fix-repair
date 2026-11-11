@@ -8,12 +8,12 @@ Clear-DB code:
       original_price = record.price_unit
       if record.rug_confirmed == True:
         record.write({'price_unit': record.product_template_id.standard_price,
-                      'x_studio_price_unit_original': original_price})
+                      'price_unit_original': original_price})
 
 Fires on every sale.order.line create + write. When the parent SO is
 a Repair quotation AND rug_confirmed is True on the header, resets
 the line's price_unit to the product's standard cost and captures the
-previous price in x_studio_price_unit_original (audit trail for the
+previous price in price_unit_original (audit trail for the
 customer-facing quote before RUG locked it).
 
 Fix-repair's sale_order.py already resets prices when the HEADER
@@ -24,7 +24,7 @@ when the flag flips, not on subsequent line adds.
 
 Fields quotation_type / rug_confirmed live on the
 parent sale.order (declared in BugFix-Sales), not on the line — the
-override navigates via record.order_id. x_studio_price_unit_original
+override navigates via record.order_id. price_unit_original
 is declared on sale.order.line by BugFix-Sales v43.
 """
 
@@ -37,7 +37,7 @@ class SaleOrderLine(models.Model):
     def _fix_repair_maybe_reprice_rug_line(self):
         """Studio automation 193 port. Reset price to product cost on
         RUG-confirmed repair lines, capture original in
-        x_studio_price_unit_original.
+        price_unit_original.
 
         Idempotent guards:
           - only fires for Repair-type SOs
@@ -62,7 +62,7 @@ class SaleOrderLine(models.Model):
             line.with_context(_fix_repair_rug_reprice=True).write(
                 {
                     "price_unit": target_price,
-                    "x_studio_price_unit_original": line.price_unit,
+                    "price_unit_original": line.price_unit,
                 }
             )
 
@@ -102,7 +102,7 @@ class SaleOrderLine(models.Model):
         affect a re-estimate (product change, qty change, price change).
         Add more fields here if a Studio-form edit is missed in practice.
 
-        Reads header state via record.order_id.x_studio_xxx instead of
+        Reads header state via record.order_id.xxx instead of
         declaring line-level related copies -- the Studio automation
         used implicit line-level related fields, but for the Python
         port there's no need to add three redundant related fields to
@@ -114,7 +114,7 @@ class SaleOrderLine(models.Model):
                 continue
             if order.quotation_type != "Repair":
                 continue
-            if not order.x_studio_unlocked:
+            if not order.unlocked:
                 continue
-            line.x_studio_re_estimated = True
-            line.x_studio_count_1 = order.re_estimate_count + 1
+            line.re_estimated = True
+            line.count_1 = order.re_estimate_count + 1
