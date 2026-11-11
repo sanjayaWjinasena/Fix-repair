@@ -2,11 +2,11 @@
 
 Repair tickets get their number from ir.sequence 'repair.seq' (REPAIR/<year>/NNNNN, see
 helpdesk.ticket._repair_seq_no_on_create_or_write) and auto-created repair serials from
-'repair.serial.seq'. On Clear-DB both were made by hand per company, so wherever Fix-repair was
-installed without them tickets kept the subject "New". They are now created by the module: on
-install, on upgrade (migrations/17.0.1.0.377) and for every new company. A company that already
-has a sequence for a code keeps it untouched (counter included).
-"""
+'repair.serial.seq'. On Clear-DB both were made by hand per company, so wherever
+Fix-repair was installed without them tickets kept the subject "New". They are now
+created by the module: on install, on upgrade (migrations/17.0.1.0.377) and for every
+new company. A company that already has a sequence for a code keeps it untouched
+(counter included)."""
 
 import logging
 
@@ -14,8 +14,8 @@ from odoo import api, models
 
 _logger = logging.getLogger(__name__)
 
-# Settings as on Clear-DB (ir.sequence 811/278 and 812/279, read 2026-10-28). Clear-DB's serial
-# prefix starts with a stray tab character; it is left out here.
+# Settings as on Clear-DB (ir.sequence 811/278 and 812/279, read 2026-10-28). Clear-DB's
+# serial prefix starts with a stray tab character; it is left out here.
 REPAIR_SEQUENCES = (
     {"code": "repair.seq", "name": "Repair Sequence No", "prefix": "REPAIR/%(year)s/"},
     {
@@ -36,7 +36,8 @@ class ResCompany(models.Model):
         return companies
 
     def _jin_ensure_repair_sequences(self):
-        """Create the missing repair sequences for these companies (all companies when empty)."""
+        """Create the missing repair sequences for these companies (all companies when
+        empty)."""
         Sequence = self.env["ir.sequence"].sudo()
         companies = self or self.sudo().search([])
         created = 0

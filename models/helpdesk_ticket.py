@@ -1923,7 +1923,8 @@ class HelpdeskTicket(models.Model):
     # Repair tickets vs general tickets
     # ------------------------------------------------------------------
     def _jin_is_repair_ticket(self):
-        """A ticket of a Repair Team, or with no team yet (the Repair flow stays the default)."""
+        """A ticket of a Repair Team, or with no team yet (the Repair flow stays the
+        default)."""
         self.ensure_one()
         return not self.team_id or self.team_id.repair_team
 
@@ -1941,7 +1942,8 @@ class HelpdeskTicket(models.Model):
         Team = self.env["helpdesk.team"]
         team = Team.browse(res["team_id"]) if res.get("team_id") else Team
         general_menu = self.env.context.get("jin_general_ticket")
-        # Helpdesk > Tickets > General Tickets: Odoo would pick the user's first team, a Repair team.
+        # Helpdesk > Tickets > General Tickets: Odoo would pick the user's first team, a
+        # Repair team.
         if general_menu and "team_id" in fields_list and (not team or team.repair_team):
             team = Team.search(
                 [
@@ -1951,7 +1953,8 @@ class HelpdeskTicket(models.Model):
                 limit=1,
             )
             res["team_id"] = team.id or False
-        # 'New' is the Repair numbering sentinel (repair.seq); a general ticket starts with an empty subject.
+        # 'New' is the Repair numbering sentinel (repair.seq); a general ticket starts
+        # with an empty subject.
         if (general_menu or (team and not team.repair_team)) and res.get(
             "name"
         ) == "New":
@@ -1959,7 +1962,8 @@ class HelpdeskTicket(models.Model):
         return res
 
     def get_formview_id(self, access_uid=None):
-        """Links (mail, chatter, smart buttons) open general tickets in Odoo's standard form."""
+        """Links (mail, chatter, smart buttons) open general tickets in Odoo's standard
+        form."""
         if len(self) == 1 and not self._jin_is_repair_ticket():
             form = self.env.ref(
                 "helpdesk.helpdesk_ticket_view_form", raise_if_not_found=False
@@ -1970,8 +1974,8 @@ class HelpdeskTicket(models.Model):
 
     def _get_view(self, view_id=None, view_type="form", **options):
         arch, view = super()._get_view(view_id, view_type, **options)
-        # Only the Repair ticket form gets the repair rewrite; Odoo's standard ticket form (used
-        # by non-repair teams) stays as Odoo ships it.
+        # Only the Repair ticket form gets the repair rewrite; Odoo's standard ticket
+        # form (used by non-repair teams) stays as Odoo ships it.
         if view_type == "form" and self._jin_is_repair_form_view(view):
             self._fix_repair_get_view_inject_computed_studio_fields(arch)
             self._fix_repair_get_view_freeze_all_form_fields(arch)
@@ -2648,7 +2652,9 @@ class HelpdeskTicket(models.Model):
             new_fields.append(
                 _reposition_or_create(
                     "return_receipt_location",
-                    domain="[('users_stock_location', 'in', user_id)] if user_id else []",
+                    domain=(
+                        "[('users_stock_location', 'in', user_id)] if user_id else []"
+                    ),
                     options="{'no_create': True}",
                     required="user_id",
                     force_save="1",
@@ -4194,7 +4200,9 @@ class HelpdeskTicket(models.Model):
                         original_price = so_line.price_unit
                         so_line.write(
                             {
-                                "price_unit": so_line.product_template_id.standard_price,
+                                "price_unit": (
+                                    so_line.product_template_id.standard_price
+                                ),
                                 "price_unit_original": original_price,
                             }
                         )
@@ -4571,7 +4579,9 @@ class HelpdeskTicket(models.Model):
         clean_arch = """<data>
   <!-- fix_repair:sanitized-v190 -->
   <xpath expr="//field[@name='personal_stage_type_id']" position="after">
-    <button type="action" name="2316" string="Tested OK" class="btn-primary" invisible="material_line_product_count &gt; 0 or cancelled == True or not helpdesk_ticket_id or end_quick_repair == True"/>
+    <button type="action" name="2316" string="Tested OK" class="btn-primary"
+    invisible="material_line_product_count &gt; 0 or cancelled == True
+        or not helpdesk_ticket_id or end_quick_repair == True"/>
   </xpath>
   <xpath expr="//field[@name='user_ids']" position="attributes">
     <attribute name="string">Assignees</attribute>
@@ -4611,8 +4621,10 @@ class HelpdeskTicket(models.Model):
         </group>
       </group>
     </page>
-    <page string="Repair Diagnosis" name="studio_page_M5qFQ" invisible="helpdesk_ticket_id == False">
-      <field name="diagnosis_ids" force_save="True" required="helpdesk_ticket_id != False">
+    <page string="Repair Diagnosis" name="studio_page_M5qFQ"
+    invisible="helpdesk_ticket_id == False">
+      <field name="diagnosis_ids" force_save="True"
+      required="helpdesk_ticket_id != False">
         <tree editable="bottom">
           <field name="sequence" widget="handle"/>
           <field name="name" column_invisible="True"/>
@@ -4621,12 +4633,15 @@ class HelpdeskTicket(models.Model):
           <field name="symptom_code" optional="show" column_invisible="True"/>
           <field name="description" optional="show"/>
           <field name="diagnosis_area" optional="show" required="1"/>
-          <field name="diagnosis_code" optional="show" required="1" domain="[[&quot;diagnosis_area_1&quot;,&quot;=&quot;,diagnosis_area]]"/>
+          <field name="diagnosis_code" optional="show" required="1"
+          domain="[[&quot;diagnosis_area_1&quot;,&quot;=&quot;,diagnosis_area]]"/>
           <field name="reason" optional="show" required="1"/>
-          <field name="sub_reason" optional="show" required="1" domain="[[&quot;reason_code&quot;,&quot;=&quot;,reason]]"/>
+          <field name="sub_reason" optional="show" required="1"
+          domain="[[&quot;reason_code&quot;,&quot;=&quot;,reason]]"/>
           <field name="resolution" optional="show" required="1"/>
           <field name="repair_stage" optional="show" required="1"/>
-          <field optional="show" name="task_id" string="Task Id" invisible="1" column_invisible="True"/>
+          <field optional="show" name="task_id" string="Task Id" invisible="1"
+          column_invisible="True"/>
         </tree>
       </field>
     </page>

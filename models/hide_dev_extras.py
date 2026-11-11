@@ -16,7 +16,8 @@ from odoo import models
 
 
 def hide_present(env, arch, view, view_xmlid, targets):
-    """Set invisible="1" on the targets found in ``arch`` when ``view`` is ``view_xmlid``.
+    """Set invisible="1" on the targets found in ``arch`` when ``view`` is
+    ``view_xmlid``.
 
     targets: iterable of (tag, name, occurrences). For action buttons the name
     may be a record name (``module.xmlid``); it also matches the numeric id

@@ -12,16 +12,18 @@ GENERAL_STAGE_XMLIDS = (
 class HelpdeskTeam(models.Model):
     _inherit = "helpdesk.team"
 
-    # Repair tickets and general tickets side by side: tickets of a Repair Team open in the
-    # Repair ticket form (Fix-repair fields, rules, buttons); tickets of any other team open in
-    # Odoo's standard Helpdesk ticket form.
+    # Repair tickets and general tickets side by side: tickets of a Repair Team open in
+    # the Repair ticket form (Fix-repair fields, rules, buttons); tickets of any other
+    # team open in Odoo's standard Helpdesk ticket form.
     repair_team = fields.Boolean(
-        help="Tickets of this team use the Repair ticket form (repair fields, required rules and "
-        "buttons). Tickets of other teams use Odoo's standard Helpdesk ticket form.",
+        help="Tickets of this team use the Repair ticket form (repair fields, required "
+        "rules and buttons). Tickets of other teams use Odoo's standard Helpdesk "
+        "ticket form.",
     )
 
-    # Odoo picks a new team's stages by the helpdesk.stage_* xmlids, which the Repair flow has
-    # renamed (Diagnosis, Advance Received, ...). New teams get the general stages instead.
+    # Odoo picks a new team's stages by the helpdesk.stage_* xmlids, which the Repair
+    # flow has renamed (Diagnosis, Advance Received, ...). New teams get the general
+    # stages instead.
     stage_ids = fields.Many2many(default=lambda self: self._jin_default_stage_ids())
 
     def _jin_default_stage_ids(self):
@@ -34,8 +36,8 @@ class HelpdeskTeam(models.Model):
         return stages or self.env["helpdesk.stage"].search([], limit=1)
 
     def action_view_ticket(self):
-        # Every team-card button on Helpdesk > Overview (Tickets, open, closed, success rate)
-        # and the team form's Tickets button go through this method.
+        # Every team-card button on Helpdesk > Overview (Tickets, open, closed, success
+        # rate) and the team form's Tickets button go through this method.
         action = super().action_view_ticket()
         if len(self) == 1 and not self.repair_team and action.get("views"):
             form = self.env.ref(

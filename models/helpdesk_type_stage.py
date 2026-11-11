@@ -89,8 +89,9 @@ class HelpdeskStage(models.Model):
         Stage' (on_create_or_write, trigger_field=create_date —
         fire-on-create-only pattern)."""
         records = super().create(vals_list)
-        # A stage created with an explicit company (or explicitly none: shared by all companies,
-        # like the general stages) keeps it; otherwise the current company is stamped.
+        # A stage created with an explicit company (or explicitly none: shared by all
+        # companies, like the general stages) keeps it; otherwise the current company is
+        # stamped.
         to_stamp = self.env["helpdesk.stage"]
         for record, vals in zip(records, vals_list):
             if "accounting_company_id" not in vals:
