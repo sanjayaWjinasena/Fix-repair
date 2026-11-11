@@ -53,9 +53,6 @@ class ResUsers(models.Model):
             studio_pins.unlink()
 
 
-class ResUsersGap(models.Model):
-    _inherit = "res.users"
-
     # STRIPPED binary_field_0lxfw: related field chain not resolvable on target
     # STRIPPED binary_field_0lxfw_filename: related field chain not resolvable
     # on target
