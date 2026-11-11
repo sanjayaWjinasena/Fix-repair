@@ -49,4 +49,7 @@
     <record id="menu_f6_warehouse_1" model="ir.ui.menu">
       <field name="active" eval="False"/>
     </record>
+
+    <menuitem id="menu_helpdesk_ticket_general" name="General Tickets"
+              parent="helpdesk.helpdesk_ticket_menu_main" action="action_helpdesk_ticket_general" sequence="30"/>
 </odoo>

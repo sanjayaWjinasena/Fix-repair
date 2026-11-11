@@ -1971,9 +1971,64 @@ class HelpdeskTicket(models.Model):
             to_deactivate.write({"active": False})
 
     @api.model
+    # ------------------------------------------------------------------
+    # Repair tickets vs general tickets
+    # ------------------------------------------------------------------
+    def _jin_is_repair_ticket(self):
+        """A ticket of a Repair Team, or with no team yet (the Repair flow stays the default)."""
+        self.ensure_one()
+        return not self.team_id or self.team_id.x_jin_repair_team
+
+    @api.model
+    def _jin_is_repair_form_view(self, view):
+        repair_form = self.env.ref(
+            "Fix-repair.helpdesk_ticket_view_form_repair", raise_if_not_found=False
+        )
+        # before the Repair form exists (first install), keep the old behaviour
+        return not repair_form or view == repair_form
+
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+        Team = self.env["helpdesk.team"]
+        team = Team.browse(res["team_id"]) if res.get("team_id") else Team
+        general_menu = self.env.context.get("jin_general_ticket")
+        # Helpdesk > Tickets > General Tickets: Odoo would pick the user's first team, a Repair team.
+        if (
+            general_menu
+            and "team_id" in fields_list
+            and (not team or team.x_jin_repair_team)
+        ):
+            team = Team.search(
+                [
+                    ("x_jin_repair_team", "=", False),
+                    ("company_id", "in", self.env.companies.ids),
+                ],
+                limit=1,
+            )
+            res["team_id"] = team.id or False
+        # 'New' is the Repair numbering sentinel (repair.seq); a general ticket starts with an empty subject.
+        if (general_menu or (team and not team.x_jin_repair_team)) and res.get(
+            "name"
+        ) == "New":
+            res["name"] = False
+        return res
+
+    def get_formview_id(self, access_uid=None):
+        """Links (mail, chatter, smart buttons) open general tickets in Odoo's standard form."""
+        if len(self) == 1 and not self._jin_is_repair_ticket():
+            form = self.env.ref(
+                "helpdesk.helpdesk_ticket_view_form", raise_if_not_found=False
+            )
+            if form:
+                return form.id
+        return super().get_formview_id(access_uid=access_uid)
+
     def _get_view(self, view_id=None, view_type="form", **options):
         arch, view = super()._get_view(view_id, view_type, **options)
-        if view_type == "form":
+        # Only the Repair ticket form gets the repair rewrite; Odoo's standard ticket form (used
+        # by non-repair teams) stays as Odoo ships it.
+        if view_type == "form" and self._jin_is_repair_form_view(view):
             self._fix_repair_get_view_inject_computed_studio_fields(arch)
             self._fix_repair_get_view_freeze_all_form_fields(arch)
             self._fix_repair_get_view_assign_me_hide_soon(arch)
@@ -2644,12 +2699,12 @@ class HelpdeskTicket(models.Model):
                 )
 
             # Return Receipt Location — where the returned item is
-            # first booked in. Domain (users-stock-location scope)
-            # is set by a separate xpath block above; we only place
-            # the field here.
+            # first booked in. The domain must be set here because
+            # _reposition_or_create wipes attributes set earlier.
             new_fields.append(
                 _reposition_or_create(
                     "return_receipt_location",
+                    domain="[('users_stock_location', 'in', user_id)] if user_id else []",
                     options="{'no_create': True}",
                     required="user_id",
                     force_save="1",
@@ -3527,25 +3582,32 @@ class HelpdeskTicket(models.Model):
         for ticket in self:
             ticket._create_received_at_sales_centre_picking()
         stage = self._get_or_create_stage("Received at Sales Centre", 110)
+        Picking = self.env["stock.picking"].sudo()
         for ticket in self:
-            # Find the most-recent done incoming picking that collected this
-            # customer's item to the repair virtual location.  Stored so the
-            # "Return to Customer" popup (action 195 at this stage) can
-            # pre-load the picking via default_picking_id.
-            repair_loc = ticket.virtual_location_1 or ticket.virtual_location
-            domain = [
-                ("partner_id", "=", ticket.partner_id.id),
-                ("company_id", "=", ticket.company_id.id),
-                ("state", "=", "done"),
-                ("picking_type_code", "=", "incoming"),
-            ]
-            if repair_loc:
-                domain.append(("location_dest_id", "=", repair_loc.id))
-            pick = (
-                self.env["stock.picking"]
-                .sudo()
-                .search(domain, order="date_done desc", limit=1)
+            # The picking the "Return to Customer" popup (action 195 at this
+            # stage) reverses, pre-loaded via default_picking_id. It must be
+            # this ticket's own intake receipt (customer -> repair location),
+            # as on Clear-DB: a customer-wide search picked other documents of
+            # the same customer (bug sheet Repairs row 6, 29/Oct: a spare-part
+            # receipt, so the dispatch moved the wrong item from the wrong
+            # location). Where the item sits now is applied to the dispatch by
+            # stock.return.picking._create_returns.
+            ticket_receipts = Picking.search(
+                [
+                    ("helpdesk_ticket_id", "=", ticket.id),
+                    ("state", "=", "done"),
+                    ("picking_type_code", "=", "incoming"),
+                ],
+                order="date_done desc, id desc",
             )
+            pick = (
+                ticket_receipts.filtered(
+                    lambda p: ticket.product_id in p.move_ids.product_id
+                )[:1]
+                if ticket.product_id
+                else ticket_receipts[:1]
+            )
+            pick = pick or ticket_receipts[:1]
             ticket.write(
                 {
                     "stage_id": stage.id,
@@ -4275,7 +4337,9 @@ class HelpdeskTicket(models.Model):
         seq assignment on create only.
         """
         records = super().create(vals_list)
-        records._repair_seq_no_on_create_or_write()
+        records.filtered(
+            lambda t: t._jin_is_repair_ticket()
+        )._repair_seq_no_on_create_or_write()
         return records
 
     def unlink(self):

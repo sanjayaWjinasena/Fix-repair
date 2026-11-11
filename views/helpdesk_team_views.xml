@@ -75,4 +75,16 @@
                 </p>
             </field>
   </record>
+    <record id="helpdesk_team_view_form_repair_team" model="ir.ui.view">
+    <field name="name">helpdesk.team.form.repair_team (Fix-repair)</field>
+    <field name="model">helpdesk.team</field>
+    <field name="inherit_id" ref="helpdesk.helpdesk_team_view_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//setting[.//field[@name='use_product_repairs']]" position="after">
+        <setting id="jin_repair_team" help="Tickets open in the Repair ticket form (repair fields, rules and buttons). Off: Odoo's standard ticket form.">
+          <field name="x_jin_repair_team"/>
+        </setting>
+      </xpath>
+    </field>
+  </record>
 </odoo>

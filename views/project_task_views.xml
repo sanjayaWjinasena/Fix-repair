@@ -56,50 +56,6 @@
                 <field name="quotation_type"/>
                 <field name="material_availability"/>
             </xpath>
-
-            <xpath expr="//notebook" position="inside">
-                <!-- v261: Repair Image tab (Clear-DB view 3019 verbatim) -->
-                <page string="Repair Image" name="repair_image">
-                    <group>
-                        <group>
-                            <field name="repair_image_01" widget="image"/>
-                        </group>
-                        <group>
-                            <field name="repair_image_02" widget="image"/>
-                        </group>
-                    </group>
-                </page>
-                <!-- v261: Warranty Card tab (Clear-DB view 3019 verbatim) -->
-                <page string="Warranty Card" name="warranty_card">
-                    <group>
-                        <group>
-                            <field name="warranty_card" widget="image"/>
-                        </group>
-                        <group>
-                            <field name="related_information" widget="image"/>
-                        </group>
-                    </group>
-                </page>
-                <page string="Repair Diagnosis" name="repair_diagnosis" invisible="not helpdesk_ticket_id">
-                    <field name="diagnosis_ids" nolabel="1" force_save="1">
-                        <tree editable="bottom">
-                            <field name="sequence" widget="handle"/>
-                            <field name="name" column_invisible="True"/>
-                            <field name="condition" optional="show"/>
-                            <field name="symptom_area" optional="show"/>
-                            <field name="symptom_code" optional="show"/>
-                            <field name="description" optional="show"/>
-                            <field name="diagnosis_area" optional="show" required="1"/>
-                            <field name="diagnosis_code" optional="show" required="1" domain="[('diagnosis_area_1','=',diagnosis_area)]"/>
-                            <field name="reason" optional="show" required="1"/>
-                            <field name="sub_reason" optional="show" required="1" domain="[('reason_code','=',reason)]"/>
-                            <field name="resolution" optional="show" required="1"/>
-                            <field name="repair_stage" optional="show" required="1"/>
-                            <field name="task_id" column_invisible="True"/>
-                        </tree>
-                    </field>
-                </page>
-            </xpath>
         </field>
     </record>
   <record id="view_project_task_form_4730" model="ir.ui.view">
@@ -132,4 +88,33 @@
 
     </field>
   </record>
+    <record id="view_project_task_repair_diagnosis_page" model="ir.ui.view">
+        <field name="name">project.task.form.repair.diagnosis.page</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_form2"/>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Repair Diagnosis" name="repair_diagnosis" invisible="not helpdesk_ticket_id">
+                    <field name="diagnosis_ids" nolabel="1" force_save="1" required="helpdesk_ticket_id">
+                        <tree editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="name" column_invisible="True"/>
+                            <field name="condition" column_invisible="True"/>
+                            <field name="symptom_area" column_invisible="True"/>
+                            <field name="symptom_code" column_invisible="True"/>
+                            <field name="description" optional="show"/>
+                            <field name="diagnosis_area" optional="show" required="1"/>
+                            <field name="diagnosis_code" optional="show" required="1" domain="[('diagnosis_area_1','=',diagnosis_area)]"/>
+                            <field name="reason" optional="show" required="1"/>
+                            <field name="sub_reason" optional="show" required="1" domain="[('reason_code','=',reason)]"/>
+                            <field name="resolution" optional="show" required="1"/>
+                            <field name="repair_stage" optional="show" required="1"/>
+                            <field name="task_id" column_invisible="True"/>
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
 </odoo>

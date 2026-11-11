@@ -1,4 +1,4 @@
-"""v374: give a number to what was created while the repair sequences were missing.
+"""v385 (was v374): give a number to what was created while the repair sequences were missing.
 
 Before v373 a database set up from this branch had no repair.seq / repair.serial.seq, so tickets kept the
 name 'New', and so did their field service tasks and the repair serials they created. This renames them:

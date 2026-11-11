@@ -10,6 +10,18 @@
     <field name="res_model">helpdesk.ticket</field>
     <field name="view_mode">kanban,tree,form,pivot,graph,activity</field>
   </record>
+  <record id="helpdesk_ticket_view_form_repair" model="ir.ui.view">
+    <field name="name">helpdesk.ticket.form.repair (Fix-repair)</field>
+    <field name="model">helpdesk.ticket</field>
+    <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
+    <field name="mode">primary</field>
+    <field name="priority">15</field>
+    <field name="arch" type="xml">
+      <xpath expr="//form" position="attributes">
+        <attribute name="class" add="o_jin_repair_ticket_form" separator=" "/>
+      </xpath>
+    </field>
+  </record>
   <record id="ported_view_helpdesk_ticket_form_4012" model="ir.ui.view">
     <field name="name">Odoo Studio: helpdesk.ticket.form customization</field>
     <field name="model">helpdesk.ticket</field>
@@ -17,7 +29,7 @@
     <field name="type">form</field>
     <field name="priority">99</field>
     <field name="mode">extension</field>
-    <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
+    <field name="inherit_id" ref="Fix-repair.helpdesk_ticket_view_form_repair"/>
     <field name="arch" type="xml">
       <data>
         <xpath expr="//button[@name='%(stock.act_stock_return_picking)d']" position="attributes">
@@ -218,7 +230,7 @@
     <record id="helpdesk_ticket_form_hide_studio_fields" model="ir.ui.view">
         <field name="name">helpdesk.ticket.form.hide.studio.fields</field>
         <field name="model">helpdesk.ticket</field>
-        <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
+        <field name="inherit_id" ref="Fix-repair.helpdesk_ticket_view_form_repair"/>
         <field name="priority">100</field>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='rug_repair']" position="attributes">
@@ -253,7 +265,7 @@
     <record id="helpdesk_ticket_form_assign_to_me" model="ir.ui.view">
         <field name="name">helpdesk.ticket.form.assign.to.me</field>
         <field name="model">helpdesk.ticket</field>
-        <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
+        <field name="inherit_id" ref="Fix-repair.helpdesk_ticket_view_form_repair"/>
         <field name="arch" type="xml">
             <!-- Stored computed field — web_read reads a plain DB varchar, no many2one traversal -->
             <xpath expr="//field[@name='name']" position="before">
@@ -406,7 +418,7 @@
     <record id="helpdesk_ticket_form_statusbar_readonly" model="ir.ui.view">
         <field name="name">helpdesk.ticket.form.statusbar.readonly</field>
         <field name="model">helpdesk.ticket</field>
-        <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
+        <field name="inherit_id" ref="Fix-repair.helpdesk_ticket_view_form_repair"/>
         <field name="priority">99</field>
         <field name="arch" type="xml">
             <!--
@@ -446,7 +458,7 @@
     <record id="helpdesk_ticket_form_hide_fields" model="ir.ui.view">
         <field name="name">helpdesk.ticket.form.hide.fields</field>
         <field name="model">helpdesk.ticket</field>
-        <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
+        <field name="inherit_id" ref="Fix-repair.helpdesk_ticket_view_form_repair"/>
         <field name="priority">99</field>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='team_id']" position="attributes">
@@ -526,7 +538,7 @@
       <field name="type">form</field>
       <field name="priority">50000</field>
       <field name="active" eval="False"/>
-      <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
+      <field name="inherit_id" ref="Fix-repair.helpdesk_ticket_view_form_repair"/>
       <field name="mode">extension</field>
       <field name="arch" type="xml">
         <data>
@@ -613,4 +625,66 @@
   </data>
       </field>
     </record>
+
+  <!-- General Tickets: tickets of teams that are not a Repair Team, in Odoo's standard ticket form. -->
+  <record id="action_helpdesk_ticket_general" model="ir.actions.act_window">
+    <field name="name">General Tickets</field>
+    <field name="res_model">helpdesk.ticket</field>
+    <field name="view_mode">tree,kanban,form,activity</field>
+    <field name="domain">['|', ('team_id', '=', False), ('team_id.x_jin_repair_team', '=', False)]</field>
+    <field name="context">{'jin_general_ticket': True}</field>
+    <field name="help" type="html">
+      <p class="o_view_nocontent_smiling_face">No general tickets yet</p>
+      <p>Tickets of teams that are not a Repair Team appear here and open in Odoo's standard ticket form.</p>
+    </field>
+  </record>
+  <record id="action_helpdesk_ticket_general_view_tree" model="ir.actions.act_window.view">
+    <field name="sequence">1</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="helpdesk.helpdesk_tickets_view_tree"/>
+    <field name="act_window_id" ref="action_helpdesk_ticket_general"/>
+  </record>
+  <record id="action_helpdesk_ticket_general_view_kanban" model="ir.actions.act_window.view">
+    <field name="sequence">2</field>
+    <field name="view_mode">kanban</field>
+    <field name="view_id" ref="helpdesk.helpdesk_ticket_view_kanban"/>
+    <field name="act_window_id" ref="action_helpdesk_ticket_general"/>
+  </record>
+  <record id="action_helpdesk_ticket_general_view_form" model="ir.actions.act_window.view">
+    <field name="sequence">3</field>
+    <field name="view_mode">form</field>
+    <field name="view_id" ref="helpdesk.helpdesk_ticket_view_form"/>
+    <field name="act_window_id" ref="action_helpdesk_ticket_general"/>
+  </record>
+
+  <!-- Ticket types / teams: Odoo's standard form offers general ones only, the Repair form Repair ones only. -->
+  <record id="helpdesk_ticket_view_form_general_types" model="ir.ui.view">
+    <field name="name">helpdesk.ticket.form.general_types (Fix-repair)</field>
+    <field name="model">helpdesk.ticket</field>
+    <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
+    <field name="priority">90</field>
+    <field name="arch" type="xml">
+      <xpath expr="//field[@name='ticket_type_id']" position="attributes">
+        <attribute name="domain">[('x_jin_repair_type', '=', False)]</attribute>
+      </xpath>
+      <!-- a ticket in a Repair team must use the Repair form (its rules and buttons) -->
+      <xpath expr="//field[@name='team_id']" position="attributes">
+        <attribute name="domain">[('x_jin_repair_team', '=', False)]</attribute>
+      </xpath>
+    </field>
+  </record>
+  <record id="helpdesk_ticket_view_form_repair_types" model="ir.ui.view">
+    <field name="name">helpdesk.ticket.form.repair_types (Fix-repair)</field>
+    <field name="model">helpdesk.ticket</field>
+    <field name="inherit_id" ref="helpdesk_ticket_view_form_repair"/>
+    <field name="priority">200</field>
+    <field name="arch" type="xml">
+      <xpath expr="//field[@name='ticket_type_id']" position="attributes">
+        <attribute name="domain">[('x_jin_repair_type', '=', True)]</attribute>
+      </xpath>
+      <xpath expr="//field[@name='team_id']" position="attributes">
+        <attribute name="domain">[('x_jin_repair_team', '=', True)]</attribute>
+      </xpath>
+    </field>
+  </record>
 </odoo>

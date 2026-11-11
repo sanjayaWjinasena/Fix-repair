@@ -40,6 +40,9 @@
       <field name="model">helpdesk.ticket.type</field>
       <field name="type">tree</field>
       <field name="priority">99</field>
+      <!-- 2026-10-22: switched off - no Studio views; Fix-repair's own helpdesk_ticket_type_view_tree_repair_config
+           (views/helpdesk_ticket_type_views.xml) adds the same four columns, so they showed twice. -->
+      <field name="active" eval="False"/>
       <field name="inherit_id" ref="helpdesk.helpdesk_ticket_type_view_tree"/>
       <field name="mode">extension</field>
       <field name="arch" type="xml">
@@ -54,4 +57,26 @@
 </data>
       </field>
     </record>
+    <record id="helpdesk_ticket_type_view_tree_repair_type" model="ir.ui.view">
+    <field name="name">helpdesk.ticket.type.tree.repair_type (Fix-repair)</field>
+    <field name="model">helpdesk.ticket.type</field>
+    <field name="inherit_id" ref="helpdesk.helpdesk_ticket_type_view_tree"/>
+    <field name="priority">60</field>
+    <field name="arch" type="xml">
+      <xpath expr="//field[@name='name']" position="after">
+        <field name="x_jin_repair_type" optional="show"/>
+      </xpath>
+    </field>
+  </record>
+    <record id="helpdesk_ticket_type_view_form_repair_type" model="ir.ui.view">
+    <field name="name">helpdesk.ticket.type.form.repair_type (Fix-repair)</field>
+    <field name="model">helpdesk.ticket.type</field>
+    <field name="inherit_id" ref="helpdesk.helpdesk_ticket_type_view_form"/>
+    <field name="priority">60</field>
+    <field name="arch" type="xml">
+      <xpath expr="//field[@name='name']" position="after">
+        <field name="x_jin_repair_type"/>
+      </xpath>
+    </field>
+  </record>
 </odoo>

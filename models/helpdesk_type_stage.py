@@ -18,6 +18,9 @@ class HelpdeskTicketType(models.Model):
     rug_confirmed = fields.Boolean(string="RUG Confirmed")
     with_serial_no = fields.Boolean(string="With Serial No")
     without_serial_no = fields.Boolean(string="Without Serial No")
+    # Repair ticket types are offered on the Repair ticket form only; the others (Odoo's
+    # Question / Issue style types) on Odoo's standard ticket form.
+    x_jin_repair_type = fields.Boolean(string="Repair Type")
 
     @api.model
     def _migrate_studio_ticket_type_cluster_to_base(self):
@@ -86,7 +89,13 @@ class HelpdeskStage(models.Model):
         Stage' (on_create_or_write, trigger_field=create_date —
         fire-on-create-only pattern)."""
         records = super().create(vals_list)
-        records._jin_set_company_id()
+        # A stage created with an explicit company (or explicitly none: shared by all companies,
+        # like the general stages) keeps it; otherwise the current company is stamped.
+        to_stamp = self.env["helpdesk.stage"]
+        for record, vals in zip(records, vals_list):
+            if "accounting_company_id" not in vals:
+                to_stamp |= record
+        to_stamp._jin_set_company_id()
         return records
 
     @api.model
