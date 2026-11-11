@@ -22,28 +22,18 @@ class StockLocation(models.Model):
     # ownership to Fix-repair — see _migrate_studio_stock_location_cluster.
 
     # Flags: mark a stock.location for a specific repair-flow role
-    finished_good_location = fields.Boolean(
-        string="Finished Good Location",
-    )
-    repair_factory_location = fields.Boolean(
-        string="Repair Factory Location",
-    )
-    repair_return_location = fields.Boolean(
-        string="Repair Return Location",
-    )
-    temp_location = fields.Boolean(
-        string="Temp Location",
-    )
+    finished_good_location = fields.Boolean()
+    repair_factory_location = fields.Boolean()
+    repair_return_location = fields.Boolean()
+    temp_location = fields.Boolean()
 
     # Chained locations used by the repair-flow picking routing
     return_receipt_location = fields.Many2one(
         "stock.location",
-        string="Return Receipt Location",
         ondelete="set null",
     )
     return_sequence = fields.Many2one(
         "ir.sequence",
-        string="Return Sequence",
         ondelete="set null",
     )
 

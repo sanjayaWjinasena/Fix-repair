@@ -47,21 +47,14 @@ class ProjectTask(models.Model):
     # Migration completes the field ownership graph for the helpdesk
     # repair workflow. Compute strings ported verbatim from Studio.
 
-    end_quick_repair = fields.Boolean(
-        string="End Quick Repair",
-    )
+    end_quick_repair = fields.Boolean()
 
-    repair_image_01 = fields.Binary(
-        string="Repair Image 01",
-    )
+    repair_image_01 = fields.Binary()
 
-    repair_image_02 = fields.Binary(
-        string="Repair Image 02",
-    )
+    repair_image_02 = fields.Binary()
 
     repair_reason = fields.Many2many(
         "repair_reason",
-        string="Repair Reason",
     )
 
     quick_repair_status_1 = fields.Selection(
@@ -111,7 +104,6 @@ class ProjectTask(models.Model):
             ("Material Not Ready", "Material Not Ready"),
             ("Material Ready", "Material Ready"),
         ],
-        string="Material Availability",
         compute="_compute_material_availability",
         store=False,
         readonly=True,
@@ -325,7 +317,6 @@ class ProjectTask(models.Model):
     # Plain stored datetime — no compute, editable, marked copied=True
     # in Studio.
     created_date = fields.Datetime(
-        string="Created Date",
         copy=True,
     )
 
@@ -347,9 +338,7 @@ class ProjectTask(models.Model):
         store=True,
         readonly=True,
     )
-    starting_date = fields.Datetime(
-        string="Starting Date",
-    )
+    starting_date = fields.Datetime()
     # Studio-generated stat counter: number of sale.order records whose
     # task_id points at this task. Kept as a plain integer to preserve
     # arch references (Studio wired a stat button to it); actual value
@@ -363,7 +352,6 @@ class ProjectTask(models.Model):
     # branch that set valid=False when it was already False — dropped
     # from the port; observable behaviour is unchanged.
     incomplete_delivery_available = fields.Boolean(
-        string="Incomplete Delivery Available",
         compute="_compute_incomplete_delivery_available",
         store=False,
         readonly=True,
@@ -423,7 +411,6 @@ class ProjectTask(models.Model):
     # bool() of the one2many; the loop pattern is preserved verbatim
     # in commentary but the port uses the shorter expression.
     valid_diagnosis = fields.Boolean(
-        string="Valid Diagnosis",
         compute="_compute_valid_diagnosis",
         store=False,
         readonly=True,

@@ -14,11 +14,11 @@ class XRepairAccounts(models.Model):
     _rec_name = "name"
     _order = "sequence, id"
 
-    active = fields.Boolean(string="Active", default=True)
-    name = fields.Char(string="Name")
+    active = fields.Boolean(default=True)
+    name = fields.Char()
     accounting_company_id = fields.Many2one("res.company", string="Company")
     rug_account = fields.Many2one("account.account", string="RUG Account")
-    sequence = fields.Integer(string="Sequence")
+    sequence = fields.Integer()
 
     def _jin_set_company_id(self):
         """Studio server action id 2790 native port."""
@@ -48,11 +48,11 @@ class XRepairReason(models.Model):
     _rec_name = "name"
     _order = "sequence, id"
 
-    active = fields.Boolean(string="Active", default=True)
-    color = fields.Integer(string="Color")
+    active = fields.Boolean(default=True)
+    color = fields.Integer()
     name = fields.Char(string="Repair Reason")
     accounting_company_id = fields.Many2one("res.company", string="Company")
-    sequence = fields.Integer(string="Sequence")
+    sequence = fields.Integer()
 
     def _jin_set_company_id(self):
         """Studio server action id 2666 native port."""
@@ -82,11 +82,11 @@ class XRepairReasonCustom(models.Model):
     _rec_name = "name"
     _order = "sequence, id"
 
-    active = fields.Boolean(string="Active", default=True)
-    color = fields.Integer(string="Color")
+    active = fields.Boolean(default=True)
+    color = fields.Integer()
     name = fields.Char(string="Repair Reason")
     accounting_company_id = fields.Many2one("res.company", string="Company")
-    sequence = fields.Integer(string="Sequence")
+    sequence = fields.Integer()
 
     def _jin_set_company_id(self):
         """Studio server action id 2667 native port."""
@@ -116,11 +116,11 @@ class XRepairStages(models.Model):
     _rec_name = "name"
     _order = "sequence, id"
 
-    active = fields.Boolean(string="Active", default=True)
+    active = fields.Boolean(default=True)
     name = fields.Char(string="Repair Stage")
     accounting_company_id = fields.Many2one("res.company", string="Company")
-    description = fields.Char(string="Description")
-    sequence = fields.Integer(string="Sequence")
+    description = fields.Char()
+    sequence = fields.Integer()
 
     def _jin_set_company_id(self):
         """Studio server action id 2670 native port."""
@@ -149,14 +149,13 @@ class XRepairSubReason(models.Model):
     _rec_name = "name"
     _order = "sequence, id"
 
-    active = fields.Boolean(string="Active", default=True)
+    active = fields.Boolean(default=True)
     name = fields.Char(string="Sub Reason Code")
     accounting_company_id = fields.Many2one("res.company", string="Company")
     reason_code = fields.Many2one(
         "repair_reason",
-        string="Reason Code",
     )
-    sequence = fields.Integer(string="Sequence")
+    sequence = fields.Integer()
 
     def _jin_set_company_id(self):
         """Studio server action id 2668 native port."""
@@ -198,10 +197,10 @@ class XConditions(models.Model):
     _rec_name = "name"
     _order = "sequence, id"
 
-    active = fields.Boolean(string="Active", default=True)
+    active = fields.Boolean(default=True)
     name = fields.Char(string="Condition")
-    description = fields.Char(string="Description")
-    sequence = fields.Integer(string="Sequence")
+    description = fields.Char()
+    sequence = fields.Integer()
     accounting_company_id = fields.Many2one("res.company", string="Company")
 
 
@@ -216,10 +215,10 @@ class XDiagnosisAreas(models.Model):
     _rec_name = "name"
     _order = "sequence, id"
 
-    active = fields.Boolean(string="Active", default=True)
+    active = fields.Boolean(default=True)
     name = fields.Char(string="Diagnosis Area")
-    description = fields.Char(string="Description")
-    sequence = fields.Integer(string="Sequence")
+    description = fields.Char()
+    sequence = fields.Integer()
     accounting_company_id = fields.Many2one("res.company", string="Company")
 
 
@@ -233,10 +232,10 @@ class XDiagnosisCodes(models.Model):
     _rec_name = "name"
     _order = "sequence, id"
 
-    active = fields.Boolean(string="Active", default=True)
+    active = fields.Boolean(default=True)
     name = fields.Char(string="Diagnosis Code")
-    description = fields.Char(string="Description")
-    sequence = fields.Integer(string="Sequence")
+    description = fields.Char()
+    sequence = fields.Integer()
     diagnosis_area_1 = fields.Many2one(
         "diagnosis_areas",
         string="Diagnosis Area",
@@ -255,10 +254,10 @@ class XSymptomAreas(models.Model):
     _rec_name = "name"
     _order = "sequence, id"
 
-    active = fields.Boolean(string="Active", default=True)
+    active = fields.Boolean(default=True)
     name = fields.Char(string="Symptom Area")
-    description = fields.Char(string="Description")
-    sequence = fields.Integer(string="Sequence")
+    description = fields.Char()
+    sequence = fields.Integer()
     accounting_company_id = fields.Many2one("res.company", string="Company")
 
 
@@ -272,13 +271,12 @@ class XSymptomCodes(models.Model):
     _rec_name = "name"
     _order = "sequence, id"
 
-    active = fields.Boolean(string="Active", default=True)
+    active = fields.Boolean(default=True)
     name = fields.Char(string="Symptom Code")
-    description = fields.Char(string="Description")
-    sequence = fields.Integer(string="Sequence")
+    description = fields.Char()
+    sequence = fields.Integer()
     symptom_area = fields.Many2one(
         "symptom_areas",
-        string="Symptom Area",
     )
     accounting_company_id = fields.Many2one("res.company", string="Company")
 
@@ -293,10 +291,10 @@ class XResolutions(models.Model):
     _rec_name = "name"
     _order = "sequence, id"
 
-    active = fields.Boolean(string="Active", default=True)
+    active = fields.Boolean(default=True)
     name = fields.Char(string="Resolution")
-    description = fields.Char(string="Description")
-    sequence = fields.Integer(string="Sequence")
+    description = fields.Char()
+    sequence = fields.Integer()
     accounting_company_id = fields.Many2one("res.company", string="Company")
 
 

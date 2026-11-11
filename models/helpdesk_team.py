@@ -16,7 +16,6 @@ class HelpdeskTeam(models.Model):
     # Repair ticket form (Fix-repair fields, rules, buttons); tickets of any other team open in
     # Odoo's standard Helpdesk ticket form.
     repair_team = fields.Boolean(
-        string="Repair Team",
         help="Tickets of this team use the Repair ticket form (repair fields, required rules and "
         "buttons). Tickets of other teams use Odoo's standard Helpdesk ticket form.",
     )

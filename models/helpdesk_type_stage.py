@@ -16,11 +16,11 @@ class HelpdeskTicketType(models.Model):
 
     rug = fields.Boolean(string="RUG")
     rug_confirmed = fields.Boolean(string="RUG Confirmed")
-    with_serial_no = fields.Boolean(string="With Serial No")
-    without_serial_no = fields.Boolean(string="Without Serial No")
+    with_serial_no = fields.Boolean()
+    without_serial_no = fields.Boolean()
     # Repair ticket types are offered on the Repair ticket form only; the others (Odoo's
     # Question / Issue style types) on Odoo's standard ticket form.
-    repair_type = fields.Boolean(string="Repair Type")
+    repair_type = fields.Boolean()
 
     @api.model
     def _migrate_studio_ticket_type_cluster_to_base(self):

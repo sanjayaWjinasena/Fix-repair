@@ -40,7 +40,6 @@ class StockPicking(models.Model):
     # locate the anchoring warehouse when composing follow-up pickings.
     return_receipt_location = fields.Many2one(
         "stock.location",
-        string="Return Receipt Location",
         ondelete="set null",
         index=True,
     )
@@ -84,7 +83,7 @@ class StockPicking(models.Model):
         store=True,
         readonly=True,
     )
-    validation = fields.Char(string="Validation")
+    validation = fields.Char()
 
     nuw_block_validate = fields.Boolean(
         compute="_compute_nuw_block_validate",
@@ -131,9 +130,7 @@ class StockPicking(models.Model):
         """
         for picking in self:
             so = picking.sale_id
-            customer_pays = bool(so) and (
-                so.repair_customer_pays or so.rug_rejected
-            )
+            customer_pays = bool(so) and (so.repair_customer_pays or so.rug_rejected)
             if not customer_pays:
                 picking.nuw_block_validate = False
                 continue

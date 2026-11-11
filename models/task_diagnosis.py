@@ -54,19 +54,18 @@ class XTaskDiagnosis(models.Model):
     # diagnosis rows carry name=False (empty). Match verbatim so the
     # tree-editable Repair Diagnosis tab can save rows without the UI
     # exposing an name input (Studio hides it via column_invisible).
-    name = fields.Char(string="Name")
+    name = fields.Char()
 
     # v276: standard Odoo active pattern — mirrors Clear-DB's Studio
     # active. Diagnosis rows can be soft-deleted from catalogues
     # without cascading through project.task history.
-    active = fields.Boolean(string="Active", default=True)
+    active = fields.Boolean(default=True)
 
     # The back-reference project.task.diagnosis_ids traverses
     # into on load-time setup_nonrelated. Must exist as a real Python
     # field for Fix-repair to install cleanly.
     task_id = fields.Many2one(
         "project.task",
-        string="Task",
         ondelete="set null",
         index=True,
     )
@@ -74,51 +73,42 @@ class XTaskDiagnosis(models.Model):
     # v259: catalogue m2os matching Clear-DB schema. All targets are
     # already Python-declared (Chunk 1a v241 for the 6 diagnosis
     # catalogues, v227 for the 3 repair-master ones).
-    sequence = fields.Integer(string="Sequence", default=10)
-    description = fields.Char(string="Description")
+    sequence = fields.Integer(default=10)
+    description = fields.Char()
     condition = fields.Many2one(
         "conditions",
-        string="Condition",
         ondelete="set null",
     )
     symptom_area = fields.Many2one(
         "symptom_areas",
-        string="Symptom Area",
         ondelete="set null",
     )
     symptom_code = fields.Many2one(
         "symptom_codes",
-        string="Symptom Code",
         ondelete="set null",
     )
     diagnosis_area = fields.Many2one(
         "diagnosis_areas",
-        string="Diagnosis Area",
         ondelete="set null",
     )
     diagnosis_code = fields.Many2one(
         "diagnosis_codes",
-        string="Diagnosis Code",
         ondelete="set null",
     )
     reason = fields.Many2one(
         "repair_reason",
-        string="Reason",
         ondelete="set null",
     )
     sub_reason = fields.Many2one(
         "repair_sub_reason",
-        string="Sub Reason",
         ondelete="set null",
     )
     resolution = fields.Many2one(
         "resolutions",
-        string="Resolution",
         ondelete="set null",
     )
     repair_stage = fields.Many2one(
         "repair_stages",
-        string="Repair Stage",
         ondelete="set null",
     )
 
@@ -127,5 +117,5 @@ class XTaskDiagnosisGap(models.Model):
     _inherit = "task_diagnosis"
     _rec_name = "name"  # Clear-DB Studio model: records are named by name
 
-    active = fields.Boolean(string="Active")
-    name = fields.Char(string="Name")
+    active = fields.Boolean()
+    name = fields.Char()

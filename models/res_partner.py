@@ -25,17 +25,12 @@ class ResPartner(models.Model):
     bank_guarantee_docs = fields.Binary(
         string="Bank Guarantee Docs.",
     )
-    bank_guarantee_docs_filename = fields.Char(
-        string="Bank Guarantee Docs Filename",
-    )
-    mandatory_bank_guarantee = fields.Boolean(
-        string="Mandatory Bank Guarantee",
-    )
+    bank_guarantee_docs_filename = fields.Char()
+    mandatory_bank_guarantee = fields.Boolean()
 
     # --- Vendor master (skips vendor_group by design) ------------
     vendor_account = fields.Many2one(
         "res.partner",
-        string="Vendor Account",
         ondelete="set null",
     )
     vendor_name = fields.Char(

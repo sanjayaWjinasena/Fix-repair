@@ -152,14 +152,12 @@ class HelpdeskTicket(models.Model):
     # For centre repairs it's the branch's stock location.
     repair_location = fields.Many2one(
         "stock.location",
-        string="Repair Location",
     )
 
     # Return Receipt Location — where returned items are received back
     # after a repair round-trip (used by the Return picking flow).
     return_receipt_location = fields.Many2one(
         "stock.location",
-        string="Return Receipt Location",
     )
 
     # Source Location — mirrored from the assigned user's home stock
@@ -237,9 +235,7 @@ class HelpdeskTicket(models.Model):
 
     # Cancelled flag — set to True by Studio's cancel automation when
     # a ticket is moved to a cancelled stage.
-    cancelled = fields.Boolean(
-        string="Cancelled",
-    )
+    cancelled = fields.Boolean()
 
     # Cancelled (duplicate slot — Studio-created copy). Kept for
     # schema compatibility.
@@ -249,9 +245,7 @@ class HelpdeskTicket(models.Model):
 
     # Cancel Reason — free-text explanation entered by the user
     # closing the ticket.
-    cancel_reason = fields.Text(
-        string="Cancel Reason",
-    )
+    cancel_reason = fields.Text()
 
     # Cancel Status — selection flag surfaced on the ticket list view.
     # Two values: 'None' (default) and 'Cancelled'.
@@ -260,19 +254,15 @@ class HelpdeskTicket(models.Model):
             ("None", "None"),
             ("Cancelled", "Cancelled"),
         ],
-        string="Cancel Status",
     )
 
     # Cancelled By — user who initiated the cancellation.
     cancelled_by = fields.Many2one(
         "res.users",
-        string="Cancelled By",
     )
 
     # Cancelled Date — timestamp of the cancellation action.
-    cancelled_date = fields.Datetime(
-        string="Cancelled Date",
-    )
+    cancelled_date = fields.Datetime()
 
     # Cancelled Stage Id — the helpdesk stage the ticket was in when
     # it got cancelled (so reopen can restore it).
@@ -283,9 +273,7 @@ class HelpdeskTicket(models.Model):
 
     # Reopened flag — set to True when a cancelled ticket is
     # reactivated.
-    reopened = fields.Boolean(
-        string="Reopened",
-    )
+    reopened = fields.Boolean()
 
     # Reopen Status — selection flag surfaced on list view.
     # Two values: 'None' (default) and 'Reopened'.
@@ -294,19 +282,15 @@ class HelpdeskTicket(models.Model):
             ("None", "None"),
             ("Reopened", "Reopened"),
         ],
-        string="Reopen Status",
     )
 
     # Reopened By — user who reopened the ticket.
     reopened_by = fields.Many2one(
         "res.users",
-        string="Reopened By",
     )
 
     # Reopened Date — timestamp of the reopen action.
-    reopened_date = fields.Datetime(
-        string="Reopened Date",
-    )
+    reopened_date = fields.Datetime()
 
     # ─────────────────────────────────────────────────────────────────
     # Cluster 4 — Stage-transition markers
@@ -345,33 +329,23 @@ class HelpdeskTicket(models.Model):
     # Estimation Sent Stage Updated — set once the ticket has moved
     # to 'Estimation Sent to Customer' stage. Prevents the transition
     # firing twice for the same SO.
-    estimation_sent_stage_updated = fields.Boolean(
-        string="Estimation Sent Stage Updated",
-    )
+    estimation_sent_stage_updated = fields.Boolean()
 
     # Estimation Approved Stage Updated — set once the ticket has
     # moved to 'Estimation Approval Received' stage.
-    estimation_approved_stage_updated = fields.Boolean(
-        string="Estimation Approved Stage Updated",
-    )
+    estimation_approved_stage_updated = fields.Boolean()
 
     # Invoice Stage Updated — set once the invoice-related stage
     # transition has fired.
-    invoice_stage_updated = fields.Boolean(
-        string="Invoice Stage Updated",
-    )
+    invoice_stage_updated = fields.Boolean()
 
     # Repair Started Stage Updated — set once the ticket has moved
     # to 'Repair Started' stage.
-    repair_started_stage_updated = fields.Boolean(
-        string="Repair Started Stage Updated",
-    )
+    repair_started_stage_updated = fields.Boolean()
 
     # Repair Complete Stage Updated — set once the ticket has moved
     # to 'Repair Completed' stage.
-    repair_complete_stage_updated = fields.Boolean(
-        string="Repair Complete Stage Updated",
-    )
+    repair_complete_stage_updated = fields.Boolean()
 
     # ─────────────────────────────────────────────────────────────────
     # Cluster 5 — Stage-validation computes
@@ -420,7 +394,6 @@ class HelpdeskTicket(models.Model):
             rec["fully_paid_so"] = valid
 
     valid_confirm_return = fields.Boolean(
-        string="Valid Confirm Return",
         compute="_compute_valid_confirm_return",
         store=False,
         readonly=True,
@@ -436,7 +409,6 @@ class HelpdeskTicket(models.Model):
             rec["valid_confirm_return"] = valid
 
     valid_return = fields.Boolean(
-        string="Valid Return",
         compute="_compute_valid_return",
         store=False,
         readonly=True,
@@ -452,7 +424,6 @@ class HelpdeskTicket(models.Model):
             rec["valid_return"] = valid
 
     user_location_validation = fields.Boolean(
-        string="User Location Validation",
         compute="_compute_user_location_validation",
         store=False,
         readonly=True,
@@ -634,7 +605,6 @@ class HelpdeskTicket(models.Model):
             rec["valid_delivered_so"] = valid
 
     task_status = fields.Boolean(
-        string="Task Status",
         compute="_compute_task_status",
         store=False,
         readonly=True,
@@ -721,28 +691,28 @@ class HelpdeskTicket(models.Model):
     # automations elsewhere. Kept as-is (numbered slots are ugly but
     # Studio's automations reference them by name).
 
-    stage_date = fields.Datetime(string="Stage Date")
+    stage_date = fields.Datetime()
 
-    created_by_1 = fields.Many2one("res.users", string="Created By 1")
-    created_on_1 = fields.Datetime(string="Created On 1")
-    created_by_2 = fields.Many2one("res.users", string="Created By 2")
-    created_on_2 = fields.Datetime(string="Created On 2")
-    created_by_3 = fields.Many2one("res.users", string="Created By 3")
-    created_on_3 = fields.Datetime(string="Created On 3")
-    created_by_4 = fields.Many2one("res.users", string="Created By 4")
-    created_on_4 = fields.Datetime(string="Created On 4")
-    created_by_5 = fields.Many2one("res.users", string="Created By 5")
-    created_on_5 = fields.Datetime(string="Created On 5")
-    created_by_6 = fields.Many2one("res.users", string="Created By 6")
-    created_on_6 = fields.Datetime(string="Created On 6")
-    created_by_7 = fields.Many2one("res.users", string="Created By 7")
-    created_on_7 = fields.Datetime(string="Created On 7")
-    created_by_8 = fields.Many2one("res.users", string="Created By 8")
-    created_on_8 = fields.Datetime(string="Created On 8")
-    created_by_9 = fields.Many2one("res.users", string="Created By 9")
-    created_on_9 = fields.Datetime(string="Created On 9")
-    created_by_10 = fields.Many2one("res.users", string="Created By 10")
-    created_on_10 = fields.Datetime(string="Created On 10")
+    created_by_1 = fields.Many2one("res.users")
+    created_on_1 = fields.Datetime()
+    created_by_2 = fields.Many2one("res.users")
+    created_on_2 = fields.Datetime()
+    created_by_3 = fields.Many2one("res.users")
+    created_on_3 = fields.Datetime()
+    created_by_4 = fields.Many2one("res.users")
+    created_on_4 = fields.Datetime()
+    created_by_5 = fields.Many2one("res.users")
+    created_on_5 = fields.Datetime()
+    created_by_6 = fields.Many2one("res.users")
+    created_on_6 = fields.Datetime()
+    created_by_7 = fields.Many2one("res.users")
+    created_on_7 = fields.Datetime()
+    created_by_8 = fields.Many2one("res.users")
+    created_on_8 = fields.Datetime()
+    created_by_9 = fields.Many2one("res.users")
+    created_on_9 = fields.Datetime()
+    created_by_10 = fields.Many2one("res.users")
+    created_on_10 = fields.Datetime()
 
     # Factory shipment audit (sent to factory / received at factory)
     f_shipped_by = fields.Many2one("res.users", string="Shipped By")
@@ -787,9 +757,7 @@ class HelpdeskTicket(models.Model):
 
     # Repair Serial Created — flag set when a new stock.lot has been
     # created as part of the repair flow.
-    repair_serial_created = fields.Boolean(
-        string="Repair Serial Created",
-    )
+    repair_serial_created = fields.Boolean()
 
     # Repair Reason — many-to-many onto the Studio-managed
     # repair_reason_custom catalogue.
@@ -798,7 +766,6 @@ class HelpdeskTicket(models.Model):
         relation="helpdesk_ticket_x_repair_reason_custom_rel",
         column1="helpdesk_ticket_id",
         column2="x_repair_reason_custom_id",
-        string="Repair Reason",
     )
 
     # Materials Used — first product from the linked SO's first
@@ -836,21 +803,16 @@ class HelpdeskTicket(models.Model):
     # compute side effects.
     items = fields.Many2many(
         "product.product",
-        string="Items",
     )
 
     # Qty — Char snapshot of the SO lines' quantities. Written by
     # Cluster 5 as the string representation of a Python list of
     # floats (e.g. "[1.0, 2.0]") — Studio behaviour preserved.
-    qty = fields.Char(
-        string="Qty",
-    )
+    qty = fields.Char()
 
     # Sales Price — Char snapshot of the SO lines' unit prices.
     # Same Python-list-as-string pattern as qty.
-    sales_price = fields.Char(
-        string="Sales Price",
-    )
+    sales_price = fields.Char()
 
     # ─────────────────────────────────────────────────────────────────
     # Cluster 8 — Diagnostic / misc (final cluster)
@@ -862,16 +824,13 @@ class HelpdeskTicket(models.Model):
     # and the double-x-prefix picking count field. All preserved
     # 1:1 with Studio names, ttypes, selections, and compute logic.
 
-    balance_due = fields.Float(
-        string="Balance Due",
-    )
+    balance_due = fields.Float()
 
     branch = fields.Selection(
         selection=[
             ("Colombo", "Colombo"),
             ("Gampah", "Gampah"),
         ],
-        string="Branch",
     )
 
     # CCCC — related from ticket_type_id.name. Studio auto-generated
@@ -899,19 +858,15 @@ class HelpdeskTicket(models.Model):
             ("Colombo", "Colombo"),
             ("Yakkala", "Yakkala"),
         ],
-        string="City",
     )
 
-    driver_name = fields.Char(
-        string="Driver Name",
-    )
+    driver_name = fields.Char()
 
     job_location = fields.Selection(
         selection=[
             ("Centre Repair", "Centre Repair"),
             ("Factory Repair", "Factory Repair"),
         ],
-        string="Job Location",
     )
 
     material_availability = fields.Selection(
@@ -919,7 +874,6 @@ class HelpdeskTicket(models.Model):
             ("Material Not Ready", "Material Not Ready"),
             ("Material Ready", "Material Ready"),
         ],
-        string="Material Availability",
         compute="_compute_material_availability",
         store=False,
         readonly=True,
@@ -999,9 +953,7 @@ class HelpdeskTicket(models.Model):
         readonly=True,
     )
 
-    related_information = fields.Binary(
-        string="Related Information",
-    )
+    related_information = fields.Binary()
 
     # Sales Order — first non-empty sale_order_id found across the
     # linked fsm tasks (Studio's LAST-match semantics preserved:
@@ -1038,13 +990,9 @@ class HelpdeskTicket(models.Model):
         readonly=True,
     )
 
-    vehicle_details = fields.Char(
-        string="Vehicle Details",
-    )
+    vehicle_details = fields.Char()
 
-    warranty_card = fields.Binary(
-        string="Warranty Card",
-    )
+    warranty_card = fields.Binary()
 
     # Double-x-prefix Studio field (Odoo added an extra `x_` at some
     # rename step; the field name is now literally `x_x_studio_...`).
@@ -1994,11 +1942,7 @@ class HelpdeskTicket(models.Model):
         team = Team.browse(res["team_id"]) if res.get("team_id") else Team
         general_menu = self.env.context.get("jin_general_ticket")
         # Helpdesk > Tickets > General Tickets: Odoo would pick the user's first team, a Repair team.
-        if (
-            general_menu
-            and "team_id" in fields_list
-            and (not team or team.repair_team)
-        ):
+        if general_menu and "team_id" in fields_list and (not team or team.repair_team):
             team = Team.search(
                 [
                     ("repair_team", "=", False),

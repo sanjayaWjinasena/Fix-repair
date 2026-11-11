@@ -18,6 +18,4 @@ from odoo import fields, models
 class RepairOrder(models.Model):
     _inherit = "repair.order"
 
-    confirm_draft_quotation = fields.Boolean(
-        string="Confirm Draft Quotation",
-    )
+    confirm_draft_quotation = fields.Boolean()
