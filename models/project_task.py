@@ -90,7 +90,7 @@ class ProjectTask(models.Model):
     def _compute_fully_invoiced_so(self):
         for rec in self:
             valid = False
-            if rec.sale_order_id != False:
+            if rec.sale_order_id:
                 if rec.sale_order_id.state == "cancel":
                     if rec.repair_completed_stage_updated:
                         valid = True
@@ -112,7 +112,7 @@ class ProjectTask(models.Model):
     def _compute_material_availability(self):
         for rec in self:
             val = "Material Not Ready"
-            if rec.sale_order_id != False:
+            if rec.sale_order_id:
                 if rec.sale_order_id.state == "done":
                     delivery = self.env["stock.picking"].search(
                         [
@@ -141,7 +141,7 @@ class ProjectTask(models.Model):
     def _compute_valid_confirm_so(self):
         for rec in self:
             valid = False
-            if rec.sale_order_id != False:
+            if rec.sale_order_id:
                 if rec.sale_order_id.state == "sent":
                     valid = True
             rec["valid_confirm_so"] = valid
@@ -156,7 +156,7 @@ class ProjectTask(models.Model):
     def _compute_valid_confirm2_so(self):
         for rec in self:
             valid = False
-            if rec.sale_order_id != False:
+            if rec.sale_order_id:
                 if rec.sale_order_id.state == "done":
                     valid = True
             rec["valid_confirm2_so"] = valid
@@ -175,7 +175,7 @@ class ProjectTask(models.Model):
         for rec in self:
             valid = False
             valid2 = False
-            if rec.sale_order_id != False:
+            if rec.sale_order_id:
                 if rec.sale_order_id.state == "done":
                     delivery = self.env["stock.picking"].search(
                         [

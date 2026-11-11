@@ -625,7 +625,7 @@ class HelpdeskTicket(models.Model):
                     task_status = True
 
             if not task_status:
-                if rec.sale_order == True:
+                if rec.sale_order:
                     if rec.sale_order.state == "cancel":
                         task_status = True
                     else:
@@ -972,7 +972,7 @@ class HelpdeskTicket(models.Model):
         for rec in self:
             so = False
             for invoices in rec.fsm_task_ids:
-                if invoices.sale_order_id != False:
+                if invoices.sale_order_id:
                     so = invoices.sale_order_id.id
             rec["sale_order"] = so
 

@@ -39,7 +39,7 @@ the picking type. If stock levels must follow the item, replace the direct
 state write with the standard validation (`picking.button_validate()` /
 `move._action_done()`).
 
-## Logic bugs found (not changed)
+## Logic bugs found (fixed 2026-10-29, decision on branch Rename-StudioNames)
 
 In Odoo 17 a record compared with `False` is never equal, so these
 conditions are always True (`!= False`) or always False (`== True`).
@@ -50,3 +50,11 @@ Changing them changes behaviour, so they need a functional decision:
 - `models/helpdesk_ticket.py`: `rec.sale_order == True`: always False
 
 The intended check is almost certainly `if rec.sale_order_id:`.
+
+Fixed as intended (decision 2026-10-29):
+- `project_task.py` (5): `if rec.sale_order_id:`. Same results: on an empty order the inner
+  state checks were already false.
+- `helpdesk_ticket.py` `_compute_sale_order`: `if invoices.sale_order_id:`. Behaviour change:
+  a task without a sale order no longer clears the ticket's sale order; the last order found is kept.
+- `helpdesk_ticket.py` task status: `if rec.sale_order:`. Behaviour change: the cancelled-order
+  and delivery checks now run when the ticket has a sale order (before, that block never ran).
