@@ -6,7 +6,7 @@
 
 *Extends a model created by `helpdesk`.* Python: `models/helpdesk_ticket.py`.
 
-Other repos that use this model: `report BugFix-Studio-Misc.action_report_2093_repair_status` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.action_report_2094_repair_receipt` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.action_report_2237_customer_letter` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.action_report_2240_repair_final_notice` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.action_report_2241_repair_final_notice_scrappage` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.action_report_2420_helpdesk_ticket_report` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.action_report_3492_c09_repair_receipt` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.action_report_3494_c10_repair_estimate` (BugFix-Studio-Misc)<details><summary>+15 more</summary>`report BugFix-Studio-Misc.action_report_3495_c11_repair_quotation` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.action_report_3496_c12_repair_invoice` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.action_report_3510_c19_reminder_repair_reminding_letter` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.action_report_3511_c18_final_notice_estimated_scrappage` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.action_report_3512_c17_final_notice_scrappage` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.action_report_3513_c16_final_notice_estimated` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.action_report_3514_c15_final_notice` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.action_report_3515_c14_ready_for_collection_letter` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.action_report_3516_c13_repair_aod` (BugFix-Studio-Misc)<br>`server action BugFix-Stock.sa_f5_stock_return_picking_rr_auto_select_product_for_rug_repairs_3` (BugFix-Stock)<br>`server action BugFix-Stock.server_action_1991_rr_auto_select_product_for_rug_repairs_3` (BugFix-Stock)<br>`server action BugFix-Stock.server_action_1997_rr_rug_return_from_help_desk` (BugFix-Stock)<br>`server action BugFix-Studio-Misc.server_action_2799_mst_odoo_data_clean_up` (BugFix-Studio-Misc)<br>`stock.picking.created_from_help_ticket` (BugFix-Stock)<br>`stock.picking.helpdesk_ticket_id` (BugFix-Stock)</details>
+Other repos that use this model: `report BugFix-Studio-Misc.report_repair_status` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.report_repair_receipt` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.report_customer_letter` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.report_repair_final_notice` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.report_repair_final_notice_scrappage` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.report_helpdesk_ticket_report` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.report_c09_repair_receipt` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.report_c10_repair_estimate` (BugFix-Studio-Misc)<details><summary>+15 more</summary>`report BugFix-Studio-Misc.report_c11_repair_quotation` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.report_c12_repair_invoice` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.report_c19_reminder_repair_reminding_letter` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.report_c18_final_notice_estimated_scrappage` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.report_c17_final_notice_scrappage` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.report_c16_final_notice_estimated` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.report_c15_final_notice` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.report_c14_ready_for_collection_letter` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.report_c13_repair_aod` (BugFix-Studio-Misc)<br>`server action BugFix-Stock.action_stock_return_picking_rr_auto_select_product_for_rug_repairs_3` (BugFix-Stock)<br>`server action BugFix-Stock.action_rr_auto_select_product_for_rug_repairs_3` (BugFix-Stock)<br>`server action BugFix-Stock.action_rr_rug_return_from_help_desk` (BugFix-Stock)<br>`server action BugFix-Studio-Misc.server_action_2799_mst_odoo_data_clean_up` (BugFix-Studio-Misc)<br>`stock.picking.created_from_help_ticket` (BugFix-Stock)<br>`stock.picking.helpdesk_ticket_id` (BugFix-Stock)</details>
 
 **Summary:**
 
@@ -23,7 +23,7 @@ This is the core of the module: a helpdesk ticket represents one repair job. Abo
 | `has_return_picking` | Has Return Picking | boolean | Computed: true when the ticket has any transfer, or, for Without-Serial-No repairs, when the item's serial was already collected from a customer location. | computed by `_compute_has_return_picking`; not stored | `helpdesk.ticket._compute_has_return_picking()` |  |
 | `is_so_cancelled` | Is So Cancelled | boolean | Computed: true when the ticket's repair tasks have sales orders and at least one of them is cancelled. | computed by `_compute_is_so_cancelled`; not stored | `helpdesk.ticket._compute_is_so_cancelled()` |  |
 | `is_tested_ok` | Is Tested Ok | boolean | Computed: true when any linked repair task is marked 'Tested OK' (Quick Repair status) or has End Quick Repair ticked. | computed by `_compute_is_tested_ok`; not stored | `helpdesk.ticket._compute_is_tested_ok()` |  |
-| `name` | Subject | char | Ticket subject, defaulting to 'New'; Fix-repair replaces it with the repair sequence number when a repair ticket is created or written, and uses it when creating repair serial numbers. | default `New`; stored; required |  | `default Fix-repair.default_301_helpdesk_ticket_name`<br>`helpdesk.ticket._repair_seq_no_on_create_or_write()`<br>`helpdesk.ticket.action_create_repair_serial()` |
+| `name` | Subject | char | Ticket subject, defaulting to 'New'; Fix-repair replaces it with the repair sequence number when a repair ticket is created or written, and uses it when creating repair serial numbers. | default `New`; stored; required |  | `default Fix-repair.default_helpdesk_ticket_name`<br>`helpdesk.ticket._repair_seq_no_on_create_or_write()`<br>`helpdesk.ticket.action_create_repair_serial()` |
 | `repair_picking_count` | Repair Picking Count | integer | Computed number of repair movements (transfers) linked to the ticket; shown on the ticket form's smart button. | computed by `_compute_repair_picking_count`; not stored | `helpdesk.ticket._compute_repair_picking_count()` | `view Fix-repair.helpdesk_ticket_form_assign_to_me` |
 | `repair_picking_ids` | Movements | one2many → `stock.picking` | Stock transfers (movements) created for this repair ticket; used to count movements, detect a ready dispatch transfer and lock the ticket once a movement is done. | stored | `model stock.picking` (stock) | `helpdesk.ticket._compute_has_ready_dispatch_picking()`<br>`helpdesk.ticket._compute_repair_picking_count()`<br>`helpdesk.ticket._compute_ticket_locked()` |
 | `repair_stage_state` | Repair Stage State | selection: new=New; sent_to_factory=Sent to Factory; received_at_factory=Received at Factory; estimation_sent_to_customer=Estimation Sent to Customer; repair_completed=Repair Completed; sent_to_sales_centre=Sent to Sales Centre; received_at_sales_centre=Received at Sales Centre; other=Other | Computed key of the ticket's current repair stage (New, Sent to Factory, ..., Received at Sales Centre, or Other) mapped from the stage name; used by the Direct Return action and form button visibility. | computed by `_compute_repair_stage_state`; stored | `helpdesk.ticket._compute_repair_stage_state()` | `helpdesk.ticket.fix_repair_action_direct_return()`<br>`view Fix-repair.helpdesk_ticket_form_assign_to_me` |
@@ -32,12 +32,12 @@ This is the core of the module: a helpdesk ticket represents one repair job. Abo
 | `task_done` | Task Done | boolean | Computed: true when the ticket has at least one field-service task marked done; controls buttons on the ticket form. | computed by `_compute_task_done`; not stored | `helpdesk.ticket._compute_task_done()` | `view Fix-repair.helpdesk_ticket_form_assign_to_me` |
 | `balance_due` | Balance Due | float | Amount still owed by the customer; printed in the repair collection and final-reminder email templates. | stored |  |  |
 | `branch` | Branch | selection: Colombo=Colombo; Gampah=Gampah | Branch of the ticket (Colombo or Gampah), entered manually; not used by any view or logic in this repo. | stored |  |  |
-| `cancel_reason` | Cancel Reason | text | Reason entered when the repair ticket is cancelled; written by the Cancel Repair handlers and shown on the ticket form. | stored |  | `helpdesk.ticket._repair_studio_cancel_repair()`<br>`helpdesk.ticket._repair_studio_cancel_repair_2()`<br>`view Fix-repair.ported_view_helpdesk_ticket_form_4012` |
-| `cancel_status` | Cancel Status | selection: None=None; Cancelled=Cancelled | Cancel status of the ticket ('None' or 'Cancelled'), with a default of None; shown on the ticket kanban. | stored |  | `default Fix-repair.default_360_helpdesk_ticket_cancel_status`<br>`view Fix-repair.view_4735_odoo_studio_helpdesk_ticket_kanban_customization_e` |
-| `cancelled` | Cancelled | boolean | Marks the repair ticket as cancelled; checked by the cancelled-ticket validation automation and on delete, mirrored on tasks and used in form button conditions. | stored |  | `automation Fix-repair.base_automation_201_rr_validate_cancelled_tickets`<br>`helpdesk.ticket._repair_validate_cancelled_on_unlink()`<br>`project.task.cancelled` (BugFix-Project)<br>`view Fix-repair.view_4013_odoo_studio_helpdesk_ticket_form_button_e` |
+| `cancel_reason` | Cancel Reason | text | Reason entered when the repair ticket is cancelled; written by the Cancel Repair handlers and shown on the ticket form. | stored |  | `helpdesk.ticket._repair_studio_cancel_repair()`<br>`helpdesk.ticket._repair_studio_cancel_repair_2()`<br>`view Fix-repair.view_helpdesk_ticket_form_inherit` |
+| `cancel_status` | Cancel Status | selection: None=None; Cancelled=Cancelled | Cancel status of the ticket ('None' or 'Cancelled'), with a default of None; shown on the ticket kanban. | stored |  | `default Fix-repair.default_helpdesk_ticket_cancel_status`<br>`view Fix-repair.view_helpdesk_ticket_kanban_inherit` |
+| `cancelled` | Cancelled | boolean | Marks the repair ticket as cancelled; checked by the cancelled-ticket validation automation and on delete, mirrored on tasks and used in form button conditions. | stored |  | `automation Fix-repair.automation_rr_validate_cancelled_tickets`<br>`helpdesk.ticket._repair_validate_cancelled_on_unlink()`<br>`project.task.cancelled` (BugFix-Project)<br>`view Fix-repair.view_helpdesk_ticket_form_button` |
 | `cancelled_2` | Cancelled-2 | boolean | Second cancelled flag on the ticket; not used by any view or logic in this repo. | stored |  |  |
-| `cancelled_by` | Cancelled By | many2one → `res.users` | User who cancelled the repair ticket; shown on the ticket form. | stored | `model res.users` (base) | `view Fix-repair.ported_view_helpdesk_ticket_form_4012` |
-| `cancelled_date` | Cancelled Date | datetime | Date and time the repair ticket was cancelled; shown on the ticket form and kanban. | stored |  | `view Fix-repair.ported_view_helpdesk_ticket_form_4012`<br>`view Fix-repair.view_4735_odoo_studio_helpdesk_ticket_kanban_customization_e` |
+| `cancelled_by` | Cancelled By | many2one → `res.users` | User who cancelled the repair ticket; shown on the ticket form. | stored | `model res.users` (base) | `view Fix-repair.view_helpdesk_ticket_form_inherit` |
+| `cancelled_date` | Cancelled Date | datetime | Date and time the repair ticket was cancelled; shown on the ticket form and kanban. | stored |  | `view Fix-repair.view_helpdesk_ticket_form_inherit`<br>`view Fix-repair.view_helpdesk_ticket_kanban_inherit` |
 | `cancelled_stage_id` | Cancelled Stage Id | many2one → `helpdesk.stage` | Stage the ticket was in when it was cancelled; the Reopen Repair handler moves the ticket back to it. | stored | `model helpdesk.stage` (helpdesk) | `helpdesk.ticket._repair_studio_reopen_repair()` |
 | `cccc` | CCCC | char | Ticket type name (related); a leftover Studio test field not used by any view or logic in this repo. | related `ticket_type_id.name`; stored | `helpdesk.ticket.ticket_type_id` (helpdesk)<br>`helpdesk.ticket.type.name` (helpdesk) |  |
 | `cccc3` | CCCC3 | many2one → `helpdesk.stage` | Copy of the ticket's stage (related); a leftover Studio test field not used by any view or logic in this repo. | related `stage_id`; stored | `helpdesk.ticket.stage_id` (helpdesk)<br>`model helpdesk.stage` (helpdesk) |  |
@@ -73,69 +73,69 @@ This is the core of the module: a helpdesk ticket represents one repair job. Abo
 | `fully_paid_so` | Fully Paid SO | boolean | Computed: true when any linked field-service task has a fully invoiced sales order or ended as a quick repair. | computed by `_compute_fully_paid_so`; not stored | `helpdesk.ticket._compute_fully_paid_so()` |  |
 | `handed_over` | X Studio Handed Over | boolean | Computed: true when more than one of the ticket's transfers is done, meaning the item has been handed over. | computed by `_compute_handed_over`; not stored | `helpdesk.ticket._compute_handed_over()` | `helpdesk.ticket._compute_handed_over()` |
 | `invoice_stage_updated` | Invoice Stage Updated | boolean | Marks that the ticket has passed the Invoice stage; used by the Valid Invoiced SO compute. | stored |  | `helpdesk.ticket._compute_valid_invoiced_so()` |
-| `items` | Items | many2many → `product.product` | Products used in the repair, copied from the sales order lines when the ticket reaches Repair Completed; shown on the ticket form and list. | stored | `model product.product` (product) | `view Fix-repair.ported_view_helpdesk_ticket_form_4012`<br>`view Fix-repair.view_5027_odoo_studio_helpdesk_ticket_tree_customization_e` |
-| `job_location` | Job Location | selection: Centre Repair=Centre Repair; Factory Repair=Factory Repair | Where the repair is done: Centre Repair or Factory Repair; decides which transfers are created on Plan Intervention and Mark as Done and controls form buttons and the factory page. | stored |  | `helpdesk.ticket._create_mark_as_done_picking()`<br>`helpdesk.ticket._create_plan_intervention_picking()`<br>`view Fix-repair.view_4013_odoo_studio_helpdesk_ticket_form_button_e` |
-| `material_availability` | Material Availability | selection: Material Not Ready=Material Not Ready; Material Ready=Material Ready | Computed from the linked field-service tasks: takes the last task's Material Availability (default 'Material Not Ready'); shown on the ticket kanban. | computed by `_compute_material_availability`; not stored | `helpdesk.ticket._compute_material_availability()` | `view Fix-repair.view_4735_odoo_studio_helpdesk_ticket_kanban_customization_e` |
-| `materials_used` | Materials Used | many2one → `product.product` | Product of the ticket's sales order lines (related through Sales Order), shown in the ticket list as materials used. | related `sale_order.order_line.product_id`; stored | `helpdesk.ticket.sale_order`<br>`model product.product` (product)<br>`sale.order.line.product_id` (sale)<br>`sale.order.order_line` (sale) | `view Fix-repair.view_5027_odoo_studio_helpdesk_ticket_tree_customization_e` |
-| `normal_repair_with_serial_no` | Normal Repair (With Serial No) | boolean | Copied from the ticket type: marks a normal repair for an item with a serial number; controls ticket form elements. | related `ticket_type_id.with_serial_no`; stored | `helpdesk.ticket.ticket_type_id` (helpdesk)<br>`helpdesk.ticket.type.with_serial_no` | `view Fix-repair.ported_view_helpdesk_ticket_form_4012`<br>`view Fix-repair.view_4013_odoo_studio_helpdesk_ticket_form_button_e` |
-| `normal_repair_without_serial_no` | Normal Repair (Without Serial No) | boolean | Copied from the ticket type: marks a normal repair for an item without a serial number; used by the RUG product auto-select helpers and ticket form buttons. | related `ticket_type_id.without_serial_no`; stored | `helpdesk.ticket.ticket_type_id` (helpdesk)<br>`helpdesk.ticket.type.without_serial_no` | `helpdesk.ticket._repair_auto_select_product_for_rug()`<br>`helpdesk.ticket._repair_auto_select_product_for_rug_no_company()`<br>`view Fix-repair.ported_view_helpdesk_ticket_form_4012`<br>`view Fix-repair.view_4013_odoo_studio_helpdesk_ticket_form_button_e` |
-| `pick_id` | Pick Id | integer | Integer id of the transfer created for the repair, with a default; set and read by the route, serial-number and RUG product helpers and the Direct Dispatch action. | stored |  | `default Fix-repair.default_298_helpdesk_ticket_pick_id`<br>`helpdesk.ticket._repair_auto_select_product_for_rug()`<br>`helpdesk.ticket._repair_auto_select_product_for_rug_no_company()`<br>`helpdesk.ticket._repair_studio_auto_create_repair_route()`<br>`helpdesk.ticket._repair_studio_auto_create_repair_serial_nos()`<details><summary>+3 more</summary>`helpdesk.ticket.fix_repair_action_direct_dispatch()`<br>`helpdesk.ticket.fix_repair_action_direct_return()`<br>`view Fix-repair.view_4013_odoo_studio_helpdesk_ticket_form_button_e`</details> |
+| `items` | Items | many2many → `product.product` | Products used in the repair, copied from the sales order lines when the ticket reaches Repair Completed; shown on the ticket form and list. | stored | `model product.product` (product) | `view Fix-repair.view_helpdesk_ticket_form_inherit`<br>`view Fix-repair.view_helpdesk_ticket_tree_inherit` |
+| `job_location` | Job Location | selection: Centre Repair=Centre Repair; Factory Repair=Factory Repair | Where the repair is done: Centre Repair or Factory Repair; decides which transfers are created on Plan Intervention and Mark as Done and controls form buttons and the factory page. | stored |  | `helpdesk.ticket._create_mark_as_done_picking()`<br>`helpdesk.ticket._create_plan_intervention_picking()`<br>`view Fix-repair.view_helpdesk_ticket_form_button` |
+| `material_availability` | Material Availability | selection: Material Not Ready=Material Not Ready; Material Ready=Material Ready | Computed from the linked field-service tasks: takes the last task's Material Availability (default 'Material Not Ready'); shown on the ticket kanban. | computed by `_compute_material_availability`; not stored | `helpdesk.ticket._compute_material_availability()` | `view Fix-repair.view_helpdesk_ticket_kanban_inherit` |
+| `materials_used` | Materials Used | many2one → `product.product` | Product of the ticket's sales order lines (related through Sales Order), shown in the ticket list as materials used. | related `sale_order.order_line.product_id`; stored | `helpdesk.ticket.sale_order`<br>`model product.product` (product)<br>`sale.order.line.product_id` (sale)<br>`sale.order.order_line` (sale) | `view Fix-repair.view_helpdesk_ticket_tree_inherit` |
+| `normal_repair_with_serial_no` | Normal Repair (With Serial No) | boolean | Copied from the ticket type: marks a normal repair for an item with a serial number; controls ticket form elements. | related `ticket_type_id.with_serial_no`; stored | `helpdesk.ticket.ticket_type_id` (helpdesk)<br>`helpdesk.ticket.type.with_serial_no` | `view Fix-repair.view_helpdesk_ticket_form_inherit`<br>`view Fix-repair.view_helpdesk_ticket_form_button` |
+| `normal_repair_without_serial_no` | Normal Repair (Without Serial No) | boolean | Copied from the ticket type: marks a normal repair for an item without a serial number; used by the RUG product auto-select helpers and ticket form buttons. | related `ticket_type_id.without_serial_no`; stored | `helpdesk.ticket.ticket_type_id` (helpdesk)<br>`helpdesk.ticket.type.without_serial_no` | `helpdesk.ticket._repair_auto_select_product_for_rug()`<br>`helpdesk.ticket._repair_auto_select_product_for_rug_no_company()`<br>`view Fix-repair.view_helpdesk_ticket_form_inherit`<br>`view Fix-repair.view_helpdesk_ticket_form_button` |
+| `pick_id` | Pick Id | integer | Integer id of the transfer created for the repair, with a default; set and read by the route, serial-number and RUG product helpers and the Direct Dispatch action. | stored |  | `default Fix-repair.default_helpdesk_ticket_pick_id`<br>`helpdesk.ticket._repair_auto_select_product_for_rug()`<br>`helpdesk.ticket._repair_auto_select_product_for_rug_no_company()`<br>`helpdesk.ticket._repair_studio_auto_create_repair_route()`<br>`helpdesk.ticket._repair_studio_auto_create_repair_serial_nos()`<details><summary>+3 more</summary>`helpdesk.ticket.fix_repair_action_direct_dispatch()`<br>`helpdesk.ticket.fix_repair_action_direct_return()`<br>`view Fix-repair.view_helpdesk_ticket_form_button`</details> |
 | `picking_id` | Picking Id | many2one → `stock.picking` | Transfer linked to the repair ticket; set and read by the repair route, serial-number and RUG auto-select product helpers. | stored | `model stock.picking` (stock) | `helpdesk.ticket._repair_auto_select_product_for_rug()`<br>`helpdesk.ticket._repair_auto_select_product_for_rug_no_company()`<br>`helpdesk.ticket._repair_studio_auto_create_repair_route()`<br>`helpdesk.ticket._repair_studio_auto_create_repair_serial_nos()` |
-| `qty` | Qty | char | Text list of the order line quantities copied when the ticket reaches Repair Completed; shown in the ticket list. | stored |  | `view Fix-repair.view_5027_odoo_studio_helpdesk_ticket_tree_customization_e` |
-| `quantity` | Quantity | float | Quantity of the ticket's sales order line (related through Sales Order); shown in the ticket list. | related `sale_order.order_line.product_uom_qty`; stored | `helpdesk.ticket.sale_order`<br>`sale.order.line.product_uom_qty` (sale)<br>`sale.order.order_line` (sale) | `view Fix-repair.view_5027_odoo_studio_helpdesk_ticket_tree_customization_e` |
-| `quick_repair_status` | Tested OK | selection: None=None; Quick Repair=Tested OK | Tested OK status of the ticket ('None' or 'Tested OK'), defaulting to None; read by the transfer cash-payment compute and shown on the ticket form and kanban. | stored |  | `default Fix-repair.default_372_helpdesk_ticket_quick_repair_status`<br>`stock.picking._fix_repair_compute_cash_full_payment_made()`<br>`view Fix-repair.ported_view_helpdesk_ticket_form_4012`<br>`view Fix-repair.view_4735_odoo_studio_helpdesk_ticket_kanban_customization_e` |
-| `re_estimate_count` | Re-estimate Count | integer | Computed: number of re-estimates on the last linked task's sales order. | computed by `_compute_re_estimate_count`; not stored | `helpdesk.ticket._compute_re_estimate_count()` | `default Fix-repair.default_369_helpdesk_ticket_re_estimate_count` |
-| `re_estimate_status` | Re-estimate Status | selection: None=None; Re-estimated=Re-estimated | Computed: 'Re-estimated' when any linked task's sales order has a re-estimate count above zero, else 'None'. | computed by `_compute_re_estimate_status`; not stored | `helpdesk.ticket._compute_re_estimate_status()` | `default Fix-repair.default_368_helpdesk_ticket_re_estimate_status` |
+| `qty` | Qty | char | Text list of the order line quantities copied when the ticket reaches Repair Completed; shown in the ticket list. | stored |  | `view Fix-repair.view_helpdesk_ticket_tree_inherit` |
+| `quantity` | Quantity | float | Quantity of the ticket's sales order line (related through Sales Order); shown in the ticket list. | related `sale_order.order_line.product_uom_qty`; stored | `helpdesk.ticket.sale_order`<br>`sale.order.line.product_uom_qty` (sale)<br>`sale.order.order_line` (sale) | `view Fix-repair.view_helpdesk_ticket_tree_inherit` |
+| `quick_repair_status` | Tested OK | selection: None=None; Quick Repair=Tested OK | Tested OK status of the ticket ('None' or 'Tested OK'), defaulting to None; read by the transfer cash-payment compute and shown on the ticket form and kanban. | stored |  | `default Fix-repair.default_helpdesk_ticket_quick_repair_status`<br>`stock.picking._fix_repair_compute_cash_full_payment_made()`<br>`view Fix-repair.view_helpdesk_ticket_form_inherit`<br>`view Fix-repair.view_helpdesk_ticket_kanban_inherit` |
+| `re_estimate_count` | Re-estimate Count | integer | Computed: number of re-estimates on the last linked task's sales order. | computed by `_compute_re_estimate_count`; not stored | `helpdesk.ticket._compute_re_estimate_count()` | `default Fix-repair.default_helpdesk_ticket_re_estimate_count` |
+| `re_estimate_status` | Re-estimate Status | selection: None=None; Re-estimated=Re-estimated | Computed: 'Re-estimated' when any linked task's sales order has a re-estimate count above zero, else 'None'. | computed by `_compute_re_estimate_status`; not stored | `helpdesk.ticket._compute_re_estimate_status()` | `default Fix-repair.default_helpdesk_ticket_re_estimate_status` |
 | `receive_at_centre` | Receive at Centre | boolean | Stores a Receive at Centre flag; not used by any view or logic in this repo. | stored |  |  |
-| `receive_at_factory` | Receive at Factory | boolean | Receive at Factory flag on the ticket; used in ticket form button conditions. | stored |  | `view Fix-repair.view_4013_odoo_studio_helpdesk_ticket_form_button_e` |
+| `receive_at_factory` | Receive at Factory | boolean | Receive at Factory flag on the ticket; used in ticket form button conditions. | stored |  | `view Fix-repair.view_helpdesk_ticket_form_button` |
 | `related_field_FNjnC` | New Related Field | one2many → `project.task` | All tasks of the ticket's project (related); leftover Studio field not used by any view or logic in this repo. | related `project_id.task_ids`; not stored | `helpdesk.ticket.project_id` (helpdesk_timesheet)<br>`model project.task` (project)<br>`project.project.task_ids` (project) |  |
 | `related_field_QuqN1` | New Related Field | integer | Ticket id taken from the project's tasks (related); leftover Studio field not used by any view or logic in this repo. | related `project_id.task_ids.helpdesk_ticket_id.id`; stored | `helpdesk.ticket.id` (helpdesk)<br>`helpdesk.ticket.project_id` (helpdesk_timesheet)<br>`project.project.task_ids` (project)<br>`project.task.helpdesk_ticket_id` (helpdesk_fsm) |  |
-| `related_information` | Related Information | binary | Attachment with related information uploaded on the ticket; shown on the ticket form and copied to its tasks. | stored |  | `project.task.related_information` (BugFix-Project)<br>`view Fix-repair.ported_view_helpdesk_ticket_form_4012` |
-| `reopen_status` | Reopen Status | selection: None=None; Reopened=Reopened | Reopen status of the ticket ('None' or 'Reopened'), defaulting to None; shown on the ticket kanban. | stored |  | `default Fix-repair.default_361_helpdesk_ticket_reopen_status`<br>`view Fix-repair.view_4735_odoo_studio_helpdesk_ticket_kanban_customization_e` |
+| `related_information` | Related Information | binary | Attachment with related information uploaded on the ticket; shown on the ticket form and copied to its tasks. | stored |  | `project.task.related_information` (BugFix-Project)<br>`view Fix-repair.view_helpdesk_ticket_form_inherit` |
+| `reopen_status` | Reopen Status | selection: None=None; Reopened=Reopened | Reopen status of the ticket ('None' or 'Reopened'), defaulting to None; shown on the ticket kanban. | stored |  | `default Fix-repair.default_helpdesk_ticket_reopen_status`<br>`view Fix-repair.view_helpdesk_ticket_kanban_inherit` |
 | `reopened` | Reopened | boolean | Stores whether the ticket was reopened; not used by any view or logic in this repo. | stored |  |  |
-| `reopened_by` | Reopened By | many2one → `res.users` | User who reopened the cancelled ticket; shown on the ticket form. | stored | `model res.users` (base) | `view Fix-repair.ported_view_helpdesk_ticket_form_4012` |
-| `reopened_date` | Reopened Date | datetime | Date and time the ticket was reopened; shown on the ticket form and kanban. | stored |  | `view Fix-repair.ported_view_helpdesk_ticket_form_4012`<br>`view Fix-repair.view_4735_odoo_studio_helpdesk_ticket_kanban_customization_e` |
+| `reopened_by` | Reopened By | many2one → `res.users` | User who reopened the cancelled ticket; shown on the ticket form. | stored | `model res.users` (base) | `view Fix-repair.view_helpdesk_ticket_form_inherit` |
+| `reopened_date` | Reopened Date | datetime | Date and time the ticket was reopened; shown on the ticket form and kanban. | stored |  | `view Fix-repair.view_helpdesk_ticket_form_inherit`<br>`view Fix-repair.view_helpdesk_ticket_kanban_inherit` |
 | `repair_complete_stage_updated` | Repair Complete Stage Updated | boolean | Marks that the ticket has passed the Repair Completed stage; used by task-status, delivered/invoiced validity computes, mirrored on tasks and read by the transfer cash-payment compute. | stored |  | `helpdesk.ticket._compute_task_status()`<br>`helpdesk.ticket._compute_valid_delivered_so()`<br>`helpdesk.ticket._compute_valid_invoiced_so()`<br>`project.task.repair_completed_stage_updated` (BugFix-Project)<br>`stock.picking._fix_repair_compute_cash_full_payment_made()` |
 | `repair_location` | Repair Location | many2one → `stock.location` | Stock location where the item is repaired; filled by the repair-location populate helper and used when creating the Send to Factory transfer and finding the item's current location. | stored | `model stock.location` (stock) | `helpdesk.ticket._create_send_to_factory_picking()`<br>`helpdesk.ticket._current_item_location()`<br>`helpdesk.ticket._repair_populate_repair_location()` |
-| `repair_reason` | Repair Reason | many2many → `repair_reason_custom` | Repair reasons selected for the ticket (from the custom Repair Reason list); shown in the ticket list view. | stored | `model repair_reason_custom` | `view Fix-repair.view_5027_odoo_studio_helpdesk_ticket_tree_customization_e` |
-| `repair_serial_created` | Repair Serial Created | boolean | Flag that the repair serial number and route were already auto-created, preventing re-creation; used in form button conditions. | stored |  | `helpdesk.ticket._repair_studio_auto_create_repair_route()`<br>`helpdesk.ticket._repair_studio_auto_create_repair_serial_nos()`<br>`view Fix-repair.view_4013_odoo_studio_helpdesk_ticket_form_button_e` |
+| `repair_reason` | Repair Reason | many2many → `repair_reason_custom` | Repair reasons selected for the ticket (from the custom Repair Reason list); shown in the ticket list view. | stored | `model repair_reason_custom` | `view Fix-repair.view_helpdesk_ticket_tree_inherit` |
+| `repair_serial_created` | Repair Serial Created | boolean | Flag that the repair serial number and route were already auto-created, preventing re-creation; used in form button conditions. | stored |  | `helpdesk.ticket._repair_studio_auto_create_repair_route()`<br>`helpdesk.ticket._repair_studio_auto_create_repair_serial_nos()`<br>`view Fix-repair.view_helpdesk_ticket_form_button` |
 | `repair_started_stage_updated` | Repair Started Stage Updated | boolean | Marks that the ticket has passed the Repair Started stage; used by the Valid Delivered SO compute. | stored |  | `helpdesk.ticket._compute_valid_delivered_so()` |
 | `return_receipt_location` | Return Receipt Location | many2one → `stock.location` | Location where the repaired item is received back; used to build the repair route and the plan-intervention and send-to-sales-centre transfers, and for location validation. | stored | `model stock.location` (stock) | `helpdesk.ticket._compute_user_location_validation()`<br>`helpdesk.ticket._create_plan_intervention_picking()`<br>`helpdesk.ticket._create_send_to_sales_centre_picking()`<br>`helpdesk.ticket._onchange_repair_populate_repair_location()`<br>`helpdesk.ticket._repair_populate_repair_location()`<details><summary>+3 more</summary>`helpdesk.ticket._repair_studio_auto_create_repair_route()`<br>`helpdesk.ticket._repair_studio_auto_create_repair_serial_nos()`<br>`helpdesk.ticket._repair_studio_user_location_validation()`</details> |
-| `rug_approval_status` | RUG Approval Status | selection: Pending RUG Approval=Pending RUG Approval; RUG Approved=RUG Approved; RUG Rejected=RUG Rejected | Computed RUG approval status from the linked field-service tasks' sales orders: Approved, Rejected or Pending (the last task with an order wins); shown on the ticket kanban. | computed by `_compute_rug_approval_status`; not stored | `helpdesk.ticket._compute_rug_approval_status()` | `view Fix-repair.view_4735_odoo_studio_helpdesk_ticket_kanban_customization_e` |
+| `rug_approval_status` | RUG Approval Status | selection: Pending RUG Approval=Pending RUG Approval; RUG Approved=RUG Approved; RUG Rejected=RUG Rejected | Computed RUG approval status from the linked field-service tasks' sales orders: Approved, Rejected or Pending (the last task with an order wins); shown on the ticket kanban. | computed by `_compute_rug_approval_status`; not stored | `helpdesk.ticket._compute_rug_approval_status()` | `view Fix-repair.view_helpdesk_ticket_kanban_inherit` |
 | `rug_approved` | RUG Approved | boolean | Stores whether the RUG request was approved; not used by any view or logic in this repo. | stored |  |  |
-| `rug_confirmed` | RUG Confirmed | boolean | RUG Confirmed flag copied from the ticket type; shown on the ticket form and kanban. | related `ticket_type_id.rug_confirmed`; stored | `helpdesk.ticket.ticket_type_id` (helpdesk)<br>`helpdesk.ticket.type.rug_confirmed` | `view Fix-repair.ported_view_helpdesk_ticket_form_4012`<br>`view Fix-repair.view_4735_odoo_studio_helpdesk_ticket_kanban_customization_e` |
-| `rug_repair` | Repair Under Warranty | boolean | Shows whether the ticket type is a Repair Under Warranty (related to the ticket type's RUG flag); controls ticket form elements. | related `ticket_type_id.rug`; stored | `helpdesk.ticket.ticket_type_id` (helpdesk)<br>`helpdesk.ticket.type.rug` | `view Fix-repair.ported_view_helpdesk_ticket_form_4012`<br>`view Fix-repair.view_4013_odoo_studio_helpdesk_ticket_form_button_e` |
+| `rug_confirmed` | RUG Confirmed | boolean | RUG Confirmed flag copied from the ticket type; shown on the ticket form and kanban. | related `ticket_type_id.rug_confirmed`; stored | `helpdesk.ticket.ticket_type_id` (helpdesk)<br>`helpdesk.ticket.type.rug_confirmed` | `view Fix-repair.view_helpdesk_ticket_form_inherit`<br>`view Fix-repair.view_helpdesk_ticket_kanban_inherit` |
+| `rug_repair` | Repair Under Warranty | boolean | Shows whether the ticket type is a Repair Under Warranty (related to the ticket type's RUG flag); controls ticket form elements. | related `ticket_type_id.rug`; stored | `helpdesk.ticket.ticket_type_id` (helpdesk)<br>`helpdesk.ticket.type.rug` | `view Fix-repair.view_helpdesk_ticket_form_inherit`<br>`view Fix-repair.view_helpdesk_ticket_form_button` |
 | `rug_request_sent` | RUG Request Sent | boolean | Stores whether a RUG approval request was sent; not used by any view or logic in this repo. | stored |  |  |
 | `s_received_by` | Received By | many2one → `res.users` | User who received the repaired item back at the sales centre (set by Received at Sales Centre); shown read-only under Repair Transfer Details (Sales Centre). | stored | `model res.users` (base) |  |
 | `s_received_date` | Received Date | datetime | Date and time the repaired item was received back at the sales centre (set by Received at Sales Centre); shown read-only under Repair Transfer Details (Sales Centre). | stored |  |  |
 | `s_shipped_by` | Shipped By | many2one → `res.users` | User who shipped the item from the sales centre to the factory (set by Send to Factory); shown read-only under Repair Transfer Details (Sales Centre). | stored | `model res.users` (base) |  |
 | `s_shipped_date` | Shipped Date | datetime | Date and time the sales centre shipped the item to the factory (set by Send to Factory); shown read-only under Repair Transfer Details (Sales Centre). | stored |  |  |
-| `sale_order` | Sales Order | many2one → `sale.order` | Computed: the sales order of the last linked field-service task that has one; source for materials, quantity and price columns and for the Repair Completed item copy. | computed by `_compute_sale_order`; not stored | `helpdesk.ticket._compute_sale_order()`<br>`model sale.order` (sale) | `helpdesk.ticket._compute_task_status()`<br>`helpdesk.ticket._compute_valid_delivered_so()`<br>`helpdesk.ticket.materials_used`<br>`helpdesk.ticket.quantity`<br>`helpdesk.ticket.unit_price`<details><summary>+1 more</summary>`view Fix-repair.view_5027_odoo_studio_helpdesk_ticket_tree_customization_e`</details> |
-| `sales_price` | Sales Price | char | Text list of the order line unit prices copied when the ticket reaches Repair Completed; shown in the ticket list. | stored |  | `view Fix-repair.view_5027_odoo_studio_helpdesk_ticket_tree_customization_e` |
+| `sale_order` | Sales Order | many2one → `sale.order` | Computed: the sales order of the last linked field-service task that has one; source for materials, quantity and price columns and for the Repair Completed item copy. | computed by `_compute_sale_order`; not stored | `helpdesk.ticket._compute_sale_order()`<br>`model sale.order` (sale) | `helpdesk.ticket._compute_task_status()`<br>`helpdesk.ticket._compute_valid_delivered_so()`<br>`helpdesk.ticket.materials_used`<br>`helpdesk.ticket.quantity`<br>`helpdesk.ticket.unit_price`<details><summary>+1 more</summary>`view Fix-repair.view_helpdesk_ticket_tree_inherit`</details> |
+| `sales_price` | Sales Price | char | Text list of the order line unit prices copied when the ticket reaches Repair Completed; shown in the ticket list. | stored |  | `view Fix-repair.view_helpdesk_ticket_tree_inherit` |
 | `send_to_centre` | Send to Centre | boolean | Stores a Send to Centre flag; not used by any view or logic in this repo. | stored |  |  |
 | `send_to_factory` | Send to Factory | boolean | Stores a Send to Factory flag; not used by any view or logic in this repo. | stored |  |  |
 | `serial_no` | Serial Number | many2one → `stock.lot` | Serial number (lot) of the item brought in for repair; drives the product sync onchange, repair transfer creation, RUG product auto-selection and the Has Return Picking check. | stored | `model stock.lot` (stock) | `helpdesk.ticket._compute_has_return_picking()`<br>`helpdesk.ticket._create_repair_transfer()`<br>`helpdesk.ticket._onchange_serial_no_product()`<br>`helpdesk.ticket._post_write_serial_product_sync()`<br>`helpdesk.ticket._repair_auto_select_product_for_rug()`<details><summary>+3 more</summary>`helpdesk.ticket._repair_auto_select_product_for_rug_no_company()`<br>`helpdesk.ticket._repair_studio_auto_create_repair_serial_nos()`<br>`stock.return.picking._create_returns()`</details> |
 | `serial_number` | Serial Number-11 | many2one → `stock.lot` | Secondary serial number field ('Serial Number-11'); only read by the RUG auto-select-product onchange. | stored | `model stock.lot` (stock) | `helpdesk.ticket._onchange_repair_auto_select_product_for_rug()` |
-| `sn_updated` | SN Updated | boolean | Flag that the serial number/product was already updated on the ticket; set by the RUG auto-select helper and used in form button conditions. | stored |  | `helpdesk.ticket._repair_auto_select_product_for_rug_no_company()`<br>`view Fix-repair.view_4013_odoo_studio_helpdesk_ticket_form_button_e` |
+| `sn_updated` | SN Updated | boolean | Flag that the serial number/product was already updated on the ticket; set by the RUG auto-select helper and used in form button conditions. | stored |  | `helpdesk.ticket._repair_auto_select_product_for_rug_no_company()`<br>`view Fix-repair.view_helpdesk_ticket_form_button` |
 | `source_location` | Source Location | many2one → `stock.location` | Source stock location copied from the assigned user's settings; used when auto-creating the repair route and serial numbers. | related `user_id.source_location`; stored | `helpdesk.ticket.user_id` (helpdesk)<br>`model stock.location` (stock)<br>`res.users.source_location` (studio_usermodel_migration) | `helpdesk.ticket._repair_studio_auto_create_repair_route()`<br>`helpdesk.ticket._repair_studio_auto_create_repair_serial_nos()` |
-| `source_location_1` | Source Location | many2one → `stock.location` | Second source location copied from the assigned user's settings; used when auto-creating the repair route and serial numbers. | related `user_id.source_location_1`; stored | `helpdesk.ticket.user_id` (helpdesk)<br>`model stock.location` (stock)<br>`res.users.source_location_1` (studio_usermodel_migration) | `helpdesk.ticket._repair_studio_auto_create_repair_route()`<br>`helpdesk.ticket._repair_studio_auto_create_repair_serial_nos()`<br>`view Fix-repair.ported_view_helpdesk_ticket_form_4012` |
-| `stage_date` | Stage Date | datetime | Date and time of the ticket's last automatic repair-stage change, stamped by the stage-moving computes and handlers; shown on the ticket kanban. | stored |  | `view Fix-repair.view_4735_odoo_studio_helpdesk_ticket_kanban_customization_e` |
+| `source_location_1` | Source Location | many2one → `stock.location` | Second source location copied from the assigned user's settings; used when auto-creating the repair route and serial numbers. | related `user_id.source_location_1`; stored | `helpdesk.ticket.user_id` (helpdesk)<br>`model stock.location` (stock)<br>`res.users.source_location_1` (studio_usermodel_migration) | `helpdesk.ticket._repair_studio_auto_create_repair_route()`<br>`helpdesk.ticket._repair_studio_auto_create_repair_serial_nos()`<br>`view Fix-repair.view_helpdesk_ticket_form_inherit` |
+| `stage_date` | Stage Date | datetime | Date and time of the ticket's last automatic repair-stage change, stamped by the stage-moving computes and handlers; shown on the ticket kanban. | stored |  | `view Fix-repair.view_helpdesk_ticket_kanban_inherit` |
 | `stage_name` | Stage Name | char | Name of the ticket's current stage (related); not used by any view or logic in this repo. | related `stage_id.name`; stored | `helpdesk.stage.name` (helpdesk)<br>`helpdesk.ticket.stage_id` (helpdesk) |  |
 | `task_status` | Task Status | boolean | Computed: true when a linked field-service task is done or ended as a quick repair; the first time it moves the ticket to Repair Completed (stage 9/28), stamps Created By/On 8 and copies sales order items. The sales-order fallback branch compares a record to True and never runs. | computed by `_compute_task_status`; not stored | `helpdesk.ticket._compute_task_status()` |  |
-| `repair_tracking` | Tracking | selection: lot=By Lots; none=No Tracking; serial=By Unique Serial Number | Tracking mode of the ticket's product (by lots, serial or none), related from the product; shown on the ticket form. | related `product_id.tracking`; not stored | `helpdesk.ticket.product_id` (helpdesk_stock)<br>`product.product.tracking` (stock) | `view Fix-repair.ported_view_helpdesk_ticket_form_4012` |
-| `unit_price` | Unit Price | char | Value related to the sales order pricelist's item price; shown as Unit Price in the ticket list. Typed as text and its help text describes a rule name, so the value may not be a real price. | related `sale_order.pricelist_id.item_ids.price`; not stored | `helpdesk.ticket.sale_order`<br>`product.pricelist.item.price` (product)<br>`product.pricelist.item_ids` (product)<br>`sale.order.pricelist_id` (sale) | `view Fix-repair.view_5027_odoo_studio_helpdesk_ticket_tree_customization_e` |
+| `repair_tracking` | Tracking | selection: lot=By Lots; none=No Tracking; serial=By Unique Serial Number | Tracking mode of the ticket's product (by lots, serial or none), related from the product; shown on the ticket form. | related `product_id.tracking`; not stored | `helpdesk.ticket.product_id` (helpdesk_stock)<br>`product.product.tracking` (stock) | `view Fix-repair.view_helpdesk_ticket_form_inherit` |
+| `unit_price` | Unit Price | char | Value related to the sales order pricelist's item price; shown as Unit Price in the ticket list. Typed as text and its help text describes a rule name, so the value may not be a real price. | related `sale_order.pricelist_id.item_ids.price`; not stored | `helpdesk.ticket.sale_order`<br>`product.pricelist.item.price` (product)<br>`product.pricelist.item_ids` (product)<br>`sale.order.pricelist_id` (sale) | `view Fix-repair.view_helpdesk_ticket_tree_inherit` |
 | `user_location_validation` | User Location Validation | boolean | Computed: true when the ticket has a Return Receipt Location and the current user is NOT among that location's allowed stock users; checked by the User Location Validation handler to block unauthorised users. | computed by `_compute_user_location_validation`; not stored | `helpdesk.ticket._compute_user_location_validation()` | `helpdesk.ticket._repair_studio_user_location_validation()` |
-| `valid_confirm_return` | Valid Confirm Return | boolean | Computed: true when at least one of the ticket's transfers is done; used in ticket form button conditions. | computed by `_compute_valid_confirm_return`; not stored | `helpdesk.ticket._compute_valid_confirm_return()` | `view Fix-repair.view_4013_odoo_studio_helpdesk_ticket_form_button_e` |
+| `valid_confirm_return` | Valid Confirm Return | boolean | Computed: true when at least one of the ticket's transfers is done; used in ticket form button conditions. | computed by `_compute_valid_confirm_return`; not stored | `helpdesk.ticket._compute_valid_confirm_return()` | `view Fix-repair.view_helpdesk_ticket_form_button` |
 | `valid_confirmed2_so` | Valid Confirmed2 SO | boolean | Computed: true when any linked task's sales order is locked (done). The first time, it also moves the ticket to the Estimation Approved stage (stage id 12 or 31 by company) and stamps Stage Date and Created By/On 5. | computed by `_compute_valid_confirmed2_so`; not stored | `helpdesk.ticket._compute_valid_confirmed2_so()` |  |
 | `valid_confirmed_so` | Valid Confirmed SO | boolean | Computed: true when any linked task's sales order is in 'Quotation Sent'. The first time, it also moves the ticket to the Estimation Sent stage (hard-coded stage id 10 or 29 by company) and stamps Stage Date and Created By/On 4. | computed by `_compute_valid_confirmed_so`; not stored | `helpdesk.ticket._compute_valid_confirmed_so()` |  |
 | `valid_delivered_so` | Valid Delivered SO | boolean | Computed from linked tasks' delivery checks. A customer delivery moves the ticket to Repair Completed (stage 9/28), stamps Created By/On 8 and copies order items, quantities and prices; any done delivery otherwise moves it to Repair Started (stage 11/30, Created By/On 7). | computed by `_compute_valid_delivered_so`; not stored | `helpdesk.ticket._compute_valid_delivered_so()` |  |
 | `valid_invoiced_so` | Valid Invoiced SO | boolean | Computed: true when a linked non-Credit task's order counts as invoiced/paid. The first time (before Repair Completed), it also moves the ticket to the Invoice stage (stage id 3 or 22), stamps Created By/On 6 and sets Invoice Stage Updated. | computed by `_compute_valid_invoiced_so`; not stored | `helpdesk.ticket._compute_valid_invoiced_so()` |  |
-| `valid_return` | Valid Return | boolean | Computed: true when the ticket has at least one transfer that is not cancelled; used in ticket form button conditions. | computed by `_compute_valid_return`; not stored | `helpdesk.ticket._compute_valid_return()` | `view Fix-repair.view_4013_odoo_studio_helpdesk_ticket_form_button_e` |
+| `valid_return` | Valid Return | boolean | Computed: true when the ticket has at least one transfer that is not cancelled; used in ticket form button conditions. | computed by `_compute_valid_return`; not stored | `helpdesk.ticket._compute_valid_return()` | `view Fix-repair.view_helpdesk_ticket_form_button` |
 | `vehicle_details` | Vehicle Details | char | Vehicle used to deliver the item; shown read-only under Delivery Details on the factory repair page. | stored |  |  |
 | `virtual_location` | Virtual Location | many2one → `stock.location` | Virtual stock location copied from the assigned user's settings; used when creating the mark-as-done and received-at-sales-centre transfers and the repair route. | related `user_id.virtual_location`; stored | `helpdesk.ticket.user_id` (helpdesk)<br>`model stock.location` (stock)<br>`res.users.virtual_location` (studio_usermodel_migration) | `helpdesk.ticket._create_mark_as_done_picking()`<br>`helpdesk.ticket._create_received_at_sales_centre_picking()`<br>`helpdesk.ticket._repair_studio_auto_create_repair_route()`<br>`helpdesk.ticket._repair_studio_auto_create_repair_serial_nos()` |
 | `virtual_location_1` | Virtual Location | many2one → `stock.location` | Second virtual location copied from the assigned user's settings; used in the same transfer and route creation as Virtual Location. | related `user_id.virtual_location_1`; stored | `helpdesk.ticket.user_id` (helpdesk)<br>`model stock.location` (stock)<br>`res.users.virtual_location_1` (studio_usermodel_migration) | `helpdesk.ticket._create_mark_as_done_picking()`<br>`helpdesk.ticket._create_received_at_sales_centre_picking()`<br>`helpdesk.ticket._repair_studio_auto_create_repair_route()`<br>`helpdesk.ticket._repair_studio_auto_create_repair_serial_nos()` |
-| `virtual_location_id` | Virtual Location Id | integer | Numeric id of the assigned user's virtual location (related); used in ticket form button conditions. | related `user_id.virtual_location.id`; stored | `helpdesk.ticket.user_id` (helpdesk)<br>`res.users.virtual_location` (studio_usermodel_migration)<br>`stock.location.id` (stock) | `view Fix-repair.view_4013_odoo_studio_helpdesk_ticket_form_button_e` |
-| `warranty_card` | Warranty Card | binary | Warranty card attachment uploaded on the ticket; used when changing the repair type to RUG and copied to the ticket's tasks. | stored |  | `helpdesk.ticket._repair_studio_change_repair_type_to_rug()`<br>`project.task.warranty_card` (BugFix-Project)<br>`view Fix-repair.ported_view_helpdesk_ticket_form_4012` |
+| `virtual_location_id` | Virtual Location Id | integer | Numeric id of the assigned user's virtual location (related); used in ticket form button conditions. | related `user_id.virtual_location.id`; stored | `helpdesk.ticket.user_id` (helpdesk)<br>`res.users.virtual_location` (studio_usermodel_migration)<br>`stock.location.id` (stock) | `view Fix-repair.view_helpdesk_ticket_form_button` |
+| `warranty_card` | Warranty Card | binary | Warranty card attachment uploaded on the ticket; used when changing the repair type to RUG and copied to the ticket's tasks. | stored |  | `helpdesk.ticket._repair_studio_change_repair_type_to_rug()`<br>`project.task.warranty_card` (BugFix-Project)<br>`view Fix-repair.view_helpdesk_ticket_form_inherit` |
 | `ticket_locked` | X Ticket Locked | boolean | Computed: true once any linked repair movement is validated (done); freezes the ticket form so intake data stays as it was at the first movement. | computed by `_compute_ticket_locked`; not stored | `helpdesk.ticket._compute_ticket_locked()` |  |
 | `created_from_help_ticket_stock_picking_count` | Created from Help Ticket count | integer | Computed count of transfers whose 'Created from Help Ticket' is this ticket. | computed by `_compute_created_from_help_ticket_stock_picking_count`; not stored | `helpdesk.ticket._compute_created_from_help_ticket_stock_picking_count()` |  |
 
@@ -250,10 +250,10 @@ This is the core of the module: a helpdesk ticket represents one repair job. Abo
 
 **Server actions (27):**
 
-- **Execute Code** (`server_action_1976_rr_repair_seq_no`, type `code`)
+- **Execute Code** (`action_rr_repair_seq_no`, type `code`)
   - Function: Gives the ticket a number from the 'repair.seq' sequence when its name is empty or 'New'. Used by the automation 'JIN-Helpdesk(Repair) Seq.No' (which is archived after migration).
   - Depends on: `model helpdesk.ticket` (helpdesk)
-  - Used by: `automation Fix-repair.base_automation_171_jin_helpdesk_repair_seq_no`
+  - Used by: `automation Fix-repair.automation_jin_helpdesk_repair_seq_no`
   <details><summary>code (3 lines)</summary>
 
 ```python
@@ -261,10 +261,10 @@ This is the core of the module: a helpdesk ticket represents one repair job. Abo
 record._repair_seq_no_on_create_or_write()
 ```
   </details>
-- **Execute Code** (`server_action_1989_rr_auto_select_product_for_rug_repairs`, type `code`)
+- **Execute Code** (`action_rr_auto_select_product_for_rug_repairs`, type `code`)
   - Function: Fills the ticket's sale order, picking, product and lot from the customer delivery of its serial number. Used by the automation of the same name.
   - Depends on: `model helpdesk.ticket` (helpdesk)
-  - Used by: `automation Fix-repair.base_automation_172_rr_auto_select_product_for_rug_repairs`
+  - Used by: `automation Fix-repair.automation_rr_auto_select_product_for_rug_repairs`
   <details><summary>code (3 lines)</summary>
 
 ```python
@@ -272,10 +272,10 @@ record._repair_seq_no_on_create_or_write()
 record._repair_auto_select_product_for_rug()
 ```
   </details>
-- **Execute Code** (`server_action_1990_rr_auto_select_product_for_rug_repairs_2`, type `code`)
+- **Execute Code** (`action_rr_auto_select_product_for_rug_repairs_2`, type `code`)
   - Function: Fills sale order, picking, product and lot from the serial's customer delivery, without the company filter. Used by the automation 'RR - Auto Select Product for RUG Repairs-2'.
   - Depends on: `model helpdesk.ticket` (helpdesk)
-  - Used by: `automation Fix-repair.base_automation_173_rr_auto_select_product_for_rug_repairs_2`
+  - Used by: `automation Fix-repair.automation_rr_auto_select_product_for_rug_repairs_2`
   <details><summary>code (3 lines)</summary>
 
 ```python
@@ -283,10 +283,10 @@ record._repair_auto_select_product_for_rug()
 record._repair_auto_select_product_for_rug_2()
 ```
   </details>
-- **Execute Code** (`server_action_1992_rr_auto_select_product_for_rug_repairs_4`, type `code`)
+- **Execute Code** (`action_rr_auto_select_product_for_rug_repairs_4`, type `code`)
   - Function: When a ticket type is set, clears the ticket's sale order, pickings, product, lot and serial number. Used by automation 'RR - Auto Select Product for RUG Repairs-4'.
   - Depends on: `model helpdesk.ticket` (helpdesk)
-  - Used by: `automation Fix-repair.base_automation_175_rr_auto_select_product_for_rug_repairs_4`
+  - Used by: `automation Fix-repair.automation_rr_auto_select_product_for_rug_repairs_4`
   <details><summary>code (3 lines)</summary>
 
 ```python
@@ -294,10 +294,10 @@ record._repair_auto_select_product_for_rug_2()
 record._repair_auto_select_product_for_rug_4()
 ```
   </details>
-- **Execute Code** (`server_action_2000_rr_auto_populate_repair_location`, type `code`)
+- **Execute Code** (`action_rr_auto_populate_repair_location`, type `code`)
   - Function: Copies the ticket's Return Receipt Location into its Repair Location. Used by the automation 'RR - Auto Populate Repair Location'.
   - Depends on: `model helpdesk.ticket` (helpdesk)
-  - Used by: `automation Fix-repair.base_automation_178_rr_auto_populate_repair_location`
+  - Used by: `automation Fix-repair.automation_rr_auto_populate_repair_location`
   <details><summary>code (3 lines)</summary>
 
 ```python
@@ -305,10 +305,10 @@ record._repair_auto_select_product_for_rug_4()
 record._repair_populate_repair_location()
 ```
   </details>
-- **Execute Code** (`server_action_2222_rr_validate_cancelled_tickets`, type `code`)
+- **Execute Code** (`action_rr_validate_cancelled_tickets`, type `code`)
   - Function: Blocks deletion of cancelled tickets. Used by the automation 'RR - Validate Cancelled Tickets' (archived after migration).
   - Depends on: `model helpdesk.ticket` (helpdesk)
-  - Used by: `automation Fix-repair.base_automation_201_rr_validate_cancelled_tickets`
+  - Used by: `automation Fix-repair.automation_rr_validate_cancelled_tickets`
   <details><summary>code (3 lines)</summary>
 
 ```python
@@ -316,10 +316,10 @@ record._repair_populate_repair_location()
 record._repair_validate_cancelled_on_unlink()
 ```
   </details>
-- **Execute Code** (`server_action_2451_rr_auto_select_product_for_rug_repairs_33`, type `code`)
+- **Execute Code** (`action_rr_auto_select_product_for_rug_repairs_33`, type `code`)
   - Function: Clears the ticket's sale order, pickings, product, lot and SN Updated flag. Used by automation 'RR - Auto Select Product for RUG Repairs-33'.
   - Depends on: `model helpdesk.ticket` (helpdesk)
-  - Used by: `automation Fix-repair.base_automation_243_rr_auto_select_product_for_rug_repairs_33`
+  - Used by: `automation Fix-repair.automation_rr_auto_select_product_for_rug_repairs_33`
   <details><summary>code (3 lines)</summary>
 
 ```python
@@ -327,10 +327,10 @@ record._repair_validate_cancelled_on_unlink()
 record._repair_auto_select_product_for_rug_33()
 ```
   </details>
-- **Execute Code** (`server_action_2558_user_location_validation_helpdesk`, type `code`)
+- **Execute Code** (`action_user_location_validation_helpdesk`, type `code`)
   - Function: Checks the user may work with the ticket's Return Receipt Location; raises an error listing the user's permitted locations otherwise. Used by automation 'User Location Validation - Helpdesk'.
   - Depends on: `model helpdesk.ticket` (helpdesk)
-  - Used by: `automation Fix-repair.base_automation_252_user_location_validation_helpdesk`
+  - Used by: `automation Fix-repair.automation_user_location_validation_helpdesk`
   <details><summary>code (3 lines)</summary>
 
 ```python
@@ -351,7 +351,7 @@ if record:
     record._repair_studio_auto_create_repair_route()
 ```
   </details>
-- **RR - Auto Create Repair Serial Nos** (`server_action_1994_rr_auto_create_repair_serial_nos`, type `code`)
+- **RR - Auto Create Repair Serial Nos** (`action_rr_auto_create_repair_serial_nos`, type `code`)
   - Function: Creates a new repair serial number (lot) for the ticket, sets it as Serial No / Lot, marks Repair Serial Created, and creates the related stock movement.
   - Depends on: `model helpdesk.ticket` (helpdesk)
   - Used by: — (not linked to a button, menu or automation)
@@ -362,7 +362,7 @@ if record:
 record._repair_studio_auto_create_repair_serial_nos()
 ```
   </details>
-- **RR - Auto Populate Repair Location** (`sa_f5_helpdesk_ticket_rr_auto_populate_repair_location`, type `code`)
+- **RR - Auto Populate Repair Location** (`action_helpdesk_ticket_rr_auto_populate_repair_location`, type `code`)
   - Function: Copies the ticket's Return Receipt Location into its Repair Location (clears it when empty). Duplicate of the automation-linked action of the same name.
   - Depends on: `model helpdesk.ticket` (helpdesk)
   - Used by: — (not linked to a button, menu or automation)
@@ -373,7 +373,7 @@ record._repair_studio_auto_create_repair_serial_nos()
 record._repair_populate_repair_location()
 ```
   </details>
-- **RR - Auto Select Product for RUG Repairs** (`sa_f5_helpdesk_ticket_rr_auto_select_product_for_rug_repairs`, type `code`)
+- **RR - Auto Select Product for RUG Repairs** (`action_helpdesk_ticket_rr_auto_select_product_for_rug_repairs`, type `code`)
   - Function: When the ticket has a serial number, finds the delivery that shipped that serial to a customer and fills the ticket's sale order, picking, product and lot from it.
   - Depends on: `model helpdesk.ticket` (helpdesk)
   - Used by: — (not linked to a button, menu or automation)
@@ -384,7 +384,7 @@ record._repair_populate_repair_location()
 record._repair_auto_select_product_for_rug()
 ```
   </details>
-- **RR - Auto Select Product for RUG Repairs-2** (`sa_f5_helpdesk_ticket_rr_auto_select_product_for_rug_repairs_2`, type `code`)
+- **RR - Auto Select Product for RUG Repairs-2** (`action_helpdesk_ticket_rr_auto_select_product_for_rug_repairs_2`, type `code`)
   - Function: Same as 'Auto Select Product for RUG Repairs' but without the company filter on the delivery search: fills sale order, picking, product and lot from the serial's customer delivery.
   - Depends on: `model helpdesk.ticket` (helpdesk)
   - Used by: — (not linked to a button, menu or automation)
@@ -395,7 +395,7 @@ record._repair_auto_select_product_for_rug()
 record._repair_auto_select_product_for_rug_2()
 ```
   </details>
-- **RR - Auto Select Product for RUG Repairs-33** (`sa_f5_helpdesk_ticket_rr_auto_select_product_for_rug_repairs_33`, type `code`)
+- **RR - Auto Select Product for RUG Repairs-33** (`action_helpdesk_ticket_rr_auto_select_product_for_rug_repairs_33`, type `code`)
   - Function: Clears the ticket's sale order, pickings, product, lot and SN Updated flag.
   - Depends on: `model helpdesk.ticket` (helpdesk)
   - Used by: — (not linked to a button, menu or automation)
@@ -406,7 +406,7 @@ record._repair_auto_select_product_for_rug_2()
 record._repair_auto_select_product_for_rug_33()
 ```
   </details>
-- **RR - Auto Select Product for RUG Repairs-4** (`sa_f5_helpdesk_ticket_rr_auto_select_product_for_rug_repairs_4`, type `code`)
+- **RR - Auto Select Product for RUG Repairs-4** (`action_helpdesk_ticket_rr_auto_select_product_for_rug_repairs_4`, type `code`)
   - Function: When a ticket type is set, clears the ticket's sale order, pickings, product, lot and serial number.
   - Depends on: `model helpdesk.ticket` (helpdesk)
   - Used by: — (not linked to a button, menu or automation)
@@ -417,7 +417,7 @@ record._repair_auto_select_product_for_rug_33()
 record._repair_auto_select_product_for_rug_4()
 ```
   </details>
-- **RR - Cancel Repair** (`server_action_2220_rr_cancel_repair`, type `code`)
+- **RR - Cancel Repair** (`action_rr_cancel_repair`, type `code`)
   - Function: Cancel Repair: requires a cancel reason, remembers the current stage, moves the ticket to the Cancelled stage (per company), and records cancelled flag, user, date and status.
   - Depends on: `model helpdesk.ticket` (helpdesk)
   - Used by: — (not linked to a button, menu or automation)
@@ -428,7 +428,7 @@ record._repair_auto_select_product_for_rug_4()
 record._repair_studio_cancel_repair()
 ```
   </details>
-- **RR - Cancel Repair-2** (`server_action_2343_rr_cancel_repair_2`, type `code`)
+- **RR - Cancel Repair-2** (`action_rr_cancel_repair_2`, type `code`)
   - Function: Cancel Repair variant: requires a cancel reason, then closes the ticket at Repair Completed (per company) with audit slot 8 and marks it cancelled.
   - Depends on: `model helpdesk.ticket` (helpdesk)
   - Used by: — (not linked to a button, menu or automation)
@@ -439,7 +439,7 @@ record._repair_studio_cancel_repair()
 record._repair_studio_cancel_repair_2()
 ```
   </details>
-- **RR - Change Repair Type to RUG** (`server_action_2159_rr_change_repair_type_to_rug`, type `code`)
+- **RR - Change Repair Type to RUG** (`action_rr_change_repair_type_to_rug`, type `code`)
   - Function: Change to RUG: requires the warranty card to be uploaded, resets linked sale order line prices to product cost (keeping the original price), and changes the ticket type to the RUG type (id 1).
   - Depends on: `model helpdesk.ticket` (helpdesk)
   - Used by: — (not linked to a button, menu or automation)
@@ -450,7 +450,7 @@ record._repair_studio_cancel_repair_2()
 record._repair_studio_change_repair_type_to_rug()
 ```
   </details>
-- **RR - RR - Auto Select Product for RUG Repairs-22** (`server_action_2450_rr_rr_auto_select_product_for_rug_repairs_22`, type `code`)
+- **RR - RR - Auto Select Product for RUG Repairs-22** (`action_rr_rr_auto_select_product_for_rug_repairs_22`, type `code`)
   - Function: Fills sale order, picking, product and lot from the serial's customer delivery without the company filter, and sets SN Updated.
   - Depends on: `model helpdesk.ticket` (helpdesk)
   - Used by: — (not linked to a button, menu or automation)
@@ -461,7 +461,7 @@ record._repair_studio_change_repair_type_to_rug()
 record._repair_auto_select_product_for_rug_22()
 ```
   </details>
-- **RR - Receive at Factory** (`server_action_2002_rr_receive_at_factory`, type `code`)
+- **RR - Receive at Factory** (`action_rr_receive_at_factory`, type `code`)
   - Function: Receive at Factory: ticks Received at Factory, records received date/user and audit slot 2, and moves the ticket to the Received at Factory stage (per company).
   - Depends on: `model helpdesk.ticket` (helpdesk)
   - Used by: — (not linked to a button, menu or automation)
@@ -472,7 +472,7 @@ record._repair_auto_select_product_for_rug_22()
 record._repair_studio_receive_at_factory()
 ```
   </details>
-- **RR - Receive at Sales Centre** (`server_action_2006_rr_receive_at_sales_centre`, type `code`)
+- **RR - Receive at Sales Centre** (`action_rr_receive_at_sales_centre`, type `code`)
   - Function: Receive at Sales Centre: ticks Received at Centre, records received date/user and audit slot 10, and moves the ticket to the Received at Sales Centre stage (per company).
   - Depends on: `model helpdesk.ticket` (helpdesk)
   - Used by: — (not linked to a button, menu or automation)
@@ -483,7 +483,7 @@ record._repair_studio_receive_at_factory()
 record._repair_studio_receive_at_sales_centre()
 ```
   </details>
-- **RR - Reopen Repair** (`server_action_2221_rr_reopen_repair`, type `code`)
+- **RR - Reopen Repair** (`action_rr_reopen_repair`, type `code`)
   - Function: Reopen Repair: returns the ticket to the stage it was in before cancellation and records reopened flag, user, date and status.
   - Depends on: `model helpdesk.ticket` (helpdesk)
   - Used by: — (not linked to a button, menu or automation)
@@ -494,7 +494,7 @@ record._repair_studio_receive_at_sales_centre()
 record._repair_studio_reopen_repair()
 ```
   </details>
-- **RR - Repair Seq.No** (`sa_f5_helpdesk_ticket_rr_repair_seq_no`, type `code`)
+- **RR - Repair Seq.No** (`action_helpdesk_ticket_rr_repair_seq_no`, type `code`)
   - Function: Gives the ticket a number from the 'repair.seq' sequence when its name is empty or 'New'.
   - Depends on: `model helpdesk.ticket` (helpdesk)
   - Used by: — (not linked to a button, menu or automation)
@@ -505,7 +505,7 @@ record._repair_studio_reopen_repair()
 record._repair_seq_no_on_create_or_write()
 ```
   </details>
-- **RR - Send to Factory** (`server_action_2001_rr_send_to_factory`, type `code`)
+- **RR - Send to Factory** (`action_rr_send_to_factory`, type `code`)
   - Function: Send to Factory: sets the ticket's Repair Location to the stock location flagged as Repair Factory Location (error if none), ticks Send to Factory and records shipped date/user and stage date.
   - Depends on: `model helpdesk.ticket` (helpdesk)
   - Used by: — (not linked to a button, menu or automation)
@@ -516,7 +516,7 @@ record._repair_seq_no_on_create_or_write()
 record._repair_studio_send_to_factory()
 ```
   </details>
-- **RR - Send to Sales Centre** (`server_action_2007_rr_send_to_sales_centre`, type `code`)
+- **RR - Send to Sales Centre** (`action_rr_send_to_sales_centre`, type `code`)
   - Function: Send to Sales Centre: ticks Send to Centre, records shipped date/user and audit slot 9, and moves the ticket to the Sent to Sales Centre stage (per company).
   - Depends on: `model helpdesk.ticket` (helpdesk)
   - Used by: — (not linked to a button, menu or automation)
@@ -527,7 +527,7 @@ record._repair_studio_send_to_factory()
 record._repair_studio_send_to_sales_centre()
 ```
   </details>
-- **RR - Update RUG Approval in Pipeline** (`server_action_1998_rr_update_rug_approval_in_pipeline`, type `code`)
+- **RR - Update RUG Approval in Pipeline** (`action_rr_update_rug_approval_in_pipeline`, type `code`)
   - Function: Calls a placeholder method that does nothing; the action has no effect.
   - Depends on: `model helpdesk.ticket` (helpdesk)
   - Used by: — (not linked to a button, menu or automation)
@@ -538,7 +538,7 @@ record._repair_studio_send_to_sales_centre()
 record._repair_studio_update_rug_approval_in_pipeline()
 ```
   </details>
-- **RR - Validate Cancelled Tickets** (`sa_f5_helpdesk_ticket_rr_validate_cancelled_tickets`, type `code`)
+- **RR - Validate Cancelled Tickets** (`action_helpdesk_ticket_rr_validate_cancelled_tickets`, type `code`)
   - Function: Blocks deletion of cancelled tickets with 'Cancelled tickets can not be deleted.'
   - Depends on: `model helpdesk.ticket` (helpdesk)
   - Used by: — (not linked to a button, menu or automation)
@@ -553,39 +553,39 @@ record._repair_validate_cancelled_on_unlink()
 
 | Name | Record name | State | Function | Depends on | Used by |
 |---|---|---|---|---|---|
-| JIN-Helpdesk(Repair) Seq.No | `base_automation_171_jin_helpdesk_repair_seq_no` | archived | When a record is created or updated on Helpdesk Ticket, runs _Execute Code_. **Archived — does not run.** | `model helpdesk.ticket` (helpdesk)<br>`server action Fix-repair.server_action_1976_rr_repair_seq_no` |  |
-| RR - Auto Populate Repair Location | `base_automation_178_rr_auto_populate_repair_location` | archived | When a watched field changes in the form on Helpdesk Ticket, runs _Execute Code_. **Archived — does not run.** | `model helpdesk.ticket` (helpdesk)<br>`server action Fix-repair.server_action_2000_rr_auto_populate_repair_location` |  |
-| RR - Auto Select Product for RUG Repairs | `base_automation_172_rr_auto_select_product_for_rug_repairs` | archived | When a watched field changes in the form on Helpdesk Ticket, runs _Execute Code_. **Archived — does not run.** | `model helpdesk.ticket` (helpdesk)<br>`server action Fix-repair.server_action_1989_rr_auto_select_product_for_rug_repairs` |  |
-| RR - Auto Select Product for RUG Repairs-2 | `base_automation_173_rr_auto_select_product_for_rug_repairs_2` | archived | When a record is updated on Helpdesk Ticket and `[]`, runs _Execute Code_. **Archived — does not run.** | `model helpdesk.ticket` (helpdesk)<br>`server action Fix-repair.server_action_1990_rr_auto_select_product_for_rug_repairs_2` |  |
-| RR - Auto Select Product for RUG Repairs-33 | `base_automation_243_rr_auto_select_product_for_rug_repairs_33` | archived | When a watched field changes in the form on Helpdesk Ticket and `[]`, runs _Execute Code_. **Archived — does not run.** | `model helpdesk.ticket` (helpdesk)<br>`server action Fix-repair.server_action_2451_rr_auto_select_product_for_rug_repairs_33` |  |
-| RR - Auto Select Product for RUG Repairs-4 | `base_automation_175_rr_auto_select_product_for_rug_repairs_4` | archived | When a watched field changes in the form on Helpdesk Ticket, runs _Execute Code_. **Archived — does not run.** | `model helpdesk.ticket` (helpdesk)<br>`server action Fix-repair.server_action_1992_rr_auto_select_product_for_rug_repairs_4` |  |
-| RR - Validate Cancelled Tickets | `base_automation_201_rr_validate_cancelled_tickets` | archived | When a record is deleted on Helpdesk Ticket and `[["cancelled","=",True]]`, runs _Execute Code_. **Archived — does not run.** | `helpdesk.ticket.cancelled`<br>`model helpdesk.ticket` (helpdesk)<br>`server action Fix-repair.server_action_2222_rr_validate_cancelled_tickets` |  |
+| JIN-Helpdesk(Repair) Seq.No | `automation_jin_helpdesk_repair_seq_no` | archived | When a record is created or updated on Helpdesk Ticket, runs _Execute Code_. **Archived — does not run.** | `model helpdesk.ticket` (helpdesk)<br>`server action Fix-repair.action_rr_repair_seq_no` |  |
+| RR - Auto Populate Repair Location | `automation_rr_auto_populate_repair_location` | archived | When a watched field changes in the form on Helpdesk Ticket, runs _Execute Code_. **Archived — does not run.** | `model helpdesk.ticket` (helpdesk)<br>`server action Fix-repair.action_rr_auto_populate_repair_location` |  |
+| RR - Auto Select Product for RUG Repairs | `automation_rr_auto_select_product_for_rug_repairs` | archived | When a watched field changes in the form on Helpdesk Ticket, runs _Execute Code_. **Archived — does not run.** | `model helpdesk.ticket` (helpdesk)<br>`server action Fix-repair.action_rr_auto_select_product_for_rug_repairs` |  |
+| RR - Auto Select Product for RUG Repairs-2 | `automation_rr_auto_select_product_for_rug_repairs_2` | archived | When a record is updated on Helpdesk Ticket and `[]`, runs _Execute Code_. **Archived — does not run.** | `model helpdesk.ticket` (helpdesk)<br>`server action Fix-repair.action_rr_auto_select_product_for_rug_repairs_2` |  |
+| RR - Auto Select Product for RUG Repairs-33 | `automation_rr_auto_select_product_for_rug_repairs_33` | archived | When a watched field changes in the form on Helpdesk Ticket and `[]`, runs _Execute Code_. **Archived — does not run.** | `model helpdesk.ticket` (helpdesk)<br>`server action Fix-repair.action_rr_auto_select_product_for_rug_repairs_33` |  |
+| RR - Auto Select Product for RUG Repairs-4 | `automation_rr_auto_select_product_for_rug_repairs_4` | archived | When a watched field changes in the form on Helpdesk Ticket, runs _Execute Code_. **Archived — does not run.** | `model helpdesk.ticket` (helpdesk)<br>`server action Fix-repair.action_rr_auto_select_product_for_rug_repairs_4` |  |
+| RR - Validate Cancelled Tickets | `automation_rr_validate_cancelled_tickets` | archived | When a record is deleted on Helpdesk Ticket and `[["cancelled","=",True]]`, runs _Execute Code_. **Archived — does not run.** | `helpdesk.ticket.cancelled`<br>`model helpdesk.ticket` (helpdesk)<br>`server action Fix-repair.action_rr_validate_cancelled_tickets` |  |
 | Slowness - Test | `base_automation_240_slowness_test` | archived | When a record is created or updated on Helpdesk Ticket and `["&",["team_id","=",1],["ticket_type_id","!=",False]]`, runs nothing (no action linked). **Archived — does not run.** | `helpdesk.ticket.team_id` (helpdesk)<br>`helpdesk.ticket.ticket_type_id` (helpdesk)<br>`model helpdesk.ticket` (helpdesk) |  |
-| User Location Validation - Helpdesk | `base_automation_252_user_location_validation_helpdesk` | archived | When a record is created or updated on Helpdesk Ticket and `[["stage_id","=",1]]`, runs _Execute Code_. **Archived — does not run.** | `helpdesk.ticket.stage_id` (helpdesk)<br>`model helpdesk.ticket` (helpdesk)<br>`server action Fix-repair.server_action_2558_user_location_validation_helpdesk` |  |
+| User Location Validation - Helpdesk | `automation_user_location_validation_helpdesk` | archived | When a record is created or updated on Helpdesk Ticket and `[["stage_id","=",1]]`, runs _Execute Code_. **Archived — does not run.** | `helpdesk.ticket.stage_id` (helpdesk)<br>`model helpdesk.ticket` (helpdesk)<br>`server action Fix-repair.action_user_location_validation_helpdesk` |  |
 
 **Approval rules (1):**
 
 | Name | Record name | Approver group | Function | Depends on | Used by |
 |---|---|---|---|---|---|
-| Helpdesk Ticket/Reverse Transfer (User types / Internal User) (30) | `ar_relaxed_helpdesk_ticket_reverse_transfer_user_types_internal_user_30` | User types / Internal User | Before action _Reverse Transfer_ on Helpdesk Ticket runs, an approval from **User types / Internal User** is required (step 1). | `group base.group_user` (base)<br>`model helpdesk.ticket` (helpdesk)<br>`window action stock.act_stock_return_picking` (stock) |  |
+| Helpdesk Ticket/Reverse Transfer (User types / Internal User) (30) | `approval_rule_ar_relaxed_helpdesk_ticket_reverse_transfer_user_types_internal_us` | User types / Internal User | Before action _Reverse Transfer_ on Helpdesk Ticket runs, an approval from **User types / Internal User** is required (step 1). | `group base.group_user` (base)<br>`model helpdesk.ticket` (helpdesk)<br>`window action stock.act_stock_return_picking` (stock) |  |
 
 **Window actions (4):**
 
 | Name | Record name | Function | Depends on | Used by |
 |---|---|---|---|---|
 | Repair Job Details | `aw_f4_helpdesk_ticket_repair_job_details` | Opens **Helpdesk Ticket** records (kanban,tree,form,pivot,graph,activity). | `model helpdesk.ticket` (helpdesk) |  |
-| Repair Job Details | `act_window_2312_repair_job_details` | Opens **Helpdesk Ticket** records (kanban,tree,form,pivot,graph,activity). | `model helpdesk.ticket` (helpdesk) | `menu Fix-repair.menu_f6_repair_job_details` |
+| Repair Job Details | `action_repair_job_details` | Opens **Helpdesk Ticket** records (kanban,tree,form,pivot,graph,activity). | `model helpdesk.ticket` (helpdesk) | `menu Fix-repair.menu_repair_job_details` |
 | Repair Job Details for the Period - RUG Only | `aw_f4_helpdesk_ticket_repair_job_details_for_the_period_rug_only` | Opens **Helpdesk Ticket** records (kanban,tree,form,pivot,graph,activity). | `model helpdesk.ticket` (helpdesk) |  |
-| Repair Job Details for the Period - RUG Only | `act_window_2234_repair_job_details_for_the_period_rug_only` | Opens **Helpdesk Ticket** records (kanban,tree,form,pivot,graph,activity). | `model helpdesk.ticket` (helpdesk) | `menu Fix-repair.menu_f6_repair_job_details_for_the_period_rug_only` |
+| Repair Job Details for the Period - RUG Only | `action_repair_job_details_for_the_period_rug_only` | Opens **Helpdesk Ticket** records (kanban,tree,form,pivot,graph,activity). | `model helpdesk.ticket` (helpdesk) | `menu Fix-repair.menu_repair_job_details_for_the_period_rug_only` |
 
 **Views (9):**
 
 | Name | Record name | Type | What it changes | Function | Depends on | Used by |
 |---|---|---|---|---|---|---|
-| Odoo Studio: helpdesk.ticket.form customization | `ported_view_helpdesk_ticket_form_4012` | form | before `//form[1]/sheet[1]/notebook[not(@name)][1]`: add field rug_repair, field rug_confirmed, field normal_repair_with_serial_no, field normal_repair_without_serial_no, field source_location_1, field cancel_reason, field items, field quick_repair_status, field repair_tracking; inside `//form[1]/sheet[1]/notebook[not(@name)][1]`: add page 'Warranty Details', page 'Cancel/ Reopen Log' | Helpdesk ticket form: adds hidden anchor fields (RUG repair, RUG confirmed, repair kinds, source location, cancel reason, items, quick repair status, tracking) and two tabs: 'Warranty Details' (warranty card, related information) and 'Cancel/ Reopen Log' (read-only cancel/reopen user and date). | `helpdesk.ticket.cancel_reason`<br>`helpdesk.ticket.cancelled_by`<br>`helpdesk.ticket.cancelled_date`<br>`helpdesk.ticket.items`<br>`helpdesk.ticket.normal_repair_with_serial_no`<details><summary>+11 more</summary>`helpdesk.ticket.normal_repair_without_serial_no`<br>`helpdesk.ticket.quick_repair_status`<br>`helpdesk.ticket.related_information`<br>`helpdesk.ticket.reopened_by`<br>`helpdesk.ticket.reopened_date`<br>`helpdesk.ticket.rug_confirmed`<br>`helpdesk.ticket.rug_repair`<br>`helpdesk.ticket.source_location_1`<br>`helpdesk.ticket.repair_tracking`<br>`helpdesk.ticket.warranty_card`<br>`view helpdesk.helpdesk_ticket_view_form` (helpdesk)</details> |  |
-| Odoo Studio: helpdesk.ticket.form-button | `view_4013_odoo_studio_helpdesk_ticket_form_button_e` | form | inside `//form`: add field cancelled, field job_location, field normal_repair_with_serial_no, field normal_repair_without_serial_no, field pick_id, field receive_at_factory, field repair_serial_created, field rug_repair, field sn_updated, field valid_confirm_return, field valid_return, field virtual_location_id; set invisible=(use_product_repairs == False) or ((pickings_count == 0) or (cancelled == True)) on `//header/button[@name='1797']`; set invisible=((sn_updated == False) and (normal_repair_without_serial_no == False)) or ((rug_repair != True) or ((ticket_type_id == False) or ((valid_return == True) or ((use_product_returns == False) or (cancelled == True))))) on `//button[@name='870']`; set invisible=((receive_at_factory == False) and (job_location == 'Factory Repair')) or ((valid_confirm_return == False) or ((valid_return == False) or ((use_fsm == False) or ((fsm_task_count > 0) or (cancelled == True))))) on `//button[@name='action_generate_fsm_task']`; set context={'default_ticket_id': id, 'default_company_id': company_id, 'default_picking_id': pick_id} on `//button[@name='870']`; before `//header/button[@name='assign_ticket_to_self']`: add ; before `//header/button[@name='870']`: add ; after `//header/button[@name='assign_ticket_to_self']`: add button 'Receipt' … | Inactive (archived) ported Studio ticket form customization with button visibility rules for Repair, Return and Plan Intervention, Receipt buttons and a non-clickable stage bar; it has no effect while inactive. | `group stock.group_stock_user` (stock)<br>`helpdesk.ticket.company_id` (helpdesk)<br>`helpdesk.ticket.ticket_type_id` (helpdesk)<br>`helpdesk.ticket.use_product_returns` (helpdesk)<br>`helpdesk.ticket.cancelled`<details><summary>+13 more</summary>`helpdesk.ticket.job_location`<br>`helpdesk.ticket.normal_repair_with_serial_no`<br>`helpdesk.ticket.normal_repair_without_serial_no`<br>`helpdesk.ticket.pick_id`<br>`helpdesk.ticket.receive_at_factory`<br>`helpdesk.ticket.repair_serial_created`<br>`helpdesk.ticket.rug_repair`<br>`helpdesk.ticket.sn_updated`<br>`helpdesk.ticket.valid_confirm_return`<br>`helpdesk.ticket.valid_return`<br>`helpdesk.ticket.virtual_location_id`<br>`view helpdesk.helpdesk_ticket_view_form` (helpdesk)<br>`window action stock.act_stock_return_picking` (stock)</details> |  |
-| Odoo Studio: helpdesk.ticket.kanban customization | `view_4735_odoo_studio_helpdesk_ticket_kanban_customization_e` | kanban | after `//field[@name='ticket_type_id']`: add field quick_repair_status, field rug_confirmed, field rug_approval_status, field material_availability; after `//div[@class='o_kanban_record_body']/field[@name='tag_ids']`: add field create_date, field cancel_status, field cancelled_date, field reopen_status, field reopened_date, field stage_date | Helpdesk ticket kanban cards: show Quick Repair status, RUG approval status (for RUG-confirmed tickets), material availability, created date, cancel/reopen status and dates (when set), and stage date. | `helpdesk.ticket.cancel_status`<br>`helpdesk.ticket.cancelled_date`<br>`helpdesk.ticket.material_availability`<br>`helpdesk.ticket.quick_repair_status`<br>`helpdesk.ticket.reopen_status`<details><summary>+5 more</summary>`helpdesk.ticket.reopened_date`<br>`helpdesk.ticket.rug_approval_status`<br>`helpdesk.ticket.rug_confirmed`<br>`helpdesk.ticket.stage_date`<br>`view helpdesk.helpdesk_ticket_view_kanban` (helpdesk)</details> |  |
-| Odoo Studio: helpdesk.ticket.tree customization | `view_5027_odoo_studio_helpdesk_ticket_tree_customization_e` | tree | remove `//field[@name='partner_id']`; replace `//tree[1]/field[@name='team_id']`: add field partner_name, field create_date, field materials_used, field quantity, field unit_price, field items, field qty, field sales_price, field close_date; after `//field[@name='legend_done']`: add field sale_order; after `//field[@name='sla_deadline']`: add field repair_reason | Helpdesk ticket list: removes Customer and Team, adds customer name, created date, materials used, quantity, unit price, items, qty, sales price, closed date, sale order and repair reason columns. | `helpdesk.ticket.close_date` (helpdesk)<br>`helpdesk.ticket.partner_name` (helpdesk)<br>`helpdesk.ticket.items`<br>`helpdesk.ticket.materials_used`<br>`helpdesk.ticket.qty`<details><summary>+6 more</summary>`helpdesk.ticket.quantity`<br>`helpdesk.ticket.repair_reason`<br>`helpdesk.ticket.sale_order`<br>`helpdesk.ticket.sales_price`<br>`helpdesk.ticket.unit_price`<br>`view helpdesk.helpdesk_tickets_view_tree` (helpdesk)</details> |  |
+| Odoo Studio: helpdesk.ticket.form customization | `view_helpdesk_ticket_form_inherit` | form | before `//form[1]/sheet[1]/notebook[not(@name)][1]`: add field rug_repair, field rug_confirmed, field normal_repair_with_serial_no, field normal_repair_without_serial_no, field source_location_1, field cancel_reason, field items, field quick_repair_status, field repair_tracking; inside `//form[1]/sheet[1]/notebook[not(@name)][1]`: add page 'Warranty Details', page 'Cancel/ Reopen Log' | Helpdesk ticket form: adds hidden anchor fields (RUG repair, RUG confirmed, repair kinds, source location, cancel reason, items, quick repair status, tracking) and two tabs: 'Warranty Details' (warranty card, related information) and 'Cancel/ Reopen Log' (read-only cancel/reopen user and date). | `helpdesk.ticket.cancel_reason`<br>`helpdesk.ticket.cancelled_by`<br>`helpdesk.ticket.cancelled_date`<br>`helpdesk.ticket.items`<br>`helpdesk.ticket.normal_repair_with_serial_no`<details><summary>+11 more</summary>`helpdesk.ticket.normal_repair_without_serial_no`<br>`helpdesk.ticket.quick_repair_status`<br>`helpdesk.ticket.related_information`<br>`helpdesk.ticket.reopened_by`<br>`helpdesk.ticket.reopened_date`<br>`helpdesk.ticket.rug_confirmed`<br>`helpdesk.ticket.rug_repair`<br>`helpdesk.ticket.source_location_1`<br>`helpdesk.ticket.repair_tracking`<br>`helpdesk.ticket.warranty_card`<br>`view helpdesk.helpdesk_ticket_view_form` (helpdesk)</details> |  |
+| Odoo Studio: helpdesk.ticket.form-button | `view_helpdesk_ticket_form_button` | form | inside `//form`: add field cancelled, field job_location, field normal_repair_with_serial_no, field normal_repair_without_serial_no, field pick_id, field receive_at_factory, field repair_serial_created, field rug_repair, field sn_updated, field valid_confirm_return, field valid_return, field virtual_location_id; set invisible=(use_product_repairs == False) or ((pickings_count == 0) or (cancelled == True)) on `//header/button[@name='1797']`; set invisible=((sn_updated == False) and (normal_repair_without_serial_no == False)) or ((rug_repair != True) or ((ticket_type_id == False) or ((valid_return == True) or ((use_product_returns == False) or (cancelled == True))))) on `//button[@name='870']`; set invisible=((receive_at_factory == False) and (job_location == 'Factory Repair')) or ((valid_confirm_return == False) or ((valid_return == False) or ((use_fsm == False) or ((fsm_task_count > 0) or (cancelled == True))))) on `//button[@name='action_generate_fsm_task']`; set context={'default_ticket_id': id, 'default_company_id': company_id, 'default_picking_id': pick_id} on `//button[@name='870']`; before `//header/button[@name='assign_ticket_to_self']`: add ; before `//header/button[@name='870']`: add ; after `//header/button[@name='assign_ticket_to_self']`: add button 'Receipt' … | Inactive (archived) ported Studio ticket form customization with button visibility rules for Repair, Return and Plan Intervention, Receipt buttons and a non-clickable stage bar; it has no effect while inactive. | `group stock.group_stock_user` (stock)<br>`helpdesk.ticket.company_id` (helpdesk)<br>`helpdesk.ticket.ticket_type_id` (helpdesk)<br>`helpdesk.ticket.use_product_returns` (helpdesk)<br>`helpdesk.ticket.cancelled`<details><summary>+13 more</summary>`helpdesk.ticket.job_location`<br>`helpdesk.ticket.normal_repair_with_serial_no`<br>`helpdesk.ticket.normal_repair_without_serial_no`<br>`helpdesk.ticket.pick_id`<br>`helpdesk.ticket.receive_at_factory`<br>`helpdesk.ticket.repair_serial_created`<br>`helpdesk.ticket.rug_repair`<br>`helpdesk.ticket.sn_updated`<br>`helpdesk.ticket.valid_confirm_return`<br>`helpdesk.ticket.valid_return`<br>`helpdesk.ticket.virtual_location_id`<br>`view helpdesk.helpdesk_ticket_view_form` (helpdesk)<br>`window action stock.act_stock_return_picking` (stock)</details> |  |
+| Odoo Studio: helpdesk.ticket.kanban customization | `view_helpdesk_ticket_kanban_inherit` | kanban | after `//field[@name='ticket_type_id']`: add field quick_repair_status, field rug_confirmed, field rug_approval_status, field material_availability; after `//div[@class='o_kanban_record_body']/field[@name='tag_ids']`: add field create_date, field cancel_status, field cancelled_date, field reopen_status, field reopened_date, field stage_date | Helpdesk ticket kanban cards: show Quick Repair status, RUG approval status (for RUG-confirmed tickets), material availability, created date, cancel/reopen status and dates (when set), and stage date. | `helpdesk.ticket.cancel_status`<br>`helpdesk.ticket.cancelled_date`<br>`helpdesk.ticket.material_availability`<br>`helpdesk.ticket.quick_repair_status`<br>`helpdesk.ticket.reopen_status`<details><summary>+5 more</summary>`helpdesk.ticket.reopened_date`<br>`helpdesk.ticket.rug_approval_status`<br>`helpdesk.ticket.rug_confirmed`<br>`helpdesk.ticket.stage_date`<br>`view helpdesk.helpdesk_ticket_view_kanban` (helpdesk)</details> |  |
+| Odoo Studio: helpdesk.ticket.tree customization | `view_helpdesk_ticket_tree_inherit` | tree | remove `//field[@name='partner_id']`; replace `//tree[1]/field[@name='team_id']`: add field partner_name, field create_date, field materials_used, field quantity, field unit_price, field items, field qty, field sales_price, field close_date; after `//field[@name='legend_done']`: add field sale_order; after `//field[@name='sla_deadline']`: add field repair_reason | Helpdesk ticket list: removes Customer and Team, adds customer name, created date, materials used, quantity, unit price, items, qty, sales price, closed date, sale order and repair reason columns. | `helpdesk.ticket.close_date` (helpdesk)<br>`helpdesk.ticket.partner_name` (helpdesk)<br>`helpdesk.ticket.items`<br>`helpdesk.ticket.materials_used`<br>`helpdesk.ticket.qty`<details><summary>+6 more</summary>`helpdesk.ticket.quantity`<br>`helpdesk.ticket.repair_reason`<br>`helpdesk.ticket.sale_order`<br>`helpdesk.ticket.sales_price`<br>`helpdesk.ticket.unit_price`<br>`view helpdesk.helpdesk_tickets_view_tree` (helpdesk)</details> |  |
 | helpdesk.ticket.form.assign.to.me | `helpdesk_ticket_form_assign_to_me` | form | before `//field[@name='name']`: add field repair_stage_state, field task_done, field repair_picking_count, field has_ready_dispatch_picking; inside `//div[@name='button_box']`: add button 'action_view_repair_pickings'; set invisible=1 on `//button[@name='action_view_pickings']`; inside `//header`: add button 'Send to Factory', button 'Received at Factory', button 'Send to Sales Centre', button 'Received at Sales Centre', button 'Assign to Me' | Ticket form: adds a Movements smart button (all ticket transfers) replacing the standard Returns button, and header buttons Send to Factory, Received at Factory, Send to Sales Centre, Received at Sales Centre (each at the matching stage) and Assign to Me. | `helpdesk.ticket.action_assign_to_me()`<br>`helpdesk.ticket.action_received_at_factory()`<br>`helpdesk.ticket.action_received_at_sales_centre()`<br>`helpdesk.ticket.action_send_to_factory()`<br>`helpdesk.ticket.action_send_to_sales_centre()`<details><summary>+7 more</summary>`helpdesk.ticket.action_view_repair_pickings()` (Fix-Repair-Wizard-Nav, Fix-repair)<br>`helpdesk.ticket.has_ready_dispatch_picking`<br>`helpdesk.ticket.repair_picking_count`<br>`helpdesk.ticket.repair_stage_state`<br>`helpdesk.ticket.task_done`<br>`helpdesk.ticket.user_id` (helpdesk)<br>`view helpdesk.helpdesk_ticket_view_form` (helpdesk)</details> |  |
 | helpdesk.ticket.form.hide.fields | `helpdesk_ticket_form_hide_fields` | form | set invisible=1 on `//field[@name='team_id']` | Helpdesk ticket form: hides the Team field. | `view helpdesk.helpdesk_ticket_view_form` (helpdesk) |  |
 | helpdesk.ticket.form.hide.studio.fields | `helpdesk_ticket_form_hide_studio_fields` | form | set invisible=1 on `//field[@name='rug_repair']`; set invisible=1 on `//field[@name='rug_confirmed']`; set invisible=1 on `//field[@name='quick_repair_status']`; set invisible=1 on `//field[@name='cancel_reason']`; set invisible=1 on `//field[@name='items']`; set invisible=1 on `//field[@name='source_location_1']`; set invisible=1 on `//field[@name='repair_tracking']`; set invisible=1 on `//field[@name='normal_repair_with_serial_no']` … | Helpdesk ticket form: hides the RUG Repair, RUG Confirmed, Quick Repair Status, Cancel Reason, Items, Source Location, Tracking and Normal Repair with/without Serial No fields. | `view helpdesk.helpdesk_ticket_view_form` (helpdesk) |  |

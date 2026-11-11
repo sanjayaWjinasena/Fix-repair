@@ -32,7 +32,7 @@
                  non-customer-pays. Request button hidden once sent or
                  resolved; Approve/Reject hidden until request is sent. -->
             <xpath expr="//button[@name='action_confirm'][last()]" position="after">
-                <button name="%(BugFix-Sales.server_action_1980_rr_request_rug_approval)d" type="action" string="Request RUG Approval" class="btn-primary" invisible="(quotation_type != 'Repair') or (repair_customer_pays) or (state not in ['draft', 'sent']) or (rug_request_sent == True) or (rug_rejected == True) or (rug_approved == True) or (not repair_stock_ok)"/>
+                <button name="%(BugFix-Sales.action_rr_request_rug_approval)d" type="action" string="Request RUG Approval" class="btn-primary" invisible="(quotation_type != 'Repair') or (repair_customer_pays) or (state not in ['draft', 'sent']) or (rug_request_sent == True) or (rug_rejected == True) or (rug_approved == True) or (not repair_stock_ok)"/>
                 <button name="action_approve_rug_direct" type="object" string="Approve RUG" class="btn-primary" invisible="(quotation_type != 'Repair') or (repair_customer_pays) or (state not in ['draft', 'sent']) or (rug_request_sent == False) or (rug_rejected == True) or (rug_approved == True)"/>
                 <button name="action_reject_rug_direct" type="object" string="Reject RUG" class="btn-primary" invisible="(quotation_type != 'Repair') or (repair_customer_pays) or (state not in ['draft', 'sent']) or (rug_request_sent == False) or (rug_rejected == True) or (rug_approved == True)"/>
             </xpath>

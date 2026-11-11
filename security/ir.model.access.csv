@@ -1,49 +1,49 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_x_task_diagnosis_helpdesk_user,task_diagnosis helpdesk user,model_task_diagnosis,helpdesk.group_helpdesk_user,1,1,1,1
-access_x_task_diagnosis_helpdesk_manager,task_diagnosis helpdesk manager,model_task_diagnosis,helpdesk.group_helpdesk_manager,1,1,1,1
-access_x_conditions_user,conditions user,model_conditions,helpdesk.group_helpdesk_user,1,1,1,1
-access_x_conditions_manager,conditions manager,model_conditions,helpdesk.group_helpdesk_manager,1,1,1,1
-access_x_diagnosis_areas_user,diagnosis_areas user,model_diagnosis_areas,helpdesk.group_helpdesk_user,1,1,1,1
-access_x_diagnosis_areas_manager,diagnosis_areas manager,model_diagnosis_areas,helpdesk.group_helpdesk_manager,1,1,1,1
-access_x_diagnosis_codes_user,diagnosis_codes user,model_diagnosis_codes,helpdesk.group_helpdesk_user,1,1,1,1
-access_x_diagnosis_codes_manager,diagnosis_codes manager,model_diagnosis_codes,helpdesk.group_helpdesk_manager,1,1,1,1
-access_x_symptom_areas_user,symptom_areas user,model_symptom_areas,helpdesk.group_helpdesk_user,1,1,1,1
-access_x_symptom_areas_manager,symptom_areas manager,model_symptom_areas,helpdesk.group_helpdesk_manager,1,1,1,1
-access_x_symptom_codes_user,symptom_codes user,model_symptom_codes,helpdesk.group_helpdesk_user,1,1,1,1
-access_x_symptom_codes_manager,symptom_codes manager,model_symptom_codes,helpdesk.group_helpdesk_manager,1,1,1,1
-access_x_resolutions_user,resolutions user,model_resolutions,helpdesk.group_helpdesk_user,1,1,1,1
-access_x_resolutions_manager,resolutions manager,model_resolutions,helpdesk.group_helpdesk_manager,1,1,1,1
-access_x_repair_accounts_user,repair_accounts user,model_repair_accounts,helpdesk.group_helpdesk_user,1,1,1,1
-access_x_repair_accounts_manager,repair_accounts manager,model_repair_accounts,helpdesk.group_helpdesk_manager,1,1,1,1
-access_x_repair_reason_user,repair_reason user,model_repair_reason,helpdesk.group_helpdesk_user,1,1,1,1
-access_x_repair_reason_manager,repair_reason manager,model_repair_reason,helpdesk.group_helpdesk_manager,1,1,1,1
-access_x_repair_reason_custom_user,repair_reason_custom user,model_repair_reason_custom,helpdesk.group_helpdesk_user,1,1,1,1
-access_x_repair_reason_custom_manager,repair_reason_custom manager,model_repair_reason_custom,helpdesk.group_helpdesk_manager,1,1,1,1
-access_x_repair_stages_user,repair_stages user,model_repair_stages,helpdesk.group_helpdesk_user,1,1,1,1
-access_x_repair_stages_manager,repair_stages manager,model_repair_stages,helpdesk.group_helpdesk_manager,1,1,1,1
-access_x_repair_sub_reason_user,repair_sub_reason user,model_repair_sub_reason,helpdesk.group_helpdesk_user,1,1,1,1
-access_x_repair_sub_reason_manager,repair_sub_reason manager,model_repair_sub_reason,helpdesk.group_helpdesk_manager,1,1,1,1
-access_1783_conditions_group_user,Conditions group_user,Fix-repair.model_conditions,base.group_user,1,0,0,0
-access_1782_conditions_group_system,Conditions group_system,Fix-repair.model_conditions,base.group_system,1,1,1,1
-access_1789_diagnosis_areas_group_user,Diagnosis Areas group_user,Fix-repair.model_diagnosis_areas,base.group_user,1,0,0,0
-access_1788_diagnosis_areas_group_system,Diagnosis Areas group_system,Fix-repair.model_diagnosis_areas,base.group_system,1,1,1,1
-access_1791_diagnosis_codes_group_user,Diagnosis Codes group_user,Fix-repair.model_diagnosis_codes,base.group_user,1,0,0,0
-access_1790_diagnosis_codes_group_system,Diagnosis Codes group_system,Fix-repair.model_diagnosis_codes,base.group_system,1,1,1,1
-access_1775_repair_accounts_group_user,Repair Accounts group_user,Fix-repair.model_repair_accounts,base.group_user,1,0,0,0
-access_1774_repair_accounts_group_system,Repair Accounts group_system,Fix-repair.model_repair_accounts,base.group_system,1,1,1,1
-access_1676_repair_reason_group_user,Repair Reason group_user,Fix-repair.model_repair_reason,base.group_user,1,0,0,0
-access_1675_repair_reason_group_system,Repair Reason group_system,Fix-repair.model_repair_reason,base.group_system,1,1,1,1
-access_1801_repair_reason___customer_group_user,Repair Reason - Customer group_user,Fix-repair.model_repair_reason_custom,base.group_user,1,0,0,0
-access_1800_repair_reason___customer_group_system,Repair Reason - Customer group_system,Fix-repair.model_repair_reason_custom,base.group_system,1,1,1,1
-access_1797_repair_stages_group_user,Repair Stages group_user,Fix-repair.model_repair_stages,base.group_user,1,0,0,0
-access_1796_repair_stages_group_system,Repair Stages group_system,Fix-repair.model_repair_stages,base.group_system,1,1,1,1
-access_1793_repair_sub_reason_group_user,Repair Sub Reason group_user,Fix-repair.model_repair_sub_reason,base.group_user,1,0,0,0
-access_1792_repair_sub_reason_group_system,Repair Sub Reason group_system,Fix-repair.model_repair_sub_reason,base.group_system,1,1,1,1
-access_1795_resolutions_group_user,Resolutions group_user,Fix-repair.model_resolutions,base.group_user,1,0,0,0
-access_1794_resolutions_group_system,Resolutions group_system,Fix-repair.model_resolutions,base.group_system,1,1,1,1
-access_1785_symptom_areas_group_user,Symptom Areas group_user,Fix-repair.model_symptom_areas,base.group_user,1,0,0,0
-access_1784_symptom_areas_group_system,Symptom Areas group_system,Fix-repair.model_symptom_areas,base.group_system,1,1,1,1
-access_1787_symptom_codes_group_user,Symptom Codes group_user,Fix-repair.model_symptom_codes,base.group_user,1,0,0,0
-access_1786_symptom_codes_group_system,Symptom Codes group_system,Fix-repair.model_symptom_codes,base.group_system,1,1,1,1
-access_1799_task_diagnosis_group_user,Task Diagnosis group_user,Fix-repair.model_task_diagnosis,base.group_user,1,0,0,0
-access_1798_task_diagnosis_group_system,Task Diagnosis group_system,Fix-repair.model_task_diagnosis,base.group_system,1,1,1,1
+access_task_diagnosis_helpdesk_user,task_diagnosis helpdesk user,model_task_diagnosis,helpdesk.group_helpdesk_user,1,1,1,1
+access_task_diagnosis_helpdesk_manager,task_diagnosis helpdesk manager,model_task_diagnosis,helpdesk.group_helpdesk_manager,1,1,1,1
+access_conditions_user,conditions user,model_conditions,helpdesk.group_helpdesk_user,1,1,1,1
+access_conditions_manager,conditions manager,model_conditions,helpdesk.group_helpdesk_manager,1,1,1,1
+access_diagnosis_areas_user,diagnosis_areas user,model_diagnosis_areas,helpdesk.group_helpdesk_user,1,1,1,1
+access_diagnosis_areas_manager,diagnosis_areas manager,model_diagnosis_areas,helpdesk.group_helpdesk_manager,1,1,1,1
+access_diagnosis_codes_user,diagnosis_codes user,model_diagnosis_codes,helpdesk.group_helpdesk_user,1,1,1,1
+access_diagnosis_codes_manager,diagnosis_codes manager,model_diagnosis_codes,helpdesk.group_helpdesk_manager,1,1,1,1
+access_symptom_areas_user,symptom_areas user,model_symptom_areas,helpdesk.group_helpdesk_user,1,1,1,1
+access_symptom_areas_manager,symptom_areas manager,model_symptom_areas,helpdesk.group_helpdesk_manager,1,1,1,1
+access_symptom_codes_user,symptom_codes user,model_symptom_codes,helpdesk.group_helpdesk_user,1,1,1,1
+access_symptom_codes_manager,symptom_codes manager,model_symptom_codes,helpdesk.group_helpdesk_manager,1,1,1,1
+access_resolutions_user,resolutions user,model_resolutions,helpdesk.group_helpdesk_user,1,1,1,1
+access_resolutions_manager,resolutions manager,model_resolutions,helpdesk.group_helpdesk_manager,1,1,1,1
+access_repair_accounts_user,repair_accounts user,model_repair_accounts,helpdesk.group_helpdesk_user,1,1,1,1
+access_repair_accounts_manager,repair_accounts manager,model_repair_accounts,helpdesk.group_helpdesk_manager,1,1,1,1
+access_repair_reason_user,repair_reason user,model_repair_reason,helpdesk.group_helpdesk_user,1,1,1,1
+access_repair_reason_manager,repair_reason manager,model_repair_reason,helpdesk.group_helpdesk_manager,1,1,1,1
+access_repair_reason_custom_user,repair_reason_custom user,model_repair_reason_custom,helpdesk.group_helpdesk_user,1,1,1,1
+access_repair_reason_custom_manager,repair_reason_custom manager,model_repair_reason_custom,helpdesk.group_helpdesk_manager,1,1,1,1
+access_repair_stages_user,repair_stages user,model_repair_stages,helpdesk.group_helpdesk_user,1,1,1,1
+access_repair_stages_manager,repair_stages manager,model_repair_stages,helpdesk.group_helpdesk_manager,1,1,1,1
+access_repair_sub_reason_user,repair_sub_reason user,model_repair_sub_reason,helpdesk.group_helpdesk_user,1,1,1,1
+access_repair_sub_reason_manager,repair_sub_reason manager,model_repair_sub_reason,helpdesk.group_helpdesk_manager,1,1,1,1
+access_conditions_group_user,Conditions group_user,Fix-repair.model_conditions,base.group_user,1,0,0,0
+access_conditions_group_system,Conditions group_system,Fix-repair.model_conditions,base.group_system,1,1,1,1
+access_diagnosis_areas_group_user,Diagnosis Areas group_user,Fix-repair.model_diagnosis_areas,base.group_user,1,0,0,0
+access_diagnosis_areas_group_system,Diagnosis Areas group_system,Fix-repair.model_diagnosis_areas,base.group_system,1,1,1,1
+access_diagnosis_codes_group_user,Diagnosis Codes group_user,Fix-repair.model_diagnosis_codes,base.group_user,1,0,0,0
+access_diagnosis_codes_group_system,Diagnosis Codes group_system,Fix-repair.model_diagnosis_codes,base.group_system,1,1,1,1
+access_repair_accounts_group_user,Repair Accounts group_user,Fix-repair.model_repair_accounts,base.group_user,1,0,0,0
+access_repair_accounts_group_system,Repair Accounts group_system,Fix-repair.model_repair_accounts,base.group_system,1,1,1,1
+access_repair_reason_group_user,Repair Reason group_user,Fix-repair.model_repair_reason,base.group_user,1,0,0,0
+access_repair_reason_group_system,Repair Reason group_system,Fix-repair.model_repair_reason,base.group_system,1,1,1,1
+access_repair_reason_customer_group_user,Repair Reason - Customer group_user,Fix-repair.model_repair_reason_custom,base.group_user,1,0,0,0
+access_repair_reason_customer_group_system,Repair Reason - Customer group_system,Fix-repair.model_repair_reason_custom,base.group_system,1,1,1,1
+access_repair_stages_group_user,Repair Stages group_user,Fix-repair.model_repair_stages,base.group_user,1,0,0,0
+access_repair_stages_group_system,Repair Stages group_system,Fix-repair.model_repair_stages,base.group_system,1,1,1,1
+access_repair_sub_reason_group_user,Repair Sub Reason group_user,Fix-repair.model_repair_sub_reason,base.group_user,1,0,0,0
+access_repair_sub_reason_group_system,Repair Sub Reason group_system,Fix-repair.model_repair_sub_reason,base.group_system,1,1,1,1
+access_resolutions_group_user,Resolutions group_user,Fix-repair.model_resolutions,base.group_user,1,0,0,0
+access_resolutions_group_system,Resolutions group_system,Fix-repair.model_resolutions,base.group_system,1,1,1,1
+access_symptom_areas_group_user,Symptom Areas group_user,Fix-repair.model_symptom_areas,base.group_user,1,0,0,0
+access_symptom_areas_group_system,Symptom Areas group_system,Fix-repair.model_symptom_areas,base.group_system,1,1,1,1
+access_symptom_codes_group_user,Symptom Codes group_user,Fix-repair.model_symptom_codes,base.group_user,1,0,0,0
+access_symptom_codes_group_system,Symptom Codes group_system,Fix-repair.model_symptom_codes,base.group_system,1,1,1,1
+access_task_diagnosis_group_user,Task Diagnosis group_user,Fix-repair.model_task_diagnosis,base.group_user,1,0,0,0
+access_task_diagnosis_group_system,Task Diagnosis group_system,Fix-repair.model_task_diagnosis,base.group_system,1,1,1,1

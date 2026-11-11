@@ -20,7 +20,7 @@ A Repair Sub Reason is a more detailed reason under a parent Repair Reason (`rea
 | `activity_date_deadline` | Next Activity Deadline | date | Standard activity field (scheduled to-dos, calls, meetings on the record) provided by Odoo’s activity mixin. | not stored |  |  |
 | `activity_exception_decoration` | Activity Exception Decoration | selection: warning=Alert; danger=Error | Standard activity field (scheduled to-dos, calls, meetings on the record) provided by Odoo’s activity mixin. | not stored |  |  |
 | `activity_exception_icon` | Icon | char | Standard activity field (scheduled to-dos, calls, meetings on the record) provided by Odoo’s activity mixin. | not stored |  |  |
-| `activity_ids` | Activities | one2many → `mail.activity` | Standard activity field (scheduled to-dos, calls, meetings on the record) provided by Odoo’s activity mixin. | stored | `model mail.activity` (mail) | `view Fix-repair.view_4973_default_form_view_for_x_repair_sub_reason_e`<br>`repair_sub_reason.activity_summary`<br>`repair_sub_reason.activity_type_icon`<br>`repair_sub_reason.activity_type_id` |
+| `activity_ids` | Activities | one2many → `mail.activity` | Standard activity field (scheduled to-dos, calls, meetings on the record) provided by Odoo’s activity mixin. | stored | `model mail.activity` (mail) | `view Fix-repair.view_repair_sub_reason_form`<br>`repair_sub_reason.activity_summary`<br>`repair_sub_reason.activity_type_icon`<br>`repair_sub_reason.activity_type_id` |
 | `activity_state` | Activity State | selection: overdue=Overdue; today=Today; planned=Planned | Standard activity field (scheduled to-dos, calls, meetings on the record) provided by Odoo’s activity mixin. | not stored |  |  |
 | `activity_summary` | Next Activity Summary | char | Standard activity field (scheduled to-dos, calls, meetings on the record) provided by Odoo’s activity mixin. | related `activity_ids.summary`; not stored | `mail.activity.summary` (mail)<br>`repair_sub_reason.activity_ids` |  |
 | `activity_type_icon` | Activity Type Icon | char | Standard activity field (scheduled to-dos, calls, meetings on the record) provided by Odoo’s activity mixin. | related `activity_ids.icon`; not stored | `mail.activity.icon` (mail)<br>`repair_sub_reason.activity_ids` |  |
@@ -32,11 +32,11 @@ A Repair Sub Reason is a more detailed reason under a parent Repair Reason (`rea
 | `has_message` | Has Message | boolean | Standard chatter field: tells whether the record has messages. | not stored |  |  |
 | `id` | ID | integer | Unique database ID of the record (automatic). | stored |  |  |
 | `message_attachment_count` | Attachment Count | integer | Standard chatter field (messages, followers, attachments) provided by Odoo’s mail thread mixin. | not stored |  |  |
-| `message_follower_ids` | Followers | one2many → `mail.followers` | Standard chatter field (messages, followers, attachments) provided by Odoo’s mail thread mixin. | stored | `model mail.followers` (mail) | `view Fix-repair.view_4973_default_form_view_for_x_repair_sub_reason_e` |
+| `message_follower_ids` | Followers | one2many → `mail.followers` | Standard chatter field (messages, followers, attachments) provided by Odoo’s mail thread mixin. | stored | `model mail.followers` (mail) | `view Fix-repair.view_repair_sub_reason_form` |
 | `message_has_error` | Message Delivery error | boolean | Standard chatter field (messages, followers, attachments) provided by Odoo’s mail thread mixin. | not stored |  |  |
 | `message_has_error_counter` | Number of errors | integer | Standard chatter field (messages, followers, attachments) provided by Odoo’s mail thread mixin. | not stored |  |  |
 | `message_has_sms_error` | SMS Delivery error | boolean | Standard chatter field (messages, followers, attachments) provided by Odoo’s mail thread mixin. | not stored |  |  |
-| `message_ids` | Messages | one2many → `mail.message` | Standard chatter field (messages, followers, attachments) provided by Odoo’s mail thread mixin. | stored | `model mail.message` (mail) | `view Fix-repair.view_4973_default_form_view_for_x_repair_sub_reason_e` |
+| `message_ids` | Messages | one2many → `mail.message` | Standard chatter field (messages, followers, attachments) provided by Odoo’s mail thread mixin. | stored | `model mail.message` (mail) | `view Fix-repair.view_repair_sub_reason_form` |
 | `message_is_follower` | Is Follower | boolean | Standard chatter field (messages, followers, attachments) provided by Odoo’s mail thread mixin. | not stored |  |  |
 | `message_needaction` | Action Needed | boolean | Standard chatter field (messages, followers, attachments) provided by Odoo’s mail thread mixin. | not stored |  |  |
 | `message_needaction_counter` | Number of Actions | integer | Standard chatter field (messages, followers, attachments) provided by Odoo’s mail thread mixin. | not stored |  |  |
@@ -46,11 +46,11 @@ A Repair Sub Reason is a more detailed reason under a parent Repair Reason (`rea
 | `website_message_ids` | Website Messages | one2many → `mail.message` | Standard chatter field: messages shown on the website/portal for this record. | stored | `model mail.message` (mail) |  |
 | `write_date` | Last Updated on | datetime | Date and time the record was last changed (automatic). | stored |  |  |
 | `write_uid` | Last Updated by | many2one → `res.users` | User who last changed the record (automatic). | stored | `model res.users` (base) |  |
-| `active` | Active | boolean | Active flag of a Repair Sub Reason record; unticking it archives the entry so it no longer appears in selection lists (it can still be found with the Archived filter). | default `True`; stored |  | `default Fix-repair.default_343_x_repair_sub_reason_active`<br>`view Fix-repair.view_4973_default_form_view_for_x_repair_sub_reason_e`<br>`view Fix-repair.view_4974_default_search_view_for_x_repair_sub_reason_e` |
-| `name` | Sub Reason Code | char | Name (Sub Reason Code) of the Repair Sub Reason entry; it is the record's display name and is shown in the list, form and search views. | stored |  | `view Fix-repair.view_4972_default_list_view_for_x_repair_sub_reason_e`<br>`view Fix-repair.view_4973_default_form_view_for_x_repair_sub_reason_e`<br>`view Fix-repair.view_4974_default_search_view_for_x_repair_sub_reason_e` |
-| `accounting_company_id` | Company | many2one → `res.company` | Company that owns the Repair Sub Reason entry, filled automatically on create by `_jin_set_company_id`; multi-company record rules use it to show users only their companies' entries. | stored | `model res.company` (base) | `record rule Fix-repair.rule_559_jin_multi_company_repair_sub_reason`<br>`record rule Fix-repair.rule_f7_x_repair_sub_reason_jin_multi_company_repair_sub_reason`<br>`view Fix-repair.view_final_x_repair_sub_reason_odoo_studio_default_list_view_for_x_repair_sub_reason_custo`<br>`repair_sub_reason._jin_set_company_id()` |
-| `reason_code` | Reason Code | many2one → `repair_reason` | Parent repair reason this sub-reason belongs to; shown in the sub-reason list. | stored | `model repair_reason` | `view Fix-repair.view_final_x_repair_sub_reason_odoo_studio_default_list_view_for_x_repair_sub_reason_custo` |
-| `sequence` | Sequence | integer | Ordering number that sorts Repair Sub Reason entries in the list view. | stored |  | `default Fix-repair.default_344_x_repair_sub_reason_sequence`<br>`view Fix-repair.view_4972_default_list_view_for_x_repair_sub_reason_e` |
+| `active` | Active | boolean | Active flag of a Repair Sub Reason record; unticking it archives the entry so it no longer appears in selection lists (it can still be found with the Archived filter). | default `True`; stored |  | `default Fix-repair.default_repair_sub_reason_active`<br>`view Fix-repair.view_repair_sub_reason_form`<br>`view Fix-repair.view_repair_sub_reason_search` |
+| `name` | Sub Reason Code | char | Name (Sub Reason Code) of the Repair Sub Reason entry; it is the record's display name and is shown in the list, form and search views. | stored |  | `view Fix-repair.view_repair_sub_reason_list`<br>`view Fix-repair.view_repair_sub_reason_form`<br>`view Fix-repair.view_repair_sub_reason_search` |
+| `accounting_company_id` | Company | many2one → `res.company` | Company that owns the Repair Sub Reason entry, filled automatically on create by `_jin_set_company_id`; multi-company record rules use it to show users only their companies' entries. | stored | `model res.company` (base) | `record rule Fix-repair.rule_jin_multi_company_repair_sub_reason`<br>`record rule Fix-repair.rule_f7_repair_sub_reason_jin_multi_company_repair_sub_reason`<br>`view Fix-repair.view_default_list_view_for_repair_sub_reason_inherit`<br>`repair_sub_reason._jin_set_company_id()` |
+| `reason_code` | Reason Code | many2one → `repair_reason` | Parent repair reason this sub-reason belongs to; shown in the sub-reason list. | stored | `model repair_reason` | `view Fix-repair.view_default_list_view_for_repair_sub_reason_inherit` |
+| `sequence` | Sequence | integer | Ordering number that sorts Repair Sub Reason entries in the list view. | stored |  | `default Fix-repair.default_repair_sub_reason_sequence`<br>`view Fix-repair.view_repair_sub_reason_list` |
 
 **Python methods (2):**
 
@@ -61,7 +61,7 @@ A Repair Sub Reason is a more detailed reason under a parent Repair Reason (`rea
 
 **Server actions (1):**
 
-- **JIN - Company Id in Repair Sub Reason** (`server_action_2668_jin_company_id_in_repair_sub_reason`, type `code`)
+- **JIN - Company Id in Repair Sub Reason** (`action_jin_company_id_in_repair_sub_reason`, type `code`)
   - Function: Sets the record's Company field to the user's currently selected company. Delegates to the native company setter for repair sub reason (record creation now does this automatically).
   - Depends on: `model repair_sub_reason`
   - Used by: — (not linked to a button, menu or automation)
@@ -76,36 +76,36 @@ record._jin_set_company_id()
 
 | Name | Record name | State | Function | Depends on | Used by |
 |---|---|---|---|---|---|
-| JIN - Company Id in Repair Sub Reason | `base_automation_304_jin_company_id_in_repair_sub_reason` | archived | When a record is created or updated on Repair Sub Reason, runs nothing (no action linked). **Archived — does not run.** | `model repair_sub_reason` |  |
+| JIN - Company Id in Repair Sub Reason | `automation_jin_company_id_in_repair_sub_reason` | archived | When a record is created or updated on Repair Sub Reason, runs nothing (no action linked). **Archived — does not run.** | `model repair_sub_reason` |  |
 
 **Window actions (2):**
 
 | Name | Record name | Function | Depends on | Used by |
 |---|---|---|---|---|
 | Repair Sub Reason | `action_repair_sub_reason` | Opens **Repair Sub Reason** records (tree,form). | `model repair_sub_reason` | `menu Fix-repair.menu_repair_diagnosis_repair_sub_reason` |
-| Repair Sub Reason | `act_window_2214_repair_sub_reason` | Opens **Repair Sub Reason** records (tree,form). | `model repair_sub_reason` | `menu Fix-repair.menu_f6_repair_sub_reason` |
+| Repair Sub Reason | `action_repair_sub_reason_2` | Opens **Repair Sub Reason** records (tree,form). | `model repair_sub_reason` | `menu Fix-repair.menu_repair_sub_reason` |
 
 **Views (4):**
 
 | Name | Record name | Type | What it changes | Function | Depends on | Used by |
 |---|---|---|---|---|---|---|
-| Default form view for repair_sub_reason | `view_4973_default_form_view_for_x_repair_sub_reason_e` | form | full form layout with 5 fields | Base form screen for the Repair Sub Reason configuration list (`repair_sub_reason`): Name as the title, an Archived ribbon when inactive, two empty groups that Studio extensions fill, and chatter. | `repair_sub_reason.activity_ids`<br>`repair_sub_reason.message_follower_ids`<br>`repair_sub_reason.message_ids`<br>`repair_sub_reason.active`<br>`repair_sub_reason.name` |  |
-| Default list view for repair_sub_reason | `view_4972_default_list_view_for_x_repair_sub_reason_e` | tree | full tree layout with 2 fields | Base list screen for Repair Sub Reason (`repair_sub_reason`): shows the Name column with a drag handle on Sequence for manual reordering. | `repair_sub_reason.name`<br>`repair_sub_reason.sequence` | `view Fix-repair.view_final_x_repair_sub_reason_odoo_studio_default_list_view_for_x_repair_sub_reason_custo` |
-| Default search view for repair_sub_reason | `view_4974_default_search_view_for_x_repair_sub_reason_e` | search | full search layout with 1 fields | Search screen for Repair Sub Reason (`repair_sub_reason`): search by Name plus an Archived filter to show inactive records. | `repair_sub_reason.active`<br>`repair_sub_reason.name` |  |
-| Odoo Studio: Default list view for repair_sub_reason customization | `view_final_x_repair_sub_reason_odoo_studio_default_list_view_for_x_repair_sub_reason_custo` | tree | set editable=bottom on `//tree[1]`; set string=Sub Reason Code on `//field[@name='name']`; after `//field[@name='name']`: add field reason_code, field accounting_company_id | Makes the Repair Sub Reason list editable inline, relabels Name as 'Sub Reason Code', and adds optional Reason Code (parent reason, no quick-create) and Company columns. | `view Fix-repair.view_4972_default_list_view_for_x_repair_sub_reason_e`<br>`repair_sub_reason.accounting_company_id`<br>`repair_sub_reason.reason_code` |  |
+| Default form view for repair_sub_reason | `view_repair_sub_reason_form` | form | full form layout with 5 fields | Base form screen for the Repair Sub Reason configuration list (`repair_sub_reason`): Name as the title, an Archived ribbon when inactive, two empty groups that Studio extensions fill, and chatter. | `repair_sub_reason.activity_ids`<br>`repair_sub_reason.message_follower_ids`<br>`repair_sub_reason.message_ids`<br>`repair_sub_reason.active`<br>`repair_sub_reason.name` |  |
+| Default list view for repair_sub_reason | `view_repair_sub_reason_list` | tree | full tree layout with 2 fields | Base list screen for Repair Sub Reason (`repair_sub_reason`): shows the Name column with a drag handle on Sequence for manual reordering. | `repair_sub_reason.name`<br>`repair_sub_reason.sequence` | `view Fix-repair.view_default_list_view_for_repair_sub_reason_inherit` |
+| Default search view for repair_sub_reason | `view_repair_sub_reason_search` | search | full search layout with 1 fields | Search screen for Repair Sub Reason (`repair_sub_reason`): search by Name plus an Archived filter to show inactive records. | `repair_sub_reason.active`<br>`repair_sub_reason.name` |  |
+| Odoo Studio: Default list view for repair_sub_reason customization | `view_default_list_view_for_repair_sub_reason_inherit` | tree | set editable=bottom on `//tree[1]`; set string=Sub Reason Code on `//field[@name='name']`; after `//field[@name='name']`: add field reason_code, field accounting_company_id | Makes the Repair Sub Reason list editable inline, relabels Name as 'Sub Reason Code', and adds optional Reason Code (parent reason, no quick-create) and Company columns. | `view Fix-repair.view_repair_sub_reason_list`<br>`repair_sub_reason.accounting_company_id`<br>`repair_sub_reason.reason_code` |  |
 
 **Access rights (4):**
 
 | Name | Record name | Function | Depends on | Used by |
 |---|---|---|---|---|
-| Repair Sub Reason group_system | `access_1792_repair_sub_reason_group_system` | Gives **Administration / Settings** read/write/create/delete access to Repair Sub Reason records. | `group base.group_system` (base)<br>`model repair_sub_reason` |  |
-| Repair Sub Reason group_user | `access_1793_repair_sub_reason_group_user` | Gives **User types / Internal User** read access to Repair Sub Reason records. | `group base.group_user` (base)<br>`model repair_sub_reason` |  |
-| repair_sub_reason manager | `access_x_repair_sub_reason_manager` | Gives **Helpdesk / Administrator** read/write/create/delete access to Repair Sub Reason records. | `group helpdesk.group_helpdesk_manager` (helpdesk)<br>`model repair_sub_reason` |  |
-| repair_sub_reason user | `access_x_repair_sub_reason_user` | Gives **Helpdesk / User** read/write/create/delete access to Repair Sub Reason records. | `group helpdesk.group_helpdesk_user` (helpdesk)<br>`model repair_sub_reason` |  |
+| Repair Sub Reason group_system | `access_repair_sub_reason_group_system` | Gives **Administration / Settings** read/write/create/delete access to Repair Sub Reason records. | `group base.group_system` (base)<br>`model repair_sub_reason` |  |
+| Repair Sub Reason group_user | `access_repair_sub_reason_group_user` | Gives **User types / Internal User** read access to Repair Sub Reason records. | `group base.group_user` (base)<br>`model repair_sub_reason` |  |
+| repair_sub_reason manager | `access_repair_sub_reason_manager` | Gives **Helpdesk / Administrator** read/write/create/delete access to Repair Sub Reason records. | `group helpdesk.group_helpdesk_manager` (helpdesk)<br>`model repair_sub_reason` |  |
+| repair_sub_reason user | `access_repair_sub_reason_user` | Gives **Helpdesk / User** read/write/create/delete access to Repair Sub Reason records. | `group helpdesk.group_helpdesk_user` (helpdesk)<br>`model repair_sub_reason` |  |
 
 **Record rules (2):**
 
 | Name | Record name | Function | Depends on | Used by |
 |---|---|---|---|---|
-| JIN - Multi-Company - Repair Sub Reason | `rule_f7_x_repair_sub_reason_jin_multi_company_repair_sub_reason` | For everyone (global rule): read/write/create/delete on Repair Sub Reason only where `['|', ('accounting_company_id', 'in', company_ids), ('accounting_company_id', '=', False)]`. | `model repair_sub_reason`<br>`repair_sub_reason.accounting_company_id` |  |
-| JIN - Multi-Company - Repair Sub Reason | `rule_559_jin_multi_company_repair_sub_reason` | For everyone (global rule): read/write/create/delete on Repair Sub Reason only where `['|', ('accounting_company_id', 'in', company_ids), ('accounting_company_id', '=', False)]`. | `model repair_sub_reason`<br>`repair_sub_reason.accounting_company_id` |  |
+| JIN - Multi-Company - Repair Sub Reason | `rule_f7_repair_sub_reason_jin_multi_company_repair_sub_reason` | For everyone (global rule): read/write/create/delete on Repair Sub Reason only where `['|', ('accounting_company_id', 'in', company_ids), ('accounting_company_id', '=', False)]`. | `model repair_sub_reason`<br>`repair_sub_reason.accounting_company_id` |  |
+| JIN - Multi-Company - Repair Sub Reason | `rule_jin_multi_company_repair_sub_reason` | For everyone (global rule): read/write/create/delete on Repair Sub Reason only where `['|', ('accounting_company_id', 'in', company_ids), ('accounting_company_id', '=', False)]`. | `model repair_sub_reason`<br>`repair_sub_reason.accounting_company_id` |  |

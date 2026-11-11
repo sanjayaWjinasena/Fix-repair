@@ -3,7 +3,7 @@
     <!-- ============================================================ -->
     <!-- diagnosis_codes                                           -->
     <!-- ============================================================ -->
-    <record id="view_x_diagnosis_codes_form" model="ir.ui.view">
+    <record id="view_diagnosis_codes_form" model="ir.ui.view">
         <field name="name">diagnosis_codes.form</field>
         <field name="model">diagnosis_codes</field>
         <field name="type">form</field>
@@ -33,7 +33,7 @@
             </form>
         </field>
     </record>
-    <record id="view_x_diagnosis_codes_tree" model="ir.ui.view">
+    <record id="view_diagnosis_codes_tree" model="ir.ui.view">
         <field name="name">diagnosis_codes.tree</field>
         <field name="model">diagnosis_codes</field>
         <field name="type">tree</field>
@@ -46,7 +46,7 @@
             </tree>
         </field>
     </record>
-    <record id="view_x_diagnosis_codes_search" model="ir.ui.view">
+    <record id="view_diagnosis_codes_search" model="ir.ui.view">
         <field name="name">diagnosis_codes.search</field>
         <field name="model">diagnosis_codes</field>
         <field name="type">search</field>
@@ -61,13 +61,13 @@
             </search>
         </field>
     </record>
-    <record id="view_x_diagnosis_codes_tree_inherit" model="ir.ui.view">
+    <record id="view_diagnosis_codes_tree_inherit" model="ir.ui.view">
         <field name="name">diagnosis_codes.tree.inherit</field>
         <field name="model">diagnosis_codes</field>
         <field name="type">tree</field>
         <field name="mode">extension</field>
         <field name="priority">99</field>
-        <field name="inherit_id" ref="view_x_diagnosis_codes_tree"/>
+        <field name="inherit_id" ref="view_diagnosis_codes_tree"/>
         <field name="arch" type="xml">
             <data>
                 <xpath expr="//tree[1]" position="attributes">
@@ -92,7 +92,7 @@
         <field name="res_model">diagnosis_codes</field>
         <field name="view_mode">tree,form</field>
     </record>
-  <record id="act_window_2213_diagnosis_codes" model="ir.actions.act_window">
+  <record id="action_diagnosis_codes_2" model="ir.actions.act_window">
     <field name="name">Diagnosis Codes</field>
     <field name="res_model">diagnosis_codes</field>
     <field name="view_mode">tree,form</field>
@@ -109,7 +109,7 @@
                 </p>
             </field>
   </record>
-    <record id="view_4969_default_form_view_for_x_diagnosis_codes_e" model="ir.ui.view">
+    <record id="view_diagnosis_codes_form_2" model="ir.ui.view">
       <field name="name">Default form view for diagnosis_codes</field>
       <field name="model">diagnosis_codes</field>
       <field name="type">form</field>
@@ -137,7 +137,7 @@
 </form>
       </field>
     </record>
-    <record id="view_4968_default_list_view_for_x_diagnosis_codes_e" model="ir.ui.view">
+    <record id="view_diagnosis_codes_list" model="ir.ui.view">
       <field name="name">Default list view for diagnosis_codes</field>
       <field name="model">diagnosis_codes</field>
       <field name="type">tree</field>
@@ -148,7 +148,7 @@
 </tree>
       </field>
     </record>
-    <record id="view_4970_default_search_view_for_x_diagnosis_codes_e" model="ir.ui.view">
+    <record id="view_diagnosis_codes_search_2" model="ir.ui.view">
       <field name="name">Default search view for diagnosis_codes</field>
       <field name="model">diagnosis_codes</field>
       <field name="type">search</field>
@@ -161,12 +161,12 @@
 </search>
       </field>
     </record>
-    <record id="view_final_x_diagnosis_codes_odoo_studio_default_list_view_for_x_diagnosis_codes_customiz" model="ir.ui.view">
+    <record id="view_default_list_view_for_diagnosis_codes_inherit" model="ir.ui.view">
       <field name="name">Odoo Studio: Default list view for diagnosis_codes customization</field>
       <field name="model">diagnosis_codes</field>
       <field name="type">tree</field>
       <field name="priority">99</field>
-      <field name="inherit_id" ref="Fix-repair.view_4968_default_list_view_for_x_diagnosis_codes_e"/>
+      <field name="inherit_id" ref="Fix-repair.view_diagnosis_codes_list"/>
       <field name="mode">extension</field>
       <field name="arch" type="xml">
         <data>

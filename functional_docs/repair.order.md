@@ -6,7 +6,7 @@
 
 *Extends a model created by `repair`.* Python: `models/repair_order.py`.
 
-Other repos that use this model: `report BugFix-Studio-Misc.action_report_3447_template_c09_repair_receipt` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.action_report_3448_template_c10_repair_estimate` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.action_report_3451_template_c11_repair_quotation` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.action_report_3452_template_c12_repair_invoice` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.action_report_3453_template_c13_repair_aod` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.action_report_3457_template_c14_ready_for_collection_letter` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.action_report_3458_template_c15_final_notice` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.action_report_3463_template_c16_final_notice_estimated` (BugFix-Studio-Misc)<details><summary>+4 more</summary>`report BugFix-Studio-Misc.action_report_3464_template_c17_final_notice_scrappage` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.action_report_3465_template_c18_final_notice_estimated_scrappage` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.action_report_3466_template_c19_reminder_repair_reminding_letter` (BugFix-Studio-Misc)<br>`server action BugFix-Studio-Misc.server_action_2799_mst_odoo_data_clean_up` (BugFix-Studio-Misc)</details>
+Other repos that use this model: `report BugFix-Studio-Misc.report_template_c09_repair_receipt` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.report_template_c10_repair_estimate` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.report_template_c11_repair_quotation` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.report_template_c12_repair_invoice` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.report_template_c13_repair_aod` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.report_template_c14_ready_for_collection_letter` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.report_template_c15_final_notice` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.report_template_c16_final_notice_estimated` (BugFix-Studio-Misc)<details><summary>+4 more</summary>`report BugFix-Studio-Misc.report_template_c17_final_notice_scrappage` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.report_template_c18_final_notice_estimated_scrappage` (BugFix-Studio-Misc)<br>`report BugFix-Studio-Misc.report_template_c19_reminder_repair_reminding_letter` (BugFix-Studio-Misc)<br>`server action BugFix-Studio-Misc.server_action_2799_mst_odoo_data_clean_up` (BugFix-Studio-Misc)</details>
 
 **Summary:**
 
@@ -18,14 +18,14 @@ Adds one checkbox, Confirm Draft Quotation (`confirm_draft_quotation`), which is
 
 | Field | Label | Type | Function | How it gets its value | Depends on | Used by |
 |---|---|---|---|---|---|---|
-| `confirm_draft_quotation` | Confirm Draft Quotation | boolean | Flag on the repair order used by the 'Add Draft Quotation Confirm Button' server action and the repair form customizations to control the draft quotation confirm button. | stored |  | `server action Fix-repair.server_action_1814_rr_add_draft_quotation_confirm_button`<br>`view Fix-repair.view_4014_odoo_studio_repair_form_customization_e`<br>`view Fix-repair.view_4015_odoo_studio_repair_form_customization_button_e` |
+| `confirm_draft_quotation` | Confirm Draft Quotation | boolean | Flag on the repair order used by the 'Add Draft Quotation Confirm Button' server action and the repair form customizations to control the draft quotation confirm button. | stored |  | `server action Fix-repair.action_rr_add_draft_quotation_confirm_button`<br>`view Fix-repair.view_repair_form_inherit`<br>`view Fix-repair.view_repair_form_inherit_2` |
 
 **Server actions (5):**
 
-- **Create activity: Repair Completed Confirmation.** (`server_action_1817_rr_notify_customer_in_ro_end_final`, type `next_activity`)
+- **Create activity: Repair Completed Confirmation.** (`action_rr_notify_customer_in_ro_end_final`, type `next_activity`)
   - Function: Schedules a 'Repair Completed Confirmation' activity on the repair order; no code. Triggered by the automation 'RR - Notify Customer in RO End - Final'.
   - Depends on: `model repair.order` (repair)
-  - Used by: `automation Fix-repair.base_automation_149_rr_notify_customer_in_ro_end_final`
+  - Used by: `automation Fix-repair.automation_rr_notify_customer_in_ro_end_final`
   <details><summary>code (11 lines)</summary>
 
 ```python
@@ -41,7 +41,7 @@ Adds one checkbox, Confirm Draft Quotation (`confirm_draft_quotation`), which is
 # To return an action, assign: action = {...}
 ```
   </details>
-- **RR - Add Draft Quotation Confirm Button** (`server_action_1814_rr_add_draft_quotation_confirm_button`, type `code`)
+- **RR - Add Draft Quotation Confirm Button** (`action_rr_add_draft_quotation_confirm_button`, type `code`)
   - Function: Ticks Confirm Draft Quotation on the repair order.
   - Depends on: `model repair.order` (repair), `repair.order.confirm_draft_quotation`
   - Used by: — (not linked to a button, menu or automation)
@@ -52,7 +52,7 @@ if record.id:
     record["confirm_draft_quotation"] = True
 ```
   </details>
-- **RR - Notify Customer in RO End - Final** (`sa_f5_repair_order_rr_notify_customer_in_ro_end_final`, type `next_activity`)
+- **RR - Notify Customer in RO End - Final** (`action_repair_order_rr_notify_customer_in_ro_end_final`, type `next_activity`)
   - Function: Schedules an activity on the repair order (next-activity action); it contains no code, the activity details are set on the action record.
   - Depends on: `model repair.order` (repair)
   - Used by: — (not linked to a button, menu or automation)
@@ -73,7 +73,7 @@ if record.id:
 # To return an action, assign: action = {...}
 ```
   </details>
-- **RR - Notify Customer in RO End - Final - 2** (`server_action_1820_rr_notify_customer_in_ro_end_final_2`, type `code`)
+- **RR - Notify Customer in RO End - Final - 2** (`action_rr_notify_customer_in_ro_end_final_2`, type `code`)
   - Function: Creates and sends an email 'Repair Complete Confirmation' to a fixed address (janitharc@gmail.com) regardless of the repair order's customer.
   - Depends on: `model mail.mail` (mail), `model repair.order` (repair)
   - Used by: — (not linked to a button, menu or automation)
@@ -100,7 +100,7 @@ if msg_id:
     mail_pool.send([msg_id])
 ```
   </details>
-- **RR - Update SO in RO** (`server_action_1979_rr_update_so_in_ro`, type `code`)
+- **RR - Update SO in RO** (`action_rr_update_so_in_ro`, type `code`)
   - Function: Copies the sale order of the repair order's helpdesk ticket onto the repair order.
   - Depends on: `model repair.order` (repair), `repair.order.ticket_id` (helpdesk_repair)
   - Used by: — (not linked to a button, menu or automation)
@@ -115,24 +115,24 @@ if record.ticket_id.id:
 
 | Name | Record name | State | Function | Depends on | Used by |
 |---|---|---|---|---|---|
-| RR - Notify Customer in RO End - Final | `base_automation_149_rr_notify_customer_in_ro_end_final` |  | When a record is created or updated on Repair Order, runs _Create activity: Repair Completed Confirmation._. | `model repair.order` (repair)<br>`server action Fix-repair.server_action_1817_rr_notify_customer_in_ro_end_final` |  |
+| RR - Notify Customer in RO End - Final | `automation_rr_notify_customer_in_ro_end_final` |  | When a record is created or updated on Repair Order, runs _Create activity: Repair Completed Confirmation._. | `model repair.order` (repair)<br>`server action Fix-repair.action_rr_notify_customer_in_ro_end_final` |  |
 
 **Window actions (2):**
 
 | Name | Record name | Function | Depends on | Used by |
 |---|---|---|---|---|
 | repair.order | `aw_f4_repair_order_repair_order` | Opens **Repair Order** records (kanban,tree,form,pivot,graph). | `model repair.order` (repair) |  |
-| repair.order | `act_window_2807_repair_order` | Opens **Repair Order** records (kanban,tree,form,pivot,graph). | `model repair.order` (repair) | `menu BugFix-Studio-Misc.menu_f6r2_test_app_05_repair_order` (BugFix-Studio-Misc) |
+| repair.order | `action_repair_order` | Opens **Repair Order** records (kanban,tree,form,pivot,graph). | `model repair.order` (repair) | `menu BugFix-Studio-Misc.menu_f6r2_test_app_05_repair_order` (BugFix-Studio-Misc) |
 
 **Views (2):**
 
 | Name | Record name | Type | What it changes | Function | Depends on | Used by |
 |---|---|---|---|---|---|---|
-| Odoo Studio: repair.form customization | `view_4014_odoo_studio_repair_form_customization_e` | form | after `//field[@name='tag_ids']`: add field confirm_draft_quotation; after `//field[@name='product_packaging_id']`: add | Repair order form: adds a read-only 'Confirm Draft Quotation' field after Tags; a second change was emptied during porting and adds nothing. | `repair.order.confirm_draft_quotation`<br>`view repair.view_repair_order_form` (repair) |  |
-| Odoo Studio: repair.form customization_button | `view_4015_odoo_studio_repair_form_customization_button_e` | form | inside `//form`: add field confirm_draft_quotation; before `//header/button[@name='action_validate']`: add ; set invisible=state != 'draft' on `//header/button[@name='action_validate']` | Repair order form: adds a hidden Confirm Draft Quotation field and shows Validate only in draft; the original Studio button was stripped, leaving only stray text 'confirm_draft_quotation' before Validate. | `repair.order.confirm_draft_quotation`<br>`view repair.view_repair_order_form` (repair) |  |
+| Odoo Studio: repair.form customization | `view_repair_form_inherit` | form | after `//field[@name='tag_ids']`: add field confirm_draft_quotation; after `//field[@name='product_packaging_id']`: add | Repair order form: adds a read-only 'Confirm Draft Quotation' field after Tags; a second change was emptied during porting and adds nothing. | `repair.order.confirm_draft_quotation`<br>`view repair.view_repair_order_form` (repair) |  |
+| Odoo Studio: repair.form customization_button | `view_repair_form_inherit_2` | form | inside `//form`: add field confirm_draft_quotation; before `//header/button[@name='action_validate']`: add ; set invisible=state != 'draft' on `//header/button[@name='action_validate']` | Repair order form: adds a hidden Confirm Draft Quotation field and shows Validate only in draft; the original Studio button was stripped, leaving only stray text 'confirm_draft_quotation' before Validate. | `repair.order.confirm_draft_quotation`<br>`view repair.view_repair_order_form` (repair) |  |
 
 **Record rules (1):**
 
 | Name | Record name | Function | Depends on | Used by |
 |---|---|---|---|---|
-| repair order multi-company | `rule_223_repair_order_multi_company` | For everyone (global rule): read/write/create/delete on Repair Order only where `[('company_id', 'in', company_ids)]`. | `model repair.order` (repair)<br>`repair.order.company_id` (repair) |  |
+| repair order multi-company | `rule_repair_order_multi_company` | For everyone (global rule): read/write/create/delete on Repair Order only where `[('company_id', 'in', company_ids)]`. | `model repair.order` (repair)<br>`repair.order.company_id` (repair) |  |

@@ -3,7 +3,7 @@
     <!-- ============================================================ -->
     <!-- symptom_areas                                             -->
     <!-- ============================================================ -->
-    <record id="view_x_symptom_areas_form" model="ir.ui.view">
+    <record id="view_symptom_areas_form" model="ir.ui.view">
         <field name="name">symptom_areas.form</field>
         <field name="model">symptom_areas</field>
         <field name="type">form</field>
@@ -33,7 +33,7 @@
             </form>
         </field>
     </record>
-    <record id="view_x_symptom_areas_tree" model="ir.ui.view">
+    <record id="view_symptom_areas_tree" model="ir.ui.view">
         <field name="name">symptom_areas.tree</field>
         <field name="model">symptom_areas</field>
         <field name="type">tree</field>
@@ -46,7 +46,7 @@
             </tree>
         </field>
     </record>
-    <record id="view_x_symptom_areas_search" model="ir.ui.view">
+    <record id="view_symptom_areas_search" model="ir.ui.view">
         <field name="name">symptom_areas.search</field>
         <field name="model">symptom_areas</field>
         <field name="type">search</field>
@@ -61,13 +61,13 @@
             </search>
         </field>
     </record>
-    <record id="view_x_symptom_areas_tree_inherit" model="ir.ui.view">
+    <record id="view_symptom_areas_tree_inherit" model="ir.ui.view">
         <field name="name">symptom_areas.tree.inherit</field>
         <field name="model">symptom_areas</field>
         <field name="type">tree</field>
         <field name="mode">extension</field>
         <field name="priority">99</field>
-        <field name="inherit_id" ref="view_x_symptom_areas_tree"/>
+        <field name="inherit_id" ref="view_symptom_areas_tree"/>
         <field name="arch" type="xml">
             <data>
                 <xpath expr="//tree[1]" position="attributes">
@@ -91,7 +91,7 @@
         <field name="res_model">symptom_areas</field>
         <field name="view_mode">tree,form</field>
     </record>
-  <record id="act_window_2210_symptom_areas" model="ir.actions.act_window">
+  <record id="action_symptom_areas_2" model="ir.actions.act_window">
     <field name="name">Symptom Areas</field>
     <field name="res_model">symptom_areas</field>
     <field name="view_mode">tree,form</field>
@@ -108,7 +108,7 @@
                 </p>
             </field>
   </record>
-    <record id="view_4955_default_form_view_for_x_symptom_areas_e" model="ir.ui.view">
+    <record id="view_symptom_areas_form_2" model="ir.ui.view">
       <field name="name">Default form view for symptom_areas</field>
       <field name="model">symptom_areas</field>
       <field name="type">form</field>
@@ -136,7 +136,7 @@
 </form>
       </field>
     </record>
-    <record id="view_4954_default_list_view_for_x_symptom_areas_e" model="ir.ui.view">
+    <record id="view_symptom_areas_list" model="ir.ui.view">
       <field name="name">Default list view for symptom_areas</field>
       <field name="model">symptom_areas</field>
       <field name="type">tree</field>
@@ -147,7 +147,7 @@
 </tree>
       </field>
     </record>
-    <record id="view_4956_default_search_view_for_x_symptom_areas_e" model="ir.ui.view">
+    <record id="view_symptom_areas_search_2" model="ir.ui.view">
       <field name="name">Default search view for symptom_areas</field>
       <field name="model">symptom_areas</field>
       <field name="type">search</field>
@@ -160,12 +160,12 @@
 </search>
       </field>
     </record>
-    <record id="view_final_x_symptom_areas_odoo_studio_default_list_view_for_x_symptom_areas_customizat" model="ir.ui.view">
+    <record id="view_default_list_view_for_symptom_areas_inherit" model="ir.ui.view">
       <field name="name">Odoo Studio: Default list view for symptom_areas customization</field>
       <field name="model">symptom_areas</field>
       <field name="type">tree</field>
       <field name="priority">99</field>
-      <field name="inherit_id" ref="Fix-repair.view_4954_default_list_view_for_x_symptom_areas_e"/>
+      <field name="inherit_id" ref="Fix-repair.view_symptom_areas_list"/>
       <field name="mode">extension</field>
       <field name="arch" type="xml">
         <data>

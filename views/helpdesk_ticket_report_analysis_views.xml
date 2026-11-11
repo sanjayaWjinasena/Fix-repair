@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-  <record id="act_window_1802_success_rate_analysis" model="ir.actions.act_window">
+  <record id="action_success_rate_analysis" model="ir.actions.act_window">
     <field name="name">Success Rate Analysis</field>
     <field name="res_model">helpdesk.ticket.report.analysis</field>
     <field name="view_mode">pivot,graph</field>

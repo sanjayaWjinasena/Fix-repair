@@ -3,7 +3,7 @@
     <!-- ============================================================ -->
     <!-- resolutions                                               -->
     <!-- ============================================================ -->
-    <record id="view_x_resolutions_form" model="ir.ui.view">
+    <record id="view_resolutions_form" model="ir.ui.view">
         <field name="name">resolutions.form</field>
         <field name="model">resolutions</field>
         <field name="type">form</field>
@@ -33,7 +33,7 @@
             </form>
         </field>
     </record>
-    <record id="view_x_resolutions_tree" model="ir.ui.view">
+    <record id="view_resolutions_tree" model="ir.ui.view">
         <field name="name">resolutions.tree</field>
         <field name="model">resolutions</field>
         <field name="type">tree</field>
@@ -46,7 +46,7 @@
             </tree>
         </field>
     </record>
-    <record id="view_x_resolutions_search" model="ir.ui.view">
+    <record id="view_resolutions_search" model="ir.ui.view">
         <field name="name">resolutions.search</field>
         <field name="model">resolutions</field>
         <field name="type">search</field>
@@ -61,13 +61,13 @@
             </search>
         </field>
     </record>
-    <record id="view_x_resolutions_tree_inherit" model="ir.ui.view">
+    <record id="view_resolutions_tree_inherit" model="ir.ui.view">
         <field name="name">resolutions.tree.inherit</field>
         <field name="model">resolutions</field>
         <field name="type">tree</field>
         <field name="mode">extension</field>
         <field name="priority">99</field>
-        <field name="inherit_id" ref="view_x_resolutions_tree"/>
+        <field name="inherit_id" ref="view_resolutions_tree"/>
         <field name="arch" type="xml">
             <data>
                 <xpath expr="//tree[1]" position="attributes">
@@ -91,7 +91,7 @@
         <field name="res_model">resolutions</field>
         <field name="view_mode">tree,form</field>
     </record>
-  <record id="act_window_2215_resolutions" model="ir.actions.act_window">
+  <record id="action_resolutions_2" model="ir.actions.act_window">
     <field name="name">Resolutions</field>
     <field name="res_model">resolutions</field>
     <field name="view_mode">tree,form</field>
@@ -108,7 +108,7 @@
                 </p>
             </field>
   </record>
-    <record id="view_4978_default_form_view_for_x_resolutions_e" model="ir.ui.view">
+    <record id="view_resolutions_form_2" model="ir.ui.view">
       <field name="name">Default form view for resolutions</field>
       <field name="model">resolutions</field>
       <field name="type">form</field>
@@ -136,7 +136,7 @@
 </form>
       </field>
     </record>
-    <record id="view_4977_default_list_view_for_x_resolutions_e" model="ir.ui.view">
+    <record id="view_resolutions_list" model="ir.ui.view">
       <field name="name">Default list view for resolutions</field>
       <field name="model">resolutions</field>
       <field name="type">tree</field>
@@ -147,7 +147,7 @@
 </tree>
       </field>
     </record>
-    <record id="view_4979_default_search_view_for_x_resolutions_e" model="ir.ui.view">
+    <record id="view_resolutions_search_2" model="ir.ui.view">
       <field name="name">Default search view for resolutions</field>
       <field name="model">resolutions</field>
       <field name="type">search</field>
@@ -160,12 +160,12 @@
 </search>
       </field>
     </record>
-    <record id="view_final_x_resolutions_odoo_studio_default_list_view_for_x_resolutions_customizatio" model="ir.ui.view">
+    <record id="view_default_list_view_for_resolutions_inherit" model="ir.ui.view">
       <field name="name">Odoo Studio: Default list view for resolutions customization</field>
       <field name="model">resolutions</field>
       <field name="type">tree</field>
       <field name="priority">99</field>
-      <field name="inherit_id" ref="Fix-repair.view_4977_default_list_view_for_x_resolutions_e"/>
+      <field name="inherit_id" ref="Fix-repair.view_resolutions_list"/>
       <field name="mode">extension</field>
       <field name="arch" type="xml">
         <data>

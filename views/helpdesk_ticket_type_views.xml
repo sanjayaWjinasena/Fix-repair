@@ -35,7 +35,7 @@
             </xpath>
         </field>
     </record>
-    <record id="view_4610_odoo_studio_helpdesk_ticket_type_tree_customization_e" model="ir.ui.view">
+    <record id="view_helpdesk_ticket_type_tree_inherit" model="ir.ui.view">
       <field name="name">Odoo Studio: helpdesk.ticket.type.tree customization</field>
       <field name="model">helpdesk.ticket.type</field>
       <field name="type">tree</field>

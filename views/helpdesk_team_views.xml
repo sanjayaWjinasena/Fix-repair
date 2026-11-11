@@ -24,7 +24,7 @@
             </xpath>
         </field>
     </record>
-  <record id="ported_odoo_studio_helpdesk_28046b65_e20c_4a5e_8a99_12fc2676bd8f" model="ir.ui.view">
+  <record id="view_helpdesk_team_dashboard_inherit" model="ir.ui.view">
     <field name="name">Odoo Studio: helpdesk.team.dashboard customization</field>
     <field name="model">helpdesk.team</field>
     <field name="key">studio_customization.odoo_studio_helpdesk_28046b65-e20c-4a5e-8a99-12fc2676bd8f</field>
@@ -41,7 +41,7 @@
       </data>
     </field>
   </record>
-  <record id="act_window_2239_customer_letter_report" model="ir.actions.act_window">
+  <record id="action_customer_letter_report" model="ir.actions.act_window">
     <field name="name">Customer Letter Report</field>
     <field name="res_model">helpdesk.team</field>
     <field name="view_mode">kanban,tree,form</field>
@@ -58,7 +58,7 @@
                 </p>
             </field>
   </record>
-  <record id="act_window_2876_helpdesk_team_helpdesk_team" model="ir.actions.act_window">
+  <record id="action_helpdesk_team_helpdesk_team" model="ir.actions.act_window">
     <field name="name">Helpdesk Team (helpdesk.team)</field>
     <field name="res_model">helpdesk.team</field>
     <field name="view_mode">kanban,tree,form</field>

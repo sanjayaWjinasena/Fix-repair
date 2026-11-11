@@ -3,7 +3,7 @@
     <!-- ============================================================ -->
     <!-- conditions                                                -->
     <!-- ============================================================ -->
-    <record id="view_x_conditions_form" model="ir.ui.view">
+    <record id="view_conditions_form" model="ir.ui.view">
         <field name="name">conditions.form</field>
         <field name="model">conditions</field>
         <field name="type">form</field>
@@ -33,7 +33,7 @@
             </form>
         </field>
     </record>
-    <record id="view_x_conditions_tree" model="ir.ui.view">
+    <record id="view_conditions_tree" model="ir.ui.view">
         <field name="name">conditions.tree</field>
         <field name="model">conditions</field>
         <field name="type">tree</field>
@@ -46,7 +46,7 @@
             </tree>
         </field>
     </record>
-    <record id="view_x_conditions_search" model="ir.ui.view">
+    <record id="view_conditions_search" model="ir.ui.view">
         <field name="name">conditions.search</field>
         <field name="model">conditions</field>
         <field name="type">search</field>
@@ -61,13 +61,13 @@
             </search>
         </field>
     </record>
-    <record id="view_x_conditions_tree_inherit" model="ir.ui.view">
+    <record id="view_conditions_tree_inherit" model="ir.ui.view">
         <field name="name">conditions.tree.inherit</field>
         <field name="model">conditions</field>
         <field name="type">tree</field>
         <field name="mode">extension</field>
         <field name="priority">99</field>
-        <field name="inherit_id" ref="view_x_conditions_tree"/>
+        <field name="inherit_id" ref="view_conditions_tree"/>
         <field name="arch" type="xml">
             <data>
                 <xpath expr="//tree[1]" position="attributes">
@@ -92,7 +92,7 @@
         <field name="res_model">conditions</field>
         <field name="view_mode">tree,form</field>
     </record>
-  <record id="act_window_2209_conditions" model="ir.actions.act_window">
+  <record id="action_conditions_2" model="ir.actions.act_window">
     <field name="name">Conditions</field>
     <field name="res_model">conditions</field>
     <field name="view_mode">tree,form</field>
@@ -109,7 +109,7 @@
                 </p>
             </field>
   </record>
-    <record id="view_4951_default_form_view_for_x_conditions_e" model="ir.ui.view">
+    <record id="view_conditions_form_2" model="ir.ui.view">
       <field name="name">Default form view for conditions</field>
       <field name="model">conditions</field>
       <field name="type">form</field>
@@ -137,7 +137,7 @@
 </form>
       </field>
     </record>
-    <record id="view_4950_default_list_view_for_x_conditions_e" model="ir.ui.view">
+    <record id="view_conditions_list" model="ir.ui.view">
       <field name="name">Default list view for conditions</field>
       <field name="model">conditions</field>
       <field name="type">tree</field>
@@ -148,7 +148,7 @@
 </tree>
       </field>
     </record>
-    <record id="view_4952_default_search_view_for_x_conditions_e" model="ir.ui.view">
+    <record id="view_conditions_search_2" model="ir.ui.view">
       <field name="name">Default search view for conditions</field>
       <field name="model">conditions</field>
       <field name="type">search</field>
@@ -161,12 +161,12 @@
 </search>
       </field>
     </record>
-    <record id="view_final_x_conditions_odoo_studio_default_list_view_for_x_conditions_customization" model="ir.ui.view">
+    <record id="view_default_list_view_for_conditions_inherit" model="ir.ui.view">
       <field name="name">Odoo Studio: Default list view for conditions customization</field>
       <field name="model">conditions</field>
       <field name="type">tree</field>
       <field name="priority">99</field>
-      <field name="inherit_id" ref="Fix-repair.view_4950_default_list_view_for_x_conditions_e"/>
+      <field name="inherit_id" ref="Fix-repair.view_conditions_list"/>
       <field name="mode">extension</field>
       <field name="arch" type="xml">
         <data>

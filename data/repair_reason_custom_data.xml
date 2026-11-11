@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-  <record id="server_action_2667_jin_company_id_in_repair_reason_customer" model="ir.actions.server">
+  <record id="action_jin_company_id_in_repair_reason_customer" model="ir.actions.server">
     <field name="name">JIN - Company Id in Repair Reason - Customer</field>
     <field name="model_id" search="[('model', '=', 'repair_reason_custom')]"/>
     <field name="state">code</field>
@@ -9,18 +9,18 @@
 record._jin_set_company_id()
 ]]></field>
   </record>
-  <record id="base_automation_303_jin_company_id_in_repair_reason_customer" model="base.automation">
+  <record id="automation_jin_company_id_in_repair_reason_customer" model="base.automation">
     <field name="name">JIN - Company Id in Repair Reason - Customer</field>
     <field name="active" eval="False"/>
     <field name="model_id" ref="Fix-repair.model_repair_reason_custom"/>
     <field name="trigger">on_create_or_write</field>
   </record>
     <data noupdate="1">
-    <record id="default_357_x_repair_reason_custom_active" model="ir.default">
+    <record id="default_repair_reason_custom_active" model="ir.default">
       <field name="field_id" ref="Fix-repair.field_repair_reason_custom__active"/>
       <field name="json_value">true</field>
     </record>
-    <record id="default_358_x_repair_reason_custom_sequence" model="ir.default">
+    <record id="default_repair_reason_custom_sequence" model="ir.default">
       <field name="field_id" ref="Fix-repair.field_repair_reason_custom__sequence"/>
       <field name="json_value">10</field>
     </record>

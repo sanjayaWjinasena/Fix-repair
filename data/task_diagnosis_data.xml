@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data noupdate="1">
-    <record id="default_355_x_task_diagnosis_active" model="ir.default">
+    <record id="default_task_diagnosis_active" model="ir.default">
       <field name="field_id" ref="Fix-repair.field_task_diagnosis__active"/>
       <field name="json_value">true</field>
     </record>
-    <record id="default_356_x_task_diagnosis_sequence" model="ir.default">
+    <record id="default_task_diagnosis_sequence" model="ir.default">
       <field name="field_id" ref="Fix-repair.field_task_diagnosis__sequence"/>
       <field name="json_value">10</field>
     </record>

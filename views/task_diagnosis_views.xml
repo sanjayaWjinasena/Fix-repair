@@ -3,7 +3,7 @@
     <!-- ============================================================ -->
     <!-- task_diagnosis                                            -->
     <!-- ============================================================ -->
-    <record id="view_x_task_diagnosis_form" model="ir.ui.view">
+    <record id="view_task_diagnosis_form" model="ir.ui.view">
         <field name="name">task_diagnosis.form</field>
         <field name="model">task_diagnosis</field>
         <field name="type">form</field>
@@ -33,7 +33,7 @@
             </form>
         </field>
     </record>
-    <record id="view_x_task_diagnosis_tree" model="ir.ui.view">
+    <record id="view_task_diagnosis_tree" model="ir.ui.view">
         <field name="name">task_diagnosis.tree</field>
         <field name="model">task_diagnosis</field>
         <field name="type">tree</field>
@@ -46,7 +46,7 @@
             </tree>
         </field>
     </record>
-    <record id="view_x_task_diagnosis_search" model="ir.ui.view">
+    <record id="view_task_diagnosis_search" model="ir.ui.view">
         <field name="name">task_diagnosis.search</field>
         <field name="model">task_diagnosis</field>
         <field name="type">search</field>
@@ -61,13 +61,13 @@
             </search>
         </field>
     </record>
-    <record id="view_x_task_diagnosis_tree_inherit" model="ir.ui.view">
+    <record id="view_task_diagnosis_tree_inherit" model="ir.ui.view">
         <field name="name">task_diagnosis.tree.inherit</field>
         <field name="model">task_diagnosis</field>
         <field name="type">tree</field>
         <field name="mode">extension</field>
         <field name="priority">99</field>
-        <field name="inherit_id" ref="view_x_task_diagnosis_tree"/>
+        <field name="inherit_id" ref="view_task_diagnosis_tree"/>
         <field name="arch" type="xml">
             <data>
                 <xpath expr="//tree[1]" position="attributes">
@@ -79,7 +79,7 @@
             </data>
         </field>
     </record>
-  <record id="act_window_2217_task_diagnosis" model="ir.actions.act_window">
+  <record id="action_task_diagnosis" model="ir.actions.act_window">
     <field name="name">Task Diagnosis</field>
     <field name="res_model">task_diagnosis</field>
     <field name="view_mode">tree,form</field>
@@ -96,7 +96,7 @@
                 </p>
             </field>
   </record>
-    <record id="view_4986_default_form_view_for_x_task_diagnosis_e" model="ir.ui.view">
+    <record id="view_task_diagnosis_form_2" model="ir.ui.view">
       <field name="name">Default form view for task_diagnosis</field>
       <field name="model">task_diagnosis</field>
       <field name="type">form</field>
@@ -124,7 +124,7 @@
 </form>
       </field>
     </record>
-    <record id="view_4985_default_list_view_for_x_task_diagnosis_e" model="ir.ui.view">
+    <record id="view_task_diagnosis_list" model="ir.ui.view">
       <field name="name">Default list view for task_diagnosis</field>
       <field name="model">task_diagnosis</field>
       <field name="type">tree</field>
@@ -135,7 +135,7 @@
 </tree>
       </field>
     </record>
-    <record id="view_4987_default_search_view_for_x_task_diagnosis_e" model="ir.ui.view">
+    <record id="view_task_diagnosis_search_2" model="ir.ui.view">
       <field name="name">Default search view for task_diagnosis</field>
       <field name="model">task_diagnosis</field>
       <field name="type">search</field>
@@ -148,12 +148,12 @@
 </search>
       </field>
     </record>
-    <record id="view_final_x_task_diagnosis_odoo_studio_default_list_view_for_x_task_diagnosis_customiza" model="ir.ui.view">
+    <record id="view_default_list_view_for_task_diagnosis_inherit" model="ir.ui.view">
       <field name="name">Odoo Studio: Default list view for task_diagnosis customization</field>
       <field name="model">task_diagnosis</field>
       <field name="type">tree</field>
       <field name="priority">99</field>
-      <field name="inherit_id" ref="Fix-repair.view_4985_default_list_view_for_x_task_diagnosis_e"/>
+      <field name="inherit_id" ref="Fix-repair.view_task_diagnosis_list"/>
       <field name="mode">extension</field>
       <field name="arch" type="xml">
         <data>

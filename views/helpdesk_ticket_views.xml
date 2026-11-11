@@ -22,7 +22,7 @@
       </xpath>
     </field>
   </record>
-  <record id="ported_view_helpdesk_ticket_form_4012" model="ir.ui.view">
+  <record id="view_helpdesk_ticket_form_inherit" model="ir.ui.view">
     <field name="name">Odoo Studio: helpdesk.ticket.form customization</field>
     <field name="model">helpdesk.ticket</field>
     <field name="key">Fix-repair.view_helpdesk_ticket_form_4012</field>
@@ -466,17 +466,17 @@
             </xpath>
         </field>
     </record>
-  <record id="act_window_2312_repair_job_details" model="ir.actions.act_window">
+  <record id="action_repair_job_details" model="ir.actions.act_window">
     <field name="name">Repair Job Details</field>
     <field name="res_model">helpdesk.ticket</field>
     <field name="view_mode">kanban,tree,form,pivot,graph,activity</field>
   </record>
-  <record id="act_window_2234_repair_job_details_for_the_period_rug_only" model="ir.actions.act_window">
+  <record id="action_repair_job_details_for_the_period_rug_only" model="ir.actions.act_window">
     <field name="name">Repair Job Details for the Period - RUG Only</field>
     <field name="res_model">helpdesk.ticket</field>
     <field name="view_mode">kanban,tree,form,pivot,graph,activity</field>
   </record>
-    <record id="view_4735_odoo_studio_helpdesk_ticket_kanban_customization_e" model="ir.ui.view">
+    <record id="view_helpdesk_ticket_kanban_inherit" model="ir.ui.view">
       <field name="name">Odoo Studio: helpdesk.ticket.kanban customization</field>
       <field name="model">helpdesk.ticket</field>
       <field name="type">kanban</field>
@@ -502,7 +502,7 @@
 </data>
       </field>
     </record>
-    <record id="view_5027_odoo_studio_helpdesk_ticket_tree_customization_e" model="ir.ui.view">
+    <record id="view_helpdesk_ticket_tree_inherit" model="ir.ui.view">
       <field name="name">Odoo Studio: helpdesk.ticket.tree customization</field>
       <field name="model">helpdesk.ticket</field>
       <field name="type">tree</field>
@@ -532,7 +532,7 @@
 </data>
       </field>
     </record>
-    <record id="view_4013_odoo_studio_helpdesk_ticket_form_button_e" model="ir.ui.view">
+    <record id="view_helpdesk_ticket_form_button" model="ir.ui.view">
       <field name="name">Odoo Studio: helpdesk.ticket.form-button</field>
       <field name="model">helpdesk.ticket</field>
       <field name="type">form</field>

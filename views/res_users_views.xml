@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="view_2391_odoo_studio_res_users_tree_customization_e" model="ir.ui.view">
+    <record id="view_res_users_tree_inherit" model="ir.ui.view">
       <field name="name">Odoo Studio: res.users.tree customization</field>
       <field name="model">res.users</field>
       <field name="type">tree</field>

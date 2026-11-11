@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="view_5964_odoo_studio_helpdesk_stage_form_customization_e" model="ir.ui.view">
+    <record id="view_helpdesk_stage_form_inherit" model="ir.ui.view">
       <field name="name">Odoo Studio: helpdesk.stage.form customization</field>
       <field name="model">helpdesk.stage</field>
       <field name="type">form</field>
@@ -15,7 +15,7 @@
 </data>
       </field>
     </record>
-    <record id="view_4611_odoo_studio_helpdesk_stages_tree_customization_e" model="ir.ui.view">
+    <record id="view_helpdesk_stages_tree_inherit" model="ir.ui.view">
       <field name="name">Odoo Studio: helpdesk.stages.tree customization</field>
       <field name="model">helpdesk.stage</field>
       <field name="type">tree</field>

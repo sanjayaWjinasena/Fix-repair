@@ -16,7 +16,7 @@ Adds Company (`accounting_company_id`) to helpdesk stages, shown on the stage fo
 
 | Field | Label | Type | Function | How it gets its value | Depends on | Used by |
 |---|---|---|---|---|---|---|
-| `accounting_company_id` | Company | many2one → `res.company` | Company that owns the helpdesk stage, filled on create by `_jin_set_company_id`; a multi-company record rule limits stages to the user's companies. | stored | `model res.company` (base) | `helpdesk.stage._jin_set_company_id()`<br>`record rule Fix-repair.rule_616_jin_multi_company_helpdesk_stage`<br>`view Fix-repair.view_5964_odoo_studio_helpdesk_stage_form_customization_e` |
+| `accounting_company_id` | Company | many2one → `res.company` | Company that owns the helpdesk stage, filled on create by `_jin_set_company_id`; a multi-company record rule limits stages to the user's companies. | stored | `model res.company` (base) | `helpdesk.stage._jin_set_company_id()`<br>`record rule Fix-repair.rule_jin_multi_company_helpdesk_stage`<br>`view Fix-repair.view_helpdesk_stage_form_inherit` |
 
 **Python methods (3):**
 
@@ -28,7 +28,7 @@ Adds Company (`accounting_company_id`) to helpdesk stages, shown on the stage fo
 
 **Server actions (1):**
 
-- **JIN - Company Id in Helpdesk Stage** (`server_action_2760_jin_company_id_in_helpdesk_stage`, type `code`)
+- **JIN - Company Id in Helpdesk Stage** (`action_jin_company_id_in_helpdesk_stage`, type `code`)
   - Function: Sets the record's Company field to the user's currently selected company. Linked to the helpdesk stage company automation.
   - Depends on: `model helpdesk.stage` (helpdesk)
   - Used by: — (not linked to a button, menu or automation)
@@ -43,17 +43,17 @@ record._jin_set_company_id()
 
 | Name | Record name | State | Function | Depends on | Used by |
 |---|---|---|---|---|---|
-| JIN - Company Id in Helpdesk Stage | `base_automation_329_jin_company_id_in_helpdesk_stage` | archived | When a record is created or updated on Helpdesk Stage, runs nothing (no action linked). **Archived — does not run.** | `model helpdesk.stage` (helpdesk) |  |
+| JIN - Company Id in Helpdesk Stage | `automation_jin_company_id_in_helpdesk_stage` | archived | When a record is created or updated on Helpdesk Stage, runs nothing (no action linked). **Archived — does not run.** | `model helpdesk.stage` (helpdesk) |  |
 
 **Views (2):**
 
 | Name | Record name | Type | What it changes | Function | Depends on | Used by |
 |---|---|---|---|---|---|---|
-| Odoo Studio: helpdesk.stage.form customization | `view_5964_odoo_studio_helpdesk_stage_form_customization_e` | form | after `//field[@name='sequence']`: add field accounting_company_id | Helpdesk stage form: adds the Company field after Sequence. | `helpdesk.stage.accounting_company_id`<br>`view helpdesk.helpdesk_stage_view_form` (helpdesk) |  |
-| Odoo Studio: helpdesk.stages.tree customization | `view_4611_odoo_studio_helpdesk_stages_tree_customization_e` | tree | after `//field[@name='fold']`: add field id | Helpdesk stage list: adds an ID column after Folded. | `view helpdesk.helpdesk_stage_view_tree` (helpdesk) |  |
+| Odoo Studio: helpdesk.stage.form customization | `view_helpdesk_stage_form_inherit` | form | after `//field[@name='sequence']`: add field accounting_company_id | Helpdesk stage form: adds the Company field after Sequence. | `helpdesk.stage.accounting_company_id`<br>`view helpdesk.helpdesk_stage_view_form` (helpdesk) |  |
+| Odoo Studio: helpdesk.stages.tree customization | `view_helpdesk_stages_tree_inherit` | tree | after `//field[@name='fold']`: add field id | Helpdesk stage list: adds an ID column after Folded. | `view helpdesk.helpdesk_stage_view_tree` (helpdesk) |  |
 
 **Record rules (1):**
 
 | Name | Record name | Function | Depends on | Used by |
 |---|---|---|---|---|
-| JIN - Multi-Company - Helpdesk Stage | `rule_616_jin_multi_company_helpdesk_stage` | For everyone (global rule): read/write/create/delete on Helpdesk Stage only where `['|', ('accounting_company_id', 'in', company_ids), ('accounting_company_id', '=', False)]`. | `helpdesk.stage.accounting_company_id`<br>`model helpdesk.stage` (helpdesk) |  |
+| JIN - Multi-Company - Helpdesk Stage | `rule_jin_multi_company_helpdesk_stage` | For everyone (global rule): read/write/create/delete on Helpdesk Stage only where `['|', ('accounting_company_id', 'in', company_ids), ('accounting_company_id', '=', False)]`. | `helpdesk.stage.accounting_company_id`<br>`model helpdesk.stage` (helpdesk) |  |

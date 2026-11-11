@@ -3,7 +3,7 @@
   <record id="res_partner_form_fix_repair_field_content" model="ir.ui.view">
     <field name="name">res.partner.form.fix.repair.field.content</field>
     <field name="model">res.partner</field>
-    <field name="inherit_id" ref="BugFix-Sales.ported_view_2299_odoo_studio_res_partner_form_customizati"/>
+    <field name="inherit_id" ref="BugFix-Sales.view_res_partner_form_inherit"/>
     <field name="priority">100</field>
     <field name="arch" type="xml">
       <xpath expr="//group[@name='studio_group_L0Ae5_left']" position="inside">
@@ -29,7 +29,7 @@
     <record id="res_partner_tree_fix_repair_field_content" model="ir.ui.view">
     <field name="name">res.partner.tree.fix.repair.field.content</field>
     <field name="model">res.partner</field>
-    <field name="inherit_id" ref="BugFix-Sales.ported_view_2300_odoo_studio_res_partner_tree_customizati"/>
+    <field name="inherit_id" ref="BugFix-Sales.view_res_partner_tree_inherit"/>
     <field name="priority">100</field>
     <field name="arch" type="xml">
       <xpath expr="//field[@name='type']" position="after">

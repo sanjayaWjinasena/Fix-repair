@@ -6,7 +6,7 @@
 
 *Extends a model created by `stock`.* Python: `models/stock_warehouse.py`.
 
-Other repos that use this model: `account.analytic.account.bugfix_analytics_warehouse_id` (BugFix-Analytics)<br>`sale.order.line.sales_warehouse_id` (BugFix-Sales)<br>`server action BugFix-Sales.server_action_2096_rr_insufficient_transfer_inventory_details` (BugFix-Sales)<br>`server action BugFix-Sales.server_action_2162_proj_item_related_details_in_project_so` (BugFix-Sales)<br>`server action BugFix-Sales.server_action_2188_proj_create_pr_from_sales_quotation` (BugFix-Sales)<br>`stock.valuation.layer.related_field_dGINH` (BugFix-Stock)<br>`window action BugFix-Stock.action_2468_warehouse` (BugFix-Stock)<br>`window action BugFix-Stock.action_2469_warehouse` (BugFix-Stock)<details><summary>+3 more</summary>`bve.salesreport.bve_t1_warehouse_id` (BugFix-Studio-Misc)<br>`consignment_line.warehouse` (BugFix-Stock)<br>`material_request.many2one_field_W3qKf` (BugFix-Stock)</details>
+Other repos that use this model: `account.analytic.account.bugfix_analytics_warehouse_id` (BugFix-Analytics)<br>`sale.order.line.sales_warehouse_id` (BugFix-Sales)<br>`server action BugFix-Sales.action_rr_insufficient_transfer_inventory_details` (BugFix-Sales)<br>`server action BugFix-Sales.action_proj_item_related_details_in_project_so` (BugFix-Sales)<br>`server action BugFix-Sales.action_proj_create_pr_from_sales_quotation` (BugFix-Sales)<br>`stock.valuation.layer.related_field_dGINH` (BugFix-Stock)<br>`window action BugFix-Stock.action_warehouse` (BugFix-Stock)<br>`window action BugFix-Stock.action_warehouse_2` (BugFix-Stock)<details><summary>+3 more</summary>`bve.salesreport.bve_t1_warehouse_id` (BugFix-Studio-Misc)<br>`consignment_line.warehouse` (BugFix-Stock)<br>`material_request.many2one_field_W3qKf` (BugFix-Stock)</details>
 
 **Summary:**
 
@@ -29,17 +29,17 @@ Adds helpers that create the repair locations: an Intransit (transit) and a Repa
 
 | Name | Record name | Function | Depends on | Used by |
 |---|---|---|---|---|
-| WareHouse | `act_window_2468_warehouse` | Opens **Warehouse** records (tree,form). | `model stock.warehouse` (stock) |  |
-| Warehouse | `act_window_2469_warehouse` | Opens **Warehouse** records (tree,form). | `model stock.warehouse` (stock) |  |
+| WareHouse | `action_warehouse` | Opens **Warehouse** records (tree,form). | `model stock.warehouse` (stock) |  |
+| Warehouse | `action_warehouse_2` | Opens **Warehouse** records (tree,form). | `model stock.warehouse` (stock) |  |
 
 **Views (1):**
 
 | Name | Record name | Type | What it changes | Function | Depends on | Used by |
 |---|---|---|---|---|---|---|
-| Odoo Studio: stock.warehouse customization | `view_5484_odoo_studio_stock_warehouse_customization_e` | form | set readonly= on `//field[@name='lot_stock_id']` | Warehouse form: clears the read-only setting on the Location Stock field, making it editable. | `view stock.view_warehouse` (stock) |  |
+| Odoo Studio: stock.warehouse customization | `view_stock_warehouse_inherit` | form | set readonly= on `//field[@name='lot_stock_id']` | Warehouse form: clears the read-only setting on the Location Stock field, making it editable. | `view stock.view_warehouse` (stock) |  |
 
 **Record rules (1):**
 
 | Name | Record name | Function | Depends on | Used by |
 |---|---|---|---|---|
-| Stock data warehouse | `rule_921_stock_data_warehouse` | For Inventory / Administrator: read/write/create/delete on Warehouse with no record filter (empty domain = all records). | `group stock.group_stock_manager` (stock)<br>`model stock.warehouse` (stock) |  |
+| Stock data warehouse | `rule_stock_data_warehouse` | For Inventory / Administrator: read/write/create/delete on Warehouse with no record filter (empty domain = all records). | `group stock.group_stock_manager` (stock)<br>`model stock.warehouse` (stock) |  |

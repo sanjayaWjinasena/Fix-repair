@@ -5,7 +5,7 @@
         <field name="res_model">repair_reason_custom</field>
         <field name="view_mode">tree,form</field>
     </record>
-  <record id="act_window_2218_repair_reason_customer" model="ir.actions.act_window">
+  <record id="action_repair_reason_customer" model="ir.actions.act_window">
     <field name="name">Repair Reason - Customer</field>
     <field name="res_model">repair_reason_custom</field>
     <field name="view_mode">tree,form</field>
@@ -22,7 +22,7 @@
                 </p>
             </field>
   </record>
-    <record id="view_4991_default_form_view_for_x_repair_reason_custom_e" model="ir.ui.view">
+    <record id="view_repair_reason_custom_form" model="ir.ui.view">
       <field name="name">Default form view for repair_reason_custom</field>
       <field name="model">repair_reason_custom</field>
       <field name="type">form</field>
@@ -50,7 +50,7 @@
 </form>
       </field>
     </record>
-    <record id="view_4990_default_list_view_for_x_repair_reason_custom_e" model="ir.ui.view">
+    <record id="view_repair_reason_custom_list" model="ir.ui.view">
       <field name="name">Default list view for repair_reason_custom</field>
       <field name="model">repair_reason_custom</field>
       <field name="type">tree</field>
@@ -61,7 +61,7 @@
 </tree>
       </field>
     </record>
-    <record id="view_4992_default_search_view_for_x_repair_reason_custom_e" model="ir.ui.view">
+    <record id="view_repair_reason_custom_search" model="ir.ui.view">
       <field name="name">Default search view for repair_reason_custom</field>
       <field name="model">repair_reason_custom</field>
       <field name="type">search</field>
@@ -74,12 +74,12 @@
 </search>
       </field>
     </record>
-    <record id="view_final_x_repair_reason_custom_odoo_studio_default_list_view_for_repair_reason_custom" model="ir.ui.view">
+    <record id="view_default_list_view_for_repair_reason_custom_inherit" model="ir.ui.view">
       <field name="name">Odoo Studio: Default list view for repair_reason_custom customization</field>
       <field name="model">repair_reason_custom</field>
       <field name="type">tree</field>
       <field name="priority">99</field>
-      <field name="inherit_id" ref="Fix-repair.view_4990_default_list_view_for_x_repair_reason_custom_e"/>
+      <field name="inherit_id" ref="Fix-repair.view_repair_reason_custom_list"/>
       <field name="mode">extension</field>
       <field name="arch" type="xml">
         <data>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-  <record id="act_window_2175_repair_accounts" model="ir.actions.act_window">
+  <record id="action_repair_accounts" model="ir.actions.act_window">
     <field name="name">Repair Accounts</field>
     <field name="res_model">repair_accounts</field>
     <field name="view_mode">tree,form</field>
@@ -17,7 +17,7 @@
                 </p>
             </field>
   </record>
-    <record id="view_4938_default_form_view_for_x_repair_accounts_e" model="ir.ui.view">
+    <record id="view_repair_accounts_form" model="ir.ui.view">
       <field name="name">Default form view for repair_accounts</field>
       <field name="model">repair_accounts</field>
       <field name="type">form</field>
@@ -45,7 +45,7 @@
 </form>
       </field>
     </record>
-    <record id="view_4937_default_list_view_for_x_repair_accounts_e" model="ir.ui.view">
+    <record id="view_repair_accounts_list" model="ir.ui.view">
       <field name="name">Default list view for repair_accounts</field>
       <field name="model">repair_accounts</field>
       <field name="type">tree</field>
@@ -56,7 +56,7 @@
 </tree>
       </field>
     </record>
-    <record id="view_4939_default_search_view_for_x_repair_accounts_e" model="ir.ui.view">
+    <record id="view_repair_accounts_search" model="ir.ui.view">
       <field name="name">Default search view for repair_accounts</field>
       <field name="model">repair_accounts</field>
       <field name="type">search</field>
@@ -69,12 +69,12 @@
 </search>
       </field>
     </record>
-    <record id="view_final_x_repair_accounts_odoo_studio_default_form_view_for_x_repair_accounts_customiz" model="ir.ui.view">
+    <record id="view_default_form_view_for_repair_accounts_inherit" model="ir.ui.view">
       <field name="name">Odoo Studio: Default form view for repair_accounts customization</field>
       <field name="model">repair_accounts</field>
       <field name="type">form</field>
       <field name="priority">99</field>
-      <field name="inherit_id" ref="Fix-repair.view_4938_default_form_view_for_x_repair_accounts_e"/>
+      <field name="inherit_id" ref="Fix-repair.view_repair_accounts_form"/>
       <field name="mode">extension</field>
       <field name="arch" type="xml">
         <data>
@@ -93,12 +93,12 @@
 </data>
       </field>
     </record>
-    <record id="view_final_x_repair_accounts_odoo_studio_default_list_view_for_x_repair_accounts_customiz" model="ir.ui.view">
+    <record id="view_default_list_view_for_repair_accounts_inherit" model="ir.ui.view">
       <field name="name">Odoo Studio: Default list view for repair_accounts customization</field>
       <field name="model">repair_accounts</field>
       <field name="type">tree</field>
       <field name="priority">99</field>
-      <field name="inherit_id" ref="Fix-repair.view_4937_default_list_view_for_x_repair_accounts_e"/>
+      <field name="inherit_id" ref="Fix-repair.view_repair_accounts_list"/>
       <field name="mode">extension</field>
       <field name="arch" type="xml">
         <data>

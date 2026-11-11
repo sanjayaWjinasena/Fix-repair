@@ -6,7 +6,7 @@
 
 *Extends a model created by `base`.* Python: `models/res_config_settings.py`.
 
-Other repos that use this model: `access right BugFix-Sales.access_1531_res_config_settings_group_system` (BugFix-Sales)<br>`access right BugFix-Sales.access_1532_res_config_settings_group_user` (BugFix-Sales)<br>`access right BugFix-Studio-Misc.access_res_config_settings_group_system` (BugFix-Studio-Misc)<br>`server action BugFix-Accounting.server_action_1370_imp_update_consignment_pi` (BugFix-Accounting)<br>`server action BugFix-Accounting.srv_imp_update_consignment_pi` (BugFix-Accounting)<br>`server action BugFix-Stock.server_action_1318_imp_allocate_consignment_header_charges` (BugFix-Stock)
+Other repos that use this model: `access right BugFix-Sales.access_res_config_settings_group_system` (BugFix-Sales)<br>`access right BugFix-Sales.access_res_config_settings_group_user` (BugFix-Sales)<br>`access right BugFix-Studio-Misc.access_res_config_settings_group_system` (BugFix-Studio-Misc)<br>`server action BugFix-Accounting.action_imp_update_consignment_pi` (BugFix-Accounting)<br>`server action BugFix-Accounting.srv_imp_update_consignment_pi` (BugFix-Accounting)<br>`server action BugFix-Stock.action_imp_allocate_consignment_header_charges` (BugFix-Stock)
 
 **Summary:**
 

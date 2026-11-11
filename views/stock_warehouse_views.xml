@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-  <record id="act_window_2469_warehouse" model="ir.actions.act_window">
+  <record id="action_warehouse_2" model="ir.actions.act_window">
     <field name="name">Warehouse</field>
     <field name="res_model">stock.warehouse</field>
     <field name="view_mode">tree,form</field>
   </record>
-  <record id="act_window_2468_warehouse" model="ir.actions.act_window">
+  <record id="action_warehouse" model="ir.actions.act_window">
     <field name="name">WareHouse</field>
     <field name="res_model">stock.warehouse</field>
     <field name="view_mode">tree,form</field>
   </record>
-    <record id="view_5484_odoo_studio_stock_warehouse_customization_e" model="ir.ui.view">
+    <record id="view_stock_warehouse_inherit" model="ir.ui.view">
       <field name="name">Odoo Studio: stock.warehouse customization</field>
       <field name="model">stock.warehouse</field>
       <field name="type">form</field>

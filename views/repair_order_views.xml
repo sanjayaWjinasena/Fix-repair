@@ -5,7 +5,7 @@
     <field name="res_model">repair.order</field>
     <field name="view_mode">kanban,tree,form,pivot,graph</field>
   </record>
-  <record id="act_window_2807_repair_order" model="ir.actions.act_window">
+  <record id="action_repair_order" model="ir.actions.act_window">
     <field name="name">repair.order</field>
     <field name="res_model">repair.order</field>
     <field name="view_mode">kanban,tree,form,pivot,graph</field>
@@ -22,12 +22,12 @@
                 </p>
             </field>
   </record>
-  <record id="act_window_2807_repair_order" model="ir.actions.act_window">
+  <record id="action_repair_order" model="ir.actions.act_window">
     <field name="name">repair.order</field>
     <field name="res_model">repair.order</field>
     <field name="view_mode">kanban,tree,form,pivot,graph</field>
   </record>
-    <record id="view_4014_odoo_studio_repair_form_customization_e" model="ir.ui.view">
+    <record id="view_repair_form_inherit" model="ir.ui.view">
       <field name="name">Odoo Studio: repair.form customization</field>
       <field name="model">repair.order</field>
       <field name="type">form</field>
@@ -45,7 +45,7 @@
         </data>
       </field>
     </record>
-    <record id="view_4015_odoo_studio_repair_form_customization_button_e" model="ir.ui.view">
+    <record id="view_repair_form_inherit_2" model="ir.ui.view">
       <field name="name">Odoo Studio: repair.form customization_button</field>
       <field name="model">repair.order</field>
       <field name="type">form</field>
@@ -55,7 +55,7 @@
       <field name="arch" type="xml">
         <data>
             <xpath expr="//header/button[@name='action_validate']" position="before"> confirm_draft_quotation
-              <button type="action" name="%(Fix-repair.server_action_1814_rr_add_draft_quotation_confirm_button)d" string="Confirm Draft Quotation" class="btn-primary" invisible="confirm_draft_quotation == True"/>
+              <button type="action" name="%(Fix-repair.action_rr_add_draft_quotation_confirm_button)d" string="Confirm Draft Quotation" class="btn-primary" invisible="confirm_draft_quotation == True"/>
             </xpath>
 
             <xpath expr="//header/button[@name='action_validate']" position="attributes">
