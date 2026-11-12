@@ -24,7 +24,11 @@ def migrate(cr, version):
         .with_context(active_test=False)
         .search([("name", "in", REPAIR_TEAM_NAMES)])
     )
-    teams.filtered(lambda t: not t.x_jin_repair_team).write({"x_jin_repair_team": True})
+    # Field renamed x_jin_repair_team -> repair_team by the Studio rename. The
+    # rename runs in this same upgrade (pre-10-fields of .387) and every 'pre'
+    # script runs before any 'post' script, so by the time this executes the
+    # column already carries the new name.
+    teams.filtered(lambda t: not t.repair_team).write({"repair_team": True})
     _logger.info(
         "Fix-repair: %s helpdesk team(s) marked as Repair Team: %s",
         len(teams),

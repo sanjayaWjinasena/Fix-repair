@@ -40,9 +40,10 @@ def migrate(cr, version):
             ("name", "=ilike", "repair%"),
         ]
     )
-    repair_types.filtered(lambda t: not t.x_jin_repair_type).write(
-        {"x_jin_repair_type": True}
-    )
+    # Renamed by the Studio rename: x_jin_repair_type -> repair_type. The rename
+    # runs in this same upgrade (pre-10-fields of .387), and all 'pre' scripts
+    # run before any 'post' script, so the new name is in place here.
+    repair_types.filtered(lambda t: not t.repair_type).write({"repair_type": True})
     _logger.info(
         "Fix-repair: %s ticket types marked as Repair types", len(repair_types)
     )
@@ -63,7 +64,7 @@ def migrate(cr, version):
     teams = (
         env["helpdesk.team"]
         .with_context(active_test=False)
-        .search([("x_jin_repair_team", "=", False)])
+        .search([("repair_team", "=", False)])  # was x_jin_repair_team
     )
     for team in teams:
         tickets = (
