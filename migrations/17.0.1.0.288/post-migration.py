@@ -3,7 +3,7 @@ writes (v287's SO -> invoice compute propagation) don't trip it.
 
 v286 guard fired on ANY write that included one of the four watched
 fields:
-    {x_studio_rug_confirmed, x_studio_rug_acc_updated,
+    {rug_confirmed, rug_acc_updated,
      state, payment_state}
 which meant v287's SO-side rug_confirmed propagation cascaded into
 the invoice and hit "Cannot settle RUG invoice ... SO must be locked"

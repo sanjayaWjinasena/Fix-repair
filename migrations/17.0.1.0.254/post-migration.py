@@ -1,5 +1,5 @@
 """v254 upgrade migration — flag each warehouse's Stock location as
-x_studio_repair_return_location=True so the RR - Auto Create Repair
+repair_return_location=True so the RR - Auto Create Repair
 Route delegate can resolve its stock.picking.type search.
 
 Clear-DB has this flag pre-set on every branch warehouse's main

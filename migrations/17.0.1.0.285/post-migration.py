@@ -10,10 +10,10 @@ v285 rewrites the port to watch the native `locked` Boolean instead
 (Odoo 17's replacement for the old done-state lock mechanism).
 Semantics match the original intent:
 
-  * locked=True  -> mirror x_studio_locked=True + x_studio_unlocked=False
+  * locked=True  -> mirror sales_locked=True + unlocked=False
                     + stamp re_estimate_count from most recent re-line
-  * locked=False + Studio-locked still True -> mirror x_studio_locked=False
-                                               + x_studio_unlocked=True
+  * locked=False + Studio-locked still True -> mirror sales_locked=False
+                                               + unlocked=True
 
 Back-fills every already-locked Repair SO on dev env so its Studio
 lock fields align with the native locked field.
@@ -30,16 +30,16 @@ def migrate(cr, version):
         return
     env = api.Environment(cr, SUPERUSER_ID, {})
     Order = env["sale.order"].sudo()
-    # Back-fill locked=True Repair SOs to also carry x_studio_locked=True.
+    # Back-fill locked=True Repair SOs to also carry sales_locked=True.
     locked = Order.search(
         [
-            ("x_studio_quotation_type", "=", "Repair"),
+            ("quotation_type", "=", "Repair"),
             ("locked", "=", True),
-            ("x_studio_locked", "=", False),
+            ("sales_locked", "=", False),
         ]
     )
     if locked:
         locked._fix_repair_apply_track_lock_status()
-    # Symmetric back-fill for legacy stuck x_studio_locked=True on
+    # Symmetric back-fill for legacy stuck sales_locked=True on
     # native-unlocked SOs -- intentionally NOT run. Leave any existing
     # Studio-side stamps as-is so a manual audit can spot them.

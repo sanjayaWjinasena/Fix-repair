@@ -4,7 +4,7 @@ fields on every internal user that has them unset.
 Without this, `_repair_studio_auto_create_repair_route` (the delegate
 behind the new RR - Auto Create Repair Route ir.actions.server) raises
 UserError on the first click because it reads
-`x_studio_virtual_location` and `x_studio_source_location` on the
+`virtual_location` and `source_location` on the
 current user and both are False on a fresh install.
 
 post_init_hook only fires on install. Existing DBs (v252 → v253 upgrade)

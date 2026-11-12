@@ -7,11 +7,11 @@ from odoo import SUPERUSER_ID, api
 
 FIELDS = {
     "stock.picking": [
-        "x_studio_type_of_operation",
-        "x_studio_quotation_type",
-        "x_studio_quotation_type_2",
+        "type_of_operation",
+        "quotation_type",
+        "quotation_type_2",
     ],
-    "project.task": ["x_studio_payment_type"],
+    "project.task": ["payment_type"],
 }
 
 

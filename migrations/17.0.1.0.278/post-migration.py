@@ -19,7 +19,7 @@ def migrate(cr, version):
         .sudo()
         .search(
             [
-                ("x_studio_quotation_type", "=", False),
+                ("quotation_type", "=", False),
             ]
         )
     )

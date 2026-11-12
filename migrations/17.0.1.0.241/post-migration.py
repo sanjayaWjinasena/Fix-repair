@@ -1,7 +1,7 @@
 """v241 post-migration — extends the shared master-data migration
 helper to cover the 6 new catalogue models added in Chunk 1a
-(x_conditions, x_diagnosis_areas, x_diagnosis_codes, x_symptom_areas,
-x_symptom_codes, x_resolutions). Flips their ir.model rows and
+(conditions, diagnosis_areas, diagnosis_codes, symptom_areas,
+symptom_codes, resolutions). Flips their ir.model rows and
 ir.model.fields rows from state='manual' -> 'base', drops
 studio_customization pins, and creates Fix-repair ownership pins.
 
@@ -22,7 +22,7 @@ def migrate(cr, version):
     if not version:
         return
     env = api.Environment(cr, SUPERUSER_ID, {})
-    if "x_repair_master_data.migration" in env:
+    if "repair_master_data.migration" in env:
         env[
-            "x_repair_master_data.migration"
+            "repair_master_data.migration"
         ]._migrate_studio_repair_master_data_to_base()

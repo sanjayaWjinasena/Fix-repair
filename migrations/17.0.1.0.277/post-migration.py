@@ -1,7 +1,7 @@
 """v277 upgrade — port Studio automation 176 'RR - Auto Generate
 Quotation Type for Repair SOs' as sale.order create/write override.
 
-Also back-fills x_studio_quotation_type='Repair' on any existing SO
+Also back-fills quotation_type='Repair' on any existing SO
 that IS FSM-task-linked to a repair helpdesk ticket (or a repair
 project once Group C ships) but doesn't have the flag set — matches
 what the Studio automation would have done historically.
@@ -20,7 +20,7 @@ def migrate(cr, version):
         .sudo()
         .search(
             [
-                ("x_studio_quotation_type", "=", False),
+                ("quotation_type", "=", False),
             ]
         )
     )

@@ -1,13 +1,13 @@
 """v276 upgrade — close the last repair-scope Studio field gaps.
 
 Adds Python declarations for:
-  - x_studio_company_id on the 6 diagnosis catalogues
-    (x_conditions, x_diagnosis_areas, x_diagnosis_codes, x_symptom_areas,
-     x_symptom_codes, x_resolutions)
-  - x_active on x_task_diagnosis
-  - 3 project.task fields: x_studio_payment_type, x_studio_starting_date,
-    x_task_id_sale_order_count
-  - stock.location Studio-generated m2m field x_studio_many2many_field_7kpUe
+  - accounting_company_id on the 6 diagnosis catalogues
+    (conditions, diagnosis_areas, diagnosis_codes, symptom_areas,
+     symptom_codes, resolutions)
+  - active on task_diagnosis
+  - 3 project.task fields: payment_type, starting_date,
+    task_id_sale_order_count
+  - stock.location Studio-generated m2m field many2many_field_7kpUe
 
 On Clear-DB the corresponding state='manual' rows already exist — Odoo's
 module loader detects the Python declaration on load and flips the

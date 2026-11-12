@@ -2,7 +2,7 @@
 locations for the Return Receipt Location dropdown.
 
 post_init_hook only fires on fresh install. Existing DBs (already at
-Fix-repair v250 with the stock.location x_studio_users_stock_location
+Fix-repair v250 with the stock.location users_stock_location
 field declared but empty) get the seed via this migration.
 
 Idempotent — the underlying hook checks membership before writing,

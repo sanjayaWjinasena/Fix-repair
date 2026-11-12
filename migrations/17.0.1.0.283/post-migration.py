@@ -3,10 +3,10 @@ Lock Status trio) as create/write overrides on sale.order and an
 onchange handler on sale.order.line.
 
 Requires BugFix-Sales v44 for the two new line-level marker fields
-(x_studio_re_estimated + x_studio_count_1).
+(re_estimated + count_1).
 
 Also back-fills existing done-state Repair SOs: any SO that is
-currently state='done' + x_studio_quotation_type='Repair' but is not
+currently state='done' + quotation_type='Repair' but is not
 yet locked gets locked with the correct re_estimate_count derived from
 its most recent re-estimated line. Symmetric back-fill for state='sale'
 locked-but-not-unlocked SOs is intentionally NOT run -- those may
@@ -24,9 +24,9 @@ def migrate(cr, version):
     Order = env["sale.order"].sudo()
     done_repair = Order.search(
         [
-            ("x_studio_quotation_type", "=", "Repair"),
+            ("quotation_type", "=", "Repair"),
             ("state", "=", "done"),
-            ("x_studio_locked", "=", False),
+            ("sales_locked", "=", False),
         ]
     )
     if done_repair:

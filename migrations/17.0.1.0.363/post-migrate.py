@@ -12,9 +12,9 @@ from odoo import SUPERUSER_ID, api
 _logger = logging.getLogger(__name__)
 
 _FIELD_SELECTIONS = [
-    ("helpdesk.ticket", "x_studio_tracking", "serial", "By Unique Serial Number", 10),
-    ("helpdesk.ticket", "x_studio_tracking", "lot", "By Lots", 1),
-    ("helpdesk.ticket", "x_studio_tracking", "none", "No Tracking", 2),
+    ("helpdesk.ticket", "repair_tracking", "serial", "By Unique Serial Number", 10),
+    ("helpdesk.ticket", "repair_tracking", "lot", "By Lots", 1),
+    ("helpdesk.ticket", "repair_tracking", "none", "No Tracking", 2),
 ]
 
 

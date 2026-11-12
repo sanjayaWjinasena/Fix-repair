@@ -6,7 +6,7 @@ SO is Repair AND rug_confirmed, reprice to product cost. Skip lines
 whose price already matches (idempotent) and any line where
 product_template_id is falsy.
 
-Requires BugFix-Sales v43 for x_studio_price_unit_original on
+Requires BugFix-Sales v43 for price_unit_original on
 sale.order.line.
 """
 
@@ -20,8 +20,8 @@ def migrate(cr, version):
     Line = env["sale.order.line"].sudo()
     candidates = Line.search(
         [
-            ("order_id.x_studio_quotation_type", "=", "Repair"),
-            ("order_id.x_studio_rug_confirmed", "=", True),
+            ("order_id.quotation_type", "=", "Repair"),
+            ("order_id.rug_confirmed", "=", True),
         ]
     )
     if candidates:

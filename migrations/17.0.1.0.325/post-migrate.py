@@ -11,13 +11,13 @@ def migrate(cr, version):
     data = [
         (
             "helpdesk.ticket",
-            "x_studio_tracking",
+            "repair_tracking",
             "serial",
             "By Unique Serial Number",
             10,
         ),
-        ("helpdesk.ticket", "x_studio_tracking", "lot", "By Lots", 1),
-        ("helpdesk.ticket", "x_studio_tracking", "none", "No Tracking", 2),
+        ("helpdesk.ticket", "repair_tracking", "lot", "By Lots", 1),
+        ("helpdesk.ticket", "repair_tracking", "none", "No Tracking", 2),
     ]
     for model, name, value, display, seq in data:
         # Name is a JSONB translation field in Odoo 17
