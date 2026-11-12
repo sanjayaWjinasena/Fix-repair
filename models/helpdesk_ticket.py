@@ -469,10 +469,9 @@ class HelpdeskTicket(models.Model):
             if valid:
                 if not rec.estimation_sent_stage_updated:
                     rec["estimation_sent_stage_updated"] = True
-                    if company.id == 1:
-                        rec["stage_id"] = 10
-                    else:
-                        rec["stage_id"] = 29
+                    rec["stage_id"] = rec._repair_stage(
+                        "Estimation Sent to Customer", company
+                    )
                     rec["stage_date"] = datetime.datetime.now()
                     rec["created_by_4"] = self._uid
                     rec["created_on_4"] = datetime.datetime.now()
@@ -499,10 +498,9 @@ class HelpdeskTicket(models.Model):
             if valid:
                 if not rec.estimation_approved_stage_updated:
                     rec["estimation_approved_stage_updated"] = True
-                    if company.id == 1:
-                        rec["stage_id"] = 12
-                    else:
-                        rec["stage_id"] = 31
+                    rec["stage_id"] = rec._repair_stage(
+                        "Estimation Approval Received", company
+                    )
                     rec["stage_date"] = datetime.datetime.now()
                     rec["created_by_5"] = self._uid
                     rec["created_on_5"] = datetime.datetime.now()
@@ -532,10 +530,7 @@ class HelpdeskTicket(models.Model):
             if valid:
                 if not rec.repair_complete_stage_updated:
                     if not rec.invoice_stage_updated:
-                        if company.id == 1:
-                            rec["stage_id"] = 3
-                        else:
-                            rec["stage_id"] = 22
+                        rec["stage_id"] = rec._repair_stage("Advance Received", company)
                         rec["stage_date"] = datetime.datetime.now()
                         rec["created_by_6"] = self._uid
                         rec["created_on_6"] = datetime.datetime.now()
@@ -565,10 +560,7 @@ class HelpdeskTicket(models.Model):
                     valid2 = True
             if valid2:
                 if not rec.repair_complete_stage_updated:
-                    if company.id == 1:
-                        rec["stage_id"] = 9
-                    else:
-                        rec["stage_id"] = 28
+                    rec["stage_id"] = rec._repair_stage("Repair Completed", company)
                     rec["stage_date"] = datetime.datetime.now()
                     rec["created_by_8"] = self._uid
                     rec["created_on_8"] = datetime.datetime.now()
@@ -594,10 +586,7 @@ class HelpdeskTicket(models.Model):
             else:
                 if valid:
                     if not rec.repair_started_stage_updated:
-                        if company.id == 1:
-                            rec["stage_id"] = 11
-                        else:
-                            rec["stage_id"] = 30
+                        rec["stage_id"] = rec._repair_stage("Repair Started", company)
                         rec["stage_date"] = datetime.datetime.now()
                         rec["created_by_7"] = self._uid
                         rec["created_on_7"] = datetime.datetime.now()
@@ -652,10 +641,7 @@ class HelpdeskTicket(models.Model):
 
             if task_status:
                 if not rec.repair_complete_stage_updated:
-                    if company.id == 1:
-                        rec["stage_id"] = 9
-                    else:
-                        rec["stage_id"] = 28
+                    rec["stage_id"] = rec._repair_stage("Repair Completed", company)
                     rec["stage_date"] = datetime.datetime.now()
                     rec["created_by_8"] = self._uid
                     rec["created_on_8"] = datetime.datetime.now()
@@ -1922,6 +1908,38 @@ class HelpdeskTicket(models.Model):
     # ------------------------------------------------------------------
     # Repair tickets vs general tickets
     # ------------------------------------------------------------------
+    def _repair_stage(self, name, company):
+        """The helpdesk stage called `name` for `company` (a helpdesk.stage record).
+
+        The Studio actions wrote Clear-DB stage ids (e.g. 9 / 28 for Repair Completed); this
+        resolves the same stage on any database: the ticket team's stage with that name for the
+        company, else any stage with that name for the company or for all companies.
+        """
+        self.ensure_one()
+        named = self.team_id.stage_ids.filtered(lambda s: s.name == name)
+        stage = (
+            named.filtered(lambda s: s.accounting_company_id == company)[:1]
+            or named.filtered(lambda s: not s.accounting_company_id)[:1]
+        )
+        if not stage:
+            stage = (
+                self.env["helpdesk.stage"]
+                .sudo()
+                .search(
+                    [
+                        ("name", "=", name),
+                        ("accounting_company_id", "in", [company.id, False]),
+                    ],
+                    order="accounting_company_id",
+                    limit=1,
+                )
+            )
+        return stage
+
+    def _jin_pvt_ltd(self):
+        """Jinasena (Pvt) Ltd. (company id 1 on Clear-DB)."""
+        return self.env["res.company"]._jin_pvt_ltd_company()
+
     def _jin_is_repair_ticket(self):
         """A ticket of a Repair Team, or with no team yet (the Repair flow stays the
         default)."""
@@ -3742,7 +3760,7 @@ class HelpdeskTicket(models.Model):
                     "stage_date": now,
                     "created_by_1": self.env.uid,
                     "created_on_1": now,
-                    "stage_id": 5 if company.id == 1 else 24,
+                    "stage_id": record._repair_stage("Sent to Factory", company).id,
                 }
             )
 
@@ -3764,7 +3782,7 @@ class HelpdeskTicket(models.Model):
                     "stage_date": now,
                     "created_by_2": self.env.uid,
                     "created_on_2": now,
-                    "stage_id": 6 if company.id == 1 else 25,
+                    "stage_id": record._repair_stage("Received at Factory", company).id,
                 }
             )
 
@@ -3786,7 +3804,9 @@ class HelpdeskTicket(models.Model):
                     "stage_date": now,
                     "created_by_9": self.env.uid,
                     "created_on_9": now,
-                    "stage_id": 7 if company.id == 1 else 26,
+                    "stage_id": record._repair_stage(
+                        "Sent to Sales Centre", company
+                    ).id,
                 }
             )
 
@@ -3808,7 +3828,9 @@ class HelpdeskTicket(models.Model):
                     "stage_date": now,
                     "created_by_10": self.env.uid,
                     "created_on_10": now,
-                    "stage_id": 8 if company.id == 1 else 27,
+                    "stage_id": record._repair_stage(
+                        "Received at Sales Centre", company
+                    ).id,
                 }
             )
 
@@ -3826,7 +3848,7 @@ class HelpdeskTicket(models.Model):
             record.write(
                 {
                     "cancelled_stage_id": record.stage_id.id,
-                    "stage_id": 4 if company.id == 1 else 23,
+                    "stage_id": record._repair_stage("Cancelled", company).id,
                     "cancelled": True,
                     "reopened": False,
                     "cancelled_by": self.env.uid,
@@ -3877,7 +3899,7 @@ class HelpdeskTicket(models.Model):
             )[0]
             company = self.env["res.company"].browse(company_id)
 
-            if company.id == 1:
+            if company._jin_is_pvt_ltd():
                 if not record.virtual_location:
                     raise UserError(
                         _("Virtual Location must be setup for Current Logged in User.")
@@ -4001,7 +4023,9 @@ class HelpdeskTicket(models.Model):
     def _repair_send_stage13_email(self, template_id):
         """Shared helper for the five 'send letter at stage=13' actions."""
         for record in self:
-            if record.stage_id.id != 13:
+            if record.stage_id != record._repair_stage(
+                "Handed Over to Customer", record._jin_pvt_ltd()
+            ):
                 raise UserError(
                     _(
                         "The repaired item should be handed over to customer "
@@ -4175,7 +4199,7 @@ class HelpdeskTicket(models.Model):
             record.write(
                 {
                     "repair_complete_stage_updated": True,
-                    "stage_id": 9 if company.id == 1 else 28,
+                    "stage_id": record._repair_stage("Repair Completed", company).id,
                     "stage_date": now,
                     "created_by_8": self.env.uid,
                     "created_on_8": now,
@@ -5014,7 +5038,7 @@ class HelpdeskTicket(models.Model):
             )[0]
             company = self.env["res.company"].browse(company_id)
 
-            if company.id == 1:
+            if company._jin_is_pvt_ltd():
                 if not record.virtual_location:
                     raise UserError(
                         _("Virtual Location must be setup for Current Logged in User.")

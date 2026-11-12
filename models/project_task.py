@@ -544,28 +544,21 @@ class ProjectTask(models.Model):
             if not ticket:
                 continue
             now = datetime.datetime.now()
-            if company.id == 1:
-                if ticket.stage_id.id == 1 or ticket.stage_id.id == 6:
-                    if ticket.fsm_task_count > 0:
-                        ticket.write(
-                            {
-                                "stage_id": 2,
-                                "stage_date": now,
-                                "created_by_3": self.env.uid,
-                                "created_on_3": now,
-                            }
-                        )
-            else:
-                if ticket.stage_id.id == 20 or ticket.stage_id.id == 25:
-                    if ticket.fsm_task_count > 0:
-                        ticket.write(
-                            {
-                                "stage_id": 21,
-                                "stage_date": now,
-                                "created_by_3": self.env.uid,
-                                "created_on_3": now,
-                            }
-                        )
+            # Clear-DB stages 1 / 6 (company 1) and 20 / 25 (company 2): New or Received at Factory
+            # -> Diagnosis of the same company
+            if ticket.stage_id in (
+                ticket._repair_stage("New", company)
+                | ticket._repair_stage("Received at Factory", company)
+            ):
+                if ticket.fsm_task_count > 0:
+                    ticket.write(
+                        {
+                            "stage_id": ticket._repair_stage("Diagnosis", company).id,
+                            "stage_date": now,
+                            "created_by_3": self.env.uid,
+                            "created_on_3": now,
+                        }
+                    )
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -589,7 +582,6 @@ class ProjectTask(models.Model):
                 "allowed_company_ids", [self.env.user.company_id.id]
             )[0]
             company = self.env["res.company"].browse(company_id)
-            stage = 9 if company.id == 1 else 28
             record.end_quick_repair = True
             record.quick_repair_status_1 = "Quick Repair"
             ticket = self.env["helpdesk.ticket"].search(
@@ -603,7 +595,9 @@ class ProjectTask(models.Model):
                 ticket.write(
                     {
                         "repair_complete_stage_updated": True,
-                        "stage_id": stage,
+                        "stage_id": ticket._repair_stage(
+                            "Repair Completed", company
+                        ).id,
                         "stage_date": now,
                         "created_by_8": self.env.uid,
                         "created_on_8": now,

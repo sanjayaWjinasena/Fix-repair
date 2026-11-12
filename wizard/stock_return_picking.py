@@ -406,7 +406,7 @@ class StockReturnPicking(models.TransientModel):
             )[0]
             # Symmetric with automation 174 and _compute_moves_locations:
             # company 1 uses the base field, all others use the _1 variant.
-            if active_company_id == 1:
+            if self.env["res.company"].browse(active_company_id)._jin_is_pvt_ltd():
                 suggested = wizard.suggested_location_id
             else:
                 suggested = wizard.suggested_location_id_1
@@ -496,7 +496,7 @@ class StockReturnPicking(models.TransientModel):
             # "_1 or _id" fallback silently mis-selected the wrong
             # sister-field for a user profile that carried the other
             # company's per-company variant.
-            if active_company_id == 1:
+            if self.env["res.company"].browse(active_company_id)._jin_is_pvt_ltd():
                 suggested = wizard.suggested_location_id or wizard.original_location_id
             else:
                 suggested = (

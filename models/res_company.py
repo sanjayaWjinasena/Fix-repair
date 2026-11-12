@@ -35,6 +35,19 @@ class ResCompany(models.Model):
         companies._jin_ensure_repair_sequences()
         return companies
 
+    @api.model
+    def _jin_pvt_ltd_company(self):
+        """Jinasena (Pvt) Ltd.: the company the Studio actions meant by company.id == 1."""
+        main = self.env.ref(
+            "seed_master_data_and_settings.company_jinasena_pvt_ltd",
+            raise_if_not_found=False,
+        )
+        return main or self.sudo().browse(1).exists()
+
+    def _jin_is_pvt_ltd(self):
+        self.ensure_one()
+        return self == self._jin_pvt_ltd_company()
+
     def _jin_ensure_repair_sequences(self):
         """Create the missing repair sequences for these companies (all companies when
         empty)."""
