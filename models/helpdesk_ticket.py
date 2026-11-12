@@ -1911,9 +1911,10 @@ class HelpdeskTicket(models.Model):
     def _repair_stage(self, name, company):
         """The helpdesk stage called `name` for `company` (a helpdesk.stage record).
 
-        The Studio actions wrote Clear-DB stage ids (e.g. 9 / 28 for Repair Completed); this
-        resolves the same stage on any database: the ticket team's stage with that name for the
-        company, else any stage with that name for the company or for all companies.
+        The Studio actions wrote Clear-DB stage ids (e.g. 9 / 28 for Repair Completed);
+        this resolves the same stage on any database: the ticket team's stage with that
+        name for the company, else any stage with that name for the company or for all
+        companies.
         """
         self.ensure_one()
         named = self.team_id.stage_ids.filtered(lambda s: s.name == name)

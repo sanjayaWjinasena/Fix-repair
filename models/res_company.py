@@ -37,7 +37,7 @@ class ResCompany(models.Model):
 
     @api.model
     def _jin_pvt_ltd_company(self):
-        """Jinasena (Pvt) Ltd.: the company the Studio actions meant by company.id == 1."""
+        """Jinasena (Pvt) Ltd.: the company the Studio actions meant by id 1."""
         main = self.env.ref(
             "seed_master_data_and_settings.company_jinasena_pvt_ltd",
             raise_if_not_found=False,

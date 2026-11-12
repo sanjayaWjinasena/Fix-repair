@@ -544,8 +544,8 @@ class ProjectTask(models.Model):
             if not ticket:
                 continue
             now = datetime.datetime.now()
-            # Clear-DB stages 1 / 6 (company 1) and 20 / 25 (company 2): New or Received at Factory
-            # -> Diagnosis of the same company
+            # Clear-DB stages 1 / 6 (company 1) and 20 / 25 (company 2): New or Received
+            # at Factory -> Diagnosis of the same company
             if ticket.stage_id in (
                 ticket._repair_stage("New", company)
                 | ticket._repair_stage("Received at Factory", company)
